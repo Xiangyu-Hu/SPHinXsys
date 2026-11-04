@@ -5,7 +5,7 @@
  * 			understanding SPH method for multi-phase simulation.
  * @author 	sphinxsim@einsimo.com
  */
-#include "near_wall_boundary.hpp"
+#include "near_wall_boundary_ck.hpp"
 #include "sphinxsys.h"
 using namespace SPH;
 //----------------------------------------------------------------------

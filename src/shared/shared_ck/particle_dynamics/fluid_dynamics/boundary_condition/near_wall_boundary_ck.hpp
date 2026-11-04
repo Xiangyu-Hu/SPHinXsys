@@ -1,7 +1,7 @@
-#ifndef NEAR_WALL_BOUNDARY_HPP
-#define NEAR_WALL_BOUNDARY_HPP
+#ifndef NEAR_WALL_BOUNDARY_CK_HPP
+#define NEAR_WALL_BOUNDARY_CK_HPP
 
-#include "near_wall_boundary.h"
+#include "near_wall_boundary_ck.h"
 
 namespace SPH
 {
@@ -114,4 +114,4 @@ void BoundingFromWallCK<Contact<OneLevel, Parameters...>>::UpdateKernel::update(
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH
-#endif // NEAR_WALL_BOUNDARY_HPP
+#endif // NEAR_WALL_BOUNDARY_CK_HPP
