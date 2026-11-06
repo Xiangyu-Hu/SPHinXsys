@@ -15,7 +15,7 @@ SubscaleBuoyancy<Contact<WithUpdate, Parameters...>>::SubscaleBuoyancy(
       gravity_(gravity), threshold_by_dimensions_(threshold * Dimensions),
       dv_mass(this->particles_->template getVariableByName<Real>("Mass")),
       dv_isolation_factor_(nullptr), // from contact body
-      dv_buoyancy_force_(this->getCurrentForce())
+      dv_subscale_buoyancy_(this->getCurrentForce())
 {
     dv_isolation_factor_ = this->contact_particles_->template getVariableByName<Real>("IsolationFactor");
 }
@@ -30,7 +30,7 @@ SubscaleBuoyancy<Contact<WithUpdate, Parameters...>>::InteractKernel::
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       mass_(encloser.dv_mass->DelegatedData(ex_policy)),
       isolation_factor_(encloser.dv_isolation_factor_->DelegatedData(ex_policy)),
-      buoyancy_force_(encloser.dv_buoyancy_force_->DelegatedData(ex_policy)) {};
+      subscale_buoyancy_(encloser.dv_subscale_buoyancy_->DelegatedData(ex_policy)) {};
 //=================================================================================================//
 template <typename... Parameters>
 void SubscaleBuoyancy<Contact<WithUpdate, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
@@ -50,7 +50,7 @@ void SubscaleBuoyancy<Contact<WithUpdate, Parameters...>>::InteractKernel::inter
         buoyancy_i += W_ij_Vi * buoyancy_j;
     }
 
-    buoyancy_force_[index_i] = buoyancy_i * mass_[index_i];
+    subscale_buoyancy_[index_i] = buoyancy_i * mass_[index_i];
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

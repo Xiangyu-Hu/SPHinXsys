@@ -43,14 +43,14 @@ class SubscaleBuoyancy<Contact<WithUpdate, Parameters...>>
         Gravity gravity_;
         Real threshold_by_dimensions_;
         Real *Vol_, *mass_, *isolation_factor_;
-        Vecd *buoyancy_force_;
+        Vecd *subscale_buoyancy_;
     };
 
   protected:
     const Gravity gravity_;
     Real threshold_by_dimensions_;
     DiscreteVariable<Real> *dv_mass, *dv_isolation_factor_;
-    DiscreteVariable<Vecd> *dv_buoyancy_force_;
+    DiscreteVariable<Vecd> *dv_subscale_buoyancy_;
 };
 
 } // namespace fluid_dynamics
