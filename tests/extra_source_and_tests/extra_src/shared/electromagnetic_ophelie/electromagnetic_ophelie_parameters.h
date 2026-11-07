@@ -280,6 +280,21 @@ inline const char *phiBoundaryModeName(OpheliePhiBoundaryMode mode)
     }
 }
 
+inline const char *phiBoundaryNormalSourceName(OpheliePhiBoundaryNormalSource source)
+{
+    switch (source)
+    {
+    case OpheliePhiBoundaryNormalSource::AnalyticCylinder:
+        return "analytic-cylinder";
+    case OpheliePhiBoundaryNormalSource::LevelSet:
+        return "level-set";
+    case OpheliePhiBoundaryNormalSource::KernelDeficiency:
+        return "kernel-deficiency";
+    default:
+        return "analytic-box";
+    }
+}
+
 struct OphelieParameters
 {
     /** Glass melt box half-sizes (m). */
@@ -319,7 +334,8 @@ struct OphelieParameters
     bool enable_phi_correction_ = true;
     OpheliePhiSolverKind phi_solver_kind_ = OpheliePhiSolverKind::PCG;
     OpheliePhiLhsOperatorKind phi_lhs_operator_kind_ = OpheliePhiLhsOperatorKind::LegacyPairwise;
-    OpheliePhiRhsOperatorKind phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::LegacyFlux;
+    /** Doc198 production default: continuity-consistent −ω div(σA). LegacyFlux = diagnostic. */
+    OpheliePhiRhsOperatorKind phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::DivSigmaA;
     Real phi_gauge_penalty_ = 1.0;
     Real pair_weight_regularization_ = 0.01;
     Real phi_jacobi_relaxation_ = 0.85;
@@ -392,6 +408,14 @@ struct OphelieParameters
     Real coil_current_scale_ = 1.0;
     /** Complex edge-flux: solve both phi_real and phi_imag chains (default off preserves H v4). */
     bool edge_flux_complex_ = false;
+    /** Doc212: complex entry uses shared edge EMF for imag+real (default). Set false only for
+     *  diagnostic A/B vs historical DivΣA imag — not a second production path. */
+    bool doc212_shared_complex_edge_rhs_ = true;
+    /** Doc212 diagnostic: unified DivΣA for imag+real (phase-symmetric alternative to shared edge).
+     *  Not production until phase + field + edge gates are re-proven. */
+    bool doc212_shared_complex_div_sigma_rhs_ = false;
+    /** Doc212 diagnostic: unified pairwise (A_i−A_j)·g RHS for imag+real (non-edge LegacyFlux form). */
+    bool doc212_shared_complex_pairwise_rhs_ = false;
     /** A_ind one-way: after K[J], re-solve complex edge-flux with A_total (Stage 3.5). */
     bool aind_one_way_feedback_resolve_ = true;
     /** Q spatial soft gate: max(Q)/mean(Q) upper bound (edge-flux production sanity). */

@@ -30,6 +30,137 @@ inline Real hostVecdVolWeightedNorm(BaseParticles &particles, const std::string 
     return std::sqrt(hostVolWeightedVecdNormSquared(particles, field_name, n));
 }
 
+/** Doc 61: compare stored ACoil/BCoil to a fresh Biot evaluation at the same Position.
+ *  Call immediately after applyMultiloopFilamentBiotToGlass and again after edge-flux. */
+struct OphelieStoredCoilBiotAudit
+{
+    size_t n_checked = 0;
+    Real mean_abs_B_ratio = 0.0;
+    Real mean_abs_Bz_ratio = 0.0;
+    Real max_rel_B_err = 0.0;
+    Real midplane_mean_abs_B_ratio = 0.0;
+    size_t n_midplane = 0;
+    Real soft_m = 0.0;
+    size_t n_moments = 0;
+    Real sample_r = 0.0;
+    Real sample_z = 0.0;
+    Real sample_stored_Bz = 0.0;
+    Real sample_fresh_Bz = 0.0;
+    Real sample_stored_Br = 0.0;
+    Real sample_fresh_Br = 0.0;
+};
+
+/** Doc 61: rebuild moments with the same L0/L1 excitation used to write ACoil/BCoil. */
+inline OphelieStoredCoilBiotAudit auditStoredCoilBiotAgainstFresh(
+    BaseParticles &particles, const OphelieGlassFieldNames &names, const OphelieFrenchReducedCaseParams &french,
+    Real mu0, Real softening_length, const char *tag)
+{
+    OphelieStoredCoilBiotAudit audit;
+    audit.soft_m = softening_length;
+    const size_t n = particles.TotalRealParticles();
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Vecd>(particles, names.a_coil_real);
+    syncVariableToHost<Vecd>(particles, names.b_coil_real);
+    syncVariableToHost<Vecd>(particles, names.b_coil_imag);
+
+    StdVec<OphelieCurrentMomentSample> moments;
+    buildFrenchCoilExcitationMoments(french.coil, french.coil_excitation, french.coil_section_radial_width_m,
+                                     french.coil_section_axial_height_m, french.coil_section_n_radial,
+                                     french.coil_section_n_axial, moments, /*quiet=*/true, french.coil_current_imag);
+    audit.n_moments = moments.size();
+
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Vecd *b_stored = particles.getVariableDataByName<Vecd>(names.b_coil_real);
+    const Vecd *b_stored_imag = particles.getVariableDataByName<Vecd>(names.b_coil_imag);
+
+    Real sum_B = 0.0;
+    Real sum_Bz = 0.0;
+    Real sum_B_mid = 0.0;
+    Real best_target = 1.0e300;
+    size_t best_i = 0;
+    const Real target_r = Real(0.20);
+    const Real target_z = Real(0.11);
+
+    for (size_t i = 0; i < n; ++i)
+    {
+        Vecd a_r = Vecd::Zero();
+        Vecd a_i = Vecd::Zero();
+        Vecd b_r = Vecd::Zero();
+        Vecd b_i = Vecd::Zero();
+        accumulateBiotSavartFromMoments(moments, pos[i], mu0, softening_length, a_r, a_i, b_r, b_i);
+        // Doc151: include imag channel so pure-imag I is auditable.
+        const Real B_fresh = std::sqrt(b_r.squaredNorm() + b_i.squaredNorm());
+        const Real B_store = std::sqrt(b_stored[i].squaredNorm() + b_stored_imag[i].squaredNorm());
+        if (B_fresh <= TinyReal)
+        {
+            continue;
+        }
+        const Real ratio_B = B_store / B_fresh;
+        const Real ratio_Bz =
+            std::hypot(b_stored[i][2], b_stored_imag[i][2]) / (std::hypot(b_r[2], b_i[2]) + TinyReal);
+        sum_B += ratio_B;
+        sum_Bz += ratio_Bz;
+        audit.max_rel_B_err = std::max(audit.max_rel_B_err, std::abs(ratio_B - Real(1)));
+        ++audit.n_checked;
+
+        const Real r = std::sqrt(pos[i][0] * pos[i][0] + pos[i][1] * pos[i][1]);
+        const Real z = pos[i][2];
+        if (z >= Real(0.09) && z <= Real(0.12) && r >= Real(0.05))
+        {
+            sum_B_mid += ratio_B;
+            ++audit.n_midplane;
+        }
+        const Real d2 = (r - target_r) * (r - target_r) + (z - target_z) * (z - target_z);
+        if (d2 < best_target)
+        {
+            best_target = d2;
+            best_i = i;
+            audit.sample_r = r;
+            audit.sample_z = z;
+            const Real inv_r = (r > TinyReal) ? (Real(1) / r) : Real(0);
+            audit.sample_stored_Bz = b_stored[i][2];
+            audit.sample_fresh_Bz = b_r[2];
+            audit.sample_stored_Br = inv_r * (b_stored[i][0] * pos[i][0] + b_stored[i][1] * pos[i][1]);
+            audit.sample_fresh_Br = inv_r * (b_r[0] * pos[i][0] + b_r[1] * pos[i][1]);
+        }
+        (void)best_i;
+    }
+    if (audit.n_checked > 0)
+    {
+        audit.mean_abs_B_ratio = sum_B / static_cast<Real>(audit.n_checked);
+        audit.mean_abs_Bz_ratio = sum_Bz / static_cast<Real>(audit.n_checked);
+    }
+    if (audit.n_midplane > 0)
+    {
+        audit.midplane_mean_abs_B_ratio = sum_B_mid / static_cast<Real>(audit.n_midplane);
+    }
+
+    Real zmin = n > 0 ? pos[0][2] : Real(0);
+    Real zmax = zmin;
+    for (size_t i = 1; i < n; ++i)
+    {
+        zmin = std::min(zmin, pos[i][2]);
+        zmax = std::max(zmax, pos[i][2]);
+    }
+
+    std::cout.setf(std::ios::scientific);
+    std::cout.precision(6);
+    std::cout << "[ophelie][doc61] stored_vs_fresh_biot tag=" << tag << " n_checked=" << audit.n_checked
+              << " n_moments=" << audit.n_moments
+              << " excitation=" << ophelieFrenchCoilExcitationLevelName(french.coil_excitation)
+              << " soft=" << audit.soft_m
+              << " mean_|B|_ratio=" << audit.mean_abs_B_ratio << " mean_|Bz|_ratio=" << audit.mean_abs_Bz_ratio
+              << " midplane_mean_|B|_ratio=" << audit.midplane_mean_abs_B_ratio
+              << " n_mid=" << audit.n_midplane << " max_rel_|B|_err=" << audit.max_rel_B_err
+              << " sample_r=" << audit.sample_r << " sample_z=" << audit.sample_z
+              << " sample_Bz_stored=" << audit.sample_stored_Bz << " sample_Bz_fresh=" << audit.sample_fresh_Bz
+              << " sample_Br_stored=" << audit.sample_stored_Br << " sample_Br_fresh=" << audit.sample_fresh_Br
+              << " I_re=" << french.coil.current_per_loop << " I_im=" << french.coil_current_imag
+              << " R=" << french.coil.loop_radius << " n_loops=" << french.coil.num_loops
+              << " pos_z_world=[" << zmin << "," << zmax << "]" << std::endl;
+    return audit;
+}
+
 /** level0/post L2 edge residual ratio; returns -1 when level0 is negligible (ratio undefined). */
 inline Real ophelieEdgeResidualReductionRatio(Real level0_l2, Real post_l2)
 {
@@ -392,9 +523,12 @@ inline OphelieAIndOneWayDiagnostic runOphelieEdgeFluxAIndOneWayAfterCoilBiot(
         {
             const bool saved_use_a_total = params.use_a_total_for_edge_flux_;
             params.use_a_total_for_edge_flux_ = false;
+            OpheliePhiBoundaryGeometryContext boundary_geom;
+            const OpheliePhiBoundaryGeometryContext *boundary_geom_ptr =
+                prepareOpheliePhiBoundaryGeomForSolve(particles, names, params, boundary_geom, dp);
             OphelieComplexEdgeFluxSolveReport coil_only_report;
             diag.p_complex_coil_only = execOphelieComplexEdgeFluxSolveReconAndPower<ExecutionPolicy>(
-                glass_body, glass_inner, names, params, nullptr, dp, &coil_only_report);
+                glass_body, glass_inner, names, params, boundary_geom_ptr, dp, &coil_only_report);
             diag.phi_eq_res_vol = coil_only_report.phi_eq_res_vol_imag;
             diag.phi_real_solver_rel_residual = coil_only_report.phi_real_solver_rel_residual;
             std::cout << "[ophelie] aind_one_way: coil_only P_complex=" << diag.p_complex_coil_only
@@ -464,16 +598,22 @@ inline OphelieAIndOneWayDiagnostic runOphelieEdgeFluxAIndOneWayAfterCoilBiot(
         }
         const Real max_j_r_before = hostVecdFieldMax(particles, j_real_source, n);
         const Real max_j_i_before = hostVecdFieldMax(particles, j_imag_source, n);
-        const bool skip_real_feedback =
-            max_j_r_before <= TinyReal * std::max(max_j_i_before, Real(1));
-        if (skip_real_feedback)
+        // Doc 23 P0-03: do not skip real phi/recon based on pre-feedback J_real.
+        // With A_imag from one-way Biot, E_real can be nonzero even if J_real was ~0.
+        const Real a_src_imag_norm = hostVecdVolWeightedNorm(particles, names.a_src_imag, n);
+        if (max_j_r_before <= TinyReal * std::max(max_j_i_before, Real(1)))
         {
-            std::cout << "[ophelie] edge-flux feedback: skip real phi (imag-dominated J before feedback)"
-                      << std::endl;
+            std::cout << "[ophelie] edge-flux feedback: pre-feedback J_real~0 (max_Jr=" << max_j_r_before
+                      << " max_Ji=" << max_j_i_before << ") but still solving real chain; A_src_imag_norm="
+                      << a_src_imag_norm << std::endl;
         }
+        OpheliePhiBoundaryGeometryContext boundary_geom_fb;
+        const OpheliePhiBoundaryGeometryContext *boundary_geom_fb_ptr =
+            prepareOpheliePhiBoundaryGeomForSolve(particles, names, params, boundary_geom_fb, dp);
         OphelieComplexEdgeFluxSolveReport total_report;
         diag.p_complex_total_a = execOphelieComplexEdgeFluxSolveReconAndPower<ExecutionPolicy>(
-            glass_body, glass_inner, names, params, nullptr, dp, &total_report, skip_real_feedback);
+            glass_body, glass_inner, names, params, boundary_geom_fb_ptr, dp, &total_report,
+            /*skip_real_phi_solve=*/false);
         diag.phi_eq_res_vol_total = total_report.phi_eq_res_vol_imag;
         diag.phi_real_solver_rel_residual = total_report.phi_real_solver_rel_residual;
         params.use_a_total_for_edge_flux_ = saved_use_a_total;
@@ -635,13 +775,23 @@ inline OphelieAIndOneWayDiagnostic runFrenchReducedAIndOneWayDiagnostic(
     const OphelieFrenchReducedCaseParams &french)
 {
     BaseParticles &particles = glass_body.getBaseParticles();
-    applyMultiloopFilamentBiotToGlass(particles, names, french.coil, params.mu0_, params.softening_length_);
-    return runOphelieEdgeFluxAIndOneWayAfterCoilBiot<ExecutionPolicy>(glass_body, glass_inner, names, params, french.dp);
+    applyFrenchReducedCoilExcitationBiotToGlass(particles, names, french, params.mu0_, params.softening_length_);
+    (void)auditStoredCoilBiotAgainstFresh(particles, names, french, params.mu0_, params.softening_length_,
+                                          "post_biot_pre_edgeflux");
+    OphelieAIndOneWayDiagnostic diag =
+        runOphelieEdgeFluxAIndOneWayAfterCoilBiot<ExecutionPolicy>(glass_body, glass_inner, names, params, french.dp);
+    (void)auditStoredCoilBiotAgainstFresh(particles, names, french, params.mu0_, params.softening_length_,
+                                          "post_edgeflux_pre_dump");
+    return diag;
 }
 
 struct OphelieFrenchSelfInductionPicardResult
 {
+    /** Unrelaxed fixed-point residual ||F(J)-J|| / ||F|| (doc 23 P0-04). */
     Real final_j_rel_change = 0.0;
+    Real fixed_point_residual = 0.0;
+    /** Under-relaxation step size; not the convergence metric. */
+    Real relaxed_step_change = 0.0;
     size_t self_induction_iterations = 0;
     Real phi_solver_rel_residual = 0.0;
     Real phi_eq_res_vol = 0.0;
@@ -661,7 +811,7 @@ inline OphelieFrenchSelfInductionPicardResult runFrenchReducedSelfInductionPicar
     BaseParticles &particles = glass_body.getBaseParticles();
     const size_t n = particles.TotalRealParticles();
 
-    applyMultiloopFilamentBiotToGlass(particles, names, french.coil, params.mu0_, params.softening_length_);
+    applyFrenchReducedCoilExcitationBiotToGlass(particles, names, french, params.mu0_, params.softening_length_);
     hostZeroVecdField(particles, names.a_ind_real, n);
     hostZeroVecdField(particles, names.a_ind_imag, n);
     hostZeroVecdField(particles, names.b_ind_real, n);
@@ -672,7 +822,8 @@ inline OphelieFrenchSelfInductionPicardResult runFrenchReducedSelfInductionPicar
 
     result.final_j_rel_change = runOphelieSelfInductionWithPhiSolve<ExecutionPolicy>(
         glass_body, glass_inner, names, params, result.phi_solver_rel_residual, result.self_induction_iterations,
-        result.phi_eq_res_vol, result.picard_converged);
+        result.phi_eq_res_vol, result.picard_converged, &result.relaxed_step_change);
+    result.fixed_point_residual = result.final_j_rel_change;
 
     syncGlassElectromagneticFieldsToHost(particles, names);
     const Real a_coil_norm = hostComplexVecdPairVolWeightedNorm(particles, names.a_coil_real, names.a_coil_imag, n);
@@ -688,6 +839,14 @@ inline OphelieFrenchSelfInductionPicardResult runFrenchReducedSelfInductionPicar
     else
     {
         result.joule_power_w = hostVolWeightedSum(particles, names.joule_heat, n);
+    }
+    if (!result.picard_converged)
+    {
+        std::cout << "[ophelie] WARNING: Picard did not meet fixed-point/phi tolerances "
+                     "(fixed_point_res="
+                  << result.fixed_point_residual << " relaxed_step=" << result.relaxed_step_change
+                  << " phi_eq_res_vol=" << result.phi_eq_res_vol << " iters=" << result.self_induction_iterations
+                  << ")" << std::endl;
     }
     return result;
 }

@@ -109,10 +109,14 @@ Phase A 约需 3 分钟（EM self-induction Picard + 坩埚壁 level set）。Ph
 | `--max-wall-hours=` | 10 | 墙钟预算，到点停 |
 | `--c0=` | 8 | 人工声速，超过 9 会发散 |
 | `--balance-heat-loss` | 关 | 缩放边界系数使 T₀ 热平衡 |
+| `--boundary-area-normalize` | **开**（文献默认） | 显式把 SPH 面面积 `ΣV/δ` 归一到几何柱面（不改 h；勿与 balance-heat-loss 同开） |
+| `--no-boundary-area-normalize` | — | 关闭上述归一化（诊断用） |
 | `--h-side=` `--h-bottom=` `--h-free=` | 文献值 | 单独覆盖对流系数 |
 | `--t-min=` `--t-max=` | 300 / 2500 K | 温度钳制 |
 | `--q-grid-spacing=` | dp | 欧拉 Q 网格间距 |
 | `--bc-retag-every=` | 50 | 边界面重标记间隔（advection step） |
+| `--screen-every=` | 20 | 屏幕诊断间隔（advection step；0=关） |
+| `--csv-every=` | 20 | energy/monitor CSV 间隔；**须与 screen 同变**才做 F02 cadence（Doc 52；0=关 CSV） |
 | `--state-record-interval=` | 10 s | VTP 输出间隔 |
 | `--no-state-recording` | — | 关闭 VTP |
 | `--rotation-rpm=` | 10 | 搅拌转速 |
@@ -122,8 +126,28 @@ Phase A 约需 3 分钟（EM self-induction Picard + 坩埚壁 level set）。Ph
 | `--thermo-em-coupling=` | `off` | `periodic`：σ(T)→EM→Q，与自然对流同一套控制器 |
 | `--em-update-interval=` | 10 s | 周期耦合的物理时间间隔 |
 | `--no-thermal-diffusion` | — | 周期模式下关掉 SPH 传导 |
+| `--temperature-dependent-properties` | 关 | 打开 μ/cp/k(T)；默认仍在 T₀ 取常值（回归） |
+| `--constant-thermal-rheology` | 开 | 显式锁定 μ/cp/k 为 T₀ 常值 |
+| `--skull-resistance` | 关 | Level-1 固定 skull 串联热阻（侧/底）；勿与 `--balance-heat-loss` 同开 |
+| `--skull-delta=` | 0.005 m | 侧/底 skull 厚度（也可 `--skull-delta-side/bottom=`） |
+| `--free-crust-resistance` | 关 | Level-1b 自由液面壳层：导热串联表面对流+辐射（Newton 求外表面 T_s） |
+| `--free-crust-delta=` | 0.005 m | 自由液面壳层厚度 |
+| `--free-crust-k=` | 1.0 | 壳层导热系数 [W/(m·K)] |
+| `--skull-shell` | — | **搅拌未接线**（会报错退出）；生产用 Level-1 skull+crust |
 
-周期耦合冒烟（搅拌 relax，不要用自然对流的 Reload.xml）。SSH 上**不要写 VTP**（每帧约 48 MB）；看屏幕上的 `U_rms/U_th/T_out/T_ctr` 和 `output/french_spatial_stats.csv`（几 KB）。
+**推荐生产热闭合（Round 3D）：** Level-1 skull + free-crust，不要用 `--balance-heat-loss`。屏幕/CSV 含 SPH 候选 `P_mech` / `Np_sph` / `Nu_sph`（非论文冻结定义）。详见 `docs/ophelie/20_ROUND3D_STIRRED_COMPARISON_PLAN.md`。
+
+```bash
+./test_3d_ophelie_french_stirring_em \
+    --reload-dir=../../test_3d_ophelie_french_stirring_glass_relax/bin/reload \
+    --thermo-em-coupling=periodic --em-update-interval=0.5 \
+    --em-control=fixed-current --aind=off \
+    --skull-resistance --skull-delta=0.005 \
+    --free-crust-resistance --free-crust-delta=0.005 \
+    --end-time=60 --no-state-recording
+```
+
+周期耦合短冒烟（搅拌 relax，不要用自然对流的 Reload.xml）。SSH 上**不要写 VTP**；看 `U_rms/U_th/Np_sph/Nu_sph` 和 `output/french_spatial_stats.csv`。
 
 ```bash
 ./test_3d_ophelie_french_stirring_em \
@@ -138,7 +162,7 @@ Phase A 约需 3 分钟（EM self-induction Picard + 坩埚壁 level set）。Ph
 - `output/StirringJouleHeatGrid.vti` — 欧拉 Q 场，可在 ParaView 里直接看感应加热分布
 - `output/GlassBody_*.vtp` — 熔体粒子（Pressure / Temperature / JouleHeat）
 - `output/RotorProxy_*.vtp` — 搅拌桨表面网格
-- `output/french_stirring_em_monitor.csv` — 时间、转数、U_max / U_rms / U_θ / T_min/mean/max、T_out/T_ctr、墙钟；末尾多 `t_min_K,P_joule,em_updates`
+- `output/french_stirring_em_monitor.csv` — 时间、转数、扭矩、`P_mech`/`Np_sph`/`Nu_sph`、U/T 统计
 - `output/french_spatial_stats.csv` — 体积统计时间序列（**替代 ParaView**；几 KB）
 - `output/french_T_rz.csv` — 方位角平均 T(r,z) 最新一帧（约 30 KB）
 - 周期耦合另写 `output/french_thermo_em_coupling.csv`、`french_sigma_rz.csv`、`french_q_rz.csv`、`french_energy_budget.csv`

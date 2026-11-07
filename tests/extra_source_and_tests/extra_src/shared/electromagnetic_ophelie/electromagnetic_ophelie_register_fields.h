@@ -87,6 +87,7 @@ class RegisterOphelieGlassFields : public LocalDynamics
         particles->template registerStateVariable<Real>(names.phi_boundary_mask, Real(0));
         particles->template registerStateVariable<Vecd>(names.phi_boundary_normal, ZeroData<Vecd>::value);
         particles->template registerStateVariable<Real>(names.phi_boundary_gn, Real(0));
+        particles->template registerStateVariable<Real>(names.phi_boundary_gn_real, Real(0));
         particles->template registerStateVariable<Matd>(names.phi_grad_linear_correction,
                                                         IdentityMatrix<Matd>::value);
         particles->template registerStateVariable<Real>(names.krylov_workspace, Real(0));

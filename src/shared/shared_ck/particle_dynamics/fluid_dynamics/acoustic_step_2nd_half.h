@@ -126,6 +126,11 @@ class AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
         Vecd *vel_, *force_;
         Real *contact_Vol_;
         Vecd *wall_vel_ave_, *wall_n_;
+        Real *wall_free_slip_; /**< Doc201: >0.5 → free-slip ghost dens; else no-slip mirror */
+        Real *wall_contact_omit_; /**< Doc202: >0.5 → skip both acoustic halves */
+        Real *wall_contact_omit_2nd_; /**< Doc202 H1c: >0.5 → skip 2nd-half pair only */
+        Real *wall_cont_silent_; /**< Doc202 H2a: >0.5 → skip 2nd-half continuity dens (keep PJump) */
+        Real *wall_omit_pjump_; /**< Doc202 H2b: >0.5 → skip DissipativePJump (keep continuity) */
     };
 
   protected:
@@ -135,6 +140,16 @@ class AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
     KernelCorrectionType kernel_correction_;
     FluidType &fluid_;
     RiemannSolverType riemann_solver_;
+    /** Per contact body; default 0 (no-slip). Tag lid particles AcousticWallFreeSlip=1 for flat free-slip. */
+    StdVec<DiscreteVariable<Real> *> dv_wall_free_slip_;
+    /** Doc202 H1: omit both halves; shared with 1st-half. */
+    StdVec<DiscreteVariable<Real> *> dv_wall_contact_omit_;
+    /** Doc202 H1c: omit 2nd-half only; shared register. */
+    StdVec<DiscreteVariable<Real> *> dv_wall_contact_omit_2nd_;
+    /** Doc202 H2a: continuity-silent free-slip lid. */
+    StdVec<DiscreteVariable<Real> *> dv_wall_cont_silent_;
+    /** Doc202 H2b: omit DissipativePJump on lid. */
+    StdVec<DiscreteVariable<Real> *> dv_wall_omit_pjump_;
 };
 
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>

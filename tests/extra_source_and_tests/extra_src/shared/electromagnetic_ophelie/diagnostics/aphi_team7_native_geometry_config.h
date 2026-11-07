@@ -166,25 +166,44 @@ inline bool copyTeam7NativeReloadArtifacts(const std::string &from_dir, const st
     namespace fs = std::filesystem;
     std::error_code ec;
     fs::create_directories(to_dir, ec);
-    StdVec<std::string> files = {"Coil_rld.xml", "Plate_rld.xml", "team7_native_geometry.txt"};
-    if (fs::exists(fs::path(from_dir) / "Air_rld.xml"))
+    // Modern ReloadParticleIO writes a single Reload.xml (CoilSourceBody+PlateBody);
+    // legacy trees used Coil_rld.xml / Plate_rld.xml. Accept either.
+    StdVec<std::string> files = {"team7_native_geometry.txt"};
+    if (fs::exists(fs::path(from_dir) / "Reload.xml"))
     {
-        files.insert(files.begin() + 2, "Air_rld.xml");
+        files.insert(files.begin(), "Reload.xml");
+    }
+    else
+    {
+        files.insert(files.begin(), "Coil_rld.xml");
+        files.insert(files.begin() + 1, "Plate_rld.xml");
+        if (fs::exists(fs::path(from_dir) / "Air_rld.xml"))
+        {
+            files.insert(files.begin() + 2, "Air_rld.xml");
+        }
     }
     bool all_ok = true;
+    bool copied_particles = false;
     for (const std::string &file : files)
     {
         const fs::path src = fs::path(from_dir) / file;
         const fs::path dst = fs::path(to_dir) / file;
         if (!fs::exists(src))
         {
-            all_ok = false;
+            if (file != "team7_native_geometry.txt")
+            {
+                all_ok = false;
+            }
             continue;
         }
         fs::copy_file(src, dst, fs::copy_options::overwrite_existing, ec);
         all_ok = all_ok && !ec;
+        if (file == "Reload.xml" || file == "Coil_rld.xml" || file == "Plate_rld.xml")
+        {
+            copied_particles = copied_particles || !ec;
+        }
     }
-    return all_ok;
+    return all_ok && copied_particles;
 }
 
 inline bool publishTeam7NativeReloadCaseFromWorkingDirectory(const AphiTeam7NativeGeometryConfig &config)

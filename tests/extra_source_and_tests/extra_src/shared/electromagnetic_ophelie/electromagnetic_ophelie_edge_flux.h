@@ -1430,6 +1430,8 @@ inline OphelieEdgeFluxBoundaryClosureFlags resolveOphelieEdgeFluxBoundaryClosure
     {
         return flags;
     }
+    // Note: getVariableDataByName aborts if the field was never registered. Callers that enable
+    // no-flux modes must register NormalDirection/SignedDistance first (e.g. NormalFromBodyShapeCK).
     const bool have_normals = particles.getVariableDataByName<Vecd>("NormalDirection") != nullptr &&
                               particles.getVariableDataByName<Real>("SignedDistance") != nullptr;
     if (!have_normals)

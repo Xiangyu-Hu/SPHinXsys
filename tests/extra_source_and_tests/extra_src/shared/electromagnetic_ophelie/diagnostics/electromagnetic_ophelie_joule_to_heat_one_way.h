@@ -24,8 +24,16 @@ inline constexpr const char *kOphelieThermalDeltaTField = "OphelieThermalDeltaT"
 inline constexpr const char *kOphelieThermalLaplaceTField = "OphelieThermalLaplaceT";
 inline constexpr const char *kOphelieThermalConductivityField = "OphelieThermalConductivity";
 inline constexpr const char *kOphelieThermalBoundaryMaskField = "OphelieThermalBoundaryMask";
-/** Face id on thermal shell: 0=interior, 1=side, 2=bottom, 3=free-top (Stage 4.0). */
+/** Face id on thermal shell: 0=interior, 1=side, 2=bottom, 3=free-top (closest-face diagnostic). */
 inline constexpr const char *kOphelieThermalBoundaryFaceField = "OphelieThermalBoundaryFace";
+/** Non-exclusive shell weights (doc 40 R03). A corner particle may be 1 on two faces. */
+inline constexpr const char *kOphelieThermalBoundaryWeightSideField = "OphelieThermalBoundaryWeightSide";
+inline constexpr const char *kOphelieThermalBoundaryWeightBottomField = "OphelieThermalBoundaryWeightBottom";
+inline constexpr const char *kOphelieThermalBoundaryWeightFreeField = "OphelieThermalBoundaryWeightFree";
+/** Doc207 B: geometric particle→face gap d [m] for wall-temperature series model (0 = inactive). */
+inline constexpr const char *kOphelieThermalWallGapField = "OphelieThermalWallGap";
+/** Doc207 B: reconstructed wall temperature Tw [K] (diagnostic / compare; not an independent ODE DOF). */
+inline constexpr const char *kOphelieThermalWallTemperatureField = "OphelieThermalWallTemperature";
 
 /** Molten-glass order-of-magnitude defaults for one-way thermal step (no feedback). */
 struct OphelieJouleHeatOneWayMaterialProps

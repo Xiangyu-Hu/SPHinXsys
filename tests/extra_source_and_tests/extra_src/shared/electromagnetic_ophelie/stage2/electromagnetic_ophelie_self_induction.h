@@ -28,9 +28,10 @@ inline Real ophelieSelfInductionPicardPhiEqResTolerance(const OphelieParameters 
     return params.phi_eq_res_vol_gate_;
 }
 
-inline bool ophelieSelfInductionPicardConverged(Real j_rel, Real phi_eq_res_vol, const OphelieParameters &params)
+inline bool ophelieSelfInductionPicardConverged(Real fixed_point_residual, Real phi_eq_res_vol,
+                                                const OphelieParameters &params)
 {
-    return j_rel < params.self_induction_j_tolerance_ &&
+    return fixed_point_residual < params.self_induction_j_tolerance_ &&
            phi_eq_res_vol < ophelieSelfInductionPicardPhiEqResTolerance(params);
 }
 
@@ -143,7 +144,7 @@ template <class ExecutionPolicy>
 inline Real runOphelieComplexEdgeFluxSelfInductionWithPhiSolve(
     SolidBody &glass_body, Inner<> &inner, const OphelieGlassFieldNames &names, OphelieParameters &params,
     Real &phi_solver_rel_residual, size_t &self_induction_iterations_used, Real &phi_eq_res_vol_out,
-    bool &picard_converged_out)
+    bool &picard_converged_out, Real *relaxed_step_change_out = nullptr)
 {
     StateDynamics<ExecutionPolicy, CombineOphelieCoilAndInducedVectorPotentialCK> combine_vector_potential(
         glass_body, names);
@@ -156,8 +157,10 @@ inline Real runOphelieComplexEdgeFluxSelfInductionWithPhiSolve(
     const size_t n = particles.TotalRealParticles();
     StdVec<Real> previous_j_real_components;
     StdVec<Real> previous_j_imag_components;
-    Real relative_j_change = 0.0;
+    Real fixed_point_residual = Real(1); // not converged until measured after a feedback solve
+    Real relaxed_step_change = Real(0);
     self_induction_iterations_used = 1;
+    picard_converged_out = false;
     OphelieProgressLogger self_ind_progress("self_induction_complex");
 
     const bool saved_use_a_total = params.use_a_total_for_edge_flux_;
@@ -175,7 +178,6 @@ inline Real runOphelieComplexEdgeFluxSelfInductionWithPhiSolve(
                           std::to_string(phi_eq_res_vol_out));
     hostStoreVecdFieldComponents<ExecutionPolicy>(particles, j_real_source, previous_j_real_components, n);
     hostStoreVecdFieldComponents<ExecutionPolicy>(particles, j_imag_source, previous_j_imag_components, n);
-    picard_converged_out = ophelieSelfInductionPicardConverged(relative_j_change, phi_eq_res_vol_out, params);
 
     for (size_t iteration = 1; iteration < params.self_induction_max_iterations_; ++iteration)
     {
@@ -183,52 +185,85 @@ inline Real runOphelieComplexEdgeFluxSelfInductionWithPhiSolve(
         compute_self_induced_biot.exec();
         combine_vector_potential.exec();
 
+        // F(J_old): unrelaxed solve using A_ind[J_old]
         (void)execOphelieComplexEdgeFluxSolveReconAndPower<ExecutionPolicy>(glass_body, inner, names, params, nullptr,
                                                                             0.0, &solve_report);
         phi_solver_rel_residual = solve_report.phi_imag_solver_rel_residual;
         phi_eq_res_vol_out = ophelieSelfInductionPicardPhiEqResVol(solve_report);
+
+        // Doc 23 P0-04: fixed-point residual uses unrelaxed F vs J_old (before under-relaxation).
+        fixed_point_residual = hostRelativeComplexEdgeJChange<ExecutionPolicy>(
+            names, params, particles, previous_j_real_components, previous_j_imag_components, n);
 
         hostRelaxVecdFieldTowardPrevious<ExecutionPolicy>(particles, j_real_source, previous_j_real_components,
                                                           params.self_induction_relaxation_factor_, n);
         hostRelaxVecdFieldTowardPrevious<ExecutionPolicy>(particles, j_imag_source, previous_j_imag_components,
                                                           params.self_induction_relaxation_factor_, n);
 
-        relative_j_change = hostRelativeComplexEdgeJChange<ExecutionPolicy>(
+        relaxed_step_change = hostRelativeComplexEdgeJChange<ExecutionPolicy>(
             names, params, particles, previous_j_real_components, previous_j_imag_components, n);
         hostStoreVecdFieldComponents<ExecutionPolicy>(particles, j_real_source, previous_j_real_components, n);
         hostStoreVecdFieldComponents<ExecutionPolicy>(particles, j_imag_source, previous_j_imag_components, n);
-        picard_converged_out = ophelieSelfInductionPicardConverged(relative_j_change, phi_eq_res_vol_out, params);
-        self_ind_progress.log("outer iter " + std::to_string(self_induction_iterations_used) + " J_rel=" +
-                              std::to_string(relative_j_change) + " phi_eq_res_vol=" +
-                              std::to_string(phi_eq_res_vol_out) + " phi_imag_rel_res=" +
-                              std::to_string(phi_solver_rel_residual) + " phi_real_rel_res=" +
-                              std::to_string(solve_report.phi_real_solver_rel_residual) +
-                              " picard_converged=" + std::to_string(picard_converged_out ? 1 : 0));
+
+        picard_converged_out =
+            ophelieSelfInductionPicardConverged(fixed_point_residual, phi_eq_res_vol_out, params);
+        self_ind_progress.log(
+            "outer iter " + std::to_string(self_induction_iterations_used) +
+            " fixed_point_res=" + std::to_string(fixed_point_residual) +
+            " relaxed_step=" + std::to_string(relaxed_step_change) + " phi_eq_res_vol=" +
+            std::to_string(phi_eq_res_vol_out) + " phi_imag_rel_res=" + std::to_string(phi_solver_rel_residual) +
+            " phi_real_rel_res=" + std::to_string(solve_report.phi_real_solver_rel_residual) +
+            " picard_converged=" + std::to_string(picard_converged_out ? 1 : 0));
         if (picard_converged_out)
         {
             break;
         }
     }
 
+    // Final consistent fields: A_ind from last relaxed J, then unrelaxed solve (no further J under-relax).
+    compute_self_induced_biot.exec();
+    combine_vector_potential.exec();
+    (void)execOphelieComplexEdgeFluxSolveReconAndPower<ExecutionPolicy>(glass_body, inner, names, params, nullptr, 0.0,
+                                                                        &solve_report);
+    phi_solver_rel_residual = solve_report.phi_imag_solver_rel_residual;
+    phi_eq_res_vol_out = ophelieSelfInductionPicardPhiEqResVol(solve_report);
+    const Real final_consistency_res = hostRelativeComplexEdgeJChange<ExecutionPolicy>(
+        names, params, particles, previous_j_real_components, previous_j_imag_components, n);
+    // Prefer reporting the last outer fixed-point residual; keep final consistency as a gate aid.
+    if (final_consistency_res > fixed_point_residual)
+    {
+        fixed_point_residual = final_consistency_res;
+    }
+    picard_converged_out = ophelieSelfInductionPicardConverged(fixed_point_residual, phi_eq_res_vol_out, params);
+
     params.use_a_total_for_edge_flux_ = saved_use_a_total;
-    picard_converged_out = ophelieSelfInductionPicardConverged(relative_j_change, phi_eq_res_vol_out, params);
-    self_ind_progress.finish("final_J_rel=" + std::to_string(relative_j_change) + " phi_eq_res_vol=" +
+    if (relaxed_step_change_out != nullptr)
+    {
+        *relaxed_step_change_out = relaxed_step_change;
+    }
+    self_ind_progress.finish("final_fixed_point_res=" + std::to_string(fixed_point_residual) +
+                             " relaxed_step=" + std::to_string(relaxed_step_change) + " final_consistency_res=" +
+                             std::to_string(final_consistency_res) + " phi_eq_res_vol=" +
                              std::to_string(phi_eq_res_vol_out) +
                              " picard_converged=" + std::to_string(picard_converged_out ? 1 : 0));
-    return relative_j_change;
+    return fixed_point_residual;
 }
 
 template <class ExecutionPolicy>
 inline Real runOphelieSelfInductionWithPhiSolve(SolidBody &glass_body, Inner<> &inner, const OphelieGlassFieldNames &names,
                                                  OphelieParameters &params, Real &phi_solver_rel_residual,
                                                  size_t &self_induction_iterations_used, Real &phi_eq_res_vol_out,
-                                                 bool &picard_converged_out)
+                                                 bool &picard_converged_out, Real *relaxed_step_change_out = nullptr)
 {
     if (ophelieUseEdgeFluxElectromotiveRhs(params) && params.edge_flux_complex_)
     {
         return runOphelieComplexEdgeFluxSelfInductionWithPhiSolve<ExecutionPolicy>(
             glass_body, inner, names, params, phi_solver_rel_residual, self_induction_iterations_used, phi_eq_res_vol_out,
-            picard_converged_out);
+            picard_converged_out, relaxed_step_change_out);
+    }
+    if (relaxed_step_change_out != nullptr)
+    {
+        *relaxed_step_change_out = Real(0);
     }
 
     StateDynamics<ExecutionPolicy, CombineOphelieCoilAndInducedVectorPotentialCK> combine_vector_potential(
@@ -243,8 +278,10 @@ inline Real runOphelieSelfInductionWithPhiSolve(SolidBody &glass_body, Inner<> &
     BaseParticles &particles = glass_body.getBaseParticles();
     const size_t n = particles.TotalRealParticles();
     StdVec<Real> previous_j_imag_components;
-    Real relative_j_change = 0.0;
+    Real fixed_point_residual = Real(1);
+    Real relaxed_step_change = Real(0);
     self_induction_iterations_used = 1;
+    picard_converged_out = false;
     OphelieProgressLogger self_ind_progress("self_induction");
 
     combine_vector_potential.exec();
@@ -260,7 +297,6 @@ inline Real runOphelieSelfInductionWithPhiSolve(SolidBody &glass_body, Inner<> &
     compute_ejq_with_phi.exec();
     hostStoreJImagComponents<ExecutionPolicy>(particles, names, previous_j_imag_components, n);
     syncVariableToDevice<Vecd>(particles, names.j_imag);
-    picard_converged_out = ophelieSelfInductionPicardConverged(relative_j_change, phi_eq_res_vol_out, params);
 
     for (size_t iteration = 1; iteration < params.self_induction_max_iterations_; ++iteration)
     {
@@ -276,14 +312,19 @@ inline Real runOphelieSelfInductionWithPhiSolve(SolidBody &glass_body, Inner<> &
         update_inner_relation.exec();
         compute_grad_phi.exec();
         compute_ejq_with_phi.exec();
+
+        fixed_point_residual =
+            hostRelativeJImagChange<ExecutionPolicy>(particles, names, previous_j_imag_components, n);
         hostRelaxJImagTowardPrevious<ExecutionPolicy>(particles, names, previous_j_imag_components,
                                                       params.self_induction_relaxation_factor_, n);
-
-        relative_j_change = hostRelativeJImagChange<ExecutionPolicy>(particles, names, previous_j_imag_components, n);
+        relaxed_step_change =
+            hostRelativeJImagChange<ExecutionPolicy>(particles, names, previous_j_imag_components, n);
         hostStoreJImagComponents<ExecutionPolicy>(particles, names, previous_j_imag_components, n);
-        picard_converged_out = ophelieSelfInductionPicardConverged(relative_j_change, phi_eq_res_vol_out, params);
-        self_ind_progress.log("outer iter " + std::to_string(self_induction_iterations_used) + " J_rel=" +
-                              std::to_string(relative_j_change) + " phi_eq_res_vol=" +
+        picard_converged_out =
+            ophelieSelfInductionPicardConverged(fixed_point_residual, phi_eq_res_vol_out, params);
+        self_ind_progress.log("outer iter " + std::to_string(self_induction_iterations_used) +
+                              " fixed_point_res=" + std::to_string(fixed_point_residual) +
+                              " relaxed_step=" + std::to_string(relaxed_step_change) + " phi_eq_res_vol=" +
                               std::to_string(phi_eq_res_vol_out) + " phi_rel_res=" +
                               std::to_string(phi_solver_rel_residual) +
                               " picard_converged=" + std::to_string(picard_converged_out ? 1 : 0));
@@ -293,11 +334,32 @@ inline Real runOphelieSelfInductionWithPhiSolve(SolidBody &glass_body, Inner<> &
         }
     }
 
-    picard_converged_out = ophelieSelfInductionPicardConverged(relative_j_change, phi_eq_res_vol_out, params);
-    self_ind_progress.finish("final_J_rel=" + std::to_string(relative_j_change) + " phi_eq_res_vol=" +
+    syncVariableToDevice<Vecd>(particles, names.j_imag);
+    compute_self_induced_biot.exec();
+    combine_vector_potential.exec();
+    phi_solver_rel_residual = solvePhiImag<ExecutionPolicy>(glass_body, inner, names, params);
+    applyOpheliePhiImagLhsOperator<ExecutionPolicy>(glass_body, inner, names, params);
+    phi_eq_res_vol_out = hostPhiEqResVolFromCurrentLhsRhs(particles, names, n);
+    update_cell_linked_list.exec();
+    update_inner_relation.exec();
+    compute_grad_phi.exec();
+    compute_ejq_with_phi.exec();
+    const Real final_consistency_res =
+        hostRelativeJImagChange<ExecutionPolicy>(particles, names, previous_j_imag_components, n);
+    if (final_consistency_res > fixed_point_residual)
+    {
+        fixed_point_residual = final_consistency_res;
+    }
+    picard_converged_out = ophelieSelfInductionPicardConverged(fixed_point_residual, phi_eq_res_vol_out, params);
+    if (relaxed_step_change_out != nullptr)
+    {
+        *relaxed_step_change_out = relaxed_step_change;
+    }
+    self_ind_progress.finish("final_fixed_point_res=" + std::to_string(fixed_point_residual) +
+                             " relaxed_step=" + std::to_string(relaxed_step_change) + " phi_eq_res_vol=" +
                              std::to_string(phi_eq_res_vol_out) +
                              " picard_converged=" + std::to_string(picard_converged_out ? 1 : 0));
-    return relative_j_change;
+    return fixed_point_residual;
 }
 
 } // namespace ophelie

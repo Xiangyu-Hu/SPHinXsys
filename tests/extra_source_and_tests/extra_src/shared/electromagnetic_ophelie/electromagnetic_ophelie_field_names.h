@@ -98,10 +98,13 @@ struct OphelieGlassFieldNames
     /** Per-particle count of non-finite q_ij/q_ji pairs. */
     std::string edge_q_nonfinite_count = "EdgeQNonfiniteCount";
 
-    /** Boundary shell for one-sided Neumann (0/1 mask, outward normal, target g_n=-ω n·A). */
+    /** Boundary shell for one-sided Neumann (0/1 mask, outward normal, target g_n). */
     std::string phi_boundary_mask = "PhiBoundaryMask";
     std::string phi_boundary_normal = "PhiBoundaryNormal";
+    /** Imag chain: g_n = −ω n·A_r  (n·∇φ_i target). */
     std::string phi_boundary_gn = "PhiBoundaryGn";
+    /** Real chain: g_n = +ω n·A_i  (n·∇φ_r target). Doc200 P2. */
+    std::string phi_boundary_gn_real = "PhiBoundaryGnReal";
     std::string phi_grad_linear_correction = "PhiGradLinearCorrection";
 
     /** GMRES Krylov workspace / basis / dot scratch (particle fields, device-resident). */

@@ -404,17 +404,18 @@ class ComputeOphelieEJQWithPhiCK : public LocalDynamics
 };
 
 template <class ExecutionPolicy>
-inline void setupOpheliePhiImagRhsFromASrcDivConsistent(SolidBody &glass_body, Inner<> &inner,
-                                                        const OphelieGlassFieldNames &names,
-                                                        const OphelieParameters &params)
+inline void setupOpheliePhiRhsFromASrcDivConsistentFields(SolidBody &glass_body, Inner<> &inner,
+                                                          const OphelieGlassFieldNames &names,
+                                                          const OphelieParameters &params,
+                                                          const std::string &a_field, const std::string &sigma_a_scratch,
+                                                          const std::string &phi_rhs_field, Real omega_scale)
 {
-    StateDynamics<ExecutionPolicy, ZeroOphelieScalarFieldCK> zero_rhs(glass_body, names.phi_rhs_imag);
+    StateDynamics<ExecutionPolicy, ZeroOphelieScalarFieldCK> zero_rhs(glass_body, phi_rhs_field);
     UpdateCellLinkedList<ExecutionPolicy, RealBody> update_cell_linked_list(glass_body);
     UpdateRelation<ExecutionPolicy, Inner<>> update_inner_relation(inner);
     StateDynamics<ExecutionPolicy, OphelieScaleVecdFieldBySigmaCK> scale_sigma_a(
-        glass_body, names, names.a_src_real, names.j_imag);
-    StateDynamics<ExecutionPolicy, OphelieScaleScalarFieldCK> scale_rhs(
-        glass_body, names.phi_rhs_imag, -params.omega());
+        glass_body, names, a_field, sigma_a_scratch);
+    StateDynamics<ExecutionPolicy, OphelieScaleScalarFieldCK> scale_rhs(glass_body, phi_rhs_field, omega_scale);
 
     zero_rhs.exec();
     update_cell_linked_list.exec();
@@ -424,8 +425,126 @@ inline void setupOpheliePhiImagRhsFromASrcDivConsistent(SolidBody &glass_body, I
         execOpheliePhiGradCorrectionMatrixPrep<ExecutionPolicy>(glass_body, inner, names, params);
     }
     scale_sigma_a.exec();
-    execOphelieVecdDivergence<ExecutionPolicy>(inner, names, params, names.j_imag, names.phi_rhs_imag);
+    execOphelieVecdDivergence<ExecutionPolicy>(inner, names, params, sigma_a_scratch, phi_rhs_field);
     scale_rhs.exec();
+}
+
+template <class ExecutionPolicy>
+inline void setupOpheliePhiImagRhsFromASrcDivConsistent(SolidBody &glass_body, Inner<> &inner,
+                                                        const OphelieGlassFieldNames &names,
+                                                        const OphelieParameters &params)
+{
+    setupOpheliePhiRhsFromASrcDivConsistentFields<ExecutionPolicy>(
+        glass_body, inner, names, params, names.a_src_real, names.j_imag, names.phi_rhs_imag, -params.omega());
+}
+
+/** Real chain DivΣA twin: φ_rhs_real = +ω div(σ A_imag) matches edge a_sign=-1 continuum pairing. */
+template <class ExecutionPolicy>
+inline void setupOpheliePhiRealRhsFromASrcDivConsistent(SolidBody &glass_body, Inner<> &inner,
+                                                        const OphelieGlassFieldNames &names,
+                                                        const OphelieParameters &params)
+{
+    setupOpheliePhiRhsFromASrcDivConsistentFields<ExecutionPolicy>(
+        glass_body, inner, names, params, names.a_src_imag, names.j_real, names.phi_rhs_real, params.omega());
+}
+
+/**
+ * Doc212 diagnostic helper: φ_rhs += −ω_signed * σ_ij * g_ij·(A_i−A_j).
+ * Imag production pairwise uses ω_signed=+ω; real a_sign=−1 twin uses ω_signed=−ω.
+ */
+template <typename... RelationTypes>
+class ComputeOpheliePhiPairwiseRhsFromADiffCK;
+
+template <template <typename...> class RelationType, typename... Parameters>
+class ComputeOpheliePhiPairwiseRhsFromADiffCK<Base, RelationType<Parameters...>>
+    : public Interaction<RelationType<Parameters...>>
+{
+    using BaseInteraction = Interaction<RelationType<Parameters...>>;
+
+  public:
+    ComputeOpheliePhiPairwiseRhsFromADiffCK(RelationType<Parameters...> &relation, Real omega_signed,
+                                            const std::string &a_field, const std::string &phi_rhs_field,
+                                            const OphelieGlassFieldNames &names)
+        : BaseInteraction(relation), omega_signed_(omega_signed),
+          dv_a_(this->particles_->template getVariableByName<Vecd>(a_field)),
+          dv_phi_rhs_(this->particles_->template getVariableByName<Real>(phi_rhs_field)),
+          dv_sigma_(this->particles_->template getVariableByName<Real>(names.sigma))
+    {
+    }
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType, typename... Args>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
+            : BaseInteraction::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
+              Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+              sigma_(encloser.dv_sigma_->DelegatedData(ex_policy)),
+              a_(encloser.dv_a_->DelegatedData(ex_policy)),
+              phi_rhs_(encloser.dv_phi_rhs_->DelegatedData(ex_policy)), omega_signed_(encloser.omega_signed_)
+        {
+        }
+
+        void interact(size_t index_i, Real dt = 0.0)
+        {
+            (void)dt;
+            const Real sigma_i = sigma_[index_i];
+            const Vecd a_i = a_[index_i];
+            Real rhs_i = 0.0;
+            for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+            {
+                const UnsignedInt index_j = this->neighbor_index_[n];
+                const Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
+                const Vecd g_ij = pairwiseGradientWeightUncorrected(dW_ijV_j, this->e_ij(index_i, index_j));
+                const Real sigma_ij = harmonicMean(sigma_i, sigma_[index_j]);
+                rhs_i -= omega_signed_ * sigma_ij * g_ij.dot(a_i - a_[index_j]);
+            }
+            phi_rhs_[index_i] += rhs_i;
+        }
+
+      protected:
+        Real *Vol_;
+        Real *sigma_;
+        Vecd *a_;
+        Real *phi_rhs_;
+        Real omega_signed_;
+    };
+
+  protected:
+    Real omega_signed_;
+    DiscreteVariable<Vecd> *dv_a_;
+    DiscreteVariable<Real> *dv_phi_rhs_;
+    DiscreteVariable<Real> *dv_sigma_;
+};
+
+template <typename... Parameters>
+class ComputeOpheliePhiPairwiseRhsFromADiffCK<Inner<Parameters...>>
+    : public ComputeOpheliePhiPairwiseRhsFromADiffCK<Base, Inner<Parameters...>>
+{
+  public:
+    ComputeOpheliePhiPairwiseRhsFromADiffCK(Inner<Parameters...> &inner_relation, Real omega_signed,
+                                            const std::string &a_field, const std::string &phi_rhs_field,
+                                            const OphelieGlassFieldNames &names)
+        : ComputeOpheliePhiPairwiseRhsFromADiffCK<Base, Inner<Parameters...>>(inner_relation, omega_signed, a_field,
+                                                                               phi_rhs_field, names)
+    {
+    }
+};
+
+template <class ExecutionPolicy>
+inline void setupOpheliePhiRhsFromASrcPairwiseFields(SolidBody &glass_body, Inner<> &inner,
+                                                     const OphelieGlassFieldNames &names, const std::string &a_field,
+                                                     const std::string &phi_rhs_field, Real omega_signed)
+{
+    StateDynamics<ExecutionPolicy, ZeroOphelieScalarFieldCK> zero_rhs(glass_body, phi_rhs_field);
+    UpdateCellLinkedList<ExecutionPolicy, RealBody> update_cell_linked_list(glass_body);
+    UpdateRelation<ExecutionPolicy, Inner<>> update_inner_relation(inner);
+    zero_rhs.exec();
+    update_cell_linked_list.exec();
+    update_inner_relation.exec();
+    InteractionDynamicsCK<ExecutionPolicy, ComputeOpheliePhiPairwiseRhsFromADiffCK<Inner<>>> compute_rhs(
+        inner, omega_signed, a_field, phi_rhs_field, names);
+    compute_rhs.exec();
 }
 
 template <class ExecutionPolicy>
@@ -440,7 +559,7 @@ inline void setupOpheliePhiImagRhsFromASrcLegacyFlux(SolidBody &glass_body, Inne
     zero_rhs.exec();
     update_cell_linked_list.exec();
     update_inner_relation.exec();
-    if (ophelieUseEdgeFluxElectromotiveRhs(params))
+    if (ophelieUseEdgeFluxElectromotiveRhs(params) && !params.doc212_shared_complex_pairwise_rhs_)
     {
         const OphelieEdgeFluxComponent imag_component = makeOphelieEdgeFluxImagComponent(names, params);
         InteractionDynamicsCK<ExecutionPolicy, ComputeOphelieEdgeFluxPhiRhsFromASrcCK<Inner<>>> compute_rhs(

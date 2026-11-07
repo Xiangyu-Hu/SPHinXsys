@@ -1824,8 +1824,11 @@ inline Team7PicardRunResult runTeam7ComplexEdgeFluxPicardWithLog(
     {
         result.iterations_used = iteration + 1;
         combine_vector_potential.exec();
+        OpheliePhiBoundaryGeometryContext boundary_geom;
+        const OpheliePhiBoundaryGeometryContext *boundary_geom_ptr =
+            prepareOpheliePhiBoundaryGeomForSolve(particles, plate_names, params, boundary_geom, dp);
         last_p_complex_total = execOphelieComplexEdgeFluxSolveReconAndPower<ExecutionPolicy>(
-            plate_body, plate_inner, plate_names, params, nullptr, dp, &solve_report);
+            plate_body, plate_inner, plate_names, params, boundary_geom_ptr, dp, &solve_report);
         result.phi_solver_rel_residual = solve_report.phi_imag_solver_rel_residual;
         result.phi_eq_res_vol = ophelieSelfInductionPicardPhiEqResVol(solve_report);
         compute_self_induced_biot.exec();

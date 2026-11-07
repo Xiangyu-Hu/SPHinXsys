@@ -45,6 +45,10 @@ class Viscosity : public BaseMaterial
     explicit Viscosity(Real mu) : BaseMaterial(), mu_(mu) {};
     virtual ~Viscosity() {};
     Real ReferenceViscosity() { return mu_; };
+    /** Allows French mean-μ(T) refresh. Callers must also invalidate ViscousForceCK
+     *  computing kernels (resetComputingKernelUpdated on related Inner/Contact);
+     *  PairGeomAverageFixed copies μ by value into the cached InteractKernel. */
+    void setReferenceViscosity(Real mu) { mu_ = mu; };
     virtual void registerLocalParameters(BaseParticles *base_particles) {};
     virtual void registerLocalParametersFromReload(BaseParticles *base_particles) {};
     virtual void initializeLocalParameters(BaseParticles *base_particles) {};

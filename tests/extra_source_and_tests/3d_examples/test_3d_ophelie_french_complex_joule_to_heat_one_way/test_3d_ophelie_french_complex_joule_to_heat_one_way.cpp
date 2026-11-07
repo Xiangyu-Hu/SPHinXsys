@@ -323,9 +323,12 @@ int main(int ac, char *av[])
         local_cli.use_reload = true;
     }
 
+    // Doc212: finalize AFTER enabling complex EdgeFlux (filter ran with defaults).
     params.enable_phi_correction_ = true;
     params.ophelie_current_form_ = OphelieCurrentFormKind::EdgeFlux;
     params.edge_flux_complex_ = true;
+    cli_options.ophelie_current_form_user_set = true;
+    finalizeOphelieCurrentFormConfiguration(params, cli_options);
     syncFrenchReducedToParameters(french, params);
     applyOphelieCoilCurrentScale(french, params);
     if (local_cli.enable_target_power)

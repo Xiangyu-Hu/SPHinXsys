@@ -7,3 +7,13 @@ Gemfile.lock
 
 # Local ephemeral GPT upload snapshots (duplicate source copies; do not commit)
 ophelie/packs/
+
+# GPU/session run trees (CSV/log/field_exports); keep jacoutot_sigma_t tracked
+ophelie/reference/doc*_runs/
+ophelie/reference/doc77*_runs/
+ophelie/reference/**/PACKAGES/
+
+# Welding demo local dumps (keep *.md plans; ignore VTP/CSV smoke)
+ophelie/welding/**/*.vtp
+ophelie/welding/**/gate*_smoke/
+ophelie/welding/**/case_*_vtp/

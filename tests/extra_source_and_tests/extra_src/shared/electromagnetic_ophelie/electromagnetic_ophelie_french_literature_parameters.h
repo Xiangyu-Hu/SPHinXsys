@@ -80,6 +80,15 @@ struct FrenchLiteratureParameters
     bool enable_thermal_diffusion = false;
     bool q_conservative_remap = false;
     bool constant_sigma = false;
+    /**
+ * When true (default), μ/cp/k are evaluated only at t_initial_k (regression / Round-1 behavior).
+ * When false (`--temperature-dependent-properties`):
+ *   - particle k/cp track T (local fields used by diffusion / heating);
+ *   - hydro viscosity uses **volume-mean μ(T)** via Viscosity::setReferenceViscosity
+ *     (mean-viscosity(T) approximation — not local pairwise μ(T) until a VariableViscosity
+ *     discretization exists). After each refresh, ViscousForceCK kernels must be invalidated.
+ */
+bool constant_thermal_rheology = true;
     bool zero_q = false;
     bool enable_boussinesq = true;
 
@@ -140,6 +149,35 @@ inline Real frenchBuoyancySpeedScale(Real gravity, Real beta, Real delta_t, Real
     return std::sqrt(std::max(g_beta_dt_h, Real(0)));
 }
 
+/**
+ * SPH-candidate impeller power number (Round 3D). Not a frozen paper definition.
+ *   P_mech = |T_z| ω ,  N = ω/(2π) [rev/s],  D = 2 r_tip
+ *   Np_sph = P_mech / (ρ N³ D⁵)
+ */
+inline Real frenchStirringMechanicalPowerW(Real torque_z_nm, Real omega_rad_s)
+{
+    return std::abs(torque_z_nm) * std::abs(omega_rad_s);
+}
+
+inline Real frenchStirringPowerNumberSph(Real p_mech_w, Real rho, Real omega_rad_s, Real r_tip_m)
+{
+    const Real n_rps = std::abs(omega_rad_s) / (Real(2) * Real(M_PI));
+    const Real d = Real(2) * std::max(r_tip_m, TinyReal);
+    const Real denom = rho * n_rps * n_rps * n_rps * d * d * d * d * d;
+    return p_mech_w / (denom + TinyReal);
+}
+
+/**
+ * SPH-candidate wall Nusselt (Round 3D). Uses side+bottom loss, geometric A_wb, melt H, k, ΔT.
+ * Free-surface loss excluded. Not a frozen paper Nu.
+ */
+inline Real frenchStirringNusseltSph(Real wall_loss_w, Real area_wall_m2, Real delta_t, Real height, Real k_th)
+{
+    const Real dT = std::max(std::abs(delta_t), TinyReal);
+    const Real h_eff = wall_loss_w / (std::max(area_wall_m2, TinyReal) * dT);
+    return h_eff * std::max(height, TinyReal) / (k_th + TinyReal);
+}
+
 inline bool isFrenchLiteratureCouplingCliOption(const char *arg)
 {
     return std::strncmp(arg, "--thermo-em-coupling=", 21) == 0 ||
@@ -149,7 +187,10 @@ inline bool isFrenchLiteratureCouplingCliOption(const char *arg)
            std::strncmp(arg, "--target-absorbed-power=", 24) == 0 || std::strncmp(arg, "--aind=", 7) == 0 ||
            std::strcmp(arg, "--enable-thermal-diffusion") == 0 || std::strcmp(arg, "--no-thermal-diffusion") == 0 ||
            std::strcmp(arg, "--constant-sigma") == 0 || std::strcmp(arg, "--zero-q") == 0 ||
-           std::strcmp(arg, "--q-conservative-remap") == 0 || std::strcmp(arg, "--no-boussinesq") == 0;
+           std::strcmp(arg, "--q-conservative-remap") == 0 || std::strcmp(arg, "--no-boussinesq") == 0 ||
+           std::strcmp(arg, "--zero-buoyancy") == 0 ||
+           std::strcmp(arg, "--temperature-dependent-properties") == 0 ||
+           std::strcmp(arg, "--constant-thermal-rheology") == 0;
 }
 
 /**
@@ -210,6 +251,16 @@ inline bool tryApplyFrenchLiteratureCli(const char *arg, FrenchLiteratureParamet
         p.constant_sigma = true;
         return true;
     }
+    if (std::strcmp(arg, "--temperature-dependent-properties") == 0)
+    {
+        p.constant_thermal_rheology = false;
+        return true;
+    }
+    if (std::strcmp(arg, "--constant-thermal-rheology") == 0)
+    {
+        p.constant_thermal_rheology = true;
+        return true;
+    }
     if (std::strcmp(arg, "--zero-q") == 0)
     {
         p.zero_q = true;
@@ -220,7 +271,7 @@ inline bool tryApplyFrenchLiteratureCli(const char *arg, FrenchLiteratureParamet
         p.q_conservative_remap = true;
         return true;
     }
-    if (std::strcmp(arg, "--no-boussinesq") == 0)
+    if (std::strcmp(arg, "--no-boussinesq") == 0 || std::strcmp(arg, "--zero-buoyancy") == 0)
     {
         p.enable_boussinesq = false;
         return true;
@@ -237,6 +288,26 @@ inline void finalizeFrenchPeriodicLiteratureDefaults(FrenchLiteratureParameters 
     }
 }
 
+inline const char *frenchViscosityModeName(const FrenchLiteratureParameters &p)
+{
+    return p.constant_thermal_rheology ? "constant_mu_at_T0" : "mean_mu_T_volume_average";
+}
+
+inline const char *frenchThermalConductivityModeName(const FrenchLiteratureParameters &p)
+{
+    return p.constant_thermal_rheology ? "constant_k_at_T0" : "particle_k_T";
+}
+
+inline const char *frenchHeatCapacityModeName(const FrenchLiteratureParameters &p)
+{
+    return p.constant_thermal_rheology ? "constant_cp_at_T0" : "particle_cp_T_enthalpy";
+}
+
+inline const char *frenchSigmaModeName(const FrenchLiteratureParameters &p)
+{
+    return p.constant_sigma ? "constant_sigma_at_T0" : "sigma_T_under_relaxed_rz_average";
+}
+
 inline void logFrenchLiteratureParameters(const FrenchLiteratureParameters &p)
 {
     std::cout << "[ophelie][french-lit] regime=" << frenchLiteratureRegimeName(p.regime)
@@ -250,7 +321,24 @@ inline void logFrenchLiteratureParameters(const FrenchLiteratureParameters &p)
               << " sigma_under_relaxation=" << p.sigma_under_relaxation
               << " aind=" << (p.enable_aind ? "on" : "off")
               << " thermal_diffusion=" << (p.enable_thermal_diffusion ? 1 : 0)
+              << " constant_thermal_rheology=" << (p.constant_thermal_rheology ? 1 : 0)
               << " q_conservative_remap=" << (p.q_conservative_remap ? 1 : 0) << std::endl;
+    std::cout << "[ophelie][french-lit] property_modes:"
+              << " sigma=" << frenchSigmaModeName(p)
+              << " cp=" << frenchHeatCapacityModeName(p)
+              << " k=" << frenchThermalConductivityModeName(p)
+              << " viscosity=" << frenchViscosityModeName(p)
+              << " (OPEN_PARAMETER tables; mean_mu is not local pairwise viscosity;"
+                 " variable-cp cannot validation_passed until diffusion/BC share the same cp)" << std::endl;
+    std::cout << "[ophelie][french-lit] material sources:"
+              << " mu=[" << p.material.mu_source_ << "]"
+              << " cp=[" << p.material.cp_source_ << "]"
+              << " k=[" << p.material.k_source_ << "]"
+              << " sigma=[" << p.material.sigma_source_ << "]"
+              << " fig2_digitized=" << (p.material.fig2_thermal_rheology_digitized_ ? 1 : 0) << std::endl;
+    std::cout << "[ophelie][french-lit] q_deposit_path=3D_EM_q_to_euler_grid"
+                 " (r-z azimuthal average is diagnostic/power book only; not rotated back to 3D)"
+              << std::endl;
 }
 
 } // namespace ophelie

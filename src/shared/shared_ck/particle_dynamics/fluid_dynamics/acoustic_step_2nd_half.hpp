@@ -87,7 +87,27 @@ AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
     : BaseInteraction(wall_contact_relation), Interaction<Wall>(wall_contact_relation),
       kernel_correction_(this->particles_),
       fluid_(DynamicCast<FluidType>(this, this->sph_body_->getMatterMaterial())),
-      riemann_solver_(this->fluid_, this->fluid_) {}
+      riemann_solver_(this->fluid_, this->fluid_)
+{
+    // Doc201/Doc202: optional per-wall tags (idempotent register).
+    const StdVec<BaseParticles *> contact_particles = wall_contact_relation.getContactParticles();
+    for (size_t k = 0; k != contact_particles.size(); ++k)
+    {
+        BaseParticles *wp = contact_particles[k];
+        dv_wall_free_slip_.push_back(wp->template registerDiscreteVariable<Real>(
+            "AcousticWallFreeSlip", wp->ParticlesBound(), Real(0)));
+        dv_wall_contact_omit_.push_back(wp->template registerDiscreteVariable<Real>(
+            "AcousticWallContactOmit", wp->ParticlesBound(), Real(0)));
+        dv_wall_contact_omit_2nd_.push_back(wp->template registerDiscreteVariable<Real>(
+            "AcousticWallContactOmit2nd", wp->ParticlesBound(), Real(0)));
+        wp->template registerDiscreteVariable<Real>(
+            "AcousticWallContactOmit1st", wp->ParticlesBound(), Real(0));
+        dv_wall_cont_silent_.push_back(wp->template registerDiscreteVariable<Real>(
+            "AcousticWallContSilent", wp->ParticlesBound(), Real(0)));
+        dv_wall_omit_pjump_.push_back(wp->template registerDiscreteVariable<Real>(
+            "AcousticWallOmitPJump", wp->ParticlesBound(), Real(0)));
+    }
+}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -104,7 +124,12 @@ AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
       force_(encloser.dv_force_->DelegatedData(ex_policy)),
       contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
       wall_vel_ave_(encloser.dv_wall_vel_ave_[contact_index]->DelegatedData(ex_policy)),
-      wall_n_(encloser.dv_wall_n_[contact_index]->DelegatedData(ex_policy)) {}
+      wall_n_(encloser.dv_wall_n_[contact_index]->DelegatedData(ex_policy)),
+      wall_free_slip_(encloser.dv_wall_free_slip_[contact_index]->DelegatedData(ex_policy)),
+      wall_contact_omit_(encloser.dv_wall_contact_omit_[contact_index]->DelegatedData(ex_policy)),
+      wall_contact_omit_2nd_(encloser.dv_wall_contact_omit_2nd_[contact_index]->DelegatedData(ex_policy)),
+      wall_cont_silent_(encloser.dv_wall_cont_silent_[contact_index]->DelegatedData(ex_policy)),
+      wall_omit_pjump_(encloser.dv_wall_omit_pjump_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -115,14 +140,36 @@ void AcousticStep2ndHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
+        // Doc202: full omit (H1) or 2nd-half-only omit (H1c-b).
+        if (wall_contact_omit_[index_j] > Real(0.5) || wall_contact_omit_2nd_[index_j] > Real(0.5))
+            continue;
         Real dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j];
         Vecd corrected_e_ij = correction_(index_i) * this->e_ij(index_i, index_j);
 
         Vecd face_to_fluid_n = SGN(corrected_e_ij.dot(wall_n_[index_j])) * wall_n_[index_j];
-        Vecd vel_j_in_wall = 2.0 * wall_vel_ave_[index_j] - vel_[index_i];
-        density_change_rate += (vel_[index_i] - vel_j_in_wall).dot(corrected_e_ij) * dW_ijV_j;
-        Real u_jump = 2.0 * (vel_[index_i] - wall_vel_ave_[index_j]).dot(face_to_fluid_n);
-        p_dissipation += riemann_solver_.DissipativePJump(index_i, index_j, u_jump) * dW_ijV_j * face_to_fluid_n;
+        // No-slip dens ghost: v_g = 2 v_w - v_f (legacy). Free-slip: reflect normal only so
+        // tangential shear (French viscous_omit lid / Doc201 B2) is not wiped into continuity.
+        Vecd vel_j_in_wall;
+        if (wall_free_slip_[index_j] > Real(0.5))
+        {
+            const Vecd v_rel = vel_[index_i] - wall_vel_ave_[index_j];
+            vel_j_in_wall = vel_[index_i] - Real(2) * v_rel.dot(face_to_fluid_n) * face_to_fluid_n;
+        }
+        else
+        {
+            vel_j_in_wall = Real(2) * wall_vel_ave_[index_j] - vel_[index_i];
+        }
+        // Doc202 H2a: paired dens-channel silence on lid — skip continuity dens; keep PJump·n.
+        if (wall_cont_silent_[index_j] <= Real(0.5))
+        {
+            density_change_rate += (vel_[index_i] - vel_j_in_wall).dot(corrected_e_ij) * dW_ijV_j;
+        }
+        // Doc202 H2b: omit DissipativePJump on lid; keep continuity + 1st force∥n.
+        if (wall_omit_pjump_[index_j] <= Real(0.5))
+        {
+            Real u_jump = 2.0 * (vel_[index_i] - wall_vel_ave_[index_j]).dot(face_to_fluid_n);
+            p_dissipation += riemann_solver_.DissipativePJump(index_i, index_j, u_jump) * dW_ijV_j * face_to_fluid_n;
+        }
     }
     drho_dt_[index_i] += density_change_rate * rho_[index_i];
     force_[index_i] += p_dissipation * Vol_[index_i];

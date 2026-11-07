@@ -102,6 +102,8 @@ int main(int ac, char *av[])
     params.enable_self_induction_ = true;
     params.ophelie_current_form_ = OphelieCurrentFormKind::EdgeFlux;
     params.edge_flux_complex_ = true;
+    cli_options.ophelie_current_form_user_set = true;
+    finalizeOphelieCurrentFormConfiguration(params, cli_options);
     params.self_induction_j_tolerance_ = 0.05;
     params.self_induction_phi_eq_res_tolerance_ = 0.01;
     syncFrenchReducedToParameters(french, params);

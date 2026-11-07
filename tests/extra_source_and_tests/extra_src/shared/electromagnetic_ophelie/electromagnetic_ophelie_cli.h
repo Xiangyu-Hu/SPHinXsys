@@ -69,8 +69,12 @@ inline void applyOpheliePhiProjectionOperatorKind(OphelieParameters &params, Oph
         params.phi_gradient_correction_ = true;
         break;
     case OpheliePhiProjectionOperatorKind::EdgeFlux:
+        // Doc198: edge ∑c_ij ω A_avg·Δx (LegacyFlux) is NOT continuity-consistent on
+        // truncated neighborhoods — prescribed div-free A yields rim/end RHS O(1e4) and
+        // spurious φ. Production RHS is DivSigmaA (−ω div(σA)); keep LegacyPairwise LHS
+        // for the edge-flux φ residual pairing. Rollback: --phi-rhs-operator=legacy-flux.
         params.phi_lhs_operator_kind_ = OpheliePhiLhsOperatorKind::LegacyPairwise;
-        params.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::LegacyFlux;
+        params.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::DivSigmaA;
         params.phi_compatible_correction_ = false;
         params.phi_gradient_correction_ = false;
         break;
@@ -89,8 +93,9 @@ inline OpheliePhiProjectionOperatorKind inferOpheliePhiProjectionOperatorKind(co
     {
         return OpheliePhiProjectionOperatorKind::CompatibleDivGrad;
     }
-    if (params.phi_lhs_operator_kind_ == OpheliePhiLhsOperatorKind::LegacyPairwise &&
-        params.phi_rhs_operator_kind_ == OpheliePhiRhsOperatorKind::LegacyFlux)
+    // EdgeFlux phi pairing is identified by LegacyPairwise LHS; RHS is DivSigmaA in
+    // production (Doc198) or LegacyFlux for diagnostic rollback.
+    if (params.phi_lhs_operator_kind_ == OpheliePhiLhsOperatorKind::LegacyPairwise)
     {
         return OpheliePhiProjectionOperatorKind::EdgeFlux;
     }
@@ -118,7 +123,10 @@ inline void logOpheliePhiProjectionRouteWarnings(const OphelieParameters &params
     if (params.ophelie_current_form_ == OphelieCurrentFormKind::EdgeFlux)
     {
         std::cout << "[ophelie] edge-flux production: --ophelie-current-form=edge-flux "
-                     "(pairwise electromotive drop + JouleHeatEdge + edge diagnostics)." << std::endl;
+                     "(pairwise electromotive drop + JouleHeatEdge + edge diagnostics; "
+                     "complex: phi RHS=legacy-flux shared EMF (Doc212); "
+                     "imag-only legacy may still use DivΣA)."
+                  << std::endl;
         return;
     }
     if (kind == OpheliePhiProjectionOperatorKind::CompatibleDivGrad)
@@ -129,7 +137,8 @@ inline void logOpheliePhiProjectionRouteWarnings(const OphelieParameters &params
     if (kind == OpheliePhiProjectionOperatorKind::EdgeFlux)
     {
         std::cout << "[ophelie][warning] edge-flux (phi-only) changes only the phi equation pairing "
-                     "(legacy-pairwise + legacy-flux)." << std::endl;
+                     "(legacy-pairwise + div-sigma-a; legacy-flux RHS is diagnostic rollback)."
+                  << std::endl;
         std::cout << "[ophelie][warning] E/J/JouleHeat postprocess still uses particle gradient/divergence; "
                      "use --ophelie-current-form=edge-flux for full edge-flux solver." << std::endl;
     }
@@ -204,7 +213,30 @@ inline void finalizeOphelieCurrentFormConfiguration(OphelieParameters &params, O
     }
     if (params.ophelie_current_form_ == OphelieCurrentFormKind::EdgeFlux)
     {
+        // Doc198: imag-only EdgeFlux pairing used DivΣA RHS + LegacyPairwise LHS.
+        // Doc212: complex edge-flux requires identical LegacyFlux/edge EMF on imag and real.
+        const OpheliePhiRhsOperatorKind rhs_keep = params.phi_rhs_operator_kind_;
+        const OpheliePhiLhsOperatorKind lhs_keep = params.phi_lhs_operator_kind_;
         applyOpheliePhiProjectionOperatorKind(params, OpheliePhiProjectionOperatorKind::EdgeFlux);
+        if (params.edge_flux_complex_ && !cli_options.phi_rhs_operator_user_set)
+        {
+            params.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::LegacyFlux;
+            std::cout << "[ophelie][doc212] complex edge-flux production profile: "
+                         "phi_rhs=legacy-flux (imag+real shared EMF); lhs=legacy-pairwise"
+                      << std::endl;
+        }
+        if (cli_options.phi_rhs_operator_user_set)
+        {
+            params.phi_rhs_operator_kind_ = rhs_keep;
+            std::cout << "[ophelie] edge-flux: keeping user --phi-rhs-operator="
+                      << (rhs_keep == OpheliePhiRhsOperatorKind::LegacyFlux ? "legacy-flux" : "div-sigma-a")
+                      << " (diagnostic override)" << std::endl;
+        }
+        if (cli_options.phi_lhs_operator_user_set)
+        {
+            params.phi_lhs_operator_kind_ = lhs_keep;
+            std::cout << "[ophelie] edge-flux: keeping user --phi-lhs-operator override (diagnostic)" << std::endl;
+        }
         params.phi_edge_flux_diagnostics_ = true;
     }
 }

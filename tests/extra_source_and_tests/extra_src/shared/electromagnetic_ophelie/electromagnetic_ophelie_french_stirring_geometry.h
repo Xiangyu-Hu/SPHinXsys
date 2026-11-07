@@ -190,6 +190,8 @@ inline void syncFrenchStirringGlassToFrenchParams(OphelieFrenchStirringCaseParam
     stirring.french.glass_center =
         Vecd(std::abs(center[0]) < snap ? Real(0) : center[0], std::abs(center[1]) < snap ? Real(0) : center[1],
              center[2]);
+    // Doc 66: STL melt is not the canonical bottom-at-zero EM export contract.
+    stirring.french.require_canonical_bottom_at_zero = false;
     refreshFrenchReducedCoilStack(stirring.french);
     if (!stirring.french.coil_z_user_set && stirring.coil_stack_height > TinyReal)
     {

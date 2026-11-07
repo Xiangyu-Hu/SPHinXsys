@@ -208,7 +208,8 @@ int main(int ac, char *av[])
     auto &write_particle_reload_files = main_methods.addIODynamics<ReloadParticleIOCK>(sph_system);
     write_particle_reload_files.addToReload<Real>(coil_body, "SmoothingLengthRatio");
     write_particle_reload_files.addToReload<Real>(plate_body, "SmoothingLengthRatio");
-    registerTeam7CoilPlateNormalsForReload(write_particle_reload_files, coil_body, plate_body);
+    // NormalDirection/SignedDistance: register for reload ONLY after NormalFromBodyShapeCK
+    // constructs (registerStateVariable). Early addToReload → nullptr crash (Doc197 V08).
     if (include_air && air_body != nullptr)
     {
         write_particle_reload_files.addToReload<Real>(*air_body, "SmoothingLengthRatio");
@@ -301,6 +302,7 @@ int main(int ac, char *av[])
     host_methods.addStateDynamics<NormalFromBodyShapeCK>(coil_body).exec();
     host_methods.addStateDynamics<NormalFromBodyShapeCK>(plate_body).exec();
     std::cout << "NormalFromBodyShapeCK finished (NormalDirection + SignedDistance for coil/plate)." << std::endl;
+    registerTeam7CoilPlateNormalsForReload(write_particle_reload_files, coil_body, plate_body);
     write_particle_reload_files.writeToFile();
 
     std::error_code mkdir_error;

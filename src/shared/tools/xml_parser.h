@@ -51,7 +51,8 @@ namespace SPH
 // Eigen::IOFormat HeavyFmt(Eigen::FullPrecision, 0, ", ", ";\n", "[", "]", "[", "]");
 
 using TinyXMLElement = tinyxml2::XMLElement;
-constexpr int OutputPrecision = std::numeric_limits<Real>::digits10;
+/** Round-trip safe text precision for restart/reload (digits10 is too low for float32). */
+constexpr int OutputPrecision = std::numeric_limits<Real>::max_digits10;
 
 template <typename DataType>
 std::string DataToString(const DataType &value)

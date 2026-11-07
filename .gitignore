@@ -1071,3 +1071,22 @@ tests/extra_source_and_tests/3d_examples/*/reload/
 tests/extra_source_and_tests/3d_examples/*/bin/
 tests/extra_source_and_tests/3d_examples/*/output/
 tests/extra_source_and_tests/3d_examples/*/lib/
+
+# Local one-off GPU helper scripts (Cursor/session); keep case sources/README
+tests/extra_source_and_tests/3d_examples/test_3d_ophelie_induction_demo/scripts/
+
+
+##### OPHELIE local env / GPU driver copies (keep on disk; never commit)
+.venv_doc*/
+.venv_*/
+.nvidia_user_*/
+.nvidia_*/
+
+##### Repo-root run dumps (never commit)
+/output/
+/output_backup/
+
+##### Local papers / demos (optional; do not commit binaries)
+/*.pdf
+/docs/ophelie_demo_baseline.md
+

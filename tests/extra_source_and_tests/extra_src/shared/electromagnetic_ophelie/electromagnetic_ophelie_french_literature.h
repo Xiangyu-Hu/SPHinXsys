@@ -128,7 +128,8 @@ inline OphelieFrenchEmSolveResult runFrenchReducedEmPipeline(SolidBody &glass_bo
     BaseParticles &glass_particles = glass_body.getBaseParticles();
     const size_t n_glass = glass_particles.TotalRealParticles();
 
-    applyMultiloopFilamentBiotToGlass(glass_particles, glass_names, french.coil, params.mu0_, params.softening_length_);
+    applyFrenchReducedCoilExcitationBiotToGlass(glass_particles, glass_names, french, params.mu0_,
+                                                params.softening_length_);
 
     StateDynamics<ExecutionPolicy, CombineOphelieCoilAndInducedVectorPotentialCK> combine_vector_potential(
         glass_body, glass_names);
@@ -262,7 +263,8 @@ inline OphelieFrenchEmSolveResult runFrenchReducedEmPipeline(SolidBody &glass_bo
             zero_phi_real.exec();
             setupOphelieEdgeFluxComponentRhsFromA<ExecutionPolicy>(glass_body, glass_inner, glass_names, real_component,
                                                                    params);
-            finalizeOpheliePhiComponentRhsHost<ExecutionPolicy>(glass_particles, real_component.phi_rhs_field, params);
+            finalizeOpheliePhiComponentRhsHost<ExecutionPolicy>(glass_particles, real_component.phi_rhs_field, params,
+                                                                &glass_names, &boundary_geom, french.dp);
             const Real real_solver_rel_residual = solvePhiComponentWithCurrentRhs<ExecutionPolicy>(
                 glass_body, glass_inner, glass_names, real_component, params);
             applyOpheliePhiComponentLhsOperator<ExecutionPolicy>(glass_body, glass_inner, glass_names, real_component,

@@ -97,3 +97,30 @@ Conduction + longer time (still not a literature cell; watch `escaped`, `U_max` 
   --em-control=fixed-current --aind=off \
   --target-absorbed-power=50000 --end-time=5
 ```
+
+## Round 3C — detectability (buoy vs zero)
+
+After rebuild, pair a Level-2 thermal run with `--zero-buoyancy` (alias of `--no-boussinesq`). Compare `[ophelie][meridional]` / `[ophelie][natural-detect]` and CSV `output/french_meridional_ur_uz_mean.csv`. Full commands: `docs/ophelie/19_ROUND3C_NATURAL_FLOW_DETECTABILITY.md`.
+
+```bash
+# … same skull-shell COMMON flags with --end-time=5 --meridional-average-start=0.5
+./test_3d_ophelie_french_natural_convection_frozen_q $COMMON
+./test_3d_ophelie_french_natural_convection_frozen_q $COMMON --zero-buoyancy
+```
+
+## Lit-β freeze-T gate (Doc95/96)
+
+文献 β≈1e−5 的差分可检出需要 **dp≤0.010** + 静水三件套（仍 opt-in）：
+
+`--dens-sum-normalize --background-hydro-p --kernel-correction`
+
+主指标：`Uz_axis`（r&lt;0.08）/ `Uz_rim`（r&gt;0.18）的 on−off 差分，期望轴↑边↓；报 `U_rms_avg` 噪声底。勿用 `U_max` 对文献。
+
+归档 reload：`docs/ophelie/reference/doc96_runs/french_reload_dp010/`。完整命令与表见 [Doc96](../../../../docs/ophelie/96_FRENCH_DP010_LIT_BETA_DETECTABILITY_2026-10-05.md)。dp=0.012 仅适合接线/冒烟（Doc95：lit-β 边沿符号不过）。
+
+固定回归（仓库根目录、已编译）：
+
+```bash
+bash docs/ophelie/reference/doc96_runs/run_doc96_french_litbeta_gate.sh          # lit-β @20 s
+MODE=mono bash docs/ophelie/reference/doc96_runs/run_doc96_french_litbeta_gate.sh # β=1/2/3e-5
+```

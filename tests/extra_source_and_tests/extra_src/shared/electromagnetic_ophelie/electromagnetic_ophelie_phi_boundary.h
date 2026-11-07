@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include <string>
 
 namespace SPH
@@ -89,12 +90,22 @@ inline Vecd frenchReducedCylinderOutwardNormal(const Vecd &pos, const OphelieFre
     return Vecd(0.0, 0.0, 1.0);
 }
 
+inline bool opheliePhiBoundaryNormalSourceUsesParticleFields(OpheliePhiBoundaryNormalSource source)
+{
+    return source == OpheliePhiBoundaryNormalSource::LevelSet ||
+           source == OpheliePhiBoundaryNormalSource::KernelDeficiency;
+}
+
 inline Real boundaryDistanceFromContext(const Vecd &pos, const OpheliePhiBoundaryGeometryContext &geom)
 {
     switch (geom.normal_source)
     {
     case OpheliePhiBoundaryNormalSource::AnalyticCylinder:
         return frenchReducedCylinderBoundaryDistance(pos, geom.french);
+    case OpheliePhiBoundaryNormalSource::LevelSet:
+    case OpheliePhiBoundaryNormalSource::KernelDeficiency:
+        // Particle-indexed path only; callers must not use this for LevelSet.
+        return Real(0);
     default:
         return analyticBoxBoundaryDistance(pos, geom.box_center, geom.box_halfsize);
     }
@@ -106,6 +117,9 @@ inline Vecd boundaryOutwardNormalFromContext(const Vecd &pos, const OpheliePhiBo
     {
     case OpheliePhiBoundaryNormalSource::AnalyticCylinder:
         return frenchReducedCylinderOutwardNormal(pos, geom.french);
+    case OpheliePhiBoundaryNormalSource::LevelSet:
+    case OpheliePhiBoundaryNormalSource::KernelDeficiency:
+        return Vecd::Zero();
     default:
         return analyticBoxOutwardNormal(pos, geom.box_center, geom.box_halfsize);
     }
@@ -130,7 +144,10 @@ inline bool opheliePhiBoundaryGradNeumannPostprocess(const OphelieParameters &pa
            (params.phi_boundary_lhs_grad_neumann_ || params.phi_boundary_grad_neumann_projection_);
 }
 
-/** Precompute boundary mask / outward normal / g_n=-ω n·A on host (fixed during phi solve). */
+/**
+ * Precompute boundary mask / outward normal / complex g_n on host (fixed during phi solve).
+ * Imag: g_n = −ω n·A_r ; Real: g_n = +ω n·A_i  (insulating n·σ∇φ = −iω n·σA).
+ */
 inline size_t setupOpheliePhiBoundaryParticleFields(BaseParticles &particles, const OphelieGlassFieldNames &names,
                                                     const OphelieParameters &params,
                                                     const OpheliePhiBoundaryGeometryContext &geom, Real dp)
@@ -138,25 +155,64 @@ inline size_t setupOpheliePhiBoundaryParticleFields(BaseParticles &particles, co
     const size_t n = particles.TotalRealParticles();
     const Real boundary_width = params.phi_boundary_distance_factor_ * dp;
     const Real omega = params.omega();
+    const bool use_particle_n = opheliePhiBoundaryNormalSourceUsesParticleFields(geom.normal_source);
 
     syncVariableToHost<Vecd>(particles, "Position");
     syncVariableToHost<Vecd>(particles, names.a_src_real);
+    syncVariableToHost<Vecd>(particles, names.a_src_imag);
     const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
-    const Vecd *a_src = particles.getVariableDataByName<Vecd>(names.a_src_real);
+    const Vecd *a_re = particles.getVariableDataByName<Vecd>(names.a_src_real);
+    const Vecd *a_im = particles.getVariableDataByName<Vecd>(names.a_src_imag);
+    const Real *signed_distance =
+        use_particle_n ? particles.getVariableDataByName<Real>("SignedDistance") : nullptr;
+    const Vecd *particle_normal =
+        use_particle_n ? particles.getVariableDataByName<Vecd>("NormalDirection") : nullptr;
+    if (use_particle_n)
+    {
+        syncVariableToHost<Real>(particles, "SignedDistance");
+        syncVariableToHost<Vecd>(particles, "NormalDirection");
+        signed_distance = particles.getVariableDataByName<Real>("SignedDistance");
+        particle_normal = particles.getVariableDataByName<Vecd>("NormalDirection");
+        if (signed_distance == nullptr || particle_normal == nullptr)
+        {
+            std::cerr << "[ophelie] phi boundary LevelSet/kernel-deficiency requires "
+                         "SignedDistance+NormalDirection on particles"
+                      << std::endl;
+            return 0;
+        }
+    }
 
     Real *mask = particles.getVariableDataByName<Real>(names.phi_boundary_mask);
     Vecd *normal = particles.getVariableDataByName<Vecd>(names.phi_boundary_normal);
     Real *g_n = particles.getVariableDataByName<Real>(names.phi_boundary_gn);
+    Real *g_n_re = particles.getVariableDataByName<Real>(names.phi_boundary_gn_real);
 
     size_t n_boundary = 0;
     for (size_t i = 0; i < n; ++i)
     {
-        const Real dist = boundaryDistanceFromContext(pos[i], geom);
-        if (dist <= boundary_width)
+        Real dist = 0.0;
+        Vecd n_out = Vecd::Zero();
+        if (use_particle_n)
+        {
+            dist = std::abs(signed_distance[i]);
+            const Real n_norm = particle_normal[i].norm();
+            if (n_norm > TinyReal)
+            {
+                n_out = particle_normal[i] / n_norm;
+            }
+        }
+        else
+        {
+            dist = boundaryDistanceFromContext(pos[i], geom);
+            n_out = boundaryOutwardNormalFromContext(pos[i], geom);
+        }
+
+        if (dist <= boundary_width && n_out.norm() > TinyReal)
         {
             mask[i] = 1.0;
-            normal[i] = boundaryOutwardNormalFromContext(pos[i], geom);
-            g_n[i] = -omega * normal[i].dot(a_src[i]);
+            normal[i] = n_out;
+            g_n[i] = -omega * normal[i].dot(a_re[i]);
+            g_n_re[i] = omega * normal[i].dot(a_im[i]);
             ++n_boundary;
         }
         else
@@ -164,20 +220,24 @@ inline size_t setupOpheliePhiBoundaryParticleFields(BaseParticles &particles, co
             mask[i] = 0.0;
             normal[i] = Vecd::Zero();
             g_n[i] = 0.0;
+            g_n_re[i] = 0.0;
         }
     }
 
     syncVariableToDevice<Real>(particles, names.phi_boundary_mask);
     syncVariableToDevice<Vecd>(particles, names.phi_boundary_normal);
     syncVariableToDevice<Real>(particles, names.phi_boundary_gn);
+    syncVariableToDevice<Real>(particles, names.phi_boundary_gn_real);
 #if SPHINXSYS_USE_SYCL
     // Ensure device buffers exist and match host (finalizeLoadIn is a no-op until delegated).
     (void)particles.getVariableByName<Real>(names.phi_boundary_mask)->DelegatedData(execution::par_device);
     (void)particles.getVariableByName<Vecd>(names.phi_boundary_normal)->DelegatedData(execution::par_device);
     (void)particles.getVariableByName<Real>(names.phi_boundary_gn)->DelegatedData(execution::par_device);
+    (void)particles.getVariableByName<Real>(names.phi_boundary_gn_real)->DelegatedData(execution::par_device);
     syncVariableToDevice<Real>(particles, names.phi_boundary_mask);
     syncVariableToDevice<Vecd>(particles, names.phi_boundary_normal);
     syncVariableToDevice<Real>(particles, names.phi_boundary_gn);
+    syncVariableToDevice<Real>(particles, names.phi_boundary_gn_real);
 #endif
     return n_boundary;
 }
@@ -234,6 +294,32 @@ class ApplyOpheliePhiBoundaryGradNeumannProjectionCK : public LocalDynamics
     DiscreteVariable<Vecd> *dv_grad_phi_;
 };
 
+/** Host projection using precomputed PhiBoundaryMask/Normal/Gn (device-safe after Interaction CK). */
+inline void applyOpheliePhiBoundaryGradNeumannProjectionFromFields(BaseParticles &particles,
+                                                                   const OphelieGlassFieldNames &names)
+{
+    const size_t n = particles.TotalRealParticles();
+    syncVariableToHost<Vecd>(particles, names.grad_phi_imag);
+    // Mask/normal/gn are authored on host in setupOpheliePhiBoundaryParticleFields; do not
+    // prepareForOutput them here (device copies may be stale and would overwrite host).
+    const Real *mask = particles.getVariableDataByName<Real>(names.phi_boundary_mask);
+    const Vecd *normal = particles.getVariableDataByName<Vecd>(names.phi_boundary_normal);
+    const Real *g_n = particles.getVariableDataByName<Real>(names.phi_boundary_gn);
+    Vecd *grad_phi = particles.getVariableDataByName<Vecd>(names.grad_phi_imag);
+
+    for (size_t i = 0; i < n; ++i)
+    {
+        if (mask[i] < Real(0.5))
+        {
+            continue;
+        }
+        const Vecd n_out = normal[i];
+        const Real grad_n = grad_phi[i].dot(n_out);
+        grad_phi[i] -= n_out * (grad_n - g_n[i]);
+    }
+    syncVariableToDevice<Vecd>(particles, names.grad_phi_imag);
+}
+
 /**
  * After grad_phi SPH estimate: enforce n·grad_phi = g_n = −ω n·A on boundary shell particles.
  * Caller must ensure Neumann mode / activation flags (see ProjectionDynamics wrapper).
@@ -244,6 +330,12 @@ inline void applyOpheliePhiBoundaryGradNeumannProjection(
 {
     if (params.phi_boundary_mode_ != OpheliePhiBoundaryMode::OneSidedNeumann)
     {
+        return;
+    }
+    // LevelSet / kernel-deficiency: use precomputed PhiBoundary* fields (safe for particle normals).
+    if (opheliePhiBoundaryNormalSourceUsesParticleFields(geom.normal_source))
+    {
+        applyOpheliePhiBoundaryGradNeumannProjectionFromFields(particles, names);
         return;
     }
 
@@ -273,32 +365,6 @@ inline void applyOpheliePhiBoundaryGradNeumannProjection(
     syncVariableToDevice<Vecd>(particles, names.grad_phi_imag);
 }
 
-/** Host projection using precomputed PhiBoundaryMask/Normal/Gn (device-safe after Interaction CK). */
-inline void applyOpheliePhiBoundaryGradNeumannProjectionFromFields(BaseParticles &particles,
-                                                                   const OphelieGlassFieldNames &names)
-{
-    const size_t n = particles.TotalRealParticles();
-    syncVariableToHost<Vecd>(particles, names.grad_phi_imag);
-    // Mask/normal/gn are authored on host in setupOpheliePhiBoundaryParticleFields; do not
-    // prepareForOutput them here (device copies may be stale and would overwrite host).
-    const Real *mask = particles.getVariableDataByName<Real>(names.phi_boundary_mask);
-    const Vecd *normal = particles.getVariableDataByName<Vecd>(names.phi_boundary_normal);
-    const Real *g_n = particles.getVariableDataByName<Real>(names.phi_boundary_gn);
-    Vecd *grad_phi = particles.getVariableDataByName<Vecd>(names.grad_phi_imag);
-
-    for (size_t i = 0; i < n; ++i)
-    {
-        if (mask[i] < Real(0.5))
-        {
-            continue;
-        }
-        const Vecd n_out = normal[i];
-        const Real grad_n = grad_phi[i].dot(n_out);
-        grad_phi[i] -= n_out * (grad_n - g_n[i]);
-    }
-    syncVariableToDevice<Vecd>(particles, names.grad_phi_imag);
-}
-
 template <class ExecutionPolicy>
 inline void applyOpheliePhiBoundaryGradNeumannProjectionDynamics(
     SolidBody &glass_body, const OphelieGlassFieldNames &names, const OphelieParameters &params, bool for_lhs,
@@ -320,14 +386,15 @@ inline void applyOpheliePhiBoundaryGradNeumannProjectionDynamics(
 }
 
 /**
- * One-sided Neumann RHS flux closure (first version, host-only):
- *   n·σ∇φ = −ω n·σA  →  g_n = −ω n·A
+ * One-sided Neumann RHS flux closure (host-only), single chain:
  *   rhs_i += (V_i / d_b) * σ_i * g_n
  * with d_b = max(dist_to_surface, 0.25 dp).
+ * g_n_sign: imag −1 → g_n=−ω n·A_re; real +1 → g_n=+ω n·A_im.
  */
-inline OpheliePhiNeumannRhsCorrectionStats applyOpheliePhiOneSidedNeumannRhsCorrection(
+inline OpheliePhiNeumannRhsCorrectionStats applyOpheliePhiOneSidedNeumannRhsCorrectionForChain(
     BaseParticles &particles, const OphelieGlassFieldNames &names, const OphelieParameters &params,
-    const OpheliePhiBoundaryGeometryContext &geom, Real dp)
+    const OpheliePhiBoundaryGeometryContext &geom, Real dp, const std::string &rhs_field,
+    const std::string &a_field, Real g_n_sign)
 {
     OpheliePhiNeumannRhsCorrectionStats stats;
     if (params.phi_boundary_mode_ != OpheliePhiBoundaryMode::OneSidedNeumann ||
@@ -342,29 +409,59 @@ inline OpheliePhiNeumannRhsCorrectionStats applyOpheliePhiOneSidedNeumannRhsCorr
     const Real d_b_min = Real(0.25) * dp;
 
     syncVariableToHost<Vecd>(particles, "Position");
-    syncVariableToHost<Vecd>(particles, names.a_src_real);
+    syncVariableToHost<Vecd>(particles, a_field);
     syncVariableToHost<Real>(particles, names.sigma);
-    syncVariableToHost<Real>(particles, names.phi_rhs_imag);
+    syncVariableToHost<Real>(particles, rhs_field);
     syncVariableToHost<Real>(particles, "VolumetricMeasure");
 
     Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
-    Vecd *a_src = particles.getVariableDataByName<Vecd>(names.a_src_real);
+    Vecd *a_src = particles.getVariableDataByName<Vecd>(a_field);
     Real *sigma = particles.getVariableDataByName<Real>(names.sigma);
-    Real *rhs = particles.getVariableDataByName<Real>(names.phi_rhs_imag);
+    Real *rhs = particles.getVariableDataByName<Real>(rhs_field);
     const Real *vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+    const bool use_particle_n = opheliePhiBoundaryNormalSourceUsesParticleFields(geom.normal_source);
+    const Real *signed_distance = nullptr;
+    const Vecd *particle_normal = nullptr;
+    if (use_particle_n)
+    {
+        syncVariableToHost<Real>(particles, "SignedDistance");
+        syncVariableToHost<Vecd>(particles, "NormalDirection");
+        signed_distance = particles.getVariableDataByName<Real>("SignedDistance");
+        particle_normal = particles.getVariableDataByName<Vecd>("NormalDirection");
+        if (signed_distance == nullptr || particle_normal == nullptr)
+        {
+            std::cerr << "[ophelie] Neumann RHS LevelSet path missing SignedDistance/NormalDirection"
+                      << std::endl;
+            return stats;
+        }
+    }
 
     Real correction_l2_sq = 0.0;
     for (size_t i = 0; i < n; ++i)
     {
-        const Real dist = boundaryDistanceFromContext(pos[i], geom);
-        if (dist > boundary_width)
+        Real dist = 0.0;
+        Vecd n_out = Vecd::Zero();
+        if (use_particle_n)
+        {
+            dist = std::abs(signed_distance[i]);
+            const Real n_norm = particle_normal[i].norm();
+            if (n_norm > TinyReal)
+            {
+                n_out = particle_normal[i] / n_norm;
+            }
+        }
+        else
+        {
+            dist = boundaryDistanceFromContext(pos[i], geom);
+            n_out = boundaryOutwardNormalFromContext(pos[i], geom);
+        }
+        if (dist > boundary_width || n_out.norm() <= TinyReal)
         {
             continue;
         }
         ++stats.n_boundary;
-        const Vecd n_out = boundaryOutwardNormalFromContext(pos[i], geom);
         const Real d_b = std::max(dist, d_b_min);
-        const Real g_n = -omega * n_out.dot(a_src[i]);
+        const Real g_n = g_n_sign * omega * n_out.dot(a_src[i]);
         const Real correction = (vol[i] / d_b) * sigma[i] * g_n;
         rhs[i] += correction;
         correction_l2_sq += vol[i] * correction * correction;
@@ -372,8 +469,53 @@ inline OpheliePhiNeumannRhsCorrectionStats applyOpheliePhiOneSidedNeumannRhsCorr
     }
 
     stats.correction_l2 = std::sqrt(correction_l2_sq);
-    syncVariableToDevice<Real>(particles, names.phi_rhs_imag);
+    syncVariableToDevice<Real>(particles, rhs_field);
     return stats;
+}
+
+/** Imag chain: g_n = −ω n·A_r into PhiRhsImag. */
+inline OpheliePhiNeumannRhsCorrectionStats applyOpheliePhiOneSidedNeumannRhsCorrection(
+    BaseParticles &particles, const OphelieGlassFieldNames &names, const OphelieParameters &params,
+    const OpheliePhiBoundaryGeometryContext &geom, Real dp)
+{
+    return applyOpheliePhiOneSidedNeumannRhsCorrectionForChain(particles, names, params, geom, dp,
+                                                               names.phi_rhs_imag, names.a_src_real, Real(-1));
+}
+
+/** Real chain: g_n = +ω n·A_i into PhiRhsReal (Doc200 P2). */
+inline OpheliePhiNeumannRhsCorrectionStats applyOpheliePhiOneSidedNeumannRhsCorrectionReal(
+    BaseParticles &particles, const OphelieGlassFieldNames &names, const OphelieParameters &params,
+    const OpheliePhiBoundaryGeometryContext &geom, Real dp)
+{
+    return applyOpheliePhiOneSidedNeumannRhsCorrectionForChain(particles, names, params, geom, dp,
+                                                               names.phi_rhs_real, names.a_src_imag, Real(+1));
+}
+
+/**
+ * Opt-in helper: if phi_boundary_mode is OneSidedNeumann, set geom.normal_source from params,
+ * populate PhiBoundary* fields, and return &geom_storage; else nullptr.
+ * TEAM7 plate must use --phi-boundary-normal-source=level-set (SignedDistance/NormalDirection).
+ */
+inline const OpheliePhiBoundaryGeometryContext *prepareOpheliePhiBoundaryGeomForSolve(
+    BaseParticles &particles, const OphelieGlassFieldNames &names, const OphelieParameters &params,
+    OpheliePhiBoundaryGeometryContext &geom_storage, Real dp)
+{
+    if (params.phi_boundary_mode_ != OpheliePhiBoundaryMode::OneSidedNeumann)
+    {
+        return nullptr;
+    }
+    geom_storage.normal_source = params.phi_boundary_normal_source_;
+    const size_t n_bnd = setupOpheliePhiBoundaryParticleFields(particles, names, params, geom_storage, dp);
+    std::cout << "[ophelie] phi_boundary_mode=one-sided-neumann normal_source="
+              << phiBoundaryNormalSourceName(geom_storage.normal_source) << " n_boundary=" << n_bnd << " dp=" << dp
+              << std::endl;
+    if (n_bnd == 0 && opheliePhiBoundaryNormalSourceUsesParticleFields(geom_storage.normal_source))
+    {
+        std::cerr << "[ophelie] warning: Neumann LevelSet setup tagged 0 boundary particles; "
+                     "check SignedDistance/NormalDirection reload"
+                  << std::endl;
+    }
+    return &geom_storage;
 }
 
 } // namespace ophelie
