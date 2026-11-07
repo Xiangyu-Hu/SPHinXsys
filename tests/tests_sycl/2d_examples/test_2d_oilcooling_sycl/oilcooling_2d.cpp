@@ -10,40 +10,51 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Global geometry, material parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DMO = 0.2;  /**< Outer diameter of motor hausing. */
-Real DM = 0.196; /**< Diameter of motor hausing. */
-Real DRO = 0.12; /**< Diameter of outer rotor. */
-Real DRI = 0.04; /**< Diameter of inner rotor. */
-Real WL = 0.03;  /**< Winding length. */
-Real WH = 0.025; /**< Winding height. */
-Real AG = 0.001; /**< Air-gap. */
-Real LL = 0.004; /**< Inflow region length. */
-Real LH = 0.012; /**< Inflows region height. */
-Real DO = 0.02;  /**< Outflow diameter. */
-
+Real DMO = 0.2;      /**< Outer diameter of motor hausing. */
+Real DM = 0.196;     /**< Diameter of motor hausing. */
+Real DRO = 0.12;     /**< Diameter of outer rotor. */
+Real DRI = 0.04;     /**< Diameter of inner rotor. */
+Real WL = 0.03;      /**< Winding length. */
+Real WH = 0.025;     /**< Winding height. */
+Real AG = 0.001;     /**< Air-gap. */
+Real LL = 0.004;     /**< Inflow region length. */
+Real LH = 0.012;     /**< Inflows region height. */
+Real DO = 0.02;      /**< Outflow diameter. */
 Real RM = 0.5 * DM;  /**< Radius of motor hausing. */
 Real RR = 0.5 * DRI; /**< Radius of rotor. */
 Real Wnum = 12;      /**< Winding Number. */
 Real angle_increment = 2 * Pi / Wnum;
-Real WD = 0.5 * DRO + AG + 0.5 * WH;     /**< Distance from center point to the center of a winding. */
-Real ZW = 0.5 * DRO + AG;                /**< Distance from center point to the site of a winding. */
-int resolution_circle = 60;              /**<Approximate the circle as the number of sides of the polygon. */
-Real global_resolution = 0.00075;        /**< Initial reference particle spacing. */
-Real BW = 0.5 * (DMO - DM);              /**< Extending width for wall boundary. */
-Real OH = LH;                            /**< Outflows region height. */
+Real WD = 0.5 * DRO + AG + 0.5 * WH; /**< Distance from center point to the center of a winding. */
+Real ZW = 0.5 * DRO + AG;            /**< Distance from center point to the site of a winding. */
+int resolution_circle = 60;          /**<Approximate the circle as the number of sides of the polygon. */
+Real global_resolution = 0.00075;    /**< Initial reference particle spacing. */
+Real BW = 0.5 * (DMO - DM);          /**< Extending width for wall boundary. */
+BoundingBoxd system_domain_bounds(Vec2d(-BW - RM, -BW - RM), Vec2d(RM + BW, RM + BW));
+//----------------------------------------------------------------------
+//	Geometrie of the 5 inlets.
+//----------------------------------------------------------------------
 Real Lnum = 5;                           /**< Inflows number. */
 Real Lstart = (Wnum - 2 * Lnum + 2) / 4; /**< Start location of inlets. */
 Real Lend = (Wnum + 2 * Lnum - 2) / 4;   /**< End location of inlets. */
 Real inlet_height = RM + BW - LH;        /**< Inflow location height */
 Vec2d inlet_halfsize = Vec2d(0.5 * LH, 0.5 * LL);
 Real R_inlet = RM + BW - 0.5 * LH;
-Vec2d inlet_translation = Vec2d(0, R_inlet);
+Vec2d inlet1_translation = Vec2d(0, R_inlet);
+Transform inlet1_transform(Rotation2d(-(Pi / 2)), inlet1_translation);
+Vec2d inlet2_translation = Vec2d(R_inlet * cos(5 * angle_increment), R_inlet *sin(5 * angle_increment));
+Transform inlet2_transform(Rotation2d(-(angle_increment)), inlet2_translation);
+Vec2d inlet3_translation = Vec2d(R_inlet * cos(4 * angle_increment), R_inlet *sin(4 * angle_increment));
+Transform inlet3_transform(Rotation2d(-(2 * angle_increment)), inlet3_translation);
+Vec2d inlet4_translation = Vec2d(R_inlet * cos(2 * angle_increment), R_inlet *sin(2 * angle_increment));
+Transform inlet4_transform(Rotation2d(-(4 * angle_increment)), inlet4_translation);
+Vec2d inlet5_translation = Vec2d(R_inlet * cos(angle_increment), R_inlet *sin(angle_increment));
+Transform inlet5_transform(Rotation2d(-(5 * angle_increment)), inlet5_translation);
+//----------------------------------------------------------------------
+//	Geometrie of the outlet.
+//----------------------------------------------------------------------
 Vec2d outlet_halfsize = Vec2d(BW + 0.01, 0.5 * DO);
 Vec2d outlet_translation = Vec2d(0, -RM + 0.01);
 Transform outlet_transform(Rotation2d(-(Pi / 2)), outlet_translation);
-Transform inlet_transform(Rotation2d(-(Pi / 2)), inlet_translation);
-BoundingBoxd system_domain_bounds(Vec2d(-BW - RM, -BW - RM), Vec2d(RM + BW, RM + BW));
-Vecd center(0.0, 0.0);
 // observer location
 StdVec<Vecd> slot_locations = {
     Vecd(WD, 0),
@@ -127,19 +138,9 @@ Real k_winding = 1.0e-5;                                        /**< Diffusion c
 Real k_contact = (2 * k_oil * k_winding) / (k_oil + k_winding); /**< Thermal conductivity between winding and oil. */
 Real dq = 2.0;                                                  /**< Heating efficient of internal heat source [°C/s]. */
 //----------------------------------------------------------------------
-//	Geometrie of the othor 4 inlets.
-//----------------------------------------------------------------------
-Vec2d inlet2_translation = Vec2d(R_inlet * cos(5 * angle_increment), R_inlet *sin(5 * angle_increment));
-Transform inlet2_transform(Rotation2d(-(angle_increment)), inlet2_translation);
-Vec2d inlet3_translation = Vec2d(R_inlet * cos(4 * angle_increment), R_inlet *sin(4 * angle_increment));
-Transform inlet3_transform(Rotation2d(-(2 * angle_increment)), inlet3_translation);
-Vec2d inlet4_translation = Vec2d(R_inlet * cos(2 * angle_increment), R_inlet *sin(2 * angle_increment));
-Transform inlet4_transform(Rotation2d(-(4 * angle_increment)), inlet4_translation);
-Vec2d inlet5_translation = Vec2d(R_inlet * cos(angle_increment), R_inlet *sin(angle_increment));
-Transform inlet5_transform(Rotation2d(-(5 * angle_increment)), inlet5_translation);
-//----------------------------------------------------------------------
 //	Case-dependent wall boundary
 //----------------------------------------------------------------------
+Vecd center(0.0, 0.0);
 class WallBoundary : public MultiPolygonShape
 {
   public:
@@ -147,7 +148,7 @@ class WallBoundary : public MultiPolygonShape
     {
         multi_polygon_.addCircle(center, (RM + BW), resolution_circle, GeometricOps::add); /**< Outer wall of motor hausing. */
         multi_polygon_.addCircle(center, RM, resolution_circle, GeometricOps::sub);        /**< Inner wall of motor hausing. */
-        multi_polygon_.addBox(inlet_transform, inlet_halfsize, GeometricOps::sub);         /**< Top Inlets. */
+        multi_polygon_.addBox(inlet1_transform, inlet_halfsize, GeometricOps::sub);        /**< Top Inlets. */
         multi_polygon_.addBox(outlet_transform, outlet_halfsize, GeometricOps::sub);       /**< Outlets. */
         multi_polygon_.addBox(inlet2_transform, inlet_halfsize, GeometricOps::sub);
         multi_polygon_.addBox(inlet3_transform, inlet_halfsize, GeometricOps::sub);
@@ -195,7 +196,7 @@ class FluidBoundary : public MultiPolygonShape
   public:
     explicit FluidBoundary(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addBox(inlet_transform, inlet_halfsize, GeometricOps::add); /**< Top Inlets. */
+        multi_polygon_.addBox(inlet1_transform, inlet_halfsize, GeometricOps::add); /**< Top Inlets. */
         multi_polygon_.addBox(inlet2_transform, inlet_halfsize, GeometricOps::add);
         multi_polygon_.addBox(inlet3_transform, inlet_halfsize, GeometricOps::add);
         multi_polygon_.addBox(inlet4_transform, inlet_halfsize, GeometricOps::add);
@@ -296,12 +297,22 @@ int main(int ac, char *av[])
     ParticleBuffer<ReserveSizeFactor> inlet_buffer(3500.0);
     oil_body.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_buffer);
 
+    OrientedBoxByParticle emitter1(oil_body, OrientedBox(xAxis, inlet1_transform, inlet_halfsize));
+    OrientedBoxByParticle emitter2(oil_body, OrientedBox(xAxis, inlet2_transform, inlet_halfsize));
+    OrientedBoxByParticle emitter3(oil_body, OrientedBox(xAxis, inlet3_transform, inlet_halfsize));
+    OrientedBoxByParticle emitter4(oil_body, OrientedBox(xAxis, inlet4_transform, inlet_halfsize));
+    OrientedBoxByParticle emitter5(oil_body, OrientedBox(xAxis, inlet5_transform, inlet_halfsize));
+    StdVec<OrientedBoxByParticle *> emitters = {&emitter1, &emitter2, &emitter3, &emitter4, &emitter5};
+    OrientedBoxByCell outlet_disposer(oil_body, OrientedBox(xAxis, outlet_transform, outlet_halfsize + 0.5 * Vec2d(BW, BW)));
+    outlet_disposer.writeOrientedBoxToVtp();
+
     SolidBody wall(sph_system, makeShared<WallBoundary>("Wall"));
     LevelSetShape &wall_level_set_shape = wall.defineBodyLevelSetShape().writeLevelSet();
     wall.defineMatterMaterial<Solid>();
     wall.generateParticles<BaseParticles, Lattice>();
 
-    SolidBody rotor(sph_system, makeShared<RotorBoundary>("Rotor"));
+    RotorBoundary rotor_boundary("Rotor");
+    SolidBody rotor(sph_system, rotor_boundary);
     LevelSetShape &rotor_level_set_shape = rotor.defineBodyLevelSetShape().writeLevelSet();
     rotor.defineMatterMaterial<Solid>();
     rotor.generateParticles<BaseParticles, Lattice>();
@@ -411,227 +422,208 @@ int main(int ac, char *av[])
     //  At last, we define the complex relaxations by combining previous defined
     //  inner and contact relations.
     //----------------------------------------------------------------------
-    InnerRelation oil_body_inner(oil_body);
-    InnerRelation winding_inner(winding);
-    ContactRelation oil_body_contact(oil_body, {&wall, &rotor, &winding});
-    ContactRelation oil_contact(oil_body, {&winding});
-    ContactRelation winding_contact(winding, {&oil_body});
-    ContactRelation winding_slot_contact(slot_observer, {&winding});
-    ContactRelation winding_tooth_contact(tooth_observer, {&winding});
-    ContactRelation winding_yoke_contact(yoke_observer, {&winding});
-    //----------------------------------------------------------------------
-    // Combined relations built from basic relations
-    //----------------------------------------------------------------------
-    ComplexRelation oil_body_complex(oil_body_inner, oil_body_contact);
-    ComplexRelation oil_thermo_complex(oil_body_inner, oil_contact);
-    ComplexRelation winding_thermo_complex(winding_inner, winding_contact);
-    //----------------------------------------------------------------------
-    //	Define all numerical methods which are used in this case.
-    //----------------------------------------------------------------------
-    SimpleDynamics<NormalDirectionFromBodyShape> wall_normal_direction(wall);
-    SimpleDynamics<NormalDirectionFromBodyShape> rotor_normal_direction(rotor);
-    SimpleDynamics<NormalDirectionFromBodyShape> winding_normal_direction(winding);
-    InteractionWithUpdate<SpatialTemporalFreeSurfaceIndicationComplex> indicate_free_surface(oil_body_inner, oil_body_contact);
+    auto &oil_body_inner = sph_system.addInnerRelation(oil_body);
+    auto &winding_inner = sph_system.addInnerRelation(winding);
 
-    Dynamics1Level<fluid_dynamics::Integration1stHalfWithWallRiemann> pressure_relaxation(oil_body_inner, oil_body_contact);
-    Dynamics1Level<fluid_dynamics::Integration2ndHalfWithWallRiemann> density_relaxation(oil_body_inner, oil_body_contact);
-    InteractionWithUpdate<fluid_dynamics::DensitySummationComplexFreeSurface> update_density_by_summation(oil_body_inner, oil_body_contact);
+    auto &oil_wall_contact = sph_system.addContactRelation(oil_body, wall);
+    auto &oil_rotor_contact = sph_system.addContactRelation(oil_body, rotor);
+    auto &oil_winding_contact = sph_system.addContactRelation(oil_body, winding);
+
+    auto &winding_oil_contact = sph_system.addContactRelation(winding, oil_body);
+
+    auto &slot_observer_contact = sph_system.addContactRelation(slot_observer, winding);
+    auto &tooth_observer_contact = sph_system.addContactRelation(tooth_observer, winding);
+    auto &yoke_observer_contact = sph_system.addContactRelation(yoke_observer, winding);
+    //----------------------------------------------------------------------
+    // Define SPH solver with particle methods and execution policies.
+    // Generally, the host methods should be able to run immediately.
+    //----------------------------------------------------------------------
+    SPHSolver sph_solver(sph_system);
+    auto &main_methods = sph_solver.getMainMethodContainer();
+    //----------------------------------------------------------------------
+    // Define the numerical methods used in the simulation.
+    // Note that there may be data dependence on the sequence of constructions.
+    // Generally, the configuration dynamics, such as update cell linked list,
+    // update body relations, are defined first.
+    // Then the geometric models or simple objects without data dependencies,
+    // such as gravity, initialized normal direction.
+    // After that, the major physical particle dynamics model should be introduced.
+    // Finally, the auxiliary models such as time step estimator, initial condition,
+    // boundary condition and other constraints should be defined.
+    //----------------------------------------------------------------------
+    ParticleDynamicsGroup static_configuration;
+    static_configuration.add(&main_methods.addCellLinkedListDynamics(wall));
+    static_configuration.add(&main_methods.addCellLinkedListDynamics(winding));
+    static_configuration.add(&main_methods.addRelationDynamics(winding_inner));
+
+    ParticleDynamicsGroup update_configuration;
+    update_configuration.add(&main_methods.addCellLinkedListDynamics(oil_body));
+    update_configuration.add(&main_methods.addCellLinkedListDynamics(rotor));
+    update_configuration.add(&main_methods.addRelationDynamics(
+        oil_body_inner, oil_wall_contact, oil_rotor_contact, oil_winding_contact));
+    update_configuration.add(&main_methods.addRelationDynamics(winding_oil_contact));
+    auto &static_observer_relation = main_methods.addRelationDynamics(
+        slot_observer_contact, tooth_observer_contact, yoke_observer_contact);
+    auto &particle_sort = main_methods.addSortDynamics(oil_body);
 
     Gravity gravity(Vecd(0.0, -gravity_g));
-    SimpleDynamics<GravityForce<Gravity>> constant_gravity(oil_body, gravity);
-    ReduceDynamics<fluid_dynamics::AdvectionViscousTimeStep> get_fluid_advection_time_step_size(oil_body, U_f);
-    ReduceDynamics<fluid_dynamics::AcousticTimeStep> get_fluid_time_step_size(oil_body);
-    InteractionWithUpdate<fluid_dynamics::ViscousForceWithWall> viscous_force(oil_body_inner, oil_body_contact);
+    auto &constant_gravity = main_methods.addStateDynamics<GravityForceCK<Gravity>>(oil_body, gravity);
+    auto &advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(oil_body);
+    auto &update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(oil_body);
 
-    OrientedBoxByParticle emitter(oil_body, OrientedBox(xAxis, inlet_transform, inlet_halfsize));
-    SimpleDynamics<InletInflowCondition> inflow_condition(emitter);
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection(emitter, inlet_buffer);
-    OrientedBoxByParticle emitter2(oil_body, OrientedBox(xAxis, inlet2_transform, inlet_halfsize));
-    SimpleDynamics<InletInflowCondition> inflow_condition2(emitter2);
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection2(emitter2, inlet_buffer);
-    OrientedBoxByParticle emitter3(oil_body, OrientedBox(xAxis, inlet3_transform, inlet_halfsize));
-    SimpleDynamics<InletInflowCondition> inflow_condition3(emitter3);
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection3(emitter3, inlet_buffer);
-    OrientedBoxByParticle emitter4(oil_body, OrientedBox(xAxis, inlet4_transform, inlet_halfsize));
-    SimpleDynamics<InletInflowCondition> inflow_condition4(emitter4);
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection4(emitter4, inlet_buffer);
-    OrientedBoxByParticle emitter5(oil_body, OrientedBox(xAxis, inlet5_transform, inlet_halfsize));
-    SimpleDynamics<InletInflowCondition> inflow_condition5(emitter5);
-    SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_injection5(emitter5, inlet_buffer);
-    OrientedBoxByCell outlet_disposer(oil_body, OrientedBox(xAxis, outlet_transform, outlet_halfsize));
-    SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> outlet_disposer_outflow_deletion(outlet_disposer);
+    auto &linear_correction_matrix =
+        main_methods.addInteractionDynamics<LinearCorrectionMatrix, WithUpdate>(oil_body_inner, 0.5)
+            .addPostContactInteraction(oil_wall_contact)
+            .addPostContactInteraction(oil_rotor_contact)
+            .addPostContactInteraction(oil_winding_contact);
 
-    GetDiffusionTimeStepSize get_thermal_time_step(oil_body);
-    ThermalRelaxationComplex thermal_relaxation_complex_oil(oil_body_inner, oil_contact);
-    ThermalRelaxationComplex thermal_relaxation_complex_winding(winding_inner, winding_contact);
-    SimpleDynamics<ThermoWindingInitialCondition> thermowinding_condition(winding);
-    SimpleDynamics<ThermofluidBodyInitialCondition> thermofluid_initial_condition(oil_body);
-    SimpleDynamics<ThermoWindingHeatSource> heat_source(winding);
+    auto &acoustic_step_1st_half =
+        main_methods.addInteractionDynamics<
+                        fluid_dynamics::AcousticStep1stHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(oil_body_inner)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(oil_wall_contact)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(oil_rotor_contact)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(oil_winding_contact);
+    auto &acoustic_step_2nd_half =
+        main_methods.addInteractionDynamics<
+                        fluid_dynamics::AcousticStep2ndHalf, OneLevel, AcousticRiemannSolverCK, LinearCorrectionCK>(oil_body_inner)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(oil_wall_contact)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(oil_rotor_contact)
+            .addPostContactInteraction<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>(oil_winding_contact);
+    auto &density_regularization =
+        main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(oil_body_inner)
+            .addPostContactInteraction(oil_wall_contact)
+            .addPostContactInteraction(oil_rotor_contact)
+            .addPostContactInteraction(oil_winding_contact)
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, WeaklyCompressibleFluid, FreeSurface>(oil_body);
+
+    auto &advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(oil_body, U_f);
+    auto &acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(oil_body);
+
+    auto &inflow_condition = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowConditionCK, ConstantInflowSpeed>(emitters, v_inlet);
+    auto &emitter_injection = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitters);
+    auto &within_deposer_indication = main_methods.addStateDynamics<fluid_dynamics::WithinDisposerIndication>(outlet_disposer);
+    auto &outflow_particle_deletion = main_methods.addStateDynamics<fluid_dynamics::OutflowParticleDeletion>(oil_body);
+    //----------------------------------------------------------------------
+    //	Define the multi-body system
+    //----------------------------------------------------------------------
+    SimbodySystem simbody_system;
+    SolidBodyPartForSimbodyCK rotor_multibody(rotor, rotor_boundary);
+    std::string rotor_name = simbody_system.createRigidBody(rotor_multibody);
+    SimTK::MobilizedBody &rotor_mob = simbody_system.createMobilizedBody(rotor_name, "Ground", "Pin");
+    simbody_system.setUForMobilizedPin(rotor_name, Omega);
+    simbody_system.initializeStateForIntegrator();
+    //----------------------------------------------------------------------
+    //	Coupling between SimBody and SPH
+    //----------------------------------------------------------------------
+    auto &constraint_on_rotor = main_methods.addStateDynamics<
+        solid_dynamics::ConstraintBodyPartBySimBodyCK>(rotor_multibody, simbody_system);
     //----------------------------------------------------------------------
     //	File output and regression check.
     //----------------------------------------------------------------------
-
-    BodyStatesRecordingToVtp body_states_recording(sph_system);
-    body_states_recording.addToWrite<int>(oil_body, "Indicator");
-    body_states_recording.addToWrite<Real>(oil_body, "Phi");
-    body_states_recording.addToWrite<Real>(winding, "Phi");
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>> write_slot_phi("Phi", winding_slot_contact);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>> write_tooth_phi("Phi", winding_tooth_contact);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>> write_yoke_phi("Phi", winding_yoke_contact);
+    BodyStatesRecordingToVtpCK<MainExecutionPolicy> body_states_recording(sph_system);
     //----------------------------------------------------------------------
-    //	Building of multibody for rotor rotation.
+    //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    SimTK::MultibodySystem MBsystem;
-    /** The bodies or matter of the MBsystem. */
-    SimTK::SimbodyMatterSubsystem matter(MBsystem);
-    /** The forces of the MBsystem.*/
-    SimTK::GeneralForceSubsystem forces(MBsystem);
-    /** Mass properties of the rigid shell box. */
-    SolidBodyPartForSimbody rotor_multibody(rotor, makeShared<RotorBoundary>("Rotor"));
-    SimTK::Body::Rigid rigid_info(rotor_multibody.getSimTKMassProperties());
-    SimTK::MobilizedBody::Pin
-        Rotor_Pin(matter.Ground(), SimTK::Transform(SimTKVec3(0)), rigid_info, SimTK::Transform(SimTKVec3(0)));
-    /** Initial angle of rotation. */
-    Rotor_Pin.setDefaultAngle(0.0);
-    /** Time stepping method for multibody system.*/
-    SimTK::State state = MBsystem.realizeTopology();
-    Rotor_Pin.setRate(state, Omega);
-    SimTK::RungeKuttaMersonIntegrator integ(MBsystem);
-    integ.setAccuracy(1e-3);
-    integ.initialize(state);
-    /** Coupling between SimBody and SPH.*/
-    SimpleDynamics<solid_dynamics::ConstraintBodyPartBySimBody> constraint_rotor(rotor_multibody, MBsystem, Rotor_Pin, integ);
+    TimeStepper &time_stepper = sph_solver.getTimeStepper();
+    auto &advection_step = time_stepper.addTriggerByInterval(advection_time_step.exec());
+    size_t advection_steps = 0;
+    int screening_interval = 100;
+    Real end_time = 2.0;
+    auto &state_recording = time_stepper.addTriggerByInterval(0.05);
+    //----------------------------------------------------------------------
+    //	Construct static cell linked list and Lagrangian configurations.
+    //----------------------------------------------------------------------
+    static_configuration.exec();
+    update_configuration.exec();
+    static_observer_relation.exec();
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
-    wall_normal_direction.exec();
-    rotor_normal_direction.exec();
-    winding_normal_direction.exec();
-    thermowinding_condition.exec();
-    thermofluid_initial_condition.exec();
-    indicate_free_surface.exec();
     constant_gravity.exec();
-    Real dt_thermal = get_thermal_time_step.exec();
-    //----------------------------------------------------------------------
-    //	Time stepping control parameters.
-    //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
-    size_t number_of_iterations = sph_system.RestartStep();
-    int screen_output_interval = 200;
-    Real end_time = 2.0;
-    Real output_interval = 0.05;
-    Real dt = 0.0; /**< Default acoustic time step sizes. */
-    /** statistics for computing CPU time. */
-    TickCount t1 = TickCount::now();
-    TimeInterval interval;
+    constraint_on_rotor.exec();
+    inflow_condition.exec();
+
+    density_regularization.exec();
+    advection_step_setup.exec();
     //----------------------------------------------------------------------
     //	First output before the main loop.
     //----------------------------------------------------------------------
     body_states_recording.writeToFile();
-    write_slot_phi.writeToFile();
+    /** statistics for computing time. */
+    TimeInterval interval_advection_step;
+    TimeInterval interval_acoustic_step;
+    TimeInterval interval_updating_configuration;
     //----------------------------------------------------------------------
-    //	Main loop starts here.
+    //	Main loop of time stepping starts here.
     //----------------------------------------------------------------------
-    while (physical_time < end_time)
+    while (!time_stepper.isEndTime(end_time))
     {
-        Real integration_time = 0.0;
-        /** Integrate time (loop) until the next output time. */
-        while (integration_time < output_interval)
+        //----------------------------------------------------------------------
+        //	the fastest and most frequent acostic time stepping.
+        //----------------------------------------------------------------------
+        TickCount time_instance = TickCount::now();
+        Real acoustic_dt = time_stepper.incrementPhysicalTime(acoustic_time_step);
+        acoustic_step_1st_half.exec(acoustic_dt);
+        inflow_condition.exec();
+        acoustic_step_2nd_half.exec(acoustic_dt);
+        interval_acoustic_step += TickCount::now() - time_instance;
+        //----------------------------------------------------------------------
+        //	the following are slower and less frequent time stepping.
+        //----------------------------------------------------------------------
+        if (advection_step(advection_time_step))
         {
-            Real Dt = get_fluid_advection_time_step_size.exec();
-            update_density_by_summation.exec();
-            viscous_force.exec();
-
-            /** Dynamics including pressure relaxation. */
-            Real relaxation_time = 0.0;
-            while (relaxation_time < Dt)
+            advection_steps++;
+            update_particle_position.exec();
+            // simbody dynamics and constraint
+            Real t_target = time_stepper.getPhysicalTime();
+            if (t_target > simbody_system.getSimbodySystemTime())
             {
-                Real dt = SMIN(SMIN(dt_thermal, get_fluid_time_step_size.exec()), Dt);
+                simbody_system.stepSimbodySystemTo(t_target);
+            }
+            constraint_on_rotor.exec();
 
-                integ.stepBy(dt);
-                constraint_rotor.exec();
-
-                pressure_relaxation.exec(dt);
-                inflow_condition.exec();
-                inflow_condition2.exec();
-                inflow_condition3.exec();
-                inflow_condition4.exec();
-                inflow_condition5.exec();
-                density_relaxation.exec(dt);
-                inflow_condition.exec();
-                inflow_condition2.exec();
-                inflow_condition3.exec();
-                inflow_condition4.exec();
-                inflow_condition5.exec();
-
-                heat_source.exec(dt); /** Implement of heat recources. */
-                thermal_relaxation_complex_winding.exec(dt);
-                thermal_relaxation_complex_oil.exec(dt);
-
-                dt = get_fluid_time_step_size.exec();
-                relaxation_time += dt;
-                integration_time += dt;
-                physical_time += dt;
+            if (advection_steps % screening_interval == 0)
+            {
+                std::cout << std::fixed << std::setprecision(9) << "N=" << advection_steps
+                          << "	Physical Time = " << time_stepper.getPhysicalTime()
+                          << "	advection_dt = " << advection_step.getInterval()
+                          << "	acoustic_dt = " << time_stepper.getGlobalTimeStepSize() << "\n";
             }
 
-            if (number_of_iterations % screen_output_interval == 0)
+            if (state_recording())
             {
-                TickCount current_time = TickCount::now();
-                TimeInterval elapsed_time = current_time - t1 - interval;
-                Real remaining_physical_time = end_time - physical_time;
-                Real estimated_remaining_real_time = elapsed_time.seconds() *
-                                                     (remaining_physical_time / physical_time);
-                int hours = static_cast<int>(estimated_remaining_real_time) / 3600;
-                int minutes = (static_cast<int>(estimated_remaining_real_time) % 3600) / 60;
-                int seconds = static_cast<int>(estimated_remaining_real_time) % 60;
-                std::cout << std::fixed << std::setprecision(9)
-                          << "N=" << number_of_iterations
-                          << " Time = " << physical_time
-                          << " Dt = " << Dt << " dt = " << dt
-                          << " Remaining: " << hours << " h "
-                          << minutes << " min " << seconds << " s\n";
+                body_states_recording.writeToFile();
             }
-            number_of_iterations++;
 
-            /** inflow emitter injection*/
+            /** Particle sort, update cell linked list and configuration. */
+            time_instance = TickCount::now();
             emitter_injection.exec();
-            emitter_injection2.exec();
-            emitter_injection3.exec();
-            emitter_injection4.exec();
-            emitter_injection5.exec();
-            /** outflow delete*/
-            outlet_disposer_outflow_deletion.exec();
-            /** Update cell linked list and configuration. */
-            oil_body.updateCellLinkedList();
-            oil_body_complex.updateConfiguration();
-            oil_thermo_complex.updateConfiguration();
-            winding_thermo_complex.updateConfiguration();
-            winding_slot_contact.updateConfiguration();
-            winding_tooth_contact.updateConfiguration();
-            winding_yoke_contact.updateConfiguration();
+            within_deposer_indication.exec();
+            outflow_particle_deletion.exec();
+            if (advection_steps % 100)
+            {
+                particle_sort.exec();
+            }
+            update_configuration.exec();
+            interval_updating_configuration += TickCount::now() - time_instance;
+
+            /** outer loop for dual-time criteria time-stepping. */
+            time_instance = TickCount::now();
+            density_regularization.exec();
+            advection_step_setup.exec();
+            interval_advection_step += TickCount::now() - time_instance;
         }
-
-        TickCount t2 = TickCount::now();
-        indicate_free_surface.exec();
-        body_states_recording.writeToFile();
-        write_slot_phi.writeToFile(number_of_iterations);
-        write_tooth_phi.writeToFile(number_of_iterations);
-        write_yoke_phi.writeToFile(number_of_iterations);
-        TickCount t3 = TickCount::now();
-        interval += t3 - t2;
     }
-    TickCount t4 = TickCount::now();
-
-    TimeInterval tt;
-    tt = t4 - t1 - interval;
-    std::cout << "Total wall time for computation: " << tt.seconds()
-              << " seconds." << std::endl;
-
-    // write_slot_phi.generateDataBase(0.005, 0.005);
-    write_slot_phi.testResult();
+    //----------------------------------------------------------------------
+    // Summary for wall time used for real computations.
+    //----------------------------------------------------------------------
+    std::cout << std::fixed << std::setprecision(9) << "interval_advection_step ="
+              << interval_advection_step.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_acoustic_step = "
+              << interval_acoustic_step.seconds() << "\n";
+    std::cout << std::fixed << std::setprecision(9) << "interval_updating_configuration = "
+              << interval_updating_configuration.seconds() << "\n";
 
     return 0;
 }
