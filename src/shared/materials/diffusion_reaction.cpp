@@ -15,7 +15,7 @@ BaseDiffusion::BaseDiffusion(const std::string &species_name, Real cv)
 //=================================================================================================//
 Real BaseDiffusion::getDiffusionTimeStepSize(Real smoothing_length)
 {
-    return 0.5 * smoothing_length * smoothing_length / getReferenceDiffusivity() / Real(Dimensions);
+  return 0.5 * cv_ * smoothing_length * smoothing_length / getReferenceDiffusivity() / Real(Dimensions);
 }
 //=================================================================================================//
 IsotropicDiffusion::IsotropicDiffusion(const std::string &species_name,
