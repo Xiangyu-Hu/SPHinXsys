@@ -408,13 +408,12 @@ struct OphelieParameters
     Real coil_current_scale_ = 1.0;
     /** Complex edge-flux: solve both phi_real and phi_imag chains (default off preserves H v4). */
     bool edge_flux_complex_ = false;
-    /** Doc212: complex entry uses shared edge EMF for imag+real (default). Set false only for
-     *  diagnostic A/B vs historical DivΣA imag — not a second production path. */
+    /** Doc213: shared edge EMF imag+real — rollback via --phi-rhs-operator=legacy-flux.
+     *  Production default is DivΣA (finalize sets edge=false, div=true). */
     bool doc212_shared_complex_edge_rhs_ = true;
-    /** Doc212 diagnostic: unified DivΣA for imag+real (phase-symmetric alternative to shared edge).
-     *  Not production until phase + field + edge gates are re-proven. */
+    /** Doc213 production (finalize): unified DivΣA imag+real. Wins over edge when both set. */
     bool doc212_shared_complex_div_sigma_rhs_ = false;
-    /** Doc212 diagnostic: unified pairwise (A_i−A_j)·g RHS for imag+real (non-edge LegacyFlux form). */
+    /** Diagnostic: unified pairwise (A_i−A_j)·g RHS imag+real. */
     bool doc212_shared_complex_pairwise_rhs_ = false;
     /** A_ind one-way: after K[J], re-solve complex edge-flux with A_total (Stage 3.5). */
     bool aind_one_way_feedback_resolve_ = true;

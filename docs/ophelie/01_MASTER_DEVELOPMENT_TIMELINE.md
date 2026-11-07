@@ -99,6 +99,8 @@ Build an **OPHELIE-inspired** complex phasor EM solver on SPHinXsys SYCL, then c
 | 2026-10-18 | Doc180: viscosity analytic refs (CK explicit + CPU implicit) + full EM–thermal–flow cold 2.3 s | P1/P2 PASS; u0+0.7/1.4/2.1; energy~6e-6; freeze thermal-dt=0.005; pack `ophelie_doc180_viscosity_coupling_2026-10-18.tar.gz` |
 | 2026-10-18 | Doc183/184: field export + Python circulation diagnostics + A/B/C short matrix | flow yes, closed cell no at 2.3 s cold T0; pack `ophelie_doc183_python_circulation_2026-10-18.tar.gz` |
 | 2026-10-19 | Doc186: bulk-drift classifier correction + uniform buoyancy U0/U1/U2 | classifier fixed; U0 quiet; U1/U2 persistent drift; downgrade circulation detectability |
+| 2026-11-07 | Doc212: shared complex LegacyFlux EMF; cavity CFL; French finalize; F5/F6 | phase+edge PASS; field L2~5–6% PARTIAL; DivΣA/pairwise diagnostic-only |
+| 2026-11-07 | Doc213 plan: LegacyFlux EMF skin/field closure (G0 baselines) | production stays shared EMF; no RHS swap |
 
 ---
 

@@ -565,8 +565,9 @@ inline OphelieComplexEdgeFluxSolveReport solveOphelieComplexEdgeFluxWithCurrentA
     // Doc212 E-A: complex edge-flux uses one shared component RHS for imag and real.
     // Production previously mixed DivΣA (imag) with edge EMF (real); that breaks A→iA.
     // Historical DivΣA imag path remains only when edge_flux_complex_ is false.
-    // Diagnostic: doc212_shared_complex_div_sigma_rhs_ → unified DivΣA imag+real (not production).
-    // Diagnostic: doc212_shared_complex_pairwise_rhs_ → unified pairwise (A_i−A_j) imag+real.
+    // Doc213 production: doc212_shared_complex_div_sigma_rhs_ → unified DivΣA imag+real.
+    // Diagnostic: doc212_shared_complex_pairwise_rhs_ → unified pairwise (A_i−A_j).
+    // Rollback: shared edge EMF when doc212_shared_complex_edge_rhs_ (via --phi-rhs-operator=legacy-flux).
     const bool shared_complex_div =
         params.edge_flux_complex_ && params.doc212_shared_complex_div_sigma_rhs_;
     const bool shared_complex_pairwise =
@@ -577,12 +578,11 @@ inline OphelieComplexEdgeFluxSolveReport solveOphelieComplexEdgeFluxWithCurrentA
     OpheliePhiNeumannRhsCorrectionStats neumann_stats;
     if (shared_complex_div)
     {
-        std::cout << "[ophelie][doc212] DIAGNOSTIC: shared complex DivΣA ON (imag+real; not production)"
-                  << std::endl;
+        std::cout << "[ophelie][doc213] shared complex DivΣA ON (imag+real; production)" << std::endl;
     }
     else if (shared_complex_pairwise)
     {
-        std::cout << "[ophelie][doc212] DIAGNOSTIC: shared complex pairwise (A_i-A_j) ON (imag+real; not production)"
+        std::cout << "[ophelie][doc213] DIAGNOSTIC: shared complex pairwise (A_i-A_j) ON (imag+real; not production)"
                   << std::endl;
     }
     else if (!params.doc212_shared_complex_edge_rhs_ && params.edge_flux_complex_)

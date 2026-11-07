@@ -126,15 +126,20 @@ inline int runOphelieDoc212Ec0BoxInsulation(const OphelieDoc212Ec0BoxCli &cli)
     params.use_a_total_for_edge_flux_ = true;
     params.edge_flux_normalization_mode_ = OphelieEdgeFluxNormalizationMode::Off;
     params.edge_flux_solver_local_rhs_scale_ = Real(1);
+    // Insulation manufactured solution (constant A → J=0) needs shared LegacyFlux EMF:
+    // DivΣA RHS≈0 and the shell Neumann patch alone leave φ≈0 (G4c Jrms/Jchar~1 FAIL).
+    // Doc213 cylinder production stays DivΣA; EC0 deliberately pins EMF rollback.
     params.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::LegacyFlux;
     params.phi_lhs_operator_kind_ = OpheliePhiLhsOperatorKind::LegacyPairwise;
+    params.doc212_shared_complex_div_sigma_rhs_ = false;
+    params.doc212_shared_complex_edge_rhs_ = true;
+    params.doc212_shared_complex_pairwise_rhs_ = false;
     params.phi_boundary_mode_ = OpheliePhiBoundaryMode::OneSidedNeumann;
     params.phi_rhs_project_zero_mean_ = true;
     params.phi_gauge_penalty_ = Real(1.0e-8);
     params.phi_boundary_lhs_grad_neumann_ = false;
     params.phi_boundary_grad_neumann_projection_ = false;
     params.phi_boundary_normal_source_ = OpheliePhiBoundaryNormalSource::AnalyticBox;
-    params.doc212_shared_complex_edge_rhs_ = true;
 
     const Vecd center = Vecd::Zero();
     const Vecd half = cli.half;

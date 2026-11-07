@@ -13,6 +13,7 @@
 #include "electromagnetic_ophelie_doc199_e3_gauge_transform.h"
 #include "electromagnetic_ophelie_doc199_edge_continuity_audit.h"
 #include "electromagnetic_ophelie_doc212_ec0_box_insulation.h"
+#include "electromagnetic_ophelie_doc213_ec1_thin_plate.h"
 #include "electromagnetic_ophelie_doc199_p1_power_decomposition.h"
 #include "electromagnetic_ophelie_doc201_a1_phase_rotate.h"
 #include "electromagnetic_ophelie_doc201_unified_candidate.h"
@@ -106,10 +107,12 @@ struct SkinLocalCli
     bool doc201_u5_phase_rotate = false;
     /** Doc212 E-C0: thick-box insulation Neumann (early return). */
     bool doc212_ec0_box_insulation = false;
+    bool doc213_ec1_thin_plate = false;
     /** Doc212 diagnostic: force imag DivΣA (shared complex edge OFF). Not production. */
     bool doc212_imag_div_sigma = false;
     bool doc212_shared_div_sigma = false;
     bool doc212_shared_pairwise = false;
+    bool doc212_shared_legacy_flux = false;
 };
 
 inline void applyLocalCli(int ac, char *av[], SkinLocalCli &cli)
@@ -320,6 +323,10 @@ inline void applyLocalCli(int ac, char *av[], SkinLocalCli &cli)
         {
             cli.doc212_ec0_box_insulation = true;
         }
+        else if (std::strcmp(av[i], "--doc213-ec1-thin-plate") == 0)
+        {
+            cli.doc213_ec1_thin_plate = true;
+        }
         else if (std::strcmp(av[i], "--doc212-imag-rhs=div-sigma-a") == 0)
         {
             cli.doc212_imag_div_sigma = true;
@@ -331,6 +338,10 @@ inline void applyLocalCli(int ac, char *av[], SkinLocalCli &cli)
         else if (std::strcmp(av[i], "--doc212-complex-rhs=legacy-pairwise") == 0)
         {
             cli.doc212_shared_pairwise = true;
+        }
+        else if (std::strcmp(av[i], "--doc212-complex-rhs=legacy-flux") == 0)
+        {
+            cli.doc212_shared_legacy_flux = true;
         }
     }
 }
@@ -376,6 +387,17 @@ int main(int ac, char *av[])
         }
         return runOphelieDoc212Ec0BoxInsulation<MainExecutionPolicy>(ec0);
     }
+    if (local.doc213_ec1_thin_plate)
+    {
+        OphelieDoc213Ec1ThinCli ec1;
+        ec1.enabled = true;
+        if (local.dp > TinyReal)
+        {
+            ec1.dp = local.dp;
+            ec1.half[2] = Real(1.75) * local.dp; // shell=2dp overlaps both ±z; keep some interior
+        }
+        return runOphelieDoc213Ec1ThinPlate<MainExecutionPolicy>(ec1);
+    }
 
     OphelieParameters params;
     params.sigma_glass_ = local.sigma;
@@ -420,21 +442,32 @@ int main(int ac, char *av[])
                   << " (opt-in T1; production DivΣA+Neumann shell remains FAIL pending redesign)"
                   << std::endl;
     }
-    // After finalize (which may set LegacyFlux for complex): optional Doc212 field A/B diagnostics.
+    // After finalize (Doc213 default = shared DivΣA): optional RHS overrides.
     if (local.doc212_shared_div_sigma)
     {
         params.doc212_shared_complex_div_sigma_rhs_ = true;
+        params.doc212_shared_complex_pairwise_rhs_ = false;
         params.doc212_shared_complex_edge_rhs_ = false;
         params.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::DivSigmaA;
-        std::cout << "[ophelie][doc212] DIAGNOSTIC complex RHS=div-sigma-a (shared imag+real; not production)"
+        std::cout << "[ophelie][doc213] complex RHS=div-sigma-a (shared imag+real; matches production)"
                   << std::endl;
     }
     else if (local.doc212_shared_pairwise)
     {
         params.doc212_shared_complex_pairwise_rhs_ = true;
+        params.doc212_shared_complex_div_sigma_rhs_ = false;
         params.doc212_shared_complex_edge_rhs_ = false;
         params.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::LegacyFlux;
-        std::cout << "[ophelie][doc212] DIAGNOSTIC complex RHS=legacy-pairwise (shared imag+real; not production)"
+        std::cout << "[ophelie][doc213] DIAGNOSTIC complex RHS=legacy-pairwise (shared imag+real; not production)"
+                  << std::endl;
+    }
+    else if (local.doc212_shared_legacy_flux)
+    {
+        params.doc212_shared_complex_edge_rhs_ = true;
+        params.doc212_shared_complex_div_sigma_rhs_ = false;
+        params.doc212_shared_complex_pairwise_rhs_ = false;
+        params.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::LegacyFlux;
+        std::cout << "[ophelie][doc213] ROLLBACK complex RHS=legacy-flux shared EMF (Doc212 pin; not Doc213 default)"
                   << std::endl;
     }
     else if (local.doc212_imag_div_sigma)

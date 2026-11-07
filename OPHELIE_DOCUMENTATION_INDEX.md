@@ -6,7 +6,7 @@ All documentation is **English only**, except the client report:
 
 **Main index:** [`docs/ophelie/README.md`](docs/ophelie/README.md)
 
-**Current handoff / next plan:** Doc201+Doc202 **packed** — [`203`](docs/ophelie/203_DOC201_DOC202_ROUND_PACK_2026-10-31.md) · `packs/Doc201_Doc202_UNIFIED_EM_LIVE_B2_2026-10-31.tar.gz` · H2 stop [`H2_PAIRED_LID_FS_REVIEW`](docs/ophelie/reference/doc202_runs/H2_PAIRED_LID_FS_REVIEW.md) · next [`NEXT_STAGE_DECISION`](docs/ophelie/reference/doc202_runs/NEXT_STAGE_DECISION.md)
+**Current handoff / next plan:** Doc213 — LegacyFlux EMF skin/field closure — [`213`](docs/ophelie/213_OPHELIE_LEGACYFLUX_EMF_SKIN_CLOSURE_CURSOR_PLAN_2026-11-07.md) · status [`ROUND213_STATUS`](docs/ophelie/reference/doc213_runs/00_entry/ROUND213_STATUS.md) · G0 [`G0_BASELINE_RUN_COMMANDS`](docs/ophelie/reference/doc213_runs/E_emf/G0_BASELINE_RUN_COMMANDS.md) · Doc212 closed PARTIAL field
 
 **TEAM7 reference data:** [`tests/extra_source_and_tests/3d_examples/reference_data/team7/`](tests/extra_source_and_tests/3d_examples/reference_data/team7/) (see [`docs/TEAM7-reference/README.md`](docs/TEAM7-reference/README.md))
 

@@ -54,6 +54,9 @@
 | [202_OPHELIE_B2_LID_SIDE_SPLIT_ACOUSTIC_CURSOR_PLAN_2026-10-31.md](202_OPHELIE_B2_LID_SIDE_SPLIT_ACOUSTIC_CURSOR_PLAN_2026-10-31.md) | Doc202: B2 lid/side acoustic split (non-dens) |
 | [`reference/doc202_runs/`](reference/doc202_runs/) | H1/H1b split reviews; [`H1_SPLIT_REVIEW.md`](reference/doc202_runs/H1_SPLIT_REVIEW.md) |
 | [203_DOC201_DOC202_ROUND_PACK_2026-10-31.md](203_DOC201_DOC202_ROUND_PACK_2026-10-31.md) | Round pack pointer; `packs/Doc201_Doc202_UNIFIED_EM_LIVE_B2_2026-10-31.tar.gz` |
+| [212_OPHELIE_TARGETED_HYDRO_EM_REPAIR_CURSOR_PLAN_2026-11-06.md](212_OPHELIE_TARGETED_HYDRO_EM_REPAIR_CURSOR_PLAN_2026-11-06.md) | Doc212: cavity CFL + shared complex EMF; phase/edge PASS; field PARTIAL |
+| [213_OPHELIE_LEGACYFLUX_EMF_SKIN_CLOSURE_CURSOR_PLAN_2026-11-07.md](213_OPHELIE_LEGACYFLUX_EMF_SKIN_CLOSURE_CURSOR_PLAN_2026-11-07.md) | Doc213: EMF-internal skin/field closure (current) |
+| [`reference/doc213_runs/`](reference/doc213_runs/) | G0 baselines / EMF surgery evidence（本地 runs） |
 
 **Geometry freeze:** glass Ø **500 mm** (thesis; user-confirmed 2026-09-30). Crucible Ø650 mm ≠ melt diameter.  
 σ(T) tables: [`reference/jacoutot_sigma_t/`](reference/jacoutot_sigma_t/)

@@ -124,7 +124,7 @@ inline void logOpheliePhiProjectionRouteWarnings(const OphelieParameters &params
     {
         std::cout << "[ophelie] edge-flux production: --ophelie-current-form=edge-flux "
                      "(pairwise electromotive drop + JouleHeatEdge + edge diagnostics; "
-                     "complex: phi RHS=legacy-flux shared EMF (Doc212); "
+                     "complex: phi RHS=div-sigma-a shared (Doc213; EMF edge_rel diagnostic); "
                      "imag-only legacy may still use DivΣA)."
                   << std::endl;
         return;
@@ -137,7 +137,7 @@ inline void logOpheliePhiProjectionRouteWarnings(const OphelieParameters &params
     if (kind == OpheliePhiProjectionOperatorKind::EdgeFlux)
     {
         std::cout << "[ophelie][warning] edge-flux (phi-only) changes only the phi equation pairing "
-                     "(legacy-pairwise + div-sigma-a; legacy-flux RHS is diagnostic rollback)."
+                     "(legacy-pairwise + div-sigma-a production Doc213; legacy-flux EMF is rollback)."
                   << std::endl;
         std::cout << "[ophelie][warning] E/J/JouleHeat postprocess still uses particle gradient/divergence; "
                      "use --ophelie-current-form=edge-flux for full edge-flux solver." << std::endl;
@@ -214,23 +214,41 @@ inline void finalizeOphelieCurrentFormConfiguration(OphelieParameters &params, O
     if (params.ophelie_current_form_ == OphelieCurrentFormKind::EdgeFlux)
     {
         // Doc198: imag-only EdgeFlux pairing used DivΣA RHS + LegacyPairwise LHS.
-        // Doc212: complex edge-flux requires identical LegacyFlux/edge EMF on imag and real.
+        // Doc212: complex requires identical imag/real RHS (shared); LegacyFlux EMF was the Doc212 pin.
+        // Doc213: G0–G2 proved EMF nodal ΣC(A_avg·Δx) pollutes φ on div-free A; production → shared DivΣA.
+        // Rollback: --phi-rhs-operator=legacy-flux (restores shared edge EMF).
         const OpheliePhiRhsOperatorKind rhs_keep = params.phi_rhs_operator_kind_;
         const OpheliePhiLhsOperatorKind lhs_keep = params.phi_lhs_operator_kind_;
         applyOpheliePhiProjectionOperatorKind(params, OpheliePhiProjectionOperatorKind::EdgeFlux);
         if (params.edge_flux_complex_ && !cli_options.phi_rhs_operator_user_set)
         {
-            params.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::LegacyFlux;
-            std::cout << "[ophelie][doc212] complex edge-flux production profile: "
-                         "phi_rhs=legacy-flux (imag+real shared EMF); lhs=legacy-pairwise"
+            params.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::DivSigmaA;
+            params.doc212_shared_complex_div_sigma_rhs_ = true;
+            params.doc212_shared_complex_pairwise_rhs_ = false;
+            params.doc212_shared_complex_edge_rhs_ = false;
+            std::cout << "[ophelie][doc213] complex edge-flux production profile: "
+                         "phi_rhs=div-sigma-a (imag+real shared); lhs=legacy-pairwise; "
+                         "EMF edge_rel diagnostic-only. Rollback: --phi-rhs-operator=legacy-flux"
                       << std::endl;
         }
         if (cli_options.phi_rhs_operator_user_set)
         {
             params.phi_rhs_operator_kind_ = rhs_keep;
+            if (rhs_keep == OpheliePhiRhsOperatorKind::LegacyFlux)
+            {
+                params.doc212_shared_complex_div_sigma_rhs_ = false;
+                params.doc212_shared_complex_pairwise_rhs_ = false;
+                params.doc212_shared_complex_edge_rhs_ = true;
+            }
+            else
+            {
+                params.doc212_shared_complex_div_sigma_rhs_ = true;
+                params.doc212_shared_complex_pairwise_rhs_ = false;
+                params.doc212_shared_complex_edge_rhs_ = false;
+            }
             std::cout << "[ophelie] edge-flux: keeping user --phi-rhs-operator="
                       << (rhs_keep == OpheliePhiRhsOperatorKind::LegacyFlux ? "legacy-flux" : "div-sigma-a")
-                      << " (diagnostic override)" << std::endl;
+                      << " (override; Doc213 default is div-sigma-a)" << std::endl;
         }
         if (cli_options.phi_lhs_operator_user_set)
         {

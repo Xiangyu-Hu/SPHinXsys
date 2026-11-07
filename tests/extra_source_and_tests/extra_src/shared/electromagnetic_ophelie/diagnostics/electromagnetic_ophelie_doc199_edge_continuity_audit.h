@@ -294,18 +294,18 @@ inline OphelieDoc199EdgeContinuityReport execOphelieDoc199EdgeContinuityAudit(
     }
     rep.edge_res_rel_l2 = ophelieDoc199RelL2(rep.all_edge);
 
-    // Compare production DivSigmaA / LegacyFlux RHS to φ=0 edge source
+    // Compare production DivSigmaA / LegacyFlux RHS to φ=0 edge source (keep vectors for CSV)
+    std::vector<Real> rhs_div(n, Real(0));
+    std::vector<Real> rhs_leg(n, Real(0));
     {
         OphelieParameters p_div = params;
         p_div.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::DivSigmaA;
         setupOpheliePhiImagRhsFromASrc<ExecutionPolicy>(glass_body, inner, names, p_div);
-        std::vector<Real> rhs_div(n, Real(0));
         hostReadScalarField(particles, names.phi_rhs_imag, rhs_div.data(), n);
 
         OphelieParameters p_leg = params;
         p_leg.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::LegacyFlux;
         setupOpheliePhiImagRhsFromASrc<ExecutionPolicy>(glass_body, inner, names, p_leg);
-        std::vector<Real> rhs_leg(n, Real(0));
         hostReadScalarField(particles, names.phi_rhs_imag, rhs_leg.data(), n);
 
         rep.rhs_div_vs_edge_src_rel =
@@ -579,6 +579,7 @@ inline OphelieDoc199EdgeContinuityReport execOphelieDoc199EdgeContinuityAudit(
         const Real *fb_csv = particles.getVariableDataByName<Real>(names.edge_recon_fallback);
         std::ofstream csv(particle_csv_path);
         csv << "i,x,y,z,r,region,Vol,phi_imag,phi_lhs,phi_rhs_prod,lin_res,edge_res,edge_src_phi0,"
+               "rhs_div_sigma_a,rhs_legacy_flux,rhs_leg_minus_div,"
                "div_j_re,div_j_im,|J|,recon_fallback,"
                "Jx_re,Jy_re,Jz_re,Jx_im,Jy_im,Jz_im\n";
         for (size_t i = 0; i < n; ++i)
@@ -591,7 +592,8 @@ inline OphelieDoc199EdgeContinuityReport execOphelieDoc199EdgeContinuityAudit(
             csv << i << "," << pos[i][0] << "," << pos[i][1] << "," << pos[i][2] << "," << r << ","
                 << ophelieDoc199RegionTag(pos[i], center, radius, half_height) << "," << vol[i] << "," << phi[i] << ","
                 << lhs_prod[i] << "," << rhs_prod[i] << "," << lin << "," << edge_res[i] << "," << edge_src_signed[i]
-                << "," << div_j_re_host[i] << "," << div_j_im_host[i] << "," << jn << "," << fb_csv[i] << ","
+                << "," << rhs_div[i] << "," << rhs_leg[i] << "," << (rhs_leg[i] - rhs_div[i]) << ","
+                << div_j_re_host[i] << "," << div_j_im_host[i] << "," << jn << "," << fb_csv[i] << ","
                 << j_re[i][0] << "," << j_re[i][1] << "," << j_re[i][2] << "," << j_im[i][0] << "," << j_im[i][1]
                 << "," << j_im[i][2] << "\n";
         }
@@ -632,12 +634,18 @@ inline OphelieDoc199EdgeContinuityReport execOphelieDoc199EdgeContinuityAudit(
     const bool lin_small = rep.phi_eq_res_vol <= Real(0.01);
     const bool eps_gate = rep.epsilon_div_complex <= Real(0.01);
     const bool eps_dual_gate = rep.epsilon_div_dual_gradphi <= Real(0.01);
+    const bool emf_edge_diagnostic_only =
+        params.phi_rhs_operator_kind_ == OpheliePhiRhsOperatorKind::DivSigmaA ||
+        params.doc212_shared_complex_div_sigma_rhs_ || params.doc212_shared_complex_pairwise_rhs_;
     std::cout << "[ophelie][doc199][e1-cont] gates edge_rel_l2<=1%=" << (edge_gate ? 1 : 0)
               << " edge_rel_interior<=1%=" << (edge_int_gate ? 1 : 0)
               << " phi_eq_res_vol<=1%=" << (lin_small ? 1 : 0) << " epsilon_div<=1%=" << (eps_gate ? 1 : 0)
               << " epsilon_div_dual<=1%=" << (eps_dual_gate ? 1 : 0)
-              << " note: EDGE_CONTINUITY_FAIL if lin_ok && edge_fail; epsilon_div is edge-recon SPH;"
-              << " epsilon_div_dual is Gradφ+A; epsilon_div_edge_kirchhoff is Σq pairing (not a gate)"
+              << " note: epsilon_div is edge-recon SPH; epsilon_div_dual is Gradφ+A; "
+              << "epsilon_div_edge_kirchhoff is Σq pairing (not a gate); "
+              << (emf_edge_diagnostic_only
+                      ? "Doc213: EMF edge_rel is diagnostic-only when RHS=DivΣA/pairwise (not a veto)"
+                      : "EDGE_CONTINUITY_FAIL if lin_ok && edge_fail under LegacyFlux EMF RHS")
               << std::endl;
     if (!particle_csv_path.empty())
         std::cout << "[ophelie][doc199][e1-cont] particle_csv=" << particle_csv_path << std::endl;
