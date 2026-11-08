@@ -507,8 +507,8 @@ int main(int ac, char *av[])
     IsotropicDiffusion oil_isotropic_diffusion(temperature_species_name, k_oil);
     IsotropicDiffusion winding_isotropic_diffusion(temperature_species_name, k_winding);
     auto &thermal_time_step = main_methods.addReduceDynamicsGroup<ReduceMin<Real>>();
-    thermal_time_step.add(&main_methods.addReduceDynamics<GetDiffusionTimeStepSize>(oil_body, oil_isotropic_diffusion));
-    thermal_time_step.add(&main_methods.addReduceDynamics<GetDiffusionTimeStepSize>(winding, winding_isotropic_diffusion));
+    thermal_time_step.add(&main_methods.addReturnDynamics<GetDiffusionTimeStepSize>(oil_body, &oil_isotropic_diffusion));
+    thermal_time_step.add(&main_methods.addReturnDynamics<GetDiffusionTimeStepSize>(winding, &winding_isotropic_diffusion));
 
     auto &all_runge_kutta_1st_stage = main_methods.addParticleDynamicsGroup();
     auto &all_runge_kutta_2nd_stage = main_methods.addParticleDynamicsGroup();
