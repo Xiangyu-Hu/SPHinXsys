@@ -503,6 +503,26 @@ int main(int ac, char *av[])
     auto &emitter_injection = main_methods.addStateDynamics<fluid_dynamics::EmitterInflowInjectionCK>(emitters);
     auto &within_deposer_indication = main_methods.addStateDynamics<fluid_dynamics::WithinDisposerIndication>(outlet_disposer);
     auto &outflow_particle_deletion = main_methods.addStateDynamics<fluid_dynamics::OutflowParticleDeletion>(oil_body);
+
+    IsotropicDiffusion oil_isotropic_diffusion(temperature_species_name, k_oil);
+    IsotropicDiffusion winding_isotropic_diffusion(temperature_species_name, k_winding);
+    auto &thermal_time_step = main_methods.addReduceDynamicsGroup<ReduceMin<Real>>();
+    thermal_time_step.add(&main_methods.addReduceDynamics<GetDiffusionTimeStepSize>(oil_body, oil_isotropic_diffusion));
+    thermal_time_step.add(&main_methods.addReduceDynamics<GetDiffusionTimeStepSize>(winding, winding_isotropic_diffusion));
+
+    auto &all_runge_kutta_1st_stage = main_methods.addParticleDynamicsGroup();
+    auto &all_runge_kutta_2nd_stage = main_methods.addParticleDynamicsGroup();
+
+    auto &oil_runge_kutta_1st_stage =
+        main_methods.addInteractionDynamicsOneLevel<
+            DiffusionRelaxationCK, RungeKutta1stStage, IsotropicDiffusion, LinearCorrectionCK>(
+            oil_body_inner, &oil_isotropic_diffusion);
+
+    auto &winding_runge_kutta_1st_stage =
+        main_methods.addInteractionDynamicsOneLevel<
+            DiffusionRelaxationCK, RungeKutta1stStage, IsotropicDiffusion, LinearCorrectionCK>(
+            winding_inner, &winding_isotropic_diffusion);
+
     //----------------------------------------------------------------------
     //	Define the multi-body system
     //----------------------------------------------------------------------
