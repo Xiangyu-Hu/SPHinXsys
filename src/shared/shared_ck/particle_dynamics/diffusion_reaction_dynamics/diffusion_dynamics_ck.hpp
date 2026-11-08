@@ -14,11 +14,11 @@
 namespace SPH
 {
 //=================================================================================================//
-template <class DiffusionType, class BaseInteractionType>
+template <class DiffusionType, class BaseLocalDynamicsType>
 template <class DynamicsIdentifier>
-DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
-    DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion *abstract_diffusion)
-    : BaseInteractionType(identifier),
+BaseDiffusionDynamics<DiffusionType, BaseLocalDynamicsType>::
+    BaseDiffusionDynamics(DynamicsIdentifier &identifier, AbstractDiffusion *abstract_diffusion)
+    : BaseLocalDynamicsType(identifier),
       diffusions_(this->obtainConcreteDiffusions(*abstract_diffusion)),
       species_names_(this->obtainSpeciesNames(diffusions_)),
       dv_species_(registerSpecies(this->particles_, species_names_)),
@@ -28,8 +28,8 @@ DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
     this->particles_->template addVariableToWrite<Real>(dv_species_);
 }
 //=================================================================================================//
-template <class DiffusionType, class BaseInteractionType>
-DiscreteVariable<Real> *DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::registerSpecies(
+template <class DiffusionType, class BaseLocalDynamicsType>
+DiscreteVariable<Real> *BaseDiffusionDynamics<DiffusionType, BaseLocalDynamicsType>::registerSpecies(
     BaseParticles *particles, StdVec<std::string> &species_names, std::string suffix)
 {
     if (species_names.size() == 1)
@@ -39,8 +39,8 @@ DiscreteVariable<Real> *DiffusionRelaxationCK<DiffusionType, BaseInteractionType
     return particles->template registerStateVariable<Real>("Species" + suffix, species_names);
 }
 //=================================================================================================//
-template <class DiffusionType, class BaseInteractionType>
-DiscreteVariable<Real> *DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::getSpeciesByName(
+template <class DiffusionType, class BaseLocalDynamicsType>
+DiscreteVariable<Real> *BaseDiffusionDynamics<DiffusionType, BaseLocalDynamicsType>::getSpeciesByName(
     BaseParticles *particles, StdVec<std::string> &species_names, std::string suffix)
 {
     if (species_names.size() == 1)
@@ -50,15 +50,15 @@ DiscreteVariable<Real> *DiffusionRelaxationCK<DiffusionType, BaseInteractionType
     return particles->template getVariableByName<Real>("Species" + suffix);
 }
 //=================================================================================================//
-template <class DiffusionType, class BaseInteractionType>
+template <class DiffusionType, class BaseLocalDynamicsType>
 template <class DynamicsIdentifier>
-DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
-    DiffusionRelaxationCK(DynamicsIdentifier &identifier)
-    : DiffusionRelaxationCK(
+BaseDiffusionDynamics<DiffusionType, BaseLocalDynamicsType>::
+    BaseDiffusionDynamics(DynamicsIdentifier &identifier)
+    : BaseDiffusionDynamics(
           identifier, &identifier.getSPHBody().template getMaterialProperty<AbstractDiffusion>()) {}
 //=================================================================================================//
-template <class DiffusionType, class BaseInteractionType>
-StdVec<DiffusionType *> DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
+template <class DiffusionType, class BaseLocalDynamicsType>
+StdVec<DiffusionType *> BaseDiffusionDynamics<DiffusionType, BaseLocalDynamicsType>::
     obtainConcreteDiffusions(AbstractDiffusion &abstract_diffusion)
 {
     StdVec<AbstractDiffusion *> all_diffusions = abstract_diffusion.AllDiffusions();
@@ -70,8 +70,8 @@ StdVec<DiffusionType *> DiffusionRelaxationCK<DiffusionType, BaseInteractionType
     return diffusions;
 }
 //=================================================================================================//
-template <class DiffusionType, class BaseInteractionType>
-StdVec<std::string> DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
+template <class DiffusionType, class BaseLocalDynamicsType>
+StdVec<std::string> BaseDiffusionDynamics<DiffusionType, BaseLocalDynamicsType>::
     obtainSpeciesNames(StdVec<DiffusionType *> &diffusions)
 {
     StdVec<std::string> diffusion_species_names;

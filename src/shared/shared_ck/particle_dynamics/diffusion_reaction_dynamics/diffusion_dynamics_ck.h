@@ -39,12 +39,8 @@
 
 namespace SPH
 {
-template <typename... InteractionTypes>
-class DiffusionRelaxationCK;
-
-template <class DiffusionType, class BaseInteractionType>
-class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
-    : public BaseInteractionType
+template <class DiffusionType, class BaseLocalDynamicsType>
+class BaseDiffusionDynamics : public BaseLocalDynamicsType
 {
     StdVec<DiffusionType *> obtainConcreteDiffusions(AbstractDiffusion &abstract_diffusion);
     StdVec<std::string> obtainSpeciesNames(StdVec<DiffusionType *> &diffusions);
@@ -52,13 +48,13 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
   public:
     typedef DiffusionType Diffusion;
     template <class DynamicsIdentifier>
-    DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion *abstract_diffusion);
+    BaseDiffusionDynamics(DynamicsIdentifier &identifier, AbstractDiffusion *abstract_diffusion);
     template <class DynamicsIdentifier>
-    explicit DiffusionRelaxationCK(DynamicsIdentifier &identifier);
+    explicit BaseDiffusionDynamics(DynamicsIdentifier &identifier);
     template <typename BodyRelationType, typename FirstArg>
-    DiffusionRelaxationCK(DynamicsArgs<BodyRelationType, FirstArg> parameters)
-        : DiffusionRelaxationCK(parameters.identifier_, std::get<0>(parameters.others_)) {};
-    virtual ~DiffusionRelaxationCK() {};
+    BaseDiffusionDynamics(DynamicsArgs<BodyRelationType, FirstArg> parameters)
+        : BaseDiffusionDynamics(parameters.identifier_, std::get<0>(parameters.others_)) {};
+    virtual ~BaseDiffusionDynamics() {};
     StdVec<DiffusionType *> &getDiffusions() { return diffusions_; };
     StdVec<std::string> &getSpeciesNames() { return species_names_; };
     DiscreteVariable<Real> *registerSpecies(
@@ -73,11 +69,14 @@ class DiffusionRelaxationCK<DiffusionType, BaseInteractionType>
     DiscreteVariable<Real> *dv_species_dt_;
 };
 
+template <typename... InteractionTypes>
+class DiffusionRelaxationCK;
+
 template <class DiffusionType, class KernelCorrectionType, class... Parameters>
 class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrectionType, Parameters...>>
-    : public DiffusionRelaxationCK<DiffusionType, Interaction<Inner<Parameters...>>>
+    : public BaseDiffusionDynamics<DiffusionType, Interaction<Inner<Parameters...>>>
 {
-    using BaseInteraction = DiffusionRelaxationCK<DiffusionType, Interaction<Inner<Parameters...>>>;
+    using BaseInteraction = BaseDiffusionDynamics<DiffusionType, Interaction<Inner<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
     using InterParticleCoeff = typename DiffusionType::InterParticleCoeff;
 
@@ -110,10 +109,10 @@ class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrecti
 template <class DiffusionType, template <typename...> class BoundaryType,
           class KernelCorrectionType, class... Parameters>
 class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType, Parameters...>>
-    : public DiffusionRelaxationCK<DiffusionType, Interaction<Contact<Parameters...>>>
+    : public BaseDiffusionDynamics<DiffusionType, Interaction<Contact<Parameters...>>>
 {
     UniquePtrKeeper<BoundaryType<DiffusionType>> boundary_keeper_;
-    using BaseInteraction = DiffusionRelaxationCK<DiffusionType, Interaction<Contact<Parameters...>>>;
+    using BaseInteraction = BaseDiffusionDynamics<DiffusionType, Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
     using BoundaryKernel = typename BoundaryType<DiffusionType>::ComputingKernel;
 
