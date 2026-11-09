@@ -1,0 +1,109 @@
+{
+  "schema": "gpu_paper_c1_frozen_config_v1",
+  "updated": "2026-11-09",
+  "purpose": "Industrial C1 gearbox performance baseline for SYCL GPU paper; COMMON resolution only; compare backends/hardware under identical physics.",
+  "repositories": {
+    "archive": {
+      "remote": "git@github.com:Xiangyu-Hu/SPHinXsys.git",
+      "branch": "paper/sycl-gpu-benchmarks",
+      "results_root": "docs/gpu_paper_discussion/results/C1_gearbox"
+    },
+    "executable_case": {
+      "remote": "git@github.com:Xiangyu-Hu/SPHinXsys-EinSIMO.git",
+      "branch": "yongchuan/reducer",
+      "sycl_case": "tests/tests_extra/test_3d_gearbox_real_sycl",
+      "cpu_case": "tests/tests_extra/test_3d_gearbox_real_cpu",
+      "run_in_place": true,
+      "commit": "a1fcbb2e7"
+    }
+  },
+  "physics": {
+    "case_id": 8,
+    "case_code": "R-M01",
+    "case_name": "nominal",
+    "resolution": 0.0012,
+    "resolution_tag": "dp0p0012",
+    "end_time_s": 1.05,
+    "target_revolutions_approx": 100,
+    "enable_contact_factor": 0,
+    "enable_thermal_model": 1,
+    "enable_viscous_dissipation": 1,
+    "enable_oil_solid_heat_exchange": 1,
+    "enable_solid_conduction": 1,
+    "enable_wall_convection": 1,
+    "rotation_speed_rad_s": 600,
+    "nu_oil_cSt": 44,
+    "oil_upper_y": -0.036,
+    "ambient_temperature_C": 25
+  },
+  "particles": {
+    "solids": "relaxed_reload_per_resolution",
+    "oil": "lattice_at_runtime",
+    "reload_store": "reload/dp0p0012",
+    "expected_counts": {
+      "oil": 755762,
+      "gear1": 78348,
+      "gear2": 211206,
+      "gear3": 293676,
+      "wall": 491304,
+      "total": 1830296
+    },
+    "reject_if_gear1_near": 155
+  },
+  "benchmark_policy": {
+    "repeats": 3,
+    "aggregate": "median",
+    "primary_metric": "wall_solver_s",
+    "exclude_from_primary_metric": [
+      "relax_wall_time",
+      "vtp_output_wall_time"
+    ],
+    "vtp": {
+      "enable_cycle_snapshots": 1,
+      "cycle_snapshot_window_rev": 1,
+      "cycle_snapshot_interval_rev": 0.25,
+      "carve_vtp_from_timer_total": true
+    }
+  },
+  "machine_reference_run": {
+    "host": "sphinxsys-ml",
+    "device": "NVIDIA GeForce RTX 4090",
+    "cuda_visible_devices": "1",
+    "backend": "gpu_fp32",
+    "sizeof_Real": 4,
+    "runs": [
+      {
+        "run_id": "C1_case8_gpu_fp32_dp0p0012_benchmark_r01",
+        "wall_solver_s": 26511.3,
+        "exit": 0
+      },
+      {
+        "run_id": "C1_case8_gpu_fp32_dp0p0012_benchmark_r02",
+        "wall_solver_s": 26477.2,
+        "exit": 0
+      },
+      {
+        "run_id": "C1_case8_gpu_fp32_dp0p0012_benchmark_r03",
+        "wall_solver_s": 26433.7,
+        "exit": 0
+      }
+    ],
+    "median_wall_solver_s": 26477.2
+  },
+  "scripts": {
+    "single": "docs/gpu_paper_discussion/scripts/run_c1.sh",
+    "gpu_matrix": "docs/gpu_paper_discussion/scripts/run_c1_gpu_matrix.sh",
+    "env": [
+      "GPU_PAPER_ROOT",
+      "EINSIMO_ROOT",
+      "CUDA_VISIBLE_DEVICES",
+      "RESOLUTION",
+      "CASE_ID",
+      "ENABLE_CONTACT_FACTOR",
+      "SKIP_SMOKE",
+      "RUN_SUFFIX"
+    ]
+  },
+  "handoff_doc": "C1_DEVICE_HANDOFF.md",
+  "git_policy": "Push cases + handoff/docs only; calculation products (runs/reload/logs) stay on the SSH host."
+}

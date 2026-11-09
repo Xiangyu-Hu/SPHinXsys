@@ -1,0 +1,21 @@
+﻿metric_id,category,run_scope,files,requirement,source_basis
+M01,规模与数值配置,all,run_manifest;physics;body_stats,required,V2; neighbour lists
+M02,主求解墙钟及进程总时,all benchmark,run_summary;timing_scope,required,DualSPHysics
+M03,初始化/预热/前窗/输出分解,all,run_summary,required_if_applicable,DualSPHysics; project
+M04,邻域/排序/物理/规约/耦合阶段,B/C benchmark,stage_timing,required; fused stages stay fused,DualSPHysics; Shamrock
+M05,各级步数/dt/更新次数,all,step_stats,required,V2; throughput interpretation
+M06,分模块粒子更新率/邻居访问率,B/C,throughput,required definition; estimate labelled,GPUSPH; Shamrock
+M07,求解必需传输/等待/分配,B/C,transfer_timing;sync_timing,attempt all; detailed short profile,DualSPHysics; GPUSPH
+M08,显存/RSS/内存构成/字节每粒子,all scale points,memory_stats,peaks required; breakdown if tracked,Neighbour lists 2018
+M09,邻居/cell占用/候选与接受率,representative states,body_stats,sparse counts; candidates profile only,Neighbour lists; Shamrock
+M10,三次重复/中位数/范围/SD/CV,B/C/G/H,run_aggregate,required,project repeat policy
+M11,CPU线程/绑核/SMT/NUMA/SIMD,CPU64,manifest;thread_scaling,required; SMT conditional,GPUSPH interface
+M12,GPU group与正确性,B group scan,group_sensitivity,required,V2; GeoDualSPHysics
+M13,带宽/occupancy/寄存器/cache,B2/B3 L3 short window,kernel_profile,required attempt; hardware/tool limits documented,GeoDualSPHysics
+M14,冷启动与插桩/监测开销,B2/B3 representative,instrumentation_check,short paired checks,GPUSPH latency; project
+M15,功率/温度/频率/降频/利用率,B/C,telemetry,attempt; external sampling,shared-memory SPH performance
+M16,GPU能量/CPU包能量,representative matched windows,energy_summary,derive only if counters and coverage valid,shared-memory SPH performance
+M17,误差-成本及同质量耗时,A;B1,accuracy_cost;quality,required applicable; no invented convergence,Neighbour lists tradeoffs; V2
+M18,编译器/数学模式/源码复现,all,manifest;build evidence,required metadata; no compiler sweep mandated,GPUSPH compiler paper
+M19,现有优化消融/roofline,representative profile,ablation;kernel_profile,conditional; no new solver implementation,optimization evidence
+M20,跨厂商/跨软件/多GPU扩展,outside scope,none,excluded by user / single-GPU scope,no hardware or software queue added

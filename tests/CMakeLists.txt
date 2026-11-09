@@ -33,11 +33,13 @@ if(NOT SPHINXSYS_USE_SYCL)
     if(SPHINXSYS_BUILD_OPTIMIZATION_EXAMPLES)
         ADD_SUBDIRECTORY(optimization)
     endif()
-    
-    if(SPHINXSYS_BUILD_EXTRA_SOURCE_AND_TESTS)
-        ADD_SUBDIRECTORY(extra_source_and_tests)
-    endif()
 
+endif()
+
+# GPU-paper cases live under extra_source_and_tests; must also build with SYCL.
+# When SYCL=ON, only *gpu_paper* example subdirs are added (see 2d/3d CMakeLists).
+if(SPHINXSYS_BUILD_EXTRA_SOURCE_AND_TESTS)
+    ADD_SUBDIRECTORY(extra_source_and_tests)
 endif()
 
 if(SPHINXSYS_BUILD_USER_EXAMPLES)

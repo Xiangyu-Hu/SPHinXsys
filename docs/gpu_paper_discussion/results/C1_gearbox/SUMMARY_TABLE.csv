@@ -1,0 +1,5 @@
+run_id,backend,device,resolution,end_time_s,enable_contact_factor,N_total,wall_solver_s,wall_vtp_output_s,actual_t_end,exit,role
+C1_case8_gpu_fp32_dp0p0012_benchmark_r01,gpu_fp32,RTX_4090_GPU1,0.0012,1.05,0,1830296,26511.3,0.385,1.05,0,repeat
+C1_case8_gpu_fp32_dp0p0012_benchmark_r02,gpu_fp32,RTX_4090_GPU1,0.0012,1.05,0,1830296,26477.2,0.385,1.05,0,repeat
+C1_case8_gpu_fp32_dp0p0012_benchmark_r03,gpu_fp32,RTX_4090_GPU1,0.0012,1.05,0,1830296,26433.7,0.385,1.05,0,repeat
+C1_case8_gpu_fp32_dp0p0012_benchmark_MEDIAN,gpu_fp32,RTX_4090_GPU1,0.0012,1.05,0,1830296,26477.2,,1.05,0,median_of_r01_r02_r03

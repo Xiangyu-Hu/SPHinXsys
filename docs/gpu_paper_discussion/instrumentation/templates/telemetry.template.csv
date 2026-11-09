@@ -1,0 +1,1 @@
+﻿run_id,wall_timestamp_s,gpu_power_W,gpu_temperature_C,sm_clock_MHz,memory_clock_MHz,gpu_utilization_pct,device_memory_used_bytes,process_rss_bytes,throttle_reason,measurement_status

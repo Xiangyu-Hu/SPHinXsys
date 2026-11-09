@@ -3,6 +3,8 @@
 .vscode
 *.json
 !CMakePresets.json
+# GPU-paper run manifests / frozen configs under discussion tree
+!docs/gpu_paper_discussion/**/*.json
 
 ##### Windows
 # Windows thumbnail cache files

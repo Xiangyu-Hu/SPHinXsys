@@ -1,0 +1,22 @@
+{
+  "case_id": "A5",
+  "record_kind": "template",
+  "coordinate": "time",
+  "probe_policy": "cycles100",
+  "field_policy": "cycle8",
+  "T": null,
+  "S": null,
+  "E": null,
+  "P_ref": null,
+  "field_start": null,
+  "field_end": null,
+  "event_start": null,
+  "event_end": null,
+  "thermal_start": null,
+  "thermal_end": null,
+  "iterations": null,
+  "include_startup_health": false,
+  "field_enabled": true,
+  "mode": "validate",
+  "_notice": "必须现场填真实值；benchmark覆盖probe_policy=window51（B1 iterations100），field_enabled=false；A3伪时间可改iteration并填iterations"
+}

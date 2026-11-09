@@ -1,0 +1,16 @@
+# Huge intermediate bunny dumps — keep B1_particle_relaxation instead
+results/B1_stanford_bunny/
+
+# Local build trees if ever placed under discussion
+build_*/
+**/bin/
+**/CMakeFiles/
+archives/*.tgz
+
+# Calculation products — keep local / SSH only; do not commit
+results/*/runs/
+results/*/reload/
+results/**/runs/
+results/**/reload/
+logs/
+archives/*.tgz
