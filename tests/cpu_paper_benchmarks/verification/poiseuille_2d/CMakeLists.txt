@@ -1,0 +1,1 @@
+cpu_paper_add_benchmark(cpu_paper_poiseuille_2d 2d)
