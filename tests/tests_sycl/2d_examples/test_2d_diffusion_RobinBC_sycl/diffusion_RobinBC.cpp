@@ -198,8 +198,8 @@ int main(int ac, char *av[])
         VariableAssignment, ConstantValue<Real>>(wall_Dirichlet_left_region, species_name, left_temperature);
     auto &right_initial_condition = main_methods.addStateDynamics<
         VariableAssignment, ConstantValue<Real>>(wall_Dirichlet_right_region, species_name, right_temperature);
-    auto &robin_initial_condition = main_methods.addStateDynamics<
-        VariableAssignment, ConstantValue<Real>>(wall_boundary_Robin, species_name, T_infinity);
+//    auto &robin_initial_condition = main_methods.addStateDynamics<
+//        VariableAssignment, ConstantValue<Real>>(wall_boundary_Robin, species_name, T_infinity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -215,7 +215,7 @@ int main(int ac, char *av[])
     diffusion_initial_condition.exec();
     left_initial_condition.exec();
     right_initial_condition.exec();
-    robin_initial_condition.exec();
+//    robin_initial_condition.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
