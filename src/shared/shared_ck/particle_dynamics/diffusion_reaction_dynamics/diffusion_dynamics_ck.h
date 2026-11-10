@@ -39,12 +39,15 @@
 
 namespace SPH
 {
+template <class DiffusionType>
+StdVec<DiffusionType *> obtainConcreteDiffusions(AbstractDiffusion &abstract_diffusion);
+
+template <class DiffusionType>
+StdVec<std::string> obtainSpeciesNames(StdVec<DiffusionType *> &diffusions);
+
 template <class DiffusionType, class BaseLocalDynamicsType>
 class BaseDiffusionDynamics : public BaseLocalDynamicsType
 {
-    StdVec<DiffusionType *> obtainConcreteDiffusions(AbstractDiffusion &abstract_diffusion);
-    StdVec<std::string> obtainSpeciesNames(StdVec<DiffusionType *> &diffusions);
-
   public:
     typedef DiffusionType Diffusion;
     template <class DynamicsIdentifier>
@@ -106,19 +109,21 @@ class DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrecti
     Real smoothing_length_sq_;
 };
 
-template <class DiffusionType, template <typename...> class BoundaryType,
+template <class DiffusionType, class... OtherTypes, template <typename...> class BoundaryType,
           class KernelCorrectionType, class... Parameters>
-class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType, Parameters...>>
+class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType, OtherTypes...>,
+                                    KernelCorrectionType, Parameters...>>
     : public BaseDiffusionDynamics<DiffusionType, Interaction<Contact<Parameters...>>>
 {
-    UniquePtrKeeper<BoundaryType<DiffusionType>> boundary_keeper_;
+    UniquePtrKeeper<BoundaryType<DiffusionType, OtherTypes...>> boundary_keeper_;
     using BaseInteraction = BaseDiffusionDynamics<DiffusionType, Interaction<Contact<Parameters...>>>;
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
-    using BoundaryKernel = typename BoundaryType<DiffusionType>::ComputingKernel;
+    using BoundaryKernel = typename BoundaryType<DiffusionType, OtherTypes...>::ComputingKernel;
 
   public:
     template <typename... Args>
-    explicit DiffusionRelaxationCK(Args &&...args);
+    explicit DiffusionRelaxationCK(
+        Contact<Parameters...> &contact_relation, AbstractDiffusion *abstract_diffusion, Args &&...args);
     virtual ~DiffusionRelaxationCK() {};
 
     class InteractKernel : public BaseInteraction::InteractKernel
@@ -139,7 +144,7 @@ class DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>
   protected:
     KernelCorrectionType kernel_correction_method_;
     DiscreteVariable<Real> *contact_dv_transfer_;
-    BoundaryType<DiffusionType> *contact_boundary_method_;
+    BoundaryType<DiffusionType, OtherTypes...> *contact_boundary_method_;
 };
 
 template <template <typename...> class RelationType, class... InteractionParameters>
@@ -286,5 +291,38 @@ class Neumann<DiffusionType>
     DiscreteVariable<Vecd> *dv_contact_n_;
     DiscreteVariable<Real> *dv_contact_species_flux_;
 };
+
+template <class SourceDiffusionType, class TargetDiffusionType>
+class Robin<SourceDiffusionType, TargetDiffusionType>
+{
+  public:
+    template <class DiffusionDynamics>
+    Robin(DiffusionDynamics &diffusion_dynamics, BaseParticles *contact_particles,
+          AbstractDiffusion *abstract_diffusion, Real transfer_coefficient);
+
+    class ComputingKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        Vecd operator()(UnsignedInt m, UnsignedInt index_i, UnsignedInt index_j, const Vecd &e_ij, const Vecd &vec_r_ij);
+
+      protected:
+        Real smoothing_length_sq_;
+        MultiEntryView<Real> species_, contact_species_;
+        Vecd *contact_n_;
+        Real transfer_coefficient_;
+    };
+
+  protected:
+    StdVec<TargetDiffusionType *> target_diffusions_;
+    Real smoothing_length_sq_;
+    DiscreteVariable<Real> *dv_species_;
+    StdVec<std::string> target_species_names_;
+    DiscreteVariable<Real> *dv_contact_species_;
+    DiscreteVariable<Vecd> *dv_contact_n_;
+    Real transfer_coefficient_;
+};
+
 } // namespace SPH
 #endif // DIFFUSION_DYNAMICS_CK_H

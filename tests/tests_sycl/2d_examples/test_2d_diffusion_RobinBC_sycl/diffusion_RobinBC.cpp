@@ -174,18 +174,18 @@ int main(int ac, char *av[])
                         DiffusionRelaxationCK, RungeKutta1stStage, IsotropicDiffusion, NoKernelCorrectionCK>(
                         diffusion_inner, &isotropic_diffusion)
             .addPostContactInteraction<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>(
-                contact_Dirichlet, &isotropic_diffusion);//
-//            .addPostContactInteraction<InteractionOnly, Robin<IsotropicDiffusion>, NoKernelCorrectionCK>(
-//                contact_Robin, &isotropic_diffusion);
+                contact_Dirichlet, &isotropic_diffusion)
+            .addPostContactInteraction<InteractionOnly, Robin<IsotropicDiffusion, IsotropicDiffusion>, NoKernelCorrectionCK>(
+                contact_Robin, &isotropic_diffusion, &isotropic_diffusion, convection);
 
     auto &runge_kutta_2nd_stage =
         main_methods.addInteractionDynamicsOneLevel<
                         DiffusionRelaxationCK, RungeKutta2ndStage, IsotropicDiffusion, NoKernelCorrectionCK>(
                         diffusion_inner, &isotropic_diffusion)
             .addPostContactInteraction<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>(
-                contact_Dirichlet, &isotropic_diffusion);
-//            .addPostContactInteraction<InteractionOnly, Robin<IsotropicDiffusion>, NoKernelCorrectionCK>(
-//                contact_Robin, &isotropic_diffusion);
+                contact_Dirichlet, &isotropic_diffusion)
+            .addPostContactInteraction<InteractionOnly, Robin<IsotropicDiffusion, IsotropicDiffusion>, NoKernelCorrectionCK>(
+                contact_Robin, &isotropic_diffusion, &isotropic_diffusion, convection);
 
     auto &runge_kutta_method = main_methods.addParticleDynamicsGroup();
     runge_kutta_method.add(&runge_kutta_1st_stage).add(&runge_kutta_2nd_stage);
@@ -198,8 +198,8 @@ int main(int ac, char *av[])
         VariableAssignment, ConstantValue<Real>>(wall_Dirichlet_left_region, species_name, left_temperature);
     auto &right_initial_condition = main_methods.addStateDynamics<
         VariableAssignment, ConstantValue<Real>>(wall_Dirichlet_right_region, species_name, right_temperature);
-//    auto &robin_initial_condition = main_methods.addStateDynamics<
-//        VariableAssignment, ConstantValue<Real>>(wall_boundary_Robin, species_name, T_infinity);
+    auto &robin_initial_condition = main_methods.addStateDynamics<
+        VariableAssignment, ConstantValue<Real>>(wall_boundary_Robin, species_name, T_infinity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
@@ -215,7 +215,7 @@ int main(int ac, char *av[])
     diffusion_initial_condition.exec();
     left_initial_condition.exec();
     right_initial_condition.exec();
-//    robin_initial_condition.exec();
+    robin_initial_condition.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
