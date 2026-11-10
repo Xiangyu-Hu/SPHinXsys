@@ -174,18 +174,18 @@ int main(int ac, char *av[])
                         DiffusionRelaxationCK, RungeKutta1stStage, IsotropicDiffusion, NoKernelCorrectionCK>(
                         diffusion_inner, &isotropic_diffusion)
             .addPostContactInteraction<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>(
-                contact_Dirichlet, &isotropic_diffusion)
-            .addPostContactInteraction<InteractionOnly, Robin<IsotropicDiffusion>, NoKernelCorrectionCK>(
-                contact_Robin, &isotropic_diffusion);
+                contact_Dirichlet, &isotropic_diffusion);//
+//            .addPostContactInteraction<InteractionOnly, Robin<IsotropicDiffusion>, NoKernelCorrectionCK>(
+//                contact_Robin, &isotropic_diffusion);
 
     auto &runge_kutta_2nd_stage =
         main_methods.addInteractionDynamicsOneLevel<
                         DiffusionRelaxationCK, RungeKutta2ndStage, IsotropicDiffusion, NoKernelCorrectionCK>(
                         diffusion_inner, &isotropic_diffusion)
             .addPostContactInteraction<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>(
-                contact_Dirichlet, &isotropic_diffusion)
-            .addPostContactInteraction<InteractionOnly, Robin<IsotropicDiffusion>, NoKernelCorrectionCK>(
-                contact_Robin, &isotropic_diffusion);
+                contact_Dirichlet, &isotropic_diffusion);
+//            .addPostContactInteraction<InteractionOnly, Robin<IsotropicDiffusion>, NoKernelCorrectionCK>(
+//                contact_Robin, &isotropic_diffusion);
 
     auto &runge_kutta_method = main_methods.addParticleDynamicsGroup();
     runge_kutta_method.add(&runge_kutta_1st_stage).add(&runge_kutta_2nd_stage);
@@ -193,50 +193,38 @@ int main(int ac, char *av[])
     //	Specify initial condition if necessary.
     //----------------------------------------------------------------------
     auto &diffusion_initial_condition = main_methods.addStateDynamics<
-        VariableAssignment<SPHBody, ConstantValue<Real>>>(diffusion_body, species_name, initial_temperature);
+        VariableAssignment, ConstantValue<Real>>(diffusion_body, species_name, initial_temperature);
     auto &left_initial_condition = main_methods.addStateDynamics<
-        VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>(wall_Dirichlet_left_region, species_name, left_temperature);
+        VariableAssignment, ConstantValue<Real>>(wall_Dirichlet_left_region, species_name, left_temperature);
     auto &right_initial_condition = main_methods.addStateDynamics<
-        VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>(wall_Dirichlet_right_region, species_name, right_temperature);
+        VariableAssignment, ConstantValue<Real>>(wall_Dirichlet_right_region, species_name, right_temperature);
     auto &robin_initial_condition = main_methods.addStateDynamics<
-        VariableAssignment<SPHBody, ConstantValue<Real>>>(wall_boundary_Robin, species
-
-    SimpleDynamics<DiffusionInitialCondition> setup_diffusion_initial_condition(diffusion_body);
-    SimpleDynamics<DirichletWallBoundaryInitialCondition> setup_boundary_condition_Dirichlet(wall_boundary_Dirichlet);
-    SimpleDynamics<RobinBoundaryDefinition> setup_boundary_condition_Robin(wall_boundary_Robin);
+        VariableAssignment, ConstantValue<Real>>(wall_boundary_Robin, species_name, T_infinity);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtp write_states(sph_system);
-    // ObservedQuantityRecording<Real> write_solid_temperature("Phi", temperature_observer_contact);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_solid_temperature("Phi", temperature_observer_contact);
-    ReducedQuantityRecording<Average<QuantitySummation<Real, SPHBody>>>
-        write_heat_transfer_from_robin_boundary(diffusion_body, "PhiTransferFromRobinWallBoundary");
+    auto &write_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    auto &observe_temperature = main_methods.addObserveRegression<
+        RegressionTestEnsembleAverage, Real>(temperature_observer_contact, species_name);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    sph_system.initializeSystemCellLinkedLists();
-    sph_system.initializeSystemConfigurations();
+    static_configuration.exec();
 
-    setup_diffusion_initial_condition.exec();
-
-    setup_boundary_condition_Dirichlet.exec();
-    setup_boundary_condition_Robin.exec();
-
-    diffusion_body_normal_direction.exec();
-    Dirichlet_normal_direction.exec();
-    Robin_normal_direction.exec();
+    diffusion_initial_condition.exec();
+    left_initial_condition.exec();
+    right_initial_condition.exec();
+    robin_initial_condition.exec();
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     int ite = 0;
-    Real T0 = 1.0;
-    Real End_Time = T0;
-    Real Observe_time = 0.01 * End_Time;
-    Real Output_Time = 0.1 * End_Time;
+    Real T0 = 1;
+    Real end_time = T0;
+    Real Observe_time = 0.01 * end_time;
+    Real Output_Time = 0.1 * end_time;
     Real dt = 0.0;
     //----------------------------------------------------------------------
     //	Statistics for CPU time
@@ -247,11 +235,11 @@ int main(int ac, char *av[])
     //	First output before the main loop.
     //----------------------------------------------------------------------
     write_states.writeToFile();
-    write_solid_temperature.writeToFile();
+    observe_temperature.writeToFile(ite);
     //----------------------------------------------------------------------
     //	Main loop starts here.
     //----------------------------------------------------------------------
-    while (physical_time < End_Time)
+    while (sv_physical_time->getValue() < end_time)
     {
         Real integration_time = 0.0;
         while (integration_time < Output_Time)
@@ -262,24 +250,23 @@ int main(int ac, char *av[])
                 if (ite % 500 == 0)
                 {
                     std::cout << "N=" << ite << " Time: "
-                              << physical_time << "	dt: "
+                              << sv_physical_time->getValue() << "	dt: "
                               << dt << "\n";
                 }
 
-                temperature_relaxation.exec(dt);
+                runge_kutta_method.exec(dt);
 
                 ite++;
-                dt = get_time_step_size.exec();
+                dt = thermal_time_step.exec();
                 relaxation_time += dt;
                 integration_time += dt;
-                physical_time += dt;
+                sv_physical_time->incrementValue(dt);
             }
         }
 
         TickCount t2 = TickCount::now();
         write_states.writeToFile();
-        write_solid_temperature.writeToFile(ite);
-        write_heat_transfer_from_robin_boundary.writeToFile(ite);
+        observe_temperature.writeToFile(ite);
         TickCount t3 = TickCount::now();
         interval += t3 - t2;
     }
@@ -289,15 +276,15 @@ int main(int ac, char *av[])
     tt = t4 - t1 - interval;
 
     std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
-    std::cout << "Total physical time for computation: " << physical_time << " seconds." << std::endl;
+    std::cout << "Total physical time for computation: " << sv_physical_time->getValue() << " seconds." << std::endl;
 
     if (sph_system.GenerateRegressionData())
     {
-        write_solid_temperature.generateDataBase(1.0e-3, 1.0e-3);
+        observe_temperature.generateDataBase(1.0e-3, 1.0e-3);
     }
     else if (sph_system.RestartStep() == 0)
     {
-        write_solid_temperature.testResult();
+        observe_temperature.testResult();
     }
 
     return 0;
