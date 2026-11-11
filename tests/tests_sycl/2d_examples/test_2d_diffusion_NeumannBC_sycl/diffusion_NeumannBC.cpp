@@ -203,7 +203,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &write_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     auto &observe_temperature = main_methods.addObserveRegression<
-        RegressionTestEnsembleAverage, Real>(temperature_observer_contact, species_name);
+        RegressionTestEnsembleAverage, Real, RestoringCorrection>(temperature_observer_contact, species_name);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
