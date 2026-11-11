@@ -14,3 +14,12 @@ results/**/runs/
 results/**/reload/
 logs/
 archives/*.tgz
+
+# Bulky docs assets — not needed to build/run A/B/C cases (keep local if useful)
+main.pdf
+StanfordBunny_fixed.stl
+GPU_PAPER_DEVICE_TASKS_*.zip
+
+# A5 FSI2 shared Reload.xml — regenerable via relax; do not commit
+results/A5_fsi2/shared_reload/**/Reload.xml
+results/**/shared_reload/**/Reload.xml

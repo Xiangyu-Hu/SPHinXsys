@@ -1054,3 +1054,7 @@ build_wasm_debug
 # CodeQL
 _codeql_detected_source_root
 build_test/
+
+# Local GPU-paper build trees (never commit)
+build_cpu_*/
+build_gpu_*/
