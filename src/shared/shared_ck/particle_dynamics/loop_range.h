@@ -32,6 +32,8 @@
 #include "base_body.h"
 #include "base_body_part.h"
 #include "base_particles.h"
+#include "cell_linked_list.h"
+#include "sphinxsys_bitmask.h"
 
 namespace SPH
 {
