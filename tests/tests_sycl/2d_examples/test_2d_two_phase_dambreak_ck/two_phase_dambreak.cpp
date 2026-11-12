@@ -195,7 +195,7 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<Vecd>(air_body, "NormalDirection");
     body_state_recorder.addToWrite<Real>(air_body, "SignedDistance");
     body_state_recorder.addToWrite<Real>(air_body, "IsolationFactor");
-    body_state_recorder.addToWrite<Vecd>(water_body, "BuoyancyForce");
+    body_state_recorder.addToWrite<Vecd>(water_body, "SubscaleBuoyancy");
     auto &restart_io = main_methods.addIODynamics<RestartIOCK>(sph_system);
     auto &record_water_mechanical_energy = main_methods.addReduceRegression<
         RegressionTestDynamicTimeWarping, TotalMechanicalEnergyCK>(water_body, gravity);
