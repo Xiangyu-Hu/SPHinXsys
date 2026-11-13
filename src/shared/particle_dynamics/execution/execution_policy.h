@@ -50,33 +50,18 @@ class ParallelUnsequencedPolicy
 {
 };
 
-template <typename...>
-class DeviceExecution;
-
-template <>
-class DeviceExecution<>
+class SYCLDevicePolicy
 {
 };
-
-template <typename PolicyType>
-class DeviceExecution<PolicyType>
-    : public DeviceExecution<>, public PolicyType
-{
-};
-
-using ParallelDevicePolicy = DeviceExecution<ParallelPolicy>;
-using SequencedDevicePolicy = DeviceExecution<SequencedPolicy>;
 
 inline constexpr auto seq = SequencedPolicy{};
 inline constexpr auto unseq = UnsequencedPolicy{};
 inline constexpr auto par_host = ParallelPolicy{};
 inline constexpr auto par_unseq = ParallelUnsequencedPolicy{};
-inline constexpr auto par_device = ParallelDevicePolicy{};
-inline constexpr auto seq_device = SequencedDevicePolicy{};
 
 #if SPHINXSYS_USE_SYCL
-using MainExecutionPolicy = ParallelDevicePolicy;
-inline constexpr auto par_ck = ParallelDevicePolicy{};
+using MainExecutionPolicy = SYCLDevicePolicy;
+inline constexpr auto par_ck = SYCLDevicePolicy{};
 #else
 using MainExecutionPolicy = ParallelPolicy;
 inline constexpr auto par_ck = ParallelPolicy{};
