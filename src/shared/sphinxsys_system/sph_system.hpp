@@ -4,6 +4,7 @@
 #include "sph_system.h"
 
 #include "adaptive_body.h"
+#include "io_base_ck.h"
 #include "ownership.h"
 #include "relation_ck.h"
 #include "variable_functions.h"
@@ -136,6 +137,22 @@ StdVec<RelationType *> SPHSystem::collectRelations()
         }
     }
     return collected_relations;
+}
+//=================================================================================================//
+template <class MainMethodsType>
+void SPHSystem::setBodyStatesRecording(MainMethodsType &main_methods)
+{
+    if (body_states_recording_ == nullptr)
+    {
+        body_states_recording_ = &main_methods.template addBodyStateRecorder<
+            BodyStatesRecordingToVtpCK>(*this);
+    }
+}
+//=================================================================================================//
+template <typename BodyStatesRecordingType>
+BodyStatesRecordingType &SPHSystem::getBodyStatesRecording()
+{
+    return *DynamicCast<BodyStatesRecordingType>(this, body_states_recording_);
 }
 //=================================================================================================//
 } // namespace SPH

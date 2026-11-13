@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  * ------------------------------------------------------------------------- */
 /**
- * @file  near_wall_boundary.h
+ * @file  near_wall_boundary_ck.h
  * @brief Shared boundary condition implementations for near-wall interactions  .
  * @author sphinxsim@einsimo.com
  */
 
-#ifndef NEAR_WALL_BOUNDARY_H
-#define NEAR_WALL_BOUNDARY_H
+#ifndef NEAR_WALL_BOUNDARY_CK_H
+#define NEAR_WALL_BOUNDARY_CK_H
 
 #include "base_fluid_dynamics.h"
 #include "interaction_ck.hpp"

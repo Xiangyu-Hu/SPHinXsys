@@ -32,6 +32,7 @@
 #ifndef FLUID_TIME_STEP_CK_H
 #define FLUID_TIME_STEP_CK_H
 
+#include "base_dynamics.h"
 #include "base_fluid_dynamics.h"
 #include "weakly_compressible_fluid.h"
 
@@ -117,6 +118,19 @@ class AdvectionTimeStepCK : public LocalDynamicsReduce<ReduceMax<Real>>
     Real h_min_;
     Real speed_ref_, advectionCFL_;
     DiscreteVariable<Vecd> *dv_vel_;
+};
+
+class ViscousDominance : public BaseDynamics<bool>
+{
+  public:
+    ViscousDominance(SPHBody &sph_body, Real U_max);
+    virtual ~ViscousDominance() {};
+
+    virtual bool exec(Real dt = 0.0) override { return is_viscous_dominance_; };
+
+  protected:
+    Real h_min_;
+    bool is_viscous_dominance_;
 };
 
 /**

@@ -33,8 +33,13 @@
 #include <limits>
 
 #if SPHINXSYS_USE_SYCL
-#include <CL/sycl.hpp>
-#define SYCL_DEVICE_ONLY
+#include <sycl/sycl.hpp>
+// 1. Tell Eigen to strictly avoid any heap allocations (essential for GPU code)
+#define EIGEN_RUNTIME_NO_MALLOC
+#define EIGEN_NO_MALLOC
+// 2. Prevent Eigen from generating CPU-specific vector extensions (SSE/AVX) 
+//    that the GPU compiler backend cannot parse into SPIR-V.
+#define EIGEN_DONT_VECTORIZE
 #endif // SPHINXSYS_USE_SYCL
 
 #include <Eigen/Core>

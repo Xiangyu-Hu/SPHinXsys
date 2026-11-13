@@ -5,8 +5,9 @@
  * 			understanding SPH method for multi-phase simulation.
  * @author 	sphinxsim@einsimo.com
  */
-#include "near_wall_boundary.hpp"
+#include "near_wall_boundary_ck.hpp"
 #include "sphinxsys.h"
+#include "subscale_buoyancy.hpp"
 using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
@@ -30,80 +31,6 @@ Real rho0_a = 0.001;                     /**< Reference density of air. */
 Real gravity_g = 1.0;                    /**< Gravity force of fluid. */
 Real U_ref = 2.0 * sqrt(gravity_g * LH); /**< Characteristic velocity. */
 Real c_f = 10.0 * U_ref;                 /**< Reference sound speed. */
-namespace SPH
-{
-namespace fluid_dynamics
-{
-
-template <typename...>
-class BuoyancyForce;
-
-template <typename... Parameters>
-class BuoyancyForce<Contact<WithUpdate, Parameters...>>
-    : public Interaction<Contact<Parameters...>>, public ForcePriorCK
-{
-    using BaseDynamicsType = Interaction<Contact<Parameters...>>;
-
-  public:
-    BuoyancyForce(Contact<Parameters...> &water_air_relation, const Gravity &gravity, Real threshold = 0.3)
-        : BaseDynamicsType(water_air_relation), ForcePriorCK(this->particles_, "BuoyancyForce"),
-          gravity_(gravity), threshold_by_dimensions_(threshold * Dimensions),
-          dv_mass(this->particles_->template getVariableByName<Real>("Mass")),
-          dv_isolation_factor_(nullptr), // from contact body
-          dv_buoyancy_force_(this->getCurrentForce())
-    {
-        dv_isolation_factor_ = this->contact_particles_->template getVariableByName<Real>("IsolationFactor");
-    };
-    virtual ~BuoyancyForce() {};
-
-    class InteractKernel : public BaseDynamicsType::InteractKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : BaseDynamicsType::InteractKernel(ex_policy, encloser),
-              gravity_(encloser.gravity_),
-              threshold_by_dimensions_(encloser.threshold_by_dimensions_),
-              Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-              mass_(encloser.dv_mass->DelegatedData(ex_policy)),
-              isolation_factor_(encloser.dv_isolation_factor_->DelegatedData(ex_policy)),
-              buoyancy_force_(encloser.dv_buoyancy_force_->DelegatedData(ex_policy)) {};
-
-        void interact(size_t index_i, Real dt = 0.0)
-        {
-            Vecd buoyancy_i = Vecd::Zero();
-            for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
-            {
-                UnsignedInt index_j = this->neighbor_index_[n];
-                Real W_ij_Vi = this->W_ij(index_i, index_j) * Vol_[index_i];
-
-                // Reverse gravity when air particle isolation factor less than threshold
-                // Additional mass is a assume for only fraction of exclused volume
-                // so that the summation is only contributed on water particles
-                // Also, the original gravity should be canceled
-                Vecd buoyancy_j = -SMAX(1.0 - isolation_factor_[index_j] / threshold_by_dimensions_, 0.0) *
-                                  2.0 * gravity_.InducedAcceleration(Vecd::Zero(), 0.0);
-                buoyancy_i += W_ij_Vi * buoyancy_j;
-            }
-
-            buoyancy_force_[index_i] = buoyancy_i * mass_[index_i];
-        };
-
-      protected:
-        Gravity gravity_;
-        Real threshold_by_dimensions_;
-        Real *Vol_, *mass_, *isolation_factor_;
-        Vecd *buoyancy_force_;
-    };
-
-  protected:
-    const Gravity gravity_;
-    Real threshold_by_dimensions_;
-    DiscreteVariable<Real> *dv_mass, *dv_isolation_factor_;
-    DiscreteVariable<Vecd> *dv_buoyancy_force_;
-};
-} // namespace fluid_dynamics
-} // namespace SPH
 //----------------------------------------------------------------------
 //	Main program starts here.
 //----------------------------------------------------------------------
@@ -256,7 +183,7 @@ int main(int ac, char *av[])
 
     ParticleDynamicsGroup buoyancy_force;
     buoyancy_force.add(&main_methods.addInteractionDynamics<fluid_dynamics::IsolationFactor>(air_inner));
-    buoyancy_force.add(&main_methods.addInteractionDynamicsWithUpdate<fluid_dynamics::BuoyancyForce>(water_air_contact, gravity, 0.3));
+    buoyancy_force.add(&main_methods.addInteractionDynamicsWithUpdate<fluid_dynamics::SubscaleBuoyancy>(water_air_contact, gravity, 0.3));
 
     ReduceDynamicsGroup advection_time_step = main_methods.addReduceDynamics<ReduceMin<Real>, fluid_dynamics::AdvectionTimeStepCK>(fluid_bodies, U_ref);
     ReduceDynamicsGroup acoustic_time_step = main_methods.addReduceDynamics<ReduceMin<Real>, fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(fluid_bodies);
@@ -268,12 +195,12 @@ int main(int ac, char *av[])
     body_state_recorder.addToWrite<Vecd>(air_body, "NormalDirection");
     body_state_recorder.addToWrite<Real>(air_body, "SignedDistance");
     body_state_recorder.addToWrite<Real>(air_body, "IsolationFactor");
-    body_state_recorder.addToWrite<Vecd>(water_body, "BuoyancyForce");
+    body_state_recorder.addToWrite<Vecd>(water_body, "SubscaleBuoyancy");
     auto &restart_io = main_methods.addIODynamics<RestartIOCK>(sph_system);
     auto &record_water_mechanical_energy = main_methods.addReduceRegression<
         RegressionTestDynamicTimeWarping, TotalMechanicalEnergyCK>(water_body, gravity);
     auto &water_observer_pressure = main_methods.addObserveRegression<
-        RegressionTestDynamicTimeWarping, Real>( water_observer_contact, "Pressure");
+        RegressionTestDynamicTimeWarping, Real>(water_observer_contact, "Pressure");
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------

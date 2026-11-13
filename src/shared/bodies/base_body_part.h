@@ -76,7 +76,6 @@ class BodyPart
     std::string Name() const { return alias_.value_or(part_id_name_); };
     std::string PartIDName() const { return part_id_name_; };
     int getPartID() { return part_id_; };
-    SingleVariable<UnsignedInt> *svRangeSize() { return sv_range_size_; };
     SPHAdaptation &getSPHAdaptation() { return sph_adaptation_; };
     BaseCellLinkedList &getCellLinkedList();
 
@@ -87,7 +86,6 @@ class BodyPart
     std::string part_id_name_;
     std::optional<std::string> alias_;
     SPHAdaptation &sph_adaptation_;
-    SingleVariable<UnsignedInt> *sv_range_size_;
     Vecd *pos_;
 };
 
@@ -109,7 +107,6 @@ class BodyPartByParticle : public BodyPart
     typedef BodyPartByParticle RangeIdentifier;
     IndexVector body_part_particles_; /**< Collection particle in this body part. */
     BaseParticles &getBaseParticles() { return base_particles_; };
-    DiscreteVariable<UnsignedInt> *dvParticleList() { return dv_particle_list_; };
     IndexVector &LoopRange() { return body_part_particles_; };
     size_t SizeOfLoopRange() { return body_part_particles_.size(); };
 
@@ -123,7 +120,6 @@ class BodyPartByParticle : public BodyPart
   protected:
     GroupManager &group_manager_;
     UnsignedInt part_mask_;
-    DiscreteVariable<UnsignedInt> *dv_particle_list_;
     typedef std::function<bool(size_t)> TaggingParticleMethod;
     void tagParticles(TaggingParticleMethod &tagging_particle_method);
 };
@@ -179,12 +175,16 @@ class BodyPartByCell : public BodyPart
 
     BodyPartByCell(RealBody &real_body);
     virtual ~BodyPartByCell() {};
-    DiscreteVariable<UnsignedInt> *dvCellList() { return dv_cell_list_; };
     DiscreteVariable<UnsignedInt> *dvParticleIndex() { return dv_particle_index_; };
     DiscreteVariable<UnsignedInt> *dvCellOffset() { return dv_cell_offset_; };
+    BaseCellLinkedList &getCellLinkedList() { return cell_linked_list_; };
+    GroupManager &getCellGroupManager() { return cell_group_manager_; };
+    UnsignedInt getPartMask() { return part_mask_; };
 
   protected:
     BaseCellLinkedList &cell_linked_list_;
+    GroupManager &cell_group_manager_;
+    UnsignedInt part_mask_;
     DiscreteVariable<UnsignedInt> *dv_cell_list_;
     DiscreteVariable<UnsignedInt> *dv_particle_index_;
     DiscreteVariable<UnsignedInt> *dv_cell_offset_;

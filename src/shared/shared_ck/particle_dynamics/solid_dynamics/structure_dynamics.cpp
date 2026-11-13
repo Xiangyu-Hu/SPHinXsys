@@ -43,6 +43,7 @@ StructureDynamicsVariables::StructureDynamicsVariables(BaseParticles *particles)
       dv_scaling_matrix_(particles->registerStateVariable<Matd>("ScalingMatrix"))
 {
     particles->addEvolvingVariable<Vecd>(dv_pos_);
+    particles->addEvolvingVariable<Vecd>(dv_force_);
     particles->addEvolvingVariable<Vecd>(dv_vel_);
     particles->addEvolvingVariable<Matd>(dv_F_);
     particles->addEvolvingVariable<Matd>(dv_dF_dt_);
