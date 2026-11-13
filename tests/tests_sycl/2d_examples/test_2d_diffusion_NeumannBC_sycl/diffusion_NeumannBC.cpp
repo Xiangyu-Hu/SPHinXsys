@@ -113,13 +113,6 @@ int main(int ac, char *av[])
     SolidBody wall_Dirichlet(sph_system, makeShared<DirichletWallBoundary>("DirichletWallBoundary"));
     wall_Dirichlet.defineMatterMaterial<Solid>();
     wall_Dirichlet.generateParticles<BaseParticles, Lattice>();
-
-    SolidBody wall_Neumann(sph_system, makeShared<NeumannWallBoundary>("NeumannWallBoundary"));
-    wall_Neumann.defineMatterMaterial<Solid>();
-    wall_Neumann.generateParticles<BaseParticles, Lattice>();
-
-    ObserverBody temperature_observer(sph_system, "TemperatureObserver");
-    temperature_observer.generateParticles<ObserverParticles>(createObservationPoints());
     //----------------------------------------------------------------------
     //	Creating body parts.
     //----------------------------------------------------------------------
@@ -128,16 +121,31 @@ int main(int ac, char *av[])
 
     MultiPolygonShape right_region_shape(MultiPolygon(right_region_edge_points), "RightRegion");
     BodyRegionByParticle wall_Dirichlet_right_region(wall_Dirichlet, right_region_shape);
+
+    SolidBody wall_Neumann(sph_system, makeShared<NeumannWallBoundary>("NeumannWallBoundary"));
+    wall_Neumann.defineMatterMaterial<Solid>();
+    wall_Neumann.generateParticles<BaseParticles, Lattice>();
+
+    ObserverBody temperature_observer(sph_system, "TemperatureObserver");
+    temperature_observer.generateParticles<ObserverParticles>(createObservationPoints());
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    Inner<> diffusion_body_inner(diffusion_body);
-    Contact<> contact_dirichlet(diffusion_body, wall_Dirichlet);
-    Contact<> contact_neumann(diffusion_body, wall_Neumann);
-    Contact<> temperature_observer_contact(temperature_observer, diffusion_body);
+    auto &diffusion_inner = sph_system.addInnerRelation(diffusion_body);
+    auto &contact_Dirichlet = sph_system.addContactRelation(diffusion_body, wall_Dirichlet);
+    auto &contact_Neumann = sph_system.addContactRelation(diffusion_body, wall_Neumann);
+    auto &temperature_observer_contact = sph_system.addContactRelation(temperature_observer, diffusion_body);
+    //----------------------------------------------------------------------
+    // Define SPH solver with particle methods and execution policies.
+    // Generally, the host methods should be able to run immediately.
+    //----------------------------------------------------------------------
+    SPHSolver sph_solver(sph_system);
+    auto &host_methods = sph_solver.getHostMethodContainer();
+    host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall_Neumann).exec(); // host method able to run immediately
+    auto &main_methods = sph_solver.getMainMethodContainer();
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -149,61 +157,58 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    StateDynamics<execution::ParallelPolicy, NormalFromBodyShapeCK> wall_boundary_normal_direction(wall_Neumann);
-
-    UpdateCellLinkedList<MainExecutionPolicy, RealBody> diffusion_body_cell_linked_list(diffusion_body);
-    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_Dirichlet_cell_linked_list(wall_Dirichlet);
-    UpdateCellLinkedList<MainExecutionPolicy, RealBody> wall_Neumann_cell_linked_list(wall_Neumann);
-
-    UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>, Contact<>>
-        diffusion_body_update_complex_relation(diffusion_body_inner, contact_dirichlet, contact_neumann);
-    UpdateRelation<MainExecutionPolicy, Contact<>> observer_contact_relation(temperature_observer_contact);
+    ParticleDynamicsGroup static_configuration;
+    static_configuration.add(&main_methods.addCellLinkedListDynamics(diffusion_body));
+    static_configuration.add(&main_methods.addCellLinkedListDynamics(wall_Dirichlet));
+    static_configuration.add(&main_methods.addCellLinkedListDynamics(wall_Neumann));
+    static_configuration.add(&main_methods.addRelationDynamics(diffusion_inner, contact_Dirichlet, contact_Neumann));
+    static_configuration.add(&main_methods.addRelationDynamics(temperature_observer_contact));
 
     IsotropicDiffusion isotropic_diffusion(species_name, diffusion_coeff);
+    auto &thermal_time_step = main_methods.addReturnDynamics<GetDiffusionTimeStepSize>(diffusion_body, &isotropic_diffusion);
 
-    GetDiffusionTimeStepSize get_time_step_size(diffusion_body, &isotropic_diffusion);
-    RungeKuttaSequence<InteractionDynamicsCK<
-        MainExecutionPolicy,
-        DiffusionRelaxationCK<
-            Inner<OneLevel, RungeKutta1stStage, IsotropicDiffusion, NoKernelCorrectionCK>,
-            Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>,
-            Contact<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>>,
-        DiffusionRelaxationCK<
-            Inner<OneLevel, RungeKutta2ndStage, IsotropicDiffusion, NoKernelCorrectionCK>,
-            Contact<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>,
-            Contact<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>>>>
-        diffusion_relaxation_rk2(DynamicsArgs(diffusion_body_inner, &isotropic_diffusion),
-                                 DynamicsArgs(contact_dirichlet, &isotropic_diffusion),
-                                 DynamicsArgs(contact_neumann, &isotropic_diffusion));
+    auto &runge_kutta_1st_stage =
+        main_methods.addInteractionDynamicsOneLevel<
+                        DiffusionRelaxationCK, RungeKutta1stStage, IsotropicDiffusion, NoKernelCorrectionCK>(
+                        diffusion_inner, &isotropic_diffusion)
+            .addPostContactInteraction<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>(
+                contact_Dirichlet, &isotropic_diffusion)
+            .addPostContactInteraction<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>(
+                contact_Neumann, &isotropic_diffusion);
+
+    auto &runge_kutta_2nd_stage =
+        main_methods.addInteractionDynamicsOneLevel<
+                        DiffusionRelaxationCK, RungeKutta2ndStage, IsotropicDiffusion, NoKernelCorrectionCK>(
+                        diffusion_inner, &isotropic_diffusion)
+            .addPostContactInteraction<InteractionOnly, Dirichlet<IsotropicDiffusion>, NoKernelCorrectionCK>(
+                contact_Dirichlet, &isotropic_diffusion)
+            .addPostContactInteraction<InteractionOnly, Neumann<IsotropicDiffusion>, NoKernelCorrectionCK>(
+                contact_Neumann, &isotropic_diffusion);
+
+    auto &runge_kutta_method = main_methods.addParticleDynamicsGroup();
+    runge_kutta_method.add(&runge_kutta_1st_stage).add(&runge_kutta_2nd_stage);
     //----------------------------------------------------------------------
     //	Specify initial condition if necessary.
     //----------------------------------------------------------------------
-    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
-        diffusion_initial_condition(diffusion_body, species_name, initial_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
-        left_initial_condition(wall_Dirichlet_left_region, species_name, left_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<BodyRegionByParticle, ConstantValue<Real>>>
-        right_initial_condition(wall_Dirichlet_right_region, species_name, right_temperature);
-    StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, ConstantValue<Real>>>
-        wall_Neumann_initial_condition(wall_Neumann, species_name + "Flux", heat_flux);
+    auto &diffusion_initial_condition = main_methods.addStateDynamics<
+        VariableAssignment, ConstantValue<Real>>(diffusion_body, species_name, initial_temperature);
+    auto &left_initial_condition = main_methods.addStateDynamics<
+        VariableAssignment, ConstantValue<Real>>(wall_Dirichlet_left_region, species_name, left_temperature);
+    auto &right_initial_condition = main_methods.addStateDynamics<
+        VariableAssignment, ConstantValue<Real>>(wall_Dirichlet_right_region, species_name, right_temperature);
+    auto &wall_Neumann_initial_condition = main_methods.addStateDynamics<
+        VariableAssignment, ConstantValue<Real>>(wall_Neumann, species_name + "Flux", heat_flux);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations and observations of the simulation.
     //----------------------------------------------------------------------
-    BodyStatesRecordingToVtpCK<MainExecutionPolicy> write_states(sph_system);
-    RegressionTestEnsembleAverage<ObservedQuantityRecording<MainExecutionPolicy, Real, RestoringCorrection>>
-        observe_temperature(temperature_observer_contact, species_name);
+    auto &write_states = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
+    auto &observe_temperature = main_methods.addObserveRegression<
+        RegressionTestEnsembleAverage, Real, RestoringCorrection>(temperature_observer_contact, species_name);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    wall_boundary_normal_direction.exec();
-
-    diffusion_body_cell_linked_list.exec();
-    wall_Dirichlet_cell_linked_list.exec();
-    wall_Neumann_cell_linked_list.exec();
-
-    diffusion_body_update_complex_relation.exec();
-    observer_contact_relation.exec();
+    static_configuration.exec();
 
     diffusion_initial_condition.exec();
     left_initial_condition.exec();
@@ -247,10 +252,10 @@ int main(int ac, char *av[])
                               << dt << "\n";
                 }
 
-                diffusion_relaxation_rk2.exec(dt);
+                runge_kutta_method.exec(dt);
 
                 ite++;
-                dt = get_time_step_size.exec();
+                dt = thermal_time_step.exec();
                 relaxation_time += dt;
                 integration_time += dt;
                 sv_physical_time->incrementValue(dt);

@@ -164,7 +164,7 @@ class DiffusionRelaxation<Contact<ContactKernelGradientType>, DiffusionType>
     virtual ~DiffusionRelaxation() {};
 };
 
-template <typename... ControlTypes>
+template <typename...>
 class Dirichlet; /**< Contact interaction with Dirichlet boundary condition */
 
 template <class ContactKernelGradientType, class DiffusionType>
@@ -185,7 +185,7 @@ class DiffusionRelaxation<Dirichlet<ContactKernelGradientType>, DiffusionType>
     inline void interaction(size_t index_i, Real dt = 0.0);
 };
 
-template <typename... ControlTypes>
+template <typename...>
 class Neumann; /**< Contact interaction with Neumann boundary condition */
 
 template <class ContactKernelGradientType, class DiffusionType>
@@ -208,7 +208,7 @@ class DiffusionRelaxation<Neumann<ContactKernelGradientType>, DiffusionType>
     void interaction(size_t index_i, Real dt = 0.0);
 };
 
-template <typename... ControlTypes>
+template <typename...>
 class Robin; /**< Contact interaction with Robin boundary condition */
 
 template <class ContactKernelGradientType, class DiffusionType>

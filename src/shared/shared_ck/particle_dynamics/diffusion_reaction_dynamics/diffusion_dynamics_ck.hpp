@@ -14,13 +14,36 @@
 namespace SPH
 {
 //=================================================================================================//
-template <class DiffusionType, class BaseInteractionType>
+template <class DiffusionType>
+StdVec<DiffusionType *> obtainConcreteDiffusions(AbstractDiffusion &abstract_diffusion)
+{
+    StdVec<AbstractDiffusion *> all_diffusions = abstract_diffusion.AllDiffusions();
+    StdVec<DiffusionType *> diffusions;
+    for (auto &diffusion : all_diffusions)
+    {
+        diffusions.push_back(DynamicCast<DiffusionType>(&abstract_diffusion, diffusion));
+    }
+    return diffusions;
+}
+//=================================================================================================//
+template <class DiffusionType>
+StdVec<std::string> obtainSpeciesNames(StdVec<DiffusionType *> &diffusions)
+{
+    StdVec<std::string> diffusion_species_names;
+    for (auto &diffusion : diffusions)
+    {
+        diffusion_species_names.push_back(diffusion->DiffusionSpeciesName());
+    }
+    return diffusion_species_names;
+}
+//=================================================================================================//
+template <class DiffusionType, class BaseLocalDynamicsType>
 template <class DynamicsIdentifier>
-DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
-    DiffusionRelaxationCK(DynamicsIdentifier &identifier, AbstractDiffusion *abstract_diffusion)
-    : BaseInteractionType(identifier),
-      diffusions_(this->obtainConcreteDiffusions(*abstract_diffusion)),
-      species_names_(this->obtainSpeciesNames(diffusions_)),
+BaseDiffusionDynamics<DiffusionType, BaseLocalDynamicsType>::
+    BaseDiffusionDynamics(DynamicsIdentifier &identifier, AbstractDiffusion *abstract_diffusion)
+    : BaseLocalDynamicsType(identifier),
+      diffusions_(obtainConcreteDiffusions<DiffusionType>(*abstract_diffusion)),
+      species_names_(obtainSpeciesNames(diffusions_)),
       dv_species_(registerSpecies(this->particles_, species_names_)),
       dv_species_dt_(registerSpecies(this->particles_, species_names_, "ChangeRate"))
 {
@@ -28,8 +51,8 @@ DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
     this->particles_->template addVariableToWrite<Real>(dv_species_);
 }
 //=================================================================================================//
-template <class DiffusionType, class BaseInteractionType>
-DiscreteVariable<Real> *DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::registerSpecies(
+template <class DiffusionType, class BaseLocalDynamicsType>
+DiscreteVariable<Real> *BaseDiffusionDynamics<DiffusionType, BaseLocalDynamicsType>::registerSpecies(
     BaseParticles *particles, StdVec<std::string> &species_names, std::string suffix)
 {
     if (species_names.size() == 1)
@@ -39,8 +62,8 @@ DiscreteVariable<Real> *DiffusionRelaxationCK<DiffusionType, BaseInteractionType
     return particles->template registerStateVariable<Real>("Species" + suffix, species_names);
 }
 //=================================================================================================//
-template <class DiffusionType, class BaseInteractionType>
-DiscreteVariable<Real> *DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::getSpeciesByName(
+template <class DiffusionType, class BaseLocalDynamicsType>
+DiscreteVariable<Real> *BaseDiffusionDynamics<DiffusionType, BaseLocalDynamicsType>::getSpeciesByName(
     BaseParticles *particles, StdVec<std::string> &species_names, std::string suffix)
 {
     if (species_names.size() == 1)
@@ -50,37 +73,12 @@ DiscreteVariable<Real> *DiffusionRelaxationCK<DiffusionType, BaseInteractionType
     return particles->template getVariableByName<Real>("Species" + suffix);
 }
 //=================================================================================================//
-template <class DiffusionType, class BaseInteractionType>
+template <class DiffusionType, class BaseLocalDynamicsType>
 template <class DynamicsIdentifier>
-DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
-    DiffusionRelaxationCK(DynamicsIdentifier &identifier)
-    : DiffusionRelaxationCK(
+BaseDiffusionDynamics<DiffusionType, BaseLocalDynamicsType>::
+    BaseDiffusionDynamics(DynamicsIdentifier &identifier)
+    : BaseDiffusionDynamics(
           identifier, &identifier.getSPHBody().template getMaterialProperty<AbstractDiffusion>()) {}
-//=================================================================================================//
-template <class DiffusionType, class BaseInteractionType>
-StdVec<DiffusionType *> DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
-    obtainConcreteDiffusions(AbstractDiffusion &abstract_diffusion)
-{
-    StdVec<AbstractDiffusion *> all_diffusions = abstract_diffusion.AllDiffusions();
-    StdVec<DiffusionType *> diffusions;
-    for (auto &diffusion : all_diffusions)
-    {
-        diffusions.push_back(DynamicCast<DiffusionType>(this, diffusion));
-    }
-    return diffusions;
-}
-//=================================================================================================//
-template <class DiffusionType, class BaseInteractionType>
-StdVec<std::string> DiffusionRelaxationCK<DiffusionType, BaseInteractionType>::
-    obtainSpeciesNames(StdVec<DiffusionType *> &diffusions)
-{
-    StdVec<std::string> diffusion_species_names;
-    for (auto &diffusion : diffusions)
-    {
-        diffusion_species_names.push_back(diffusion->DiffusionSpeciesName());
-    }
-    return diffusion_species_names;
-}
 //=================================================================================================//
 template <class DiffusionType, class KernelCorrectionType, class... Parameters>
 template <typename... Args>
@@ -126,22 +124,26 @@ void DiffusionRelaxationCK<Inner<InteractionOnly, DiffusionType, KernelCorrectio
     }
 }
 //=================================================================================================//
-template <class DiffusionType, template <typename...> class BoundaryType,
+template <class DiffusionType, class... OtherTypes, template <typename...> class BoundaryType,
           class KernelCorrectionType, class... Parameters>
 template <typename... Args>
-DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType, Parameters...>>::
-    DiffusionRelaxationCK(Args &&...args)
-    : BaseInteraction(std::forward<Args>(args)...),
+DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType, OtherTypes...>,
+                              KernelCorrectionType, Parameters...>>::
+    DiffusionRelaxationCK(
+        Contact<Parameters...> &contact_relation, AbstractDiffusion *abstract_diffusion, Args &&...args)
+    : BaseInteraction(contact_relation, abstract_diffusion),
       kernel_correction_method_(this->particles_),
       contact_dv_transfer_(this->registerSpecies(
           this->particles_, this->species_names_, "TransferWith" + this->sph_body_->Name())),
-      contact_boundary_method_(boundary_keeper_.template createPtr<BoundaryType<DiffusionType>>(
-          *this, this->contact_particles_)) {}
+      contact_boundary_method_(
+          boundary_keeper_.template createPtr<BoundaryType<DiffusionType, OtherTypes...>>(
+              *this, this->contact_particles_, std::forward<Args>(args)...)) {}
 //=================================================================================================//
-template <class DiffusionType, template <typename...> class BoundaryType,
+template <class DiffusionType, class... OtherTypes, template <typename...> class BoundaryType,
           class KernelCorrectionType, class... Parameters>
 template <class ExecutionPolicy, class EncloserType>
-DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType, Parameters...>>::
+DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType, OtherTypes...>,
+                              KernelCorrectionType, Parameters...>>::
     InteractKernel::InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : BaseInteraction::InteractKernel(ex_policy, encloser),
       correction_(ex_policy, encloser.kernel_correction_method_),
@@ -151,9 +153,10 @@ DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, Kern
       contact_transfer_(encloser.contact_dv_transfer_->DelegatedMultiEntryView(ex_policy)),
       boundary_flux_(ex_policy, *encloser.contact_boundary_method_) {}
 //=================================================================================================//
-template <class DiffusionType, template <typename...> class BoundaryType,
+template <class DiffusionType, class... OtherTypes, template <typename...> class BoundaryType,
           class KernelCorrectionType, class... Parameters>
-void DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType>, KernelCorrectionType, Parameters...>>::
+void DiffusionRelaxationCK<Contact<InteractionOnly, BoundaryType<DiffusionType, OtherTypes...>,
+                                   KernelCorrectionType, Parameters...>>::
     InteractKernel::interact(UnsignedInt index_i, Real dt)
 {
     for (UnsignedInt m = 0; m < contact_transfer_.Width(); ++m)
@@ -323,6 +326,44 @@ Vecd Neumann<DiffusionType>::ComputingKernel::operator()(
     const Vecd &e_ij, const Vecd &vec_r_ij)
 {
     return -contact_species_flux_[index_j][m] * contact_n_[index_j];
+}
+//=================================================================================================//
+template <class SourceDiffusionType, class TargetDiffusionType>
+template <class DiffusionDynamics>
+Robin<SourceDiffusionType, TargetDiffusionType>::Robin(
+    DiffusionDynamics &diffusion_dynamics, BaseParticles *contact_particles,
+    AbstractDiffusion *target_diffusion, Real transfer_coefficient)
+    : target_diffusions_(obtainConcreteDiffusions<TargetDiffusionType>(*target_diffusion)),
+      smoothing_length_sq_(pow(diffusion_dynamics.getSPHAdaptation().ReferenceSmoothingLength(), 2)),
+      dv_species_(diffusion_dynamics.getSpeciesByName(
+          &diffusion_dynamics.getBaseParticles(), diffusion_dynamics.getSpeciesNames())),
+      target_species_names_(obtainSpeciesNames(target_diffusions_)),
+      dv_contact_species_(diffusion_dynamics.registerSpecies(
+          contact_particles, target_species_names_)),
+      dv_contact_n_(contact_particles->getVariableByName<Vecd>("NormalDirection")),
+      transfer_coefficient_(transfer_coefficient)
+{
+    contact_particles->template addEvolvingVariable<Real>(dv_contact_species_);
+    contact_particles->template addVariableToWrite<Real>(dv_contact_species_);
+}
+//=================================================================================================//
+template <class SourceDiffusionType, class TargetDiffusionType>
+template <class ExecutionPolicy, class EncloserType>
+Robin<SourceDiffusionType, TargetDiffusionType>::ComputingKernel::
+    ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : smoothing_length_sq_(encloser.smoothing_length_sq_),
+      species_(encloser.dv_species_->DelegatedMultiEntryView(ex_policy)),
+      contact_species_(encloser.dv_contact_species_->DelegatedMultiEntryView(ex_policy)),
+      contact_n_(encloser.dv_contact_n_->DelegatedData(ex_policy)),
+      transfer_coefficient_(encloser.transfer_coefficient_) {}
+//=================================================================================================//
+template <class SourceDiffusionType, class TargetDiffusionType>
+Vecd Robin<SourceDiffusionType, TargetDiffusionType>::ComputingKernel::operator()(
+    UnsignedInt m, UnsignedInt index_i, UnsignedInt index_j,
+    const Vecd &e_ij, const Vecd &vec_r_ij)
+{
+    Real species_diff = species_[index_i][m] - contact_species_[index_j][m];
+    return transfer_coefficient_ * species_diff * contact_n_[index_j];
 }
 //=================================================================================================//
 } // namespace SPH
