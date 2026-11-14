@@ -21,12 +21,12 @@
  *                                                                           *
  * ------------------------------------------------------------------------- */
 /**
- * @file general_gradient.h
- * @brief This the methods related on the corrections of SPH smoothing kernel.
- * @details The corrections aim to increase the numerical consistency
- * or accuracy for kernel approximations.
- * @author Xiangyu Hu
- */
+  * @file general_gradient.h
+  * @brief This the methods related on the corrections of SPH smoothing kernel.
+  * @details The corrections aim to increase the numerical consistency
+  * or accuracy for kernel approximations.
+  * @author Xiangyu Hu
+  */
 
 #ifndef GENERAL_GRADIENT_H
 #define GENERAL_GRADIENT_H
@@ -101,14 +101,12 @@ class Gradient<Base, DataType, RelationType<Parameters...>>
         Real *Vol_;
         DataType *variable_;
         Grad<DataType> *gradient_;
-        Matd *B_;
     };
 
   protected:
     std::string variable_name_;
     DiscreteVariable<DataType> *dv_variable_;
     DiscreteVariable<Grad<DataType>> *dv_gradient_;
-    DiscreteVariable<Matd> *dv_B_;
 };
 
 template <typename... RelationTypes>
@@ -190,12 +188,10 @@ class Hessian<Base, DataType, RelationType<Parameters...>>
         InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args);
 
       protected:
-        MatTend *M_;
         Hess<DataType> *hessian_;
     };
 
   protected:
-    DiscreteVariable<MatTend> *dv_M_;
     DiscreteVariable<Hess<DataType>> *dv_hessian_;
 };
 
@@ -281,6 +277,230 @@ class SecondOrderGradient<Contact<DataType, Parameters...>>
     template <typename... Args>
     explicit SecondOrderGradient(Args &&...args);
     virtual ~SecondOrderGradient(){};
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *contact_Vol_;
+        DataType *contact_variable_;
+    };
+
+  protected:
+    DiscreteVariable<DataType> *dv_contact_variable_;
+};
+
+//=================================================================================================//
+template <typename... RelationTypes>
+class GradientApplyCorrection;
+
+template <typename DataType, template <typename...> class RelationType, typename... Parameters>
+class GradientApplyCorrection<Base, DataType, RelationType<Parameters...>>
+    : public Interaction<RelationType<Parameters...>>
+{
+    using BaseDynamicsType = Interaction<RelationType<Parameters...>>;
+
+  public:
+    explicit GradientApplyCorrection(RelationType<Parameters...> &relation, const std::string &variable_name);
+    template <typename FirstArg>
+    explicit GradientApplyCorrection(DynamicsArgs<RelationType<Parameters...>, FirstArg> parameters)
+        : GradientApplyCorrection(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~GradientApplyCorrection(){};
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType, typename... Args>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args);
+
+      protected:
+        Real *Vol_;
+        DataType *variable_;
+        Grad<DataType> *gradient_;
+        Matd *B_;
+    };
+
+  protected:
+    std::string variable_name_;
+    DiscreteVariable<DataType> *dv_variable_;
+    DiscreteVariable<Grad<DataType>> *dv_gradient_;
+    DiscreteVariable<Matd> *dv_B_;
+};
+
+template <typename... RelationTypes>
+class LinearGradientApplyCorrection;
+
+template <typename DataType, typename... Parameters>
+class LinearGradientApplyCorrection<Inner<DataType, Parameters...>>
+    : public GradientApplyCorrection<Base, DataType, Inner<Parameters...>>
+{
+    using BaseDynamicsType = GradientApplyCorrection<Base, DataType, Inner<Parameters...>>;
+
+  public:
+    template <class DynamicsIdentifier>
+    explicit LinearGradientApplyCorrection(DynamicsIdentifier &identifier, const std::string &variable_name)
+        : BaseDynamicsType(identifier, variable_name){};
+    template <typename FirstArg>
+    explicit LinearGradientApplyCorrection(DynamicsArgs<Inner<Parameters...>, FirstArg> parameters)
+        : LinearGradientApplyCorrection(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~LinearGradientApplyCorrection(){};
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseDynamicsType::InteractKernel(ex_policy, encloser){};
+        void interact(size_t index_i, Real dt = 0.0);
+    };
+};
+
+template <typename DataType, typename... Parameters>
+class LinearGradientApplyCorrection<Contact<DataType, Parameters...>>
+    : public GradientApplyCorrection<Base, DataType, Contact<Parameters...>>
+{
+    using BaseDynamicsType = GradientApplyCorrection<Base, DataType, Contact<Parameters...>>;
+
+  public:
+    template <class DynamicsIdentifier>
+    explicit LinearGradientApplyCorrection(DynamicsIdentifier &identifier, const std::string &variable_name);
+    template <typename FirstArg>
+    explicit LinearGradientApplyCorrection(DynamicsArgs<Contact<Parameters...>, FirstArg> parameters)
+        : LinearGradientApplyCorrection(parameters.identifier_, std::get<0>(parameters.others_)){};
+    virtual ~LinearGradientApplyCorrection(){};
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *contact_Vol_;
+        DataType *contact_variable_;
+    };
+
+  protected:
+    DiscreteVariable<DataType> *dv_contact_variable_;
+};
+
+template <typename... RelationTypes>
+class HessianApplyCorrection;
+
+template <typename DataType, template <typename...> class RelationType, typename... Parameters>
+class HessianApplyCorrection<Base, DataType, RelationType<Parameters...>>
+    : public GradientApplyCorrection<Base, DataType, RelationType<Parameters...>>
+{
+    using BaseDynamicsType = GradientApplyCorrection<Base, DataType, RelationType<Parameters...>>;
+
+  public:
+    template <typename... Args>
+    explicit HessianApplyCorrection(Args &&...args);
+    virtual ~HessianApplyCorrection(){};
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType, typename... Args>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args);
+
+      protected:
+        MatTend *M_;
+        Hess<DataType> *hessian_;
+    };
+
+  protected:
+    DiscreteVariable<MatTend> *dv_M_;
+    DiscreteVariable<Hess<DataType>> *dv_hessian_;
+};
+
+template <typename DataType, typename... Parameters>
+class HessianApplyCorrection<Inner<DataType, Parameters...>>
+    : public HessianApplyCorrection<Base, DataType, Inner<Parameters...>>
+{
+    using BaseDynamicsType = HessianApplyCorrection<Base, DataType, Inner<Parameters...>>;
+
+  public:
+    template <typename... Args>
+    explicit HessianApplyCorrection(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
+    virtual ~HessianApplyCorrection(){};
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseDynamicsType::InteractKernel(ex_policy, encloser){};
+        void interact(size_t index_i, Real dt = 0.0);
+    };
+};
+
+template <typename DataType, typename... Parameters>
+class HessianApplyCorrection<Contact<DataType, Parameters...>>
+    : public HessianApplyCorrection<Base, DataType, Contact<Parameters...>>
+{
+    using BaseDynamicsType = HessianApplyCorrection<Base, DataType, Contact<Parameters...>>;
+
+  public:
+    template <typename... Args>
+    explicit HessianApplyCorrection(Args &&...args);
+    virtual ~HessianApplyCorrection(){};
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *contact_Vol_;
+        DataType *contact_variable_;
+    };
+
+  protected:
+    DiscreteVariable<DataType> *dv_contact_variable_;
+};
+
+template <typename... RelationTypes>
+class SecondOrderGradientApplyCorrection;
+
+template <typename DataType, typename... Parameters>
+class SecondOrderGradientApplyCorrection<Inner<DataType, Parameters...>>
+    : public HessianApplyCorrection<Base, DataType, Inner<Parameters...>>
+{
+    using BaseDynamicsType = HessianApplyCorrection<Base, DataType, Inner<Parameters...>>;
+
+  public:
+    template <typename... Args>
+    explicit SecondOrderGradientApplyCorrection(Args &&...args) : BaseDynamicsType(std::forward<Args>(args)...){};
+    virtual ~SecondOrderGradientApplyCorrection(){};
+
+    class InteractKernel : public BaseDynamicsType::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+            : BaseDynamicsType::InteractKernel(ex_policy, encloser){};
+        void interact(size_t index_i, Real dt = 0.0);
+    };
+};
+
+template <typename DataType, typename... Parameters>
+class SecondOrderGradientApplyCorrection<Contact<DataType, Parameters...>>
+    : public HessianApplyCorrection<Base, DataType, Contact<Parameters...>>
+{
+    using BaseDynamicsType = HessianApplyCorrection<Base, DataType, Contact<Parameters...>>;
+
+  public:
+    template <typename... Args>
+    explicit SecondOrderGradientApplyCorrection(Args &&...args);
+    virtual ~SecondOrderGradientApplyCorrection(){};
 
     class InteractKernel : public BaseDynamicsType::InteractKernel
     {

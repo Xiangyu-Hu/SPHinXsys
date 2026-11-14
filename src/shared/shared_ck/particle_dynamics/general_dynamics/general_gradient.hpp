@@ -14,8 +14,7 @@ Gradient<Base, DataType, RelationType<Parameters...>>::
     : BaseDynamicsType(relation), variable_name_(variable_name),
       dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
       dv_gradient_(this->particles_->template registerStateVariable<Grad<DataType>>(
-          variable_name + "Gradient", ZeroData<Grad<DataType>>::value)),
-      dv_B_(this->particles_->template getVariableByName<Matd>("LinearCorrectionMatrix")) {}
+          variable_name + "Gradient", ZeroData<Grad<DataType>>::value)) {}
 //=================================================================================================//
 template <typename DataType, template <typename...> class RelationType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType, typename... Args>
@@ -24,8 +23,7 @@ Gradient<Base, DataType, RelationType<Parameters...>>::InteractKernel::
     : BaseDynamicsType::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
-      gradient_(encloser.dv_gradient_->DelegatedData(ex_policy)),
-      B_(encloser.dv_B_->DelegatedData(ex_policy)) {}
+      gradient_(encloser.dv_gradient_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
 void LinearGradient<Inner<DataType, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
@@ -34,8 +32,7 @@ void LinearGradient<Inner<DataType, Parameters...>>::InteractKernel::interact(si
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Vecd corrected_gradW_ijV_j = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
-                                     this->B_[index_i] * this->e_ij(index_i, index_j);
+        Vecd corrected_gradW_ijV_j = this->dW_ij(index_i, index_j) * this->Vol_[index_j] * this->e_ij(index_i, index_j);
         DataType difference = this->variable_[index_i] - this->variable_[index_j];
         summation -= tensorProduct(corrected_gradW_ijV_j, difference);
     }
@@ -66,8 +63,7 @@ void LinearGradient<Contact<DataType, Parameters...>>::
     for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
     {
         UnsignedInt index_j = this->neighbor_index_[n];
-        Vecd corrected_gradW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
-                                     this->B_[index_i] * this->e_ij(index_i, index_j);
+        Vecd corrected_gradW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] * this->e_ij(index_i, index_j);
         DataType difference = this->variable_[index_i] - contact_variable_[index_j];
         summation -= tensorProduct(corrected_gradW_ijV_j, difference);
     }
@@ -78,7 +74,6 @@ template <typename DataType, template <typename...> class RelationType, typename
 template <typename... Args>
 Hessian<Base, DataType, RelationType<Parameters...>>::Hessian(Args &&...args)
     : BaseDynamicsType(std::forward<Args>(args)...),
-      dv_M_(this->particles_->template getVariableByName<MatTend>("HessianCorrectionMatrix")),
       dv_hessian_(this->particles_->template registerStateVariable<Hess<DataType>>(
           this->variable_name_ + "Hessian")) {}
 //=================================================================================================//
@@ -87,7 +82,6 @@ template <class ExecutionPolicy, class EncloserType, typename... Args>
 Hessian<Base, DataType, RelationType<Parameters...>>::InteractKernel::
     InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
     : BaseDynamicsType::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
-      M_(encloser.dv_M_->DelegatedData(ex_policy)),
       hessian_(encloser.dv_hessian_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
@@ -100,13 +94,13 @@ void Hessian<Inner<DataType, Parameters...>>::
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
         Real corrected_dW_ijV_j = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
-                                  (this->B_[index_i] * this->e_ij(index_i, index_j)).dot(r_ij);
+                                  (this->e_ij(index_i, index_j)).dot(r_ij);
         DataType corrected_difference = this->variable_[index_i] - this->variable_[index_j] -
                                         this->gradient_[index_i].dot(r_ij);
         summation += 2.0 * corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), Real(2)) *
                      tensorProduct(vectorizeTensorSquare(r_ij), corrected_difference);
     }
-    this->hessian_[index_i] = this->M_[index_i] * summation;
+    this->hessian_[index_i] = summation;
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
@@ -134,13 +128,13 @@ void Hessian<Contact<DataType, Parameters...>>::
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
         Real corrected_dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
-                                  (this->B_[index_i] * this->e_ij(index_i, index_j)).dot(r_ij);
+                                  (this->e_ij(index_i, index_j)).dot(r_ij);
         DataType corrected_difference = this->variable_[index_i] - contact_variable_[index_j] -
                                         this->gradient_[index_i].dot(r_ij);
         summation += 2.0 * corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), Real(2)) *
                      tensorProduct(vectorizeTensorSquare(r_ij), corrected_difference);
     }
-    this->hessian_[index_i] += this->M_[index_i] * summation;
+    this->hessian_[index_i] += summation;
 }
 //=================================================================================================//
 template <typename DataType, typename... Parameters>
@@ -152,8 +146,7 @@ void SecondOrderGradient<Inner<DataType, Parameters...>>::
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
-        Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
-                                  this->B_[index_i] * this->e_ij(index_i, index_j);
+        Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * this->Vol_[index_j] * this->e_ij(index_i, index_j);
         auto difference = this->variable_[index_i] - this->variable_[index_j] +
                           0.5 * vectorizeTensorSquare(r_ij).transpose() * this->hessian_[index_i];
         summation -= corrected_gradW_ij * difference;
@@ -185,6 +178,192 @@ void SecondOrderGradient<Contact<DataType, Parameters...>>::
     {
         UnsignedInt index_j = this->neighbor_index_[n];
         Vecd r_ij = this->vec_r_ij(index_i, index_j);
+        Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] * this->e_ij(index_i, index_j);
+        auto difference = this->variable_[index_i] - contact_variable_[index_j] +
+                          0.5 * vectorizeTensorSquare(r_ij).transpose() * this->hessian_[index_i];
+        summation -= corrected_gradW_ij * difference;
+    }
+    this->gradient_[index_i] += summation;
+}
+//=================================================================================================//
+template <typename DataType, template <typename...> class RelationType, typename... Parameters>
+GradientApplyCorrection<Base, DataType, RelationType<Parameters...>>::
+    GradientApplyCorrection(RelationType<Parameters...> &relation, const std::string &variable_name)
+    : BaseDynamicsType(relation), variable_name_(variable_name),
+      dv_variable_(this->particles_->template getVariableByName<DataType>(variable_name)),
+      dv_gradient_(this->particles_->template registerStateVariable<Grad<DataType>>(
+          variable_name + "GradientApplyCorrection", ZeroData<Grad<DataType>>::value)),
+      dv_B_(this->particles_->template getVariableByName<Matd>("LinearCorrectionMatrix")) {}
+//=================================================================================================//
+template <typename DataType, template <typename...> class RelationType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType, typename... Args>
+GradientApplyCorrection<Base, DataType, RelationType<Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
+    : BaseDynamicsType::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+      variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
+      gradient_(encloser.dv_gradient_->DelegatedData(ex_policy)),
+      B_(encloser.dv_B_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+void LinearGradientApplyCorrection<Inner<DataType, Parameters...>>::InteractKernel::interact(size_t index_i, Real dt)
+{
+    Grad<DataType> summation = Grad<DataType>::Zero();
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        Vecd corrected_gradW_ijV_j = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
+                                     this->B_[index_i] * this->e_ij(index_i, index_j);
+        DataType difference = this->variable_[index_i] - this->variable_[index_j];
+        summation -= tensorProduct(corrected_gradW_ijV_j, difference);
+    }
+    this->gradient_[index_i] = summation;
+}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+template <class DynamicsIdentifier>
+LinearGradientApplyCorrection<Contact<DataType, Parameters...>>::LinearGradientApplyCorrection(
+    DynamicsIdentifier &identifier, const std::string &variable_name)
+    : BaseDynamicsType(identifier, variable_name),
+      dv_contact_variable_(
+          this->contact_particles_->template getVariableByName<DataType>(variable_name)) {}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+LinearGradientApplyCorrection<Contact<DataType, Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseDynamicsType::InteractKernel(ex_policy, encloser),
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)),
+      contact_variable_(encloser.dv_contact_variable_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+void LinearGradientApplyCorrection<Contact<DataType, Parameters...>>::
+    InteractKernel::interact(size_t index_i, Real dt)
+{
+    Grad<DataType> summation = Grad<DataType>::Zero();
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        Vecd corrected_gradW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
+                                     this->B_[index_i] * this->e_ij(index_i, index_j);
+        DataType difference = this->variable_[index_i] - contact_variable_[index_j];
+        summation -= tensorProduct(corrected_gradW_ijV_j, difference);
+    }
+    this->gradient_[index_i] += summation;
+}
+//=================================================================================================//
+//=================================================================================================//
+template <typename DataType, template <typename...> class RelationType, typename... Parameters>
+template <typename... Args>
+HessianApplyCorrection<Base, DataType, RelationType<Parameters...>>::HessianApplyCorrection(Args &&...args)
+    : BaseDynamicsType(std::forward<Args>(args)...),
+      dv_M_(this->particles_->template getVariableByName<MatTend>("HessianCorrectionMatrix")),
+      dv_hessian_(this->particles_->template registerStateVariable<Hess<DataType>>(
+          this->variable_name_ + "HessianApplyCorrection")) {}
+//=================================================================================================//
+template <typename DataType, template <typename...> class RelationType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType, typename... Args>
+HessianApplyCorrection<Base, DataType, RelationType<Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
+    : BaseDynamicsType::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
+      M_(encloser.dv_M_->DelegatedData(ex_policy)),
+      hessian_(encloser.dv_hessian_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+void HessianApplyCorrection<Inner<DataType, Parameters...>>::
+    InteractKernel::interact(size_t index_i, Real dt)
+{
+    Hess<DataType> summation = Hess<DataType>::Zero();
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        Vecd r_ij = this->vec_r_ij(index_i, index_j);
+        Real corrected_dW_ijV_j = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
+                                  (this->B_[index_i] * this->e_ij(index_i, index_j)).dot(r_ij);
+        DataType corrected_difference = this->variable_[index_i] - this->variable_[index_j] -
+                                        this->gradient_[index_i].dot(r_ij);
+        summation += 2.0 * corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), Real(2)) *
+                     tensorProduct(vectorizeTensorSquare(r_ij), corrected_difference);
+    }
+    this->hessian_[index_i] = this->M_[index_i] * summation;
+}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+template <typename... Args>
+HessianApplyCorrection<Contact<DataType, Parameters...>>::HessianApplyCorrection(Args &&...args)
+    : BaseDynamicsType(std::forward<Args>(args)...),
+      dv_contact_variable_(this->contact_particles_->template getVariableByName<DataType>(
+          this->variable_name_)) {}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+HessianApplyCorrection<Contact<DataType, Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseDynamicsType::InteractKernel(ex_policy, encloser),
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)),
+      contact_variable_(encloser.dv_contact_variable_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+void HessianApplyCorrection<Contact<DataType, Parameters...>>::
+    InteractKernel::interact(size_t index_i, Real dt)
+{
+    Hess<DataType> summation = Hess<DataType>::Zero();
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        Vecd r_ij = this->vec_r_ij(index_i, index_j);
+        Real corrected_dW_ijV_j = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
+                                  (this->B_[index_i] * this->e_ij(index_i, index_j)).dot(r_ij);
+        DataType corrected_difference = this->variable_[index_i] - contact_variable_[index_j] -
+                                        this->gradient_[index_i].dot(r_ij);
+        summation += 2.0 * corrected_dW_ijV_j / math::pow(r_ij.squaredNorm(), Real(2)) *
+                     tensorProduct(vectorizeTensorSquare(r_ij), corrected_difference);
+    }
+    this->hessian_[index_i] += this->M_[index_i] * summation;
+}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+void SecondOrderGradientApplyCorrection<Inner<DataType, Parameters...>>::
+    InteractKernel::interact(size_t index_i, Real dt)
+{
+    Grad<DataType> summation = Grad<DataType>::Zero();
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        Vecd r_ij = this->vec_r_ij(index_i, index_j);
+        Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * this->Vol_[index_j] *
+                                  this->B_[index_i] * this->e_ij(index_i, index_j);
+        auto difference = this->variable_[index_i] - this->variable_[index_j] +
+                          0.5 * vectorizeTensorSquare(r_ij).transpose() * this->hessian_[index_i];
+        summation -= corrected_gradW_ij * difference;
+    }
+    this->gradient_[index_i] = summation;
+}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+template <typename... Args>
+SecondOrderGradientApplyCorrection<Contact<DataType, Parameters...>>::SecondOrderGradientApplyCorrection(Args &&...args)
+    : BaseDynamicsType(std::forward<Args>(args)...),
+      dv_contact_variable_(this->contact_particles_->template getVariableByName<DataType>(
+          this->variable_name_)) {}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+SecondOrderGradientApplyCorrection<Contact<DataType, Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseDynamicsType::InteractKernel(ex_policy, encloser),
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)),
+      contact_variable_(encloser.dv_contact_variable_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename DataType, typename... Parameters>
+void SecondOrderGradientApplyCorrection<Contact<DataType, Parameters...>>::
+    InteractKernel::interact(size_t index_i, Real dt)
+{
+    Grad<DataType> summation = Grad<DataType>::Zero();
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        Vecd r_ij = this->vec_r_ij(index_i, index_j);
         Vecd corrected_gradW_ij = this->dW_ij(index_i, index_j) * contact_Vol_[index_j] *
                                   this->B_[index_i] * this->e_ij(index_i, index_j);
         auto difference = this->variable_[index_i] - contact_variable_[index_j] +
@@ -193,6 +372,5 @@ void SecondOrderGradient<Contact<DataType, Parameters...>>::
     }
     this->gradient_[index_i] += summation;
 }
-//=================================================================================================//
 } // namespace SPH
 #endif // GENERAL_GRADIENT_HPP
