@@ -35,13 +35,13 @@
 #ifndef STATE_ENGINE_SIMBODY_H
 #define STATE_ENGINE_SIMBODY_H
 
-#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
-
-#include "base_data_type_package.h"
+#include "data_type.h"
 #include "exception.h"
+#include "ownership.h"
 
 #include <cstdio>
 #include <iostream>
+#include <map>
 #include <stdexcept>
 #include <string>
 
@@ -70,18 +70,21 @@ class SimbodyStateEngine
       public:
         /** Constructor and destructor. */
         StateVariable()
-            : name_(""), owner_(nullptr), subsysindex_(SimTK::InvalidIndex), varindex_(SimTK::InvalidIndex), sysyindex_(SimTK::InvalidIndex)
+            : name_(""), owner_(nullptr), subsysindex_(SimTK::InvalidIndex),
+              varindex_(SimTK::InvalidIndex), sysyindex_(SimTK::InvalidIndex)
         {
         }
 
-        explicit StateVariable(std::string &name, SimbodyStateEngine &owner, SimTK::SubsystemIndex subsys, int varindex)
-            : name_(name), owner_(&owner), subsysindex_(subsys), varindex_(varindex), sysyindex_(SimTK::InvalidIndex)
+        explicit StateVariable(std::string &name, SimbodyStateEngine &owner,
+                               SimTK::SubsystemIndex subsys, int varindex)
+            : name_(name), owner_(&owner), subsysindex_(subsys), varindex_(varindex),
+              sysyindex_(SimTK::InvalidIndex)
         {
         }
 
         virtual ~StateVariable() {}
 
-        std::string &getName() { return name_; }
+        std::string &Name() { return name_; }
         SimbodyStateEngine &getOwner() { return *owner_; }
         /** Get the index of simbody state variable. */
         int &getVarIndex() { return varindex_; }
@@ -135,11 +138,12 @@ class SimbodyStateEngine
         /** Convenience constructor for defining a SimbodyStateEngine added state variable */
         explicit AddedStateVariable(std::string &name, /**< state var name. */
                                     SimbodyStateEngine &owner,
-                                    SimTK::Stage invalidatestage) : /**< stage this variable invalidates. */
-                                                                    StateVariable(name, owner,
-                                                                                  SimTK::SubsystemIndex(SimTK::InvalidIndex),
-                                                                                  SimTK::InvalidIndex),
-                                                                    invalidatestage_(SimTK::Stage::Empty)
+                                    SimTK::Stage invalidatestage)
+            : /**< stage this variable invalidates. */
+              StateVariable(name, owner,
+                            SimTK::SubsystemIndex(SimTK::InvalidIndex),
+                            SimTK::InvalidIndex),
+              invalidatestage_(SimTK::Stage::Empty)
         {
         }
 
@@ -260,7 +264,7 @@ class SimbodyStateEngine
     mutable SimTK::ReferencePtr<SimTK::System> statesassociatedsystem_;
 
     /** Default constructor **/
-    SimbodyStateEngine(SPHSystem &sph_system, SimTK::MultibodySystem &system);
+    SimbodyStateEngine(SimTK::MultibodySystem &system);
 
     /** Reference pointer to the system that this engine manage. */
     SimTK::ReferencePtr<SimTK::MultibodySystem> mbsystem_;

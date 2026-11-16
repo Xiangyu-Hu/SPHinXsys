@@ -3,6 +3,7 @@
  * @brief   fish flapping passively in flow
  * @author  Xiangyu Hu and Chi Zhang
  */
+#include "all_simbody.h"
 #include "sphinxsys.h"
 /**
  * Create the shapes for fish and bones.
@@ -15,8 +16,8 @@ using namespace SPH;
 /**
  * @brief Basic geometry parameters and numerical setup.
  */
-Real DL = 11.0;                         /**< Channel length. */
-Real DH = 8.0;                          /**< Channel height. */
+Real DL = 11.0;                            /**< Channel length. */
+Real DH = 8.0;                             /**< Channel height. */
 Real global_resolution = 0.1;              /** Initial particle spacing. */
 Real DL_sponge = global_resolution * 20.0; /**< Sponge region to impose inflow condition. */
 Real BW = global_resolution * 4.0;         /**< Extending width for BCs. */
@@ -115,10 +116,10 @@ class WaterBlock : public MultiPolygonShape
   public:
     explicit WaterBlock(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(createWaterBlockShape(), GeometricOps::add);
         /** Exclude the fish body. */
         std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, fish_shape_resolution);
-        multi_polygon_.addAPolygon(fish_shape, GeometricOps::sub);
+        multi_polygon_.addPolygon(fish_shape, GeometricOps::sub);
     }
 };
 /**
@@ -131,8 +132,8 @@ class WallBoundary : public MultiPolygonShape
     {
         std::vector<Vecd> outer_shape = createOuterWallShape();
         std::vector<Vecd> inner_shape = createInnerWallShape();
-        multi_polygon_.addAPolygon(outer_shape, GeometricOps::add);
-        multi_polygon_.addAPolygon(inner_shape, GeometricOps::sub);
+        multi_polygon_.addPolygon(outer_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(inner_shape, GeometricOps::sub);
     }
 };
 /**
@@ -144,7 +145,7 @@ class FishBody : public MultiPolygonShape
     explicit FishBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
         std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, fish_shape_resolution);
-        multi_polygon_.addAPolygon(fish_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(fish_shape, GeometricOps::add);
     }
 };
 /**
@@ -154,8 +155,8 @@ MultiPolygon createFishHeadShape(SPHBody &sph_body)
 {
     std::vector<Vecd> fish_shape = CreatFishShape(cx, cy, fish_length, sph_body.getSPHAdaptation().ReferenceSpacing());
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(fish_shape, GeometricOps::add);
-    multi_polygon.addAPolygon(createFishBlockingShape(), GeometricOps::sub);
+    multi_polygon.addPolygon(fish_shape, GeometricOps::add);
+    multi_polygon.addPolygon(createFishBlockingShape(), GeometricOps::sub);
     return multi_polygon;
 };
 
@@ -172,14 +173,14 @@ StdVec<Vecd> createObservationPoints()
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBox &aligned_box_;
+    OrientedBox &oriented_box_;
     Vecd halfsize_;
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(U_f), t_ref_(2.0),
-          aligned_box_(boundary_condition.getAlignedBox()),
-          halfsize_(aligned_box_.HalfSize()) {}
+          oriented_box_(boundary_condition.getOrientedBox()),
+          halfsize_(oriented_box_.HalfSize()) {}
 
     Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {
@@ -209,13 +210,14 @@ int main(int ac, char *av[])
      * @brief   Particles and body creation for water.
      */
     FluidBody water_block(system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
     /**
      * @brief   Particles and body creation for wall boundary.
      */
     SolidBody wall_boundary(system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     /**
      * @brief   Particles and body creation for fish.
@@ -223,10 +225,10 @@ int main(int ac, char *av[])
     SolidBody fish_body(system, makeShared<FishBody>("FishBody"));
     fish_body.defineAdaptationRatios(1.15, 2.0);
     fish_body.defineBodyLevelSetShape();
-    fish_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    fish_body.defineMatterMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     // Using relaxed particle distribution if needed
     (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? fish_body.generateParticles<BaseParticles, Reload>(fish_body.getName())
+        ? fish_body.generateParticles<BaseParticles, Reload>(fish_body.Name())
         : fish_body.generateParticles<BaseParticles, Lattice>();
     /**
      * @brief   Particle and body creation of fish observer.
@@ -317,8 +319,8 @@ int main(int ac, char *av[])
     /** Computing vorticity in the flow. */
     InteractionDynamics<fluid_dynamics::VorticityInner> compute_vorticity(water_block_inner);
     /** Inflow boundary condition. */
-    AlignedBoxByCell inflow_buffer(
-        water_block, AlignedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
+    OrientedBoxByCell inflow_buffer(
+        water_block, OrientedBox(xAxis, Transform(Vec2d(buffer_translation)), buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> parabolic_inflow(inflow_buffer);
 
     /**
@@ -358,14 +360,14 @@ int main(int ac, char *av[])
     SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1.0, SimTKVec3(0), SimTK::UnitInertia(1)));
     SolidBodyPartForSimbody fish_head(fish_body, makeShared<MultiPolygonShape>(createFishHeadShape(fish_body), "FishHead"));
     /** Mass properties of the constrained spot. */
-    SimTK::Body::Rigid tethered_spot_info(*fish_head.body_part_mass_properties_);
+    SimTK::Body::Rigid tethered_spot_info(fish_head.getSimTKMassProperties());
     /** Mobility of the fixed spot. */
     SimTK::MobilizedBody::Weld fixed_spot(matter.Ground(), SimTK::Transform(SimTKVec3(tethering_point[0], tethering_point[1], 0.0)),
                                           fixed_spot_info, SimTK::Transform(SimTKVec3(0)));
     /** Mobility of the tethered spot.
      * Set the mass center as the origin location of the planar mobilizer
      */
-    Vecd disp0 = fish_head.initial_mass_center_ - tethering_point;
+    Vecd disp0 = fish_head.getMassCenter() - tethering_point;
     SimTK::MobilizedBody::Planar tethered_spot(fixed_spot, SimTK::Transform(SimTKVec3(disp0[0], disp0[1], 0.0)), tethered_spot_info, SimTK::Transform(SimTKVec3(0)));
     /** The tethering line give cable force.
      * the start point of the cable path is at the origin location of the first mobilizer body,
@@ -373,7 +375,7 @@ int main(int ac, char *av[])
      * location of the second mobilizer body origin location, here, the mass center
      * of the fish head.
      */
-    Vecd disp_cable_end = Vecd(cx, cy) - fish_head.initial_mass_center_;
+    Vecd disp_cable_end = Vecd(cx, cy) - fish_head.getMassCenter();
     SimTK::CablePath tethering_line(cables, fixed_spot, SimTKVec3(0), tethered_spot, SimTKVec3(disp_cable_end[0], disp_cable_end[1], 0.0));
     SimTK::CableSpring tethering_spring(forces, tethering_line, 100.0, 3.0, 10.0);
 

@@ -1,5 +1,8 @@
 // #pragma once
 #include "k-epsilon_turbulent_model.hpp"
+
+#include "base_body.hpp"
+
 namespace SPH
 {
 //=================================================================================================//
@@ -400,7 +403,7 @@ TurbuViscousForce<Contact<Wall>>::TurbuViscousForce(BaseContactRelation &wall_co
     : BaseTurbuViscousForceWithWall(wall_contact_relation),
       wall_particle_spacing_(wall_contact_relation.getSPHBody().getSPHAdaptation().ReferenceSpacing()),
       B_(particles_->getVariableDataByName<Matd>("LinearGradientCorrectionMatrix")),
-      physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {}
+      physical_time_(sph_system_->svPhysicalTime().Data()) {}
 //=================================================================================================//
 void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
 {
@@ -439,7 +442,7 @@ void TurbuViscousForce<Contact<Wall>>::interaction(size_t index_i, Real dt)
             Real u_star_j = get_dimensionless_velocity(y_star_j, current_time);
             Real fric_vel_mag_j = sqrt(C_mu_25_ * turbu_k_i_05 * vel_i_tau_mag / u_star_j);
             Real WSS_tn_mag_j = rho_i * fric_vel_mag_j * fric_vel_mag_j * boost::qvm::sign(vel_i.dot(e_j_tau));
-            
+
             WSS_j = WSS_tn_mag_j * (e_j_tau * e_j_n.transpose());
             Vecd force_j = 2.0 * mass_[index_i] * WSS_j * e_ij * contact_neighborhood.dW_ij_[n] * this->Vol_[index_j] / rho_i;
             force += force_j;
@@ -457,7 +460,7 @@ TurbulentEddyViscosity::
       turbu_epsilon_(particles_->getVariableDataByName<Real>("TurbulentDissipation")),
       wall_Y_plus_(particles_->getVariableDataByName<Real>("WallYplus")),
       wall_Y_star_(particles_->getVariableDataByName<Real>("WallYstar")),
-      viscosity_(DynamicCast<Viscosity>(this, particles_->getBaseMaterial())),
+      viscosity_(sph_body_->getMaterialProperty<Viscosity>()),
       mu_(viscosity_.ReferenceViscosity()) {}
 //=================================================================================================//
 void TurbulentEddyViscosity::update(size_t index_i, Real dt)
@@ -466,13 +469,13 @@ void TurbulentEddyViscosity::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 TurbulentAdvectionTimeStepSize::TurbulentAdvectionTimeStepSize(SPHBody &sph_body, Real U_max, Real advectionCFL)
-    : LocalDynamicsReduce<ReduceMax>(sph_body),
+    : LocalDynamicsReduce<ReduceMax<Real>>(sph_body),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       smoothing_length_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
       speed_ref_turbu_(U_max), advectionCFL_(advectionCFL),
       turbu_mu_(particles_->getVariableDataByName<Real>("TurbulentViscosity")),
-      fluid_(DynamicCast<Fluid>(this, particles_->getBaseMaterial())),
-      viscosity_(DynamicCast<Viscosity>(this, particles_->getBaseMaterial()))
+      fluid_(DynamicCast<Fluid>(this, sph_body_->getMatterMaterial())),
+      viscosity_(sph_body_->getMaterialProperty<Viscosity>())
 {
     Real viscous_speed = viscosity_.ReferenceViscosity() / fluid_.ReferenceDensity() / smoothing_length_min_;
     speed_ref_turbu_ = SMAX(viscous_speed, speed_ref_turbu_);
@@ -723,8 +726,9 @@ StandardWallFunctionCorrection::
       wall_Y_star_(particles_->registerStateVariableData<Real>("WallYstar")),
       velo_tan_(particles_->registerStateVariableData<Real>("TangentialVelocity")),
       velo_friction_(particles_->registerStateVariableData<Vecd>("FrictionVelocity")),
-      vel_(particles_->getVariableDataByName<Vecd>("Velocity")), rho_(particles_->getVariableDataByName<Real>("Density")),
-      viscosity_(DynamicCast<Viscosity>(this, particles_->getBaseMaterial())),
+      vel_(particles_->getVariableDataByName<Vecd>("Velocity")), 
+      rho_(particles_->getVariableDataByName<Real>("Density")),
+      viscosity_(sph_body_->getMaterialProperty<Viscosity>()),
       molecular_viscosity_(viscosity_.ReferenceViscosity()),
       turbu_k_(particles_->getVariableDataByName<Real>("TurbulenceKineticEnergy")),
       turbu_epsilon_(particles_->getVariableDataByName<Real>("TurbulentDissipation")),
@@ -738,7 +742,7 @@ StandardWallFunctionCorrection::
       index_nearest(particles_->getVariableDataByName<int>("NearestIndex")),
       e_nearest_tau_(particles_->getVariableDataByName<Vecd>("WallNearestTangentialUnitVector")),
       e_nearest_normal_(particles_->getVariableDataByName<Vecd>("WallNearestNormalUnitVector")),
-      physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime"))
+      physical_time_(sph_system_->svPhysicalTime().Data())
 {
     for (size_t k = 0; k != contact_particles_.size(); ++k)
     {

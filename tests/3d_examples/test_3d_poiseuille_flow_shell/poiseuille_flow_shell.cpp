@@ -103,14 +103,14 @@ class ParticleGenerator<SurfaceParticles, ShellBoundary> : public ParticleGenera
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBox &aligned_box_;
+    OrientedBox &oriented_box_;
     Vec3d halfsize_;
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(U_f), t_ref_(1.0),
-          aligned_box_(boundary_condition.getAlignedBox()),
-          halfsize_(aligned_box_.HalfSize()) {}
+          oriented_box_(boundary_condition.getOrientedBox()),
+          halfsize_(oriented_box_.HalfSize()) {}
 
     Vec3d operator()(Vec3d &position, Vec3d &velocity, Real current_time)
     {
@@ -152,11 +152,11 @@ void poiseuille_flow(const Real global_resolution, const Real resolution_shell, 
     //	Domain bounds of the system.
     //----------------------------------------------------------------------
     const BoundingBoxd system_domain_bounds(Vec3d(-0.5 * diameter, 0, -0.5 * diameter) -
-                                               Vec3d(shell_thickness, wall_thickness,
-                                                     shell_thickness),
-                                           Vec3d(0.5 * diameter, full_length, 0.5 * diameter) +
-                                               Vec3d(shell_thickness, wall_thickness,
-                                                     shell_thickness));
+                                                Vec3d(shell_thickness, wall_thickness,
+                                                      shell_thickness),
+                                            Vec3d(0.5 * diameter, full_length, 0.5 * diameter) +
+                                                Vec3d(shell_thickness, wall_thickness,
+                                                      shell_thickness));
     //----------------------------------------------------------------------
     //  Define water shape
     //----------------------------------------------------------------------
@@ -173,13 +173,14 @@ void poiseuille_flow(const Real global_resolution, const Real resolution_shell, 
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(system, water_block_shape);
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> inlet_particle_buffer(0.5);
     water_block.generateParticlesWithReserve<BaseParticles, Lattice>(inlet_particle_buffer);
 
     SolidBody shell_boundary(system, makeShared<DefaultShape>("Shell"));
     shell_boundary.defineAdaptation<SPH::SPHAdaptation>(1.15, global_resolution / resolution_shell);
-    shell_boundary.defineMaterial<LinearElasticSolid>(1, 1e3, 0.45);
+    shell_boundary.defineMatterMaterial<LinearElasticSolid>(1, 1e3, 0.45);
     shell_boundary.generateParticles<SurfaceParticles, ShellBoundary>(resolution_shell, wall_thickness, shell_thickness);
 
     ObserverBody observer_axial(system, "fluid_observer_axial");
@@ -231,11 +232,11 @@ void poiseuille_flow(const Real global_resolution, const Real resolution_shell, 
     //----------------------------------------------------------------------
     //	Boundary conditions. Inflow & Outflow in Y-direction
     //----------------------------------------------------------------------
-    AlignedBoxByParticle emitter(water_block, AlignedBox(yAxis, Transform(Vec3d(emitter_translation)), emitter_halfsize));
+    OrientedBoxByParticle emitter(water_block, OrientedBox(yAxis, Transform(Vec3d(emitter_translation)), emitter_halfsize));
     SimpleDynamics<fluid_dynamics::EmitterInflowInjection> emitter_inflow_injection(emitter, inlet_particle_buffer);
-    AlignedBoxByCell emitter_buffer(water_block, AlignedBox(yAxis, Transform(Vec3d(emitter_buffer_translation)), emitter_buffer_halfsize));
+    OrientedBoxByCell emitter_buffer(water_block, OrientedBox(yAxis, Transform(Vec3d(emitter_buffer_translation)), emitter_buffer_halfsize));
     SimpleDynamics<fluid_dynamics::InflowVelocityCondition<InflowVelocity>> emitter_buffer_inflow_condition(emitter_buffer);
-    AlignedBoxByCell disposer(water_block, AlignedBox(yAxis, Transform(Vec3d(disposer_translation)), disposer_halfsize));
+    OrientedBoxByCell disposer(water_block, OrientedBox(yAxis, Transform(Vec3d(disposer_translation)), disposer_halfsize));
     SimpleDynamics<fluid_dynamics::DisposerOutflowDeletion> disposer_outflow_deletion(disposer);
     //----------------------------------------------------------------------
     //	Define the configuration related particles dynamics.

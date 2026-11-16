@@ -16,8 +16,8 @@ using namespace std;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real DL = 120.0;                 /**< Channel length. */
-Real DH = 2.0;                   /**< Channel height. */
+Real DL = 120.0;                    /**< Channel length. */
+Real DH = 2.0;                      /**< Channel height. */
 Real global_resolution = 1.0 / 5.0; /**< Initial reference particle spacing. */
 BoundingBoxd system_domain_bounds(Vec2d(0.0, 0.0), Vec2d(DL, DH));
 //----------------------------------------------------------------------
@@ -33,9 +33,9 @@ Real C_mu = 0.09;
 Real turbulent_intensity = 0.05;
 Real length_scale = 0.07 * 2 * DH / pow(C_mu, 0.75);
 //----------------------------------------------------------------------
-//	Set the file path to the data file.
+//	Set the file name to the data file.
 //----------------------------------------------------------------------
-std::string mesh_file_path = "./input/Channel_Mesh_short.msh";
+std::string channel_mesh = "Channel_Mesh_short.msh";
 //	Define geometries and body shapes
 //----------------------------------------------------------------------
 std::vector<Vecd> createWaterBlockShape()
@@ -105,7 +105,7 @@ class TurbulentChannelFlowBoundaryConditionSetup : public BoundaryConditionSetup
           K_(this->particles_->template getVariableDataByName<Real>("TKE")),
           Eps_(this->particles_->template getVariableDataByName<Real>("Dissipation")),
           mu_t_(this->particles_->template getVariableDataByName<Real>("TurblunetViscosity")),
-          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, particles_->getBaseMaterial())),
+          fluid_(DynamicCast<WeaklyCompressibleFluid>(this, sph_body_->getMatterMaterial())),
           C_mu_(0.09) {};
     virtual ~TurbulentChannelFlowBoundaryConditionSetup() {};
 

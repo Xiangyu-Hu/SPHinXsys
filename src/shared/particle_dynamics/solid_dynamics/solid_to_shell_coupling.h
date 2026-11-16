@@ -30,7 +30,8 @@
 #define SOLID_TO_SHELL_CONSTRAINT_H
 
 #include "force_prior.h"
-#include "general_constraint.h"
+
+#include <string>
 
 namespace SPH
 {

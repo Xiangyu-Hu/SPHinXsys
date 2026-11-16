@@ -8,9 +8,9 @@ using namespace SPH;
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
-Real PL = 1.0;                   /**< Length of the myocardium body. */
-Real PH = 1.0;                   /**< Thickness of the myocardium body. */
-Real PW = 1.0;                   /**< Width of the myocardium body. */
+Real PL = 1.0;                      /**< Length of the myocardium body. */
+Real PH = 1.0;                      /**< Thickness of the myocardium body. */
+Real PW = 1.0;                      /**< Width of the myocardium body. */
 Real global_resolution = PH / 25.0; /**< Initial particle spacing. */
 Real SL = 4.0 * global_resolution;  /**< Extension for holder. */
 Vecd halfsize_myocardium(0.5 * (PL + SL), 0.5 * PH, 0.5 * PW);
@@ -38,7 +38,7 @@ class MyocardiumActivation
   public:
     explicit MyocardiumActivation(SPHBody &sph_body)
         : active_muscle_dynamics::MuscleActivation(sph_body),
-          physical_time_(sph_system_->getSystemVariableDataByName<Real>("PhysicalTime")) {};
+          physical_time_(sph_system_->svPhysicalTime().Data()) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -67,7 +67,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     GeometricShapeBox muscle_body_shape(Transform(translation_myocardium), halfsize_myocardium, "MyocardiumMuscleBody");
     SolidBody muscle_body(sph_system, muscle_body_shape);
-    muscle_body.defineMaterial<ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+    muscle_body.defineMatterMaterial<ActiveMuscle<Muscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     muscle_body.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.

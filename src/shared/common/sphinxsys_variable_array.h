@@ -22,7 +22,8 @@
  * ------------------------------------------------------------------------- */
 /**
  * @file sphinxsys_variable_array.h
- * @brief tbd
+ * @brief Defines a collective view of several discrete variables
+ * as an array for convenient data access and management.
  * @author Xiangyu Hu
  */
 
@@ -34,102 +35,110 @@
 namespace SPH
 {
 template <typename DataType>
-using DataArray = DataType *;
+class VariableArray;
 
-template <typename DataType, template <typename> class VariableType>
-class VariableArray : public Entity
+template <typename DataType>
+class VariableArrayView
 {
-    UniquePtrKeeper<Entity> device_only_variable_array_keeper_;
-
   public:
-    VariableArray(StdVec<VariableType<DataType> *> variables)
-        : Entity("VariableArray"), variables_(variables),
-          array_size_(variables.size()),
-          data_array_(nullptr), delegated_data_array_(nullptr)
-    {
-        data_array_ = new DataArray<DataType>[variables.size()];
-        for (size_t i = 0; i != variables.size(); ++i)
-        {
-            data_array_[i] = variables[i]->Data();
-        }
-        delegated_data_array_ = data_array_;
-    };
-    ~VariableArray() { delete[] data_array_; };
-    StdVec<VariableType<DataType> *> getVariables() { return variables_; };
-    DataArray<DataType> *Data() { return data_array_; };
-    size_t getArraySize() { return array_size_; }
-    bool isDataArrayDelegated() { return data_array_ != delegated_data_array_; };
+    VariableArrayView() : multi_entry_view_(nullptr), array_size_(0) {};
+    VariableArrayView(MultiEntryView<DataType> *multi_entry_view, size_t array_size)
+        : multi_entry_view_(multi_entry_view), array_size_(array_size) {};
+    size_t ArraySize() { return array_size_; };
 
-    template <class ExecutionPolicy>
-    DataArray<DataType> *DelegatedDataArray(const ExecutionPolicy &ex_policy)
+    MultiEntryView<DataType> &operator[](size_t array_index) const
     {
-        return data_array_;
-    };
-
-    template <class PolicyType>
-    DataArray<DataType> *DelegatedOnDevice();
-    template <class PolicyType>
-    DataArray<DataType> *DelegatedDataArray(const DeviceExecution<PolicyType> &ex_policy)
-    {
-        return DelegatedOnDevice<PolicyType>();
-    };
-
-    void setDelegateDataArray(DataArray<DataType> *data_array_)
-    {
-        delegated_data_array_ = data_array_;
-    };
+        return multi_entry_view_[array_index];
+    }
 
   protected:
-    StdVec<VariableType<DataType> *> variables_;
+    MultiEntryView<DataType> *multi_entry_view_;
     UnsignedInt array_size_;
-    DataArray<DataType> *data_array_;
-    DataArray<DataType> *delegated_data_array_;
 };
 
-template <typename DataType, template <typename> class VariableType>
-class DeviceOnlyVariableArray : public Entity
+template <typename DataType>
+class DeviceOnlyVariableArray : public Quantity
 {
   public:
     template <class PolicyType>
     DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
-                            VariableArray<DataType, VariableType> *host_variable_array);
+                            VariableArray<DataType> *host_variable_array);
     ~DeviceOnlyVariableArray();
+    MultiEntryView<DataType> *DeviceOnlyMultiEntryView() { return device_only_multi_entry_view_; };
 
   protected:
-    DataArray<DataType> *device_only_data_array_;
+    MultiEntryView<DataType> *device_only_multi_entry_view_;
 };
 
 template <typename DataType>
-using DiscreteVariableArray = VariableArray<DataType, DiscreteVariable>;
+class VariableArray : public Quantity
+{
+    UniquePtrKeeper<Quantity> device_only_variable_array_keeper_;
 
-template <typename DataType>
-using AllocatedDataArray = DataArray<DataType> *;
+  public:
+    VariableArray(StdVec<DiscreteVariable<DataType> *> variables)
+        : Quantity("VariableArray"), variables_(variables),
+          array_size_(variables.size()),
+          multi_entry_view_(static_cast<MultiEntryView<DataType> *>(
+              std::malloc(variables.size() * sizeof(MultiEntryView<DataType>))))
+    {
+        for (size_t i = 0; i != variables.size(); ++i)
+        {
+            multi_entry_view_[i] = MultiEntryView<DataType>(
+                variables[i]->Data(), variables[i]->getWidth());
+        }
+    };
 
-template <typename AllocationType>
-using VariableAllocationSet = std::pair<AllocationType, UnsignedInt>;
+    ~VariableArray() { free(multi_entry_view_); };
+    StdVec<DiscreteVariable<DataType> *> getVariables() { return variables_; };
+    size_t getArraySize() { return array_size_; }
+    MultiEntryView<DataType> *getArrayData() { return multi_entry_view_; };
 
-typedef DataAssemble<VariableAllocationSet, AllocatedDataArray> VariableDataArrayAssemble;
-typedef DataAssemble<UniquePtr, DiscreteVariableArray> DiscreteVariableArrayAssemble;
+    template <class ExecutionPolicy>
+    VariableArrayView<DataType> DelegatedVariableArrayView(const ExecutionPolicy &ex_policy)
+    {
+        return VariableArrayView<DataType>(multi_entry_view_, array_size_);
+    };
 
-struct DiscreteVariableArrayAssembleInitialization
+    template <class PolicyType>
+    VariableArrayView<DataType> DelegatedVariableArrayView(const DeviceExecution<PolicyType> &ex_policy)
+    {
+        return VariableArrayView<DataType>(DelegatedOnDevice<PolicyType>(), array_size_);
+    };
+
+  protected:
+    StdVec<DiscreteVariable<DataType> *> variables_;
+    UnsignedInt array_size_;
+    MultiEntryView<DataType> *multi_entry_view_ = nullptr;
+    DeviceOnlyVariableArray<DataType> *device_only_variable_array_ = nullptr;
+    friend class DeviceOnlyVariableArray<DataType>;
+
+    template <class PolicyType>
+    MultiEntryView<DataType> *DelegatedOnDevice();
+    bool isVariableArrayViewDelegated() { return device_only_variable_array_ != nullptr; };
+};
+
+typedef DataAssemble<TypeAlias, VariableArrayView> VariableArrayViewAssemble;
+typedef DataAssemble<UniquePtr, VariableArray> VariableArrayAssemble;
+
+struct VariableArrayAssembleInitialization
 {
     template <typename DataType>
     void operator()(const StdVec<DiscreteVariable<DataType> *> &variables,
-                    UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr)
+                    UniquePtr<VariableArray<DataType>> &variable_array_ptr)
     {
-        variable_array_ptr = std::make_unique<DiscreteVariableArray<DataType>>(variables);
+        variable_array_ptr = std::make_unique<VariableArray<DataType>>(variables);
     }
 };
 
-struct VariableDataArrayAssembleInitialization
+struct VariableArrayViewAssembleInitialization
 {
     template <typename DataType, class ExecutionPolicy>
-    void operator()(const UniquePtr<DiscreteVariableArray<DataType>> &variable_array_ptr,
-                    VariableAllocationSet<AllocatedDataArray<DataType>> &variable_allocation_size_pair,
+    void operator()(const UniquePtr<VariableArray<DataType>> &variable_array_ptr,
+                    VariableArrayView<DataType> &variable_array_view,
                     const ExecutionPolicy &ex_policy)
     {
-        variable_allocation_size_pair =
-            std::make_pair(variable_array_ptr->DelegatedDataArray(ex_policy), variable_array_ptr->getArraySize());
+        variable_array_view = variable_array_ptr->DelegatedVariableArrayView(ex_policy);
     }
 };
 } // namespace SPH

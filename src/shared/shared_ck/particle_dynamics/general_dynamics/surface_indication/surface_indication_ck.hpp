@@ -20,12 +20,10 @@ FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::
       dv_smoothing_length_(this->getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//
 template <template <typename...> class RelationType, typename... Parameters>
-template <class ExecutionPolicy, typename... Args>
+template <class ExecutionPolicy, class EncloserType>
 FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy,
-                   FreeSurfaceIndicationCK<Base, RelationType<Parameters...>> &encloser,
-                   Args &&...args)
-    : Interaction<RelationType<Parameters...>>::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : Interaction<RelationType<Parameters...>>::InteractKernel(ex_policy, encloser),
       indicator_(encloser.dv_indicator_->DelegatedData(ex_policy)),
       pos_div_(encloser.dv_pos_div_->DelegatedData(ex_policy)),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
@@ -33,9 +31,10 @@ FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>::InteractKernel::
       smoothing_length_(encloser.dv_smoothing_length_) {}
 //=================================================================================================//
 template <typename... Parameters>
+template <class DynamicsIdentifier>
 FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::
-    FreeSurfaceIndicationCK(Inner<Parameters...> &inner_relation)
-    : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>(inner_relation),
+    FreeSurfaceIndicationCK(DynamicsIdentifier &identifier)
+    : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>(identifier),
       dv_previous_surface_indicator_(
           this->particles_->template registerStateVariable<int>("PreviousSurfaceIndicator", 1))
 {
@@ -43,10 +42,9 @@ FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::
 }
 //=================================================================================================//
 template <typename... Parameters>
-template <class ExecutionPolicy>
+template <class ExecutionPolicy, class EncloserType>
 FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy,
-                   FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> &encloser)
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
       previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -88,10 +86,9 @@ bool FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::InteractKernel::
 }
 //=================================================================================================//
 template <typename... Parameters>
-template <class ExecutionPolicy>
+template <class ExecutionPolicy, class EncloserType>
 FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
-    UpdateKernel(const ExecutionPolicy &ex_policy,
-                 FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> &encloser)
+    UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
     : FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
       previous_surface_indicator_(encloser.dv_previous_surface_indicator_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -128,18 +125,17 @@ bool FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>::UpdateKernel::
 }
 //=================================================================================================//
 template <typename... Parameters>
+template <class DynamicsIdentifier>
 FreeSurfaceIndicationCK<Contact<Parameters...>>::
-    FreeSurfaceIndicationCK(Contact<Parameters...> &contact_relation)
-    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>(contact_relation) {}
+    FreeSurfaceIndicationCK(DynamicsIdentifier &identifier)
+    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>(identifier) {}
 //=================================================================================================//
 template <typename... Parameters>
-template <class ExecutionPolicy>
+template <class ExecutionPolicy, class EncloserType>
 FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy,
-                   FreeSurfaceIndicationCK<Contact<Parameters...>> &encloser,
-                   size_t contact_index)
-    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)) {}
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : FreeSurfaceIndicationCK<Base, Contact<Parameters...>>::InteractKernel(ex_policy, encloser),
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename... Parameters>
 void FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::
@@ -153,6 +149,33 @@ void FreeSurfaceIndicationCK<Contact<Parameters...>>::InteractKernel::
         pos_div -= this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j] * r_ij;
     }
     this->pos_div_[index_i] += pos_div;
+}
+//=================================================================================================//
+template <typename... Parameters>
+IsolationFactor<Inner<Parameters...>>::IsolationFactor(Inner<Parameters...> &inner_relation)
+    : Interaction<Inner<Parameters...>>(inner_relation),
+      dv_isolation_factor_(this->particles_->template registerStateVariable<Real>("IsolationFactor")) {}
+//=================================================================================================//
+template <typename... Parameters>
+template <class ExecutionPolicy, class EncloserType>
+IsolationFactor<Inner<Parameters...>>::InteractKernel::
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : Interaction<Inner<Parameters...>>::InteractKernel(ex_policy, encloser),
+      isolation_factor_(encloser.dv_isolation_factor_->DelegatedData(ex_policy)),
+      Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)) {}
+//=================================================================================================//
+template <typename... Parameters>
+void IsolationFactor<Inner<Parameters...>>::InteractKernel::
+    interact(size_t index_i, Real dt)
+{
+    Real pos_div = 0.0;
+    for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+    {
+        UnsignedInt index_j = this->neighbor_index_[n];
+        Real r_ij = this->vec_r_ij(index_i, index_j).norm();
+        pos_div -= this->dW_ij(index_i, index_j) * Vol_[index_j] * r_ij;
+    }
+    isolation_factor_[index_i] = pos_div;
 }
 //=================================================================================================//
 } // namespace fluid_dynamics

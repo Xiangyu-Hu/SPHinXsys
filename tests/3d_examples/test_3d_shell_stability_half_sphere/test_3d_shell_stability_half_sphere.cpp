@@ -142,7 +142,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
     SolidBody shell_body(system, shell_shape);
-    shell_body.defineMaterial<SaintVenantKirchhoffSolid>(rho, E, mu);
+    shell_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho, E, mu);
     shell_body.generateParticles<SurfaceParticles, ShellSphere>(obj_vertices, center, particle_area, thickness);
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
 
@@ -182,7 +182,7 @@ void sphere_compression(int dp_ratio, Real pressure, Real gravity_z)
     BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.addToWrite<Vecd>(shell_body, "NormalDirection");
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
-    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax<Real>>> maximum_displace_norm(shell_body, "Displacement");
     vtp_output.writeToFile(0);
 
     /** Apply initial condition. */

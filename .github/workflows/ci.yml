@@ -5,8 +5,22 @@ on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
     branches: [master]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "modules/**"
+      - "CMakeLists.txt"
+      - "*.cmake"
+      - "*.py"
   pull_request:
     branches: [master]
+    paths:
+      - "src/**"
+      - "tests/**"
+      - "modules/**"
+      - "CMakeLists.txt"
+      - "*.cmake"
+      - "*.py"
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
@@ -31,7 +45,7 @@ on:
         required: false
         default: false
 env:
-  VCPKG_VERSION: "2024.11.16"
+  VCPKG_VERSION: "2026.04.27"
   CTEST_PARALLEL_LEVEL: "1"
 
 # A workflow is made up of one or more jobs that can run sequentially or in parallel
@@ -100,8 +114,6 @@ jobs:
             -D CMAKE_C_COMPILER=icx -D CMAKE_CXX_COMPILER=icpx \
             -D CMAKE_TOOLCHAIN_FILE="${{github.workspace}}/vcpkg/scripts/buildsystems/vcpkg.cmake" \
             -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -D SPHINXSYS_2D=OFF \
-            -D SPHINXSYS_BUILD_2D_EXAMPLES=OFF \
             -D SPHINXSYS_BUILD_OPTIMIZATION_EXAMPLES=OFF \
             -D SPHINXSYS_BUILD_PYTHON_INTERFACE=OFF \
             -D SPHINXSYS_USE_SYCL=ON \
@@ -254,10 +266,7 @@ jobs:
             boost-geometry \
             simbody \
             spdlog \
-            gtest \
-            xsimd \
-            pybind11 \
-            opencascade
+            gtest
 
       - name: Generate buildsystem using double
         run: |
@@ -337,10 +346,7 @@ jobs:
             boost-geometry \
             simbody \
             spdlog \
-            gtest \
-            xsimd \
-            pybind11 \
-            opencascade
+            gtest
 
       - uses: actions/download-artifact@v4
         with:
@@ -387,7 +393,7 @@ jobs:
           cd build 
           ctest --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
-        
+
       - name: Test with the sixth try for failed cases
         id: sixth-try
         if: ${{ steps.fifth-try.outcome == 'failure' }}
@@ -427,17 +433,17 @@ jobs:
           ctest --rerun-failed --output-on-failure --timeout 1000
 
       - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only
-        shell: pwsh
+        shell: bash
         run: |
-          wget https://update.code.visualstudio.com/1.105.0/win32-x64-user/stable
-          unzip x stable
-          ./bin/code tunnel
-        if: ${{ failure() && github.event_name != 'workflow_dispatch' || inputs.linux_test_debug_enabled }}
+          wget -O vscode_cli.tar.gz 'https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64'
+          tar -xf vscode_cli.tar.gz
+          ./code tunnel
+        if: ${{ failure() && github.event_name == 'workflow_dispatch' && inputs.linux_test_debug_enabled }}
 
   ###############################################################################
   Windows-build:
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.windows_build_debug_enabled }}
-    runs-on: windows-latest
+    runs-on: windows-2022
     # make sure these permissions are set so that
     # VS Code can connect to the machine
     permissions:
@@ -480,9 +486,7 @@ jobs:
             boost-geometry `
             simbody `
             gtest `
-            spdlog `
-            xsimd `
-            pybind11
+            spdlog
 
       - uses: ilammy/msvc-dev-cmd@v1
 
@@ -522,7 +526,7 @@ jobs:
   Windows-test:
     if: ${{ github.event_name != 'workflow_dispatch' }}
     needs: Windows-build
-    runs-on: windows-latest
+    runs-on: windows-2022
     env:
       VCPKG_DEFAULT_TRIPLET: x64-windows
 
@@ -559,9 +563,7 @@ jobs:
             boost-geometry `
             simbody `
             spdlog `
-            gtest `
-            xsimd `
-            pybind11
+            gtest
 
       - uses: actions/download-artifact@v4
         with:
@@ -616,7 +618,7 @@ jobs:
           cd C:\build 
           ctest.exe --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
-        
+
       - name: Test with the seventh try for failed cases
         id: seventh-try
         if: ${{ steps.sixth-try.outcome == 'failure' }}
@@ -624,7 +626,7 @@ jobs:
           cd C:\build 
           ctest.exe --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
-        
+
       - name: Test with the eighth try for failed cases
         id: eighth-try
         if: ${{ steps.seventh-try.outcome == 'failure' }}
@@ -632,7 +634,7 @@ jobs:
           cd C:\build 
           ctest.exe --rerun-failed --output-on-failure --timeout 1000
         continue-on-error: true
-      
+
       - name: Test with the ninth try for failed cases
         id: ninth-try
         if: ${{ steps.eighth-try.outcome == 'failure' }}
@@ -694,8 +696,7 @@ jobs:
             boost-geometry \
             gtest \
             simbody \
-            spdlog \
-            pybind11
+            spdlog
 
       - name: Generate buildsystem
         run: |
@@ -763,8 +764,7 @@ jobs:
             boost-geometry \
             gtest \
             simbody \
-            spdlog \
-            pybind11
+            spdlog
 
       - uses: actions/download-artifact@v4
         with:
@@ -853,7 +853,7 @@ jobs:
   ###############################################################################
   Windows-dispatch-for-sycl-build:
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.windows_sycl_build_debug_enabled }}
-    runs-on: windows-latest
+    runs-on: windows-2022
     # make sure these permissions are set so that
     # VS Code can connect to the machine
     permissions:
@@ -898,9 +898,7 @@ jobs:
             boost-geometry `
             simbody `
             gtest `
-            spdlog `
-            xsimd `
-            pybind11
+            spdlog
 
       # Enable debugging of manually-triggered workflows if the input option was provided
       - name: 🐛 Initialize VS Code Server for debug in dispatch work flow only

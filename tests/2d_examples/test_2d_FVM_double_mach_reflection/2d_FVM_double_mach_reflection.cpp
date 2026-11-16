@@ -13,7 +13,7 @@ using namespace SPH;
 int main(int ac, char *av[])
 {
     // read data from ANSYS mesh.file
-    ANSYSMesh ansys_mesh(double_mach_reflection_mesh1_fullpath);
+    ANSYSMesh ansys_mesh(double_mach_reflection_mesh1);
     //----------------------------------------------------------------------
     //	Build up the environment of a SPHSystem.
     //----------------------------------------------------------------------
@@ -24,7 +24,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody wave_block(sph_system, makeShared<WaveBody>("WaveBody"));
-    wave_block.defineMaterial<CompressibleFluid>(rho0_another, heat_capacity_ratio);
+    wave_block.defineMatterMaterial<CompressibleFluid>(heat_capacity_ratio);
     Ghost<ReserveSizeFactor> ghost_boundary(0.5);
     wave_block.generateParticlesWithReserve<BaseParticles, UnstructuredMesh>(ghost_boundary, ansys_mesh);
     //----------------------------------------------------------------------

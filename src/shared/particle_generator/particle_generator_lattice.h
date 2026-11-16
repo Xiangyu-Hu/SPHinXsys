@@ -38,6 +38,9 @@ namespace SPH
 class Shape;
 class AdaptiveByShape;
 class SurfaceParticles;
+class GeometricShapeBox;
+class GeometricShapeCylinder;
+class OrientedBox;
 
 template <> // Base class for generating particles from lattice positions
 class GeneratingMethod<Lattice>
@@ -58,14 +61,23 @@ class ParticleGenerator<BaseParticles, Lattice>
     : public ParticleGenerator<BaseParticles>, public GeneratingMethod<Lattice>
 {
   public:
-    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape);
-    explicit ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles);
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles, Shape &target_shape,
+                      StdVec<OrientedBox *> blockers = StdVec<OrientedBox *>{},
+                      StdVec<Shape *> inserts = StdVec<Shape *>{});
+    ParticleGenerator(SPHBody &sph_body, BaseParticles &base_particles,
+                      StdVec<OrientedBox *> blockers = StdVec<OrientedBox *>{},
+                      StdVec<Shape *> inserts = StdVec<Shape *>{});
     virtual ~ParticleGenerator() {};
     virtual void prepareGeometricData() override;
 
   protected:
     Shape &target_shape_;
+    StdVec<OrientedBox *> blockers_;
+    StdVec<GeometricShapeBox *> box_shape_inserts_;
+    StdVec<GeometricShapeCylinder *> cylinder_shape_inserts_;
     virtual void addPositionAndVolumetricMeasure(const Vecd &position, Real volume) override;
+    bool checkBlocks(const Vecd &position);
+    void addInserts(const Vecd &position, Real volume);
 };
 
 template <> // For generating surface particles from lattice positions using reduced order approach

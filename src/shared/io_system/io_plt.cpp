@@ -1,7 +1,10 @@
-
 #include "io_plt.h"
 
+#include "base_body.h"
+#include "base_mesh.h"
+#include "base_particles.hpp"
 #include "io_environment.h"
+#include "vector_functions.h"
 
 namespace SPH
 {
@@ -24,6 +27,18 @@ void PltEngine::writeAQuantityHeader(
         out_file << "\"" << force << "[" << i << "]\"" << "   ";
 }
 //=============================================================================================//
+void PltEngine::writeAQuantityHeader(
+    std::ofstream &out_file, const TorqueAndForce &quantity, const std::string &quantity_name)
+{
+    std::string torque = quantity_name + "Torque";
+    for (int i = 0; i != 3; ++i)
+        out_file << "\"" << torque << "[" << i << "]\"" << "   ";
+
+    std::string force = quantity_name + "Force";
+    for (int i = 0; i != 3; ++i)
+        out_file << "\"" << force << "[" << i << "]\"" << "   ";
+}
+//=============================================================================================//
 void PltEngine::writeAQuantity(std::ofstream &out_file, const Real &quantity)
 {
     out_file << std::fixed << std::setprecision(9) << quantity << "   ";
@@ -36,10 +51,17 @@ void PltEngine::writeAQuantity(std::ofstream &out_file, const SimTK::SpatialVec 
     for (int i = 0; i < 3; ++i)
         out_file << std::fixed << std::setprecision(9) << quantity[1][i] << "   ";
 }
-
+//=============================================================================================//
+void PltEngine::writeAQuantity(std::ofstream &out_file, const TorqueAndForce &quantity)
+{
+    for (int i = 0; i < 3; ++i)
+        out_file << std::fixed << std::setprecision(9) << quantity.first[i] << "   ";
+    for (int i = 0; i < 3; ++i)
+        out_file << std::fixed << std::setprecision(9) << quantity.second[i] << "   ";
+}
 //=================================================================================================//
 void BodyStatesRecordingToPlt::writePltFileHeader(
-    std::ofstream &output_file, ParticleVariables &variables_to_write)
+    std::ofstream &output_file, DiscreteVariables &variables_to_write)
 {
     output_file << " VARIABLES = \"x\",\"y\",\"z\",\"ID\"";
 
@@ -66,10 +88,10 @@ void BodyStatesRecordingToPlt::writePltFileHeader(
 }
 //=================================================================================================//
 void BodyStatesRecordingToPlt::writePltFileParticleData(
-    std::ofstream &output_file, ParticleVariables &variables_to_write, Vecd *position, size_t index)
+    std::ofstream &output_file, DiscreteVariables &variables_to_write, const Vecd &position, size_t index)
 {
     // write particle positions and index first
-    Vec3d particle_position = upgradeToVec3d(position[index]);
+    Vec3d particle_position = upgradeToVec3d(position);
     output_file << particle_position[0] << " " << particle_position[1] << " " << particle_position[2] << " "
                 << index << " ";
 
@@ -83,16 +105,14 @@ void BodyStatesRecordingToPlt::writePltFileParticleData(
     constexpr int type_index_Vecd = DataTypeIndex<Vecd>::value;
     for (DiscreteVariable<Vecd> *variable : std::get<type_index_Vecd>(variables_to_write))
     {
-        Vecd *data_field = variable->Data();
-        Vec3d vector_value = upgradeToVec3d(data_field[index]);
+        Vec3d vector_value = upgradeToVec3d(variable->getValueWithScalingRef(index));
         output_file << vector_value[0] << " " << vector_value[1] << " " << vector_value[2] << " ";
     };
 
     constexpr int type_index_Real = DataTypeIndex<Real>::value;
     for (DiscreteVariable<Real> *variable : std::get<type_index_Real>(variables_to_write))
     {
-        Real *data_field = variable->Data();
-        output_file << data_field[index] << " ";
+        output_file << variable->getValueWithScalingRef(index) << " ";
     };
 }
 //=============================================================================================//
@@ -101,13 +121,13 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
     for (SPHBody *body : bodies_)
     {
         BaseParticles &particles = body->getBaseParticles();
-        ParticleVariables &variables_to_write = particles.VariablesToWrite();
+        DiscreteVariables &variables_to_write = particles.VariablesToWrite();
         if (body->checkNewlyUpdated())
         {
             if (state_recording_)
             {
                 std::string filefullpath = io_environment_.OutputFolder() +
-                                           "/SPHBody_" + body->getName() + "_" + sequence + ".plt";
+                                           "/SPHBody_" + body->Name() + "_" + sequence + ".plt";
                 if (fs::exists(filefullpath))
                 {
                     fs::remove(filefullpath);
@@ -116,10 +136,10 @@ void BodyStatesRecordingToPlt::writeWithFileName(const std::string &sequence)
                 writePltFileHeader(out_file, variables_to_write);
                 out_file << "\n";
 
-                Vecd *position = particles.ParticlePositions();
+                DiscreteVariable<Vecd> *position = particles.dvParticlePosition();
                 for (size_t i = 0; i != particles.TotalRealParticles(); ++i)
                 {
-                    writePltFileParticleData(out_file, variables_to_write, position, i);
+                    writePltFileParticleData(out_file, variables_to_write, position->getValueWithScalingRef(i), i);
                     out_file << "\n";
                 };
                 out_file.close();

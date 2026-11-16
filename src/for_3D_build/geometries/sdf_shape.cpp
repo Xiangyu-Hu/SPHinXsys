@@ -14,7 +14,7 @@ bool SDFShape::checkContain(const Vec3d &probe_point, bool BOUNDARY_INCLUDED)
 Vec3d SDFShape::findClosestPoint(const Vec3d &probe_point)
 {
     Real signed_distance = probeSignedDistance(probe_point);
-    Vecd normal_direction = probeNormalDirection(probe_point);
+    Vec3d normal_direction = probeNormalDirection(probe_point);
     return probe_point - signed_distance * normal_direction;
 }
 //=================================================================================================//
@@ -38,14 +38,14 @@ Real SDFShape::probeSignedDistance(const Vec3d &probe_point)
     return signed_distance;
 }
 //=================================================================================================//
-Vecd SDFShape::probeNormalDirection(const Vec3d &probe_point)
+Vec3d SDFShape::probeNormalDirection(const Vec3d &probe_point)
 {
     Real eps = 0.01 * finest_grid_spacing_;
-    Vecd normal_direction;
+    Vec3d normal_direction;
     for (int i = 0; i != Dimensions; ++i)
     {
-        Vecd probe_plus = probe_point;
-        Vecd probe_minus = probe_point;
+        Vec3d probe_plus = probe_point;
+        Vec3d probe_minus = probe_point;
         probe_plus[i] += eps;
         probe_minus[i] -= eps;
         normal_direction[i] = (probeSignedDistance(probe_plus) -

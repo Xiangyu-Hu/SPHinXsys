@@ -1,20 +1,77 @@
 #include "multi_polygon_shape.h"
 
+#include "io_environment.h"
+
 using namespace bg;
+
+#include "earcut.hpp"
+
+#ifdef SPHINXSYS_USE_VTK
+#include <vtkCellArray.h>
+#include <vtkDoubleArray.h>
+#include <vtkFieldData.h>
+#include <vtkFloatArray.h>
+#include <vtkIntArray.h>
+#include <vtkNew.h>
+#include <vtkPointData.h>
+#include <vtkPoints.h>
+#include <vtkPolyData.h>
+#include <vtkTriangle.h>
+#include <vtkUnsignedIntArray.h>
+#include <vtkXMLPolyDataWriter.h>
+#endif
 
 namespace SPH
 {
+namespace
+{
+struct TriangulatedPolygon
+{
+    NRings rings;
+    std::vector<uint32_t> indices;
+};
+
+TriangulatedPolygon triangulatePolygon(const boost_poly &poly)
+{
+    TriangulatedPolygon triangulated;
+
+    // 1. Add Outer Ring
+    std::vector<NPoint> outer_ring;
+    for (auto const &p : poly.outer())
+    {
+        outer_ring.push_back({bg::get<0>(p), bg::get<1>(p)});
+    }
+    triangulated.rings.push_back(outer_ring);
+
+    // 2. Add Interior Rings (Holes)
+    for (auto const &hole : poly.inners())
+    {
+        std::vector<NPoint> inner_ring;
+        for (auto const &p : hole)
+        {
+            inner_ring.push_back({bg::get<0>(p), bg::get<1>(p)});
+        }
+        triangulated.rings.push_back(inner_ring);
+    }
+
+    // 3. Run triangulation (3 indices per triangle)
+    triangulated.indices = mapbox::earcut<uint32_t>(triangulated.rings);
+
+    return triangulated;
+}
+} // namespace
+
 //=================================================================================================//
 MultiPolygon::MultiPolygon(const std::vector<Vecd> &points)
     : MultiPolygon()
 {
-    addAPolygon(points, GeometricOps::add);
+    addPolygon(points, GeometricOps::add);
 }
 //=================================================================================================//
 MultiPolygon::MultiPolygon(const Vecd &center, Real radius, int resolution)
     : MultiPolygon()
 {
-    addACircle(center, radius, resolution, GeometricOps::add);
+    addCircle(center, radius, resolution, GeometricOps::add);
 }
 //=================================================================================================//
 boost_multi_poly MultiPolygon::
@@ -62,17 +119,17 @@ boost_multi_poly MultiPolygon::
     return multi_poly_tmp_out;
 }
 //=================================================================================================//
-void MultiPolygon::addAMultiPolygon(MultiPolygon &multi_polygon_op, GeometricOps op)
+void MultiPolygon::addMultiPolygon(const MultiPolygon &multi_polygon_op, GeometricOps op)
 {
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_polygon_op.getBoostMultiPoly(), op);
 }
 //=================================================================================================//
-void MultiPolygon::addABoostMultiPoly(boost_multi_poly &boost_multi_poly_op, GeometricOps op)
+void MultiPolygon::addBoostMultiPoly(boost_multi_poly &boost_multi_poly_op, GeometricOps op)
 {
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, boost_multi_poly_op, op);
 }
 //=================================================================================================//
-void MultiPolygon::addABox(Transform transform, const Vecd &halfsize, GeometricOps op)
+void MultiPolygon::addBox(const Transform transform, const Vecd &halfsize, GeometricOps op)
 {
     Vecd point0 = transform.shiftFrameStationToBase(-halfsize);
     Vecd point1 = transform.shiftFrameStationToBase(Vecd(-halfsize[0], halfsize[1]));
@@ -80,10 +137,30 @@ void MultiPolygon::addABox(Transform transform, const Vecd &halfsize, GeometricO
     Vecd point3 = transform.shiftFrameStationToBase(Vecd(halfsize[0], -halfsize[1]));
 
     std::vector<Vecd> points = {point0, point1, point2, point3, point0};
-    addAPolygon(points, op);
+    addPolygon(points, op);
 }
 //=================================================================================================//
-void MultiPolygon::addACircle(const Vecd &center, Real radius, int resolution, GeometricOps op)
+void MultiPolygon::addBox(const BoundingBox2d &bounding_box, GeometricOps op)
+{
+    Vecd point0 = bounding_box.lower_;
+    Vecd point1 = Vecd(bounding_box.lower_[0], bounding_box.upper_[1]);
+    Vecd point2 = bounding_box.upper_;
+    Vecd point3 = Vecd(bounding_box.upper_[0], bounding_box.lower_[1]);
+
+    std::vector<Vecd> points = {point0, point1, point2, point3, point0};
+    addPolygon(points, op);
+}
+//=================================================================================================//
+void MultiPolygon::addContainerBox(const BoundingBox2d &bounding_box, Real thickness, GeometricOps op)
+{
+    BoundingBox2d outer_box = bounding_box.expand(thickness);
+    MultiPolygon container_box;
+    container_box.addBox(outer_box, GeometricOps::add);
+    container_box.addBox(bounding_box, GeometricOps::sub);
+    addMultiPolygon(container_box, op);
+}
+//=================================================================================================//
+void MultiPolygon::addCircle(const Vecd &center, Real radius, int resolution, GeometricOps op)
 {
     Vecd buffer_center = center;
     Real buffer_radius = radius;
@@ -118,7 +195,7 @@ void MultiPolygon::addACircle(const Vecd &center, Real radius, int resolution, G
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_circle, op);
 }
 //=================================================================================================//
-void MultiPolygon::addAPolygon(const std::vector<Vecd> &points, GeometricOps op)
+void MultiPolygon::addPolygon(const std::vector<Vecd> &points, GeometricOps op)
 {
     std::vector<boost_point> pts;
     for (const Vecd &pnt : points)
@@ -148,9 +225,20 @@ void MultiPolygon::addAPolygon(const std::vector<Vecd> &points, GeometricOps op)
     multi_poly_ = MultiPolygonByBooleanOps(multi_poly_, multi_poly_polygon, op);
 }
 //=================================================================================================//
-void MultiPolygon::
-    addAPolygonFromFile(std::string file_path_name, GeometricOps op, Vecd translation, Real scale_factor)
+void MultiPolygon::addTriangle(const Transform &transform, const Vecd &half_size, GeometricOps op)
 {
+    Vecd point0 = transform.shiftFrameStationToBase(Vecd(half_size[0], -half_size[1]));
+    Vecd point1 = transform.shiftFrameStationToBase(Vecd(-half_size[0], -half_size[1]));
+    Vecd point2 = transform.shiftFrameStationToBase(Vecd(0.0, half_size[1]));
+    std::vector<Vecd> points = {point0, point1, point2, point0};
+    addPolygon(points, op);
+}
+//=================================================================================================//
+void MultiPolygon::
+    addPolygonFromFile(std::string file_name, GeometricOps op, Vecd translation, Real scale_factor)
+{
+    IOEnvironment &io_env = IO::getEnvironment();
+    std::string file_path_name = io_env.InputFolder() + "/" + file_name;
     std::fstream dataFile(file_path_name);
     Vecd temp_point;
     std::vector<Vecd> coordinates;
@@ -171,7 +259,7 @@ void MultiPolygon::
     }
     dataFile.close();
 
-    addAPolygon(coordinates, op);
+    addPolygon(coordinates, op);
 }
 //=================================================================================================//
 bool MultiPolygon::checkContain(const Vec2d &probe_point, bool BOUNDARY_INCLUDED /*= true*/)
@@ -260,6 +348,132 @@ BoundingBoxd MultiPolygon::findBounds()
     upper_bound[0] = bg::return_envelope<box>(multi_poly_).max_corner().get<0>();
     upper_bound[1] = bg::return_envelope<box>(multi_poly_).max_corner().get<1>();
     return BoundingBoxd(lower_bound, upper_bound);
+}
+//=================================================================================================//
+void MultiPolygonShape::writeMultiPolygonShapeToVtp(Real scaling_factor)
+{
+    std::string filefullpath = IO::getEnvironment().OutputFolder() + "/Shape" + Name() + ".vtp";
+
+#ifdef SPHINXSYS_USE_VTK
+    vtkNew<vtkPoints> vtk_points;
+    vtkNew<vtkCellArray> vtk_cells;
+
+    vtkIdType global_point_offset = 0;
+    const auto &multi_poly = multi_polygon_.getBoostMultiPoly();
+
+    for (const auto &poly : multi_poly)
+    {
+        TriangulatedPolygon triangulated = triangulatePolygon(poly);
+
+        // 4. Add points to VTK and create Triangle Cells
+        // We add all points from all rings of THIS polygon
+        vtkIdType poly_start_offset = global_point_offset;
+        for (const auto &ring : triangulated.rings)
+        {
+            for (const auto &p : ring)
+            {
+                vtk_points->InsertNextPoint(p[0] * scaling_factor, p[1] * scaling_factor, 0.0);
+                global_point_offset++;
+            }
+        }
+
+        // 5. Create the VTK triangles using the indices
+        for (size_t i = 0; i < triangulated.indices.size(); i += 3)
+        {
+            vtkNew<vtkTriangle> vtk_tri;
+            vtk_tri->GetPointIds()->SetId(0, poly_start_offset + triangulated.indices[i]);
+            vtk_tri->GetPointIds()->SetId(1, poly_start_offset + triangulated.indices[i + 1]);
+            vtk_tri->GetPointIds()->SetId(2, poly_start_offset + triangulated.indices[i + 2]);
+            vtk_cells->InsertNextCell(vtk_tri);
+        }
+    }
+
+    vtkNew<vtkPolyData> polyData;
+    polyData->SetPoints(vtk_points);
+    polyData->SetPolys(vtk_cells);
+
+    vtkNew<vtkXMLPolyDataWriter> writer;
+    writer->SetInputData(polyData);
+    writer->SetFileName(filefullpath.c_str());
+    writer->SetDataModeToAscii();
+    writer->Write();
+#else
+    if (fs::exists(filefullpath))
+    {
+        fs::remove(filefullpath);
+    }
+    std::ofstream out_file(filefullpath.c_str(), std::ios::trunc);
+
+    std::vector<NPoint> vtk_points;
+    std::vector<int> connectivity;
+    std::vector<int> offsets;
+
+    int global_point_offset = 0;
+    const auto &multi_poly = multi_polygon_.getBoostMultiPoly();
+
+    for (const auto &poly : multi_poly)
+    {
+        TriangulatedPolygon triangulated = triangulatePolygon(poly);
+
+        // 4. Add points and create triangle connectivity
+        // We add all points from all rings of THIS polygon
+        int poly_start_offset = global_point_offset;
+        for (const auto &ring : triangulated.rings)
+        {
+            for (const auto &p : ring)
+            {
+                vtk_points.push_back(p);
+                global_point_offset++;
+            }
+        }
+
+        // 5. Create triangle cells from the earcut indices
+        for (size_t i = 0; i < triangulated.indices.size(); i += 3)
+        {
+            connectivity.push_back(poly_start_offset + static_cast<int>(triangulated.indices[i]));
+            connectivity.push_back(poly_start_offset + static_cast<int>(triangulated.indices[i + 1]));
+            connectivity.push_back(poly_start_offset + static_cast<int>(triangulated.indices[i + 2]));
+            offsets.push_back(static_cast<int>(connectivity.size()));
+        }
+    }
+
+    out_file << "<?xml version=\"1.0\"?>\n";
+    out_file << "<VTKFile type=\"PolyData\" version=\"1.0\" byte_order=\"LittleEndian\">\n";
+    out_file << "<PolyData>\n";
+    out_file << "<Piece NumberOfPoints=\"" << vtk_points.size() << "\" NumberOfVerts=\"0\" NumberOfLines=\"0\" "
+             << "NumberOfStrips=\"0\" NumberOfPolys=\"" << offsets.size() << "\">\n";
+
+    out_file << "<Points>\n";
+    out_file << "<DataArray type=\"Float64\" NumberOfComponents=\"3\" format=\"ascii\">\n";
+    for (const auto &p : vtk_points)
+    {
+        out_file << p[0] * scaling_factor << " " << p[1] * scaling_factor << " 0\n";
+    }
+    out_file << "</DataArray>\n";
+    out_file << "</Points>\n";
+
+    out_file << "<Polys>\n";
+    out_file << "<DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n";
+    for (size_t i = 0; i < connectivity.size(); ++i)
+    {
+        out_file << connectivity[i] << ((i + 1 < connectivity.size()) ? " " : "\n");
+    }
+    out_file << "</DataArray>\n";
+
+    out_file << "<DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">\n";
+    for (size_t i = 0; i < offsets.size(); ++i)
+    {
+        out_file << offsets[i] << ((i + 1 < offsets.size()) ? " " : "\n");
+    }
+    out_file << "</DataArray>\n";
+    out_file << "</Polys>\n";
+
+    out_file << "</Piece>\n";
+    out_file << "</PolyData>\n";
+    out_file << "</VTKFile>\n";
+
+    out_file.close();
+#endif
 }
 //=================================================================================================//
 bool MultiPolygonShape::isValid()

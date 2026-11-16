@@ -24,25 +24,26 @@ TEST(particle_reduce, test_sycl)
                               rand_uniform(-1.0, 1.0));
     }
 
-    SimTK::SpatialVec sum = particle_reduce(SequencedPolicy{}, IndexRange(0, torques.size()),
-                                            ZeroData<SimTK::SpatialVec>::value, ReduceSum<SimTK::SpatialVec>(),
-                                            [&](size_t i)
-                                            {
-                                                SimTKVec3 a = SimTK::cross(torques[i], forces[i]);
-                                                return SimTK::SpatialVec(a, forces[i]);
-                                            });
+    SimTK::SpatialVec sum = particle_reduce(
+        SequencedPolicy{}, IndexRange(0, torques.size()),
+        ZeroData<SimTK::SpatialVec>::value, ReduceSum<SimTK::SpatialVec>(),
+        [&](size_t i)
+        {
+            SimTKVec3 a = SimTK::cross(torques[i], forces[i]);
+            return SimTK::SpatialVec(a, forces[i]);
+        });
 
     DiscreteVariable<SimTKVec3> dv_torque("Torque", torques.size());
     DiscreteVariable<SimTKVec3> dv_force("Force", forces.size());
 
     SimTKVec3 *torque = dv_torque.Data();
     SimTKVec3 *force = dv_force.Data();
-    for (UnsignedInt i = 0; i != dv_torque.getDataSize(); ++i)
+    for (UnsignedInt i = 0; i != dv_torque.getSize(); ++i)
     {
         torque[i] = torques[i];
         force[i] = forces[i];
     }
-    SingularVariable<UnsignedInt> sv_total_particles("TotalParticles", dv_torque.getDataSize());
+    SingleVariable<UnsignedInt> sv_total_particles("TotalParticles", dv_torque.getSize());
 
     SimTKVec3 *torque_ck = dv_torque.DelegatedData(ParallelPolicy{});
     SimTKVec3 *force_ck = dv_force.DelegatedData(ParallelPolicy{});

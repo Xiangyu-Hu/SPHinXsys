@@ -94,7 +94,7 @@ First, we provide the following program to create a system for this problem.
 		inflow_buffer_shape.push_back(Vecd(-DL_sponge, -0.5 * DH));
 
 		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
+		multi_polygon.addPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
 		return multi_polygon;
 	}
 	/** create outer wall shape */
@@ -169,8 +169,8 @@ First, we provide the following program to create a system for this problem.
 		{
 			/** Geomtry definition. */
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createLeafletShape(), ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createLeafletShape(), ShapeBooleanOps::sub);
 			body_shape_.add<MultiPolygonShape>(multi_polygon);
 		}
 	};
@@ -183,11 +183,11 @@ First, we provide the following program to create a system for this problem.
 		{
 			/** Geomtry definition. */
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(createOuterWallShape1(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createOuterWallShape2(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
-			multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::sub);
-			multi_polygon.addAPolygon(createLeafletShape(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createOuterWallShape1(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createOuterWallShape2(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createWaterBlockShape(), ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createLeafletShape(), ShapeBooleanOps::add);
 			MultiPolygonShape multi_polygon_shape(multi_polygon);
 			body_shape_.add<LevelSetShape>(this, multi_polygon_shape);
 		}
@@ -196,11 +196,11 @@ First, we provide the following program to create a system for this problem.
 	MultiPolygon createLeafletBaseShape()
 	{
 		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createOuterWallShape1(), ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(createOuterWallShape2(), ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
-		multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::sub);
-		multi_polygon.addAPolygon(createLeafletShape(), ShapeBooleanOps::sub);
+		multi_polygon.addPolygon(createOuterWallShape1(), ShapeBooleanOps::add);
+		multi_polygon.addPolygon(createOuterWallShape2(), ShapeBooleanOps::add);
+		multi_polygon.addPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
+		multi_polygon.addPolygon(createWaterBlockShape(), ShapeBooleanOps::sub);
+		multi_polygon.addPolygon(createLeafletShape(), ShapeBooleanOps::sub);
 		return multi_polygon;
 	};
 	/** Case dependent inflow boundary condition. */
@@ -679,7 +679,7 @@ are defined form the coordinates based on the geometric parameters.
 		inflow_buffer_shape.push_back(Vecd(-DL_sponge, -0.5 * DH));
 
 		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
+		multi_polygon.addPolygon(inflow_buffer_shape, ShapeBooleanOps::add);
 		return multi_polygon;
 	}
 	/** create outer wall shape */
@@ -762,8 +762,8 @@ Then, we define the fluid body and solid body.
 		{
 			/** Geomtry definition. */
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createLeafletShape(), ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createWaterBlockShape(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createLeafletShape(), ShapeBooleanOps::sub);
 			body_shape_.add<MultiPolygonShape>(multi_polygon);
 		}
 	};
@@ -776,11 +776,11 @@ Then, we define the fluid body and solid body.
 		{
 			/** Geomtry definition. */
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(createOuterWallShape1(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createOuterWallShape2(), ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
-			multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::sub);
-			multi_polygon.addAPolygon(createLeafletShape(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createOuterWallShape1(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createOuterWallShape2(), ShapeBooleanOps::add);
+			multi_polygon.addPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createWaterBlockShape(), ShapeBooleanOps::sub);
+			multi_polygon.addPolygon(createLeafletShape(), ShapeBooleanOps::add);
 			MultiPolygonShape multi_polygon_shape(multi_polygon);
 			body_shape_.add<LevelSetShape>(this, multi_polygon_shape);
 		}
@@ -789,11 +789,11 @@ Then, we define the fluid body and solid body.
 	MultiPolygon createLeafletBaseShape()
 	{
 		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(createOuterWallShape1(), ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(createOuterWallShape2(), ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
-		multi_polygon.addAPolygon(createWaterBlockShape(), ShapeBooleanOps::sub);
-		multi_polygon.addAPolygon(createLeafletShape(), ShapeBooleanOps::sub);
+		multi_polygon.addPolygon(createOuterWallShape1(), ShapeBooleanOps::add);
+		multi_polygon.addPolygon(createOuterWallShape2(), ShapeBooleanOps::add);
+		multi_polygon.addPolygon(createInnerWallShape(), ShapeBooleanOps::sub);
+		multi_polygon.addPolygon(createWaterBlockShape(), ShapeBooleanOps::sub);
+		multi_polygon.addPolygon(createLeafletShape(), ShapeBooleanOps::sub);
 		return multi_polygon;
 	};
 

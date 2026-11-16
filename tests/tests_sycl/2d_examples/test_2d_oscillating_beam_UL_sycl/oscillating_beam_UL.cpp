@@ -8,6 +8,7 @@
  * internal constrained subregion.                                             *
  * @author Shuaihao Zhang, Dong Wu and Xiangyu Hu                              *
  * ----------------------------------------------------------------------------*/
+#include "all_continuum_dynamics_ck.h"
 #include "sphinxsys.h"
 using namespace SPH;
 //------------------------------------------------------------------------------
@@ -92,7 +93,7 @@ int main(int ac, char *av[])
     beam_shape.add(&beam_base_shape);
     beam_shape.add(&beam_column);
     auto &beam = sph_system.addBody<RealBody>(beam_shape);
-    beam.defineMaterial<GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
+    beam.defineMatterMaterial<GeneralContinuum>(rho0_s, c0, Youngs_modulus, poisson);
     beam.generateParticles<BaseParticles, Lattice>();
     BodyRegionByParticle beam_base(beam, beam_base_shape);
 
@@ -118,10 +119,8 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
-    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LinearProfile>>(beam, "Velocity").exec();
-
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &host_methods = sph_solver.getHostMethodContainer();
+    auto &main_methods = sph_solver.getMainMethodContainer();
     ParticleDynamicsGroup update_beam_configuration;
     update_beam_configuration.add(&main_methods.addCellLinkedListDynamics(beam));
     update_beam_configuration.add(&main_methods.addRelationDynamics(beam_inner));
@@ -129,22 +128,21 @@ int main(int ac, char *av[])
 
     auto &beam_advection_step_setup = main_methods.addStateDynamics<fluid_dynamics::AdvectionStepSetup>(beam);
     auto &beam_update_particle_position = main_methods.addStateDynamics<fluid_dynamics::UpdateParticlePosition>(beam);
-    auto &beam_base_constraint = main_methods.addStateDynamics<ConstantConstraintCK, Vecd>(beam_base, "Velocity", Vec2d::Zero());
     auto &beam_linear_correction_matrix = main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(beam_inner);
+
+    auto &beam_acoustic_step_1st_half = main_methods.addInteractionDynamicsOneLevel<
+        fluid_dynamics::AcousticStep1stHalf, NoRiemannSolverCK, NoKernelCorrectionCK>(beam_inner);
+    auto &beam_acoustic_step_2nd_half = main_methods.addInteractionDynamicsOneLevel<
+        fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(beam_inner);
 
     ParticleDynamicsGroup column_shear_force;
     column_shear_force.add(&main_methods.addInteractionDynamics<LinearGradient, Vecd>(beam_inner, "Velocity"));
     column_shear_force.add(&main_methods.addInteractionDynamicsOneLevel<continuum_dynamics::ShearIntegration, GeneralContinuum>(beam_inner));
 
-    auto &beam_acoustic_step_1st_half =
-        main_methods.addInteractionDynamicsOneLevel<
-            fluid_dynamics::AcousticStep1stHalf, NoRiemannSolverCK, NoKernelCorrectionCK>(beam_inner);
-    auto &beam_acoustic_step_2nd_half =
-        main_methods.addInteractionDynamicsOneLevel<
-            fluid_dynamics::AcousticStep2ndHalf, DissipativeRiemannSolverCK, NoKernelCorrectionCK>(beam_inner);
-
     auto &beam_advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(beam, U_ref, 0.2);
-    auto &beam_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(beam, 0.4);
+    auto &beam_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(beam, 0.4);
+    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<LinearProfile>>(beam, "Velocity").exec();
+    auto &beam_base_constraint = main_methods.addStateDynamics<ConstantConstraintCK, Vecd>(beam_base, "Velocity", Vec2d::Zero());
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -155,11 +153,11 @@ int main(int ac, char *av[])
     body_state_recorder.addDerivedVariableToWrite<continuum_dynamics::VonMisesStressCK>(beam);
     auto &record_beam_mechanical_energy = main_methods.addReduceRegression<
         RegressionTestDynamicTimeWarping, TotalKineticEnergyCK>(beam);
-    auto &beam_observer_position = main_methods.addObserveRecorder<Vecd>("Position", beam_observer_contact);
+    auto &beam_observer_position = main_methods.addObserveRecorder<Vecd>(beam_observer_contact, "Position");
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(total_physical_time);
+    TimeStepper &time_stepper = sph_solver.getTimeStepper();
     //----------------------------------------------------------------------
     //	Setup for advection-step based time-stepping control
     //----------------------------------------------------------------------
@@ -192,7 +190,7 @@ int main(int ac, char *av[])
     //	Single time stepping loop is used for multi-time stepping.
     //----------------------------------------------------------------------
     TickCount t0 = TickCount::now();
-    while (!time_stepper.isEndTime())
+    while (!time_stepper.isEndTime(total_physical_time))
     {
         //----------------------------------------------------------------------
         //	the fastest and most frequent acostic time stepping.

@@ -1,5 +1,5 @@
 /**
- * @file 	cell_linked_list_supplementary.cpp
+ * @file 	cell_linked_list_3d.cpp
  * @author	Luhui Han, Chi Zhang and Xiangyu Hu
  */
 

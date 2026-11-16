@@ -45,7 +45,6 @@ using AngularVecd = Real;
 using Rotation = Rotation2d;
 using BoundingBoxd = BoundingBox2d;
 using BoundingBoxi = BoundingBox2i;
-using Rotationd = Rotation2d;
 using Transform = Transform2d;
 
 /** only works for smoothing length ratio less or equal than 1.3*/

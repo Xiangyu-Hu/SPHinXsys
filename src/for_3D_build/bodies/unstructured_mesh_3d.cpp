@@ -1,16 +1,11 @@
-#include "mesh_helper.h"
 #include "unstructured_mesh.h"
 
 #include "base_particle_dynamics.h"
+#include "mesh_helper.h"
+#include "sphinxsys_tbb.h"
+
 namespace SPH
 {
-//=================================================================================================//
-ANSYSMesh::ANSYSMesh(const std::string &full_path)
-{
-    getDataFromMeshFile(full_path);
-    getElementCenterCoordinates();
-    getMinimumDistanceBetweenNodes();
-}
 //=================================================================================================//
 void ANSYSMesh::getDataFromMeshFile(const std::string &full_path)
 {
@@ -199,7 +194,7 @@ void ANSYSMesh::getMinimumDistanceBetweenNodes()
 //=================================================================================================//
 void BaseInnerRelationInFVM::resetNeighborhoodCurrentSize()
 {
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, base_particles_.TotalRealParticles()),
         [&](const IndexRange &r)
         {
@@ -233,14 +228,14 @@ void NeighborBuilderInFVM::initializeRelation(Neighborhood &neighborhood, Real &
 
 //=================================================================================================//
 InnerRelationInFVM::InnerRelationInFVM(RealBody &real_body, ANSYSMesh &ansys_mesh)
-    : BaseInnerRelationInFVM(real_body, ansys_mesh), get_inner_neighbor_(&real_body){};
+    : BaseInnerRelationInFVM(real_body, ansys_mesh), get_inner_neighbor_(&real_body) {};
 //=================================================================================================//
 template <typename GetParticleIndex, typename GetNeighborRelation>
 void InnerRelationInFVM::searchNeighborsByParticles(size_t total_particles, BaseParticles &source_particles,
                                                     ParticleConfiguration &particle_configuration,
                                                     GetParticleIndex &get_particle_index, GetNeighborRelation &get_neighbor_relation)
 {
-    parallel_for(
+    tbb::parallel_for(
         IndexRange(0, base_particles_.TotalRealParticles()),
         [&](const IndexRange &r)
         {

@@ -1,7 +1,11 @@
 #include "base_body.h"
 
-#include "base_body_relation.h"
-#include "base_particles.hpp"
+#include "adaptation.h"
+#include "base_body_part.h"
+#include "base_geometry.h"
+#include "base_material.h"
+#include "base_particles.h"
+#include "cell_linked_list.h"
 #include "sph_system.h"
 
 namespace SPH
@@ -9,15 +13,17 @@ namespace SPH
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape, const std::string &name)
     : sph_system_(sph_system), body_name_(name), newly_updated_(true),
-      base_particles_(nullptr), is_bound_set_(false), initial_shape_(&shape),
-      sph_adaptation_(sph_adaptation_keeper_.createPtr<SPHAdaptation>(sph_system.GlobalResolution())),
-      base_material_(base_material_keeper_.createPtr<BaseMaterial>())
+      base_particles_(nullptr), is_bound_set_(false),
+      is_physical_(false), initial_shape_(&shape),
+      sph_adaptation_(sph_adaptation_keeper_.createPtr<SPHAdaptation>(sph_system.GlobalResolution()))
 {
     sph_system_.addSPHBody(this);
 }
 //=================================================================================================//
+SPHBody::~SPHBody() = default;
+//=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, Shape &shape)
-    : SPHBody(sph_system, shape, shape.getName()) {}
+    : SPHBody(sph_system, shape, shape.Name()) {}
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, const std::string &name)
     : SPHBody(sph_system, makeShared<DefaultShape>(name)) {}
@@ -29,17 +35,32 @@ SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr, const std::s
 }
 //=================================================================================================//
 SPHBody::SPHBody(SPHSystem &sph_system, SharedPtr<Shape> shape_ptr)
-    : SPHBody(sph_system, shape_ptr, shape_ptr->getName()) {}
+    : SPHBody(sph_system, shape_ptr, shape_ptr->Name()) {}
 //=================================================================================================//
 BoundingBoxd SPHBody::getSPHSystemBounds()
 {
     return sph_system_.getSystemDomainBounds();
 }
 //=================================================================================================//
+IndexRange SPHBody::LoopRange()
+{
+    return IndexRange(0, base_particles_->TotalRealParticles());
+};
+//=================================================================================================//
+size_t SPHBody::SizeOfLoopRange()
+{
+    return base_particles_->TotalRealParticles();
+};
+//=================================================================================================//
 SPHSystem &SPHBody::getSPHSystem()
 {
     return sph_system_;
 }
+//=================================================================================================//
+Real SPHBody::getSPHBodyResolutionRef()
+{
+    return sph_adaptation_->ReferenceSpacing();
+};
 //=================================================================================================//
 SPHAdaptation &SPHBody::getSPHAdaptation()
 {
@@ -53,10 +74,10 @@ BaseParticles &SPHBody::getBaseParticles()
     return *base_particles_;
 };
 //=================================================================================================//
-BaseMaterial &SPHBody::getBaseMaterial()
+MatterMaterial &SPHBody::getMatterMaterial() const
 {
-    checkPointer(base_material_, "base_material_", body_name_);
-    return *base_material_;
+    checkPointer(matter_keeper_.getPtr(), "matter material", body_name_);
+    return DynamicCast<MatterMaterial>(this, *matter_keeper_.getPtr());
 };
 //=================================================================================================//
 void SPHBody::setSPHBodyBounds(const BoundingBoxd &bound)
@@ -82,10 +103,12 @@ BaseCellLinkedList &RealBody::getCellLinkedList()
         cell_linked_list_ptr_ = sph_adaptation_->createCellLinkedList(
             getSPHSystemBounds(), *base_particles_);
         cell_linked_list_created_ = true;
-        cell_linked_list_ptr_.get()->setName(getName() + "CellLinkedList<SPHAdaptation>");
+        cell_linked_list_ptr_.get()->setName(Name() + "CellLinkedList<SPHAdaptation>");
     }
     return *cell_linked_list_ptr_.get();
 }
+//=================================================================================================//
+RealBody::~RealBody() = default;
 //=================================================================================================//
 void RealBody::updateCellLinkedList()
 {

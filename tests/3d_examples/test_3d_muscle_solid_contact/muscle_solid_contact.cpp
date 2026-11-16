@@ -4,6 +4,7 @@
  * @details A soft body is in contact with rigid moving plate coupled with simbody.
  * @author 	Chi Zhang and Xiangyu Hu
  */
+#include "all_simbody.h"
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
@@ -63,11 +64,11 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     SolidBody myocardium_body(sph_system, makeShared<Myocardium>("MyocardiumBody"));
-    myocardium_body.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    myocardium_body.defineMatterMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     myocardium_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody moving_plate(sph_system, makeShared<MovingPlate>("MovingPlate"));
-    moving_plate.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    moving_plate.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     moving_plate.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -123,7 +124,7 @@ int main(int ac, char *av[])
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */
-    SimTK::Body::Rigid rigid_info(*plate_multibody.body_part_mass_properties_);
+    SimTK::Body::Rigid rigid_info(plate_multibody.getSimTKMassProperties());
     SimTK::MobilizedBody::Slider
         plateMBody(matter.Ground(), SimTK::Transform(SimTKVec3(0)), rigid_info, SimTK::Transform(SimTKVec3(0)));
     /** Gravity. */

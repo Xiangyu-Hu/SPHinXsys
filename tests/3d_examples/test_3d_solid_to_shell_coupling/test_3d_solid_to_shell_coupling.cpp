@@ -306,25 +306,23 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
 
     // System
     SPHSystem system(bb_system, dp_solid);
-    IOEnvironment io_environment(system);
-
     // change output path
     {
         std::string path = "./output_resv_x" + std::to_string(res_factor_solid) + "_ress_x" + std::to_string(res_factor_shell) + "_relax" + std::to_string(run_relax);
         fs::remove_all(path);
         fs::create_directory(path);
-        io_environment.resetOutputFolder(path);
+        IO::getEnvironment().resetOutputFolder(path);
     }
 
     // Create objects
     SolidBody cube_body(system, cube_mesh, "Cube");
     cube_body.defineBodyLevelSetShape().cleanLevelSet();
-    cube_body.defineMaterial<NeoHookeanSolid>(rho, youngs_modulus_solid, poisson_ratio);
+    cube_body.defineMatterMaterial<NeoHookeanSolid>(rho, youngs_modulus_solid, poisson_ratio);
     cube_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody shell_body(system, makeShared<DefaultShape>("shell"));
     shell_body.defineAdaptationRatios(1.15, dp_solid / dp_shell);
-    shell_body.defineMaterial<NeoHookeanSolid>(rho, youngs_modulus_shell, poisson_ratio);
+    shell_body.defineMatterMaterial<NeoHookeanSolid>(rho, youngs_modulus_shell, poisson_ratio);
     shell_body.generateParticles<SurfaceParticles, ShellDirectGenerator>(shell_pos, shell_n, dp_shell, shell_thickness);
 
     // Algorithm
@@ -394,7 +392,7 @@ void run_solid_to_shell_coupling(size_t res_factor_solid, size_t res_factor_shel
     auto get_U_max = [&]()
     {
         Real U_max = particle_reduce(ParallelPolicy(),
-                                     cube_body.LoopRange(), 0.0, ReduceMax{},
+                                     cube_body.LoopRange(), 0.0, ReduceMax<Real>{},
                                      [&](size_t i) -> Real
                                      { return vel_cube[i].norm(); });
         return U_max;
@@ -534,22 +532,20 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
 
     // System
     SPHSystem system(bb_system, dp);
-    IOEnvironment io_environment(system);
-
     // change output path
     {
         std::string path = "./single_output_resv_x" + std::to_string(res_factor) + "_relax" + std::to_string(run_relax);
         fs::remove_all(path);
         fs::create_directory(path);
-        io_environment.resetOutputFolder(path);
+        IO::getEnvironment().resetOutputFolder(path);
     }
 
     // Create objects
     SolidBody body(system, mesh, "solid");
     body.defineBodyLevelSetShape().cleanLevelSet();
-    body.defineMaterial<CompositeSolid>(rho);
+    body.defineMatterMaterial<CompositeSolid>(rho);
     body.generateParticles<BaseParticles, Lattice>();
-    auto &material = *dynamic_cast<CompositeSolid *>(&body.getBaseMaterial());
+    auto &material = *dynamic_cast<CompositeSolid *>(&body.getMatterMaterial());
     material.add<NeoHookeanSolid>(rho, youngs_modulus_solid, poisson_ratio);
     material.add<NeoHookeanSolid>(rho, youngs_modulus_shell, poisson_ratio);
 
@@ -611,7 +607,7 @@ void run_solid(size_t res_factor, Real stiffness_ratio, bool run_relax)
     auto get_U_max = [&]()
     {
         Real U_max = particle_reduce(ParallelPolicy(),
-                                     body.LoopRange(), 0.0, ReduceMax{},
+                                     body.LoopRange(), 0.0, ReduceMax<Real>{},
                                      [&](size_t i) -> Real
                                      { return vel[i].norm(); });
         return U_max;

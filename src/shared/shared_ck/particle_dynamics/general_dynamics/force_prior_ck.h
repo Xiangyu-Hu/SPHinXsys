@@ -30,7 +30,9 @@
 #ifndef FORCE_PRIOR_CK_H
 #define FORCE_PRIOR_CK_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
+
+#include <string>
 
 namespace SPH
 {
@@ -85,7 +87,7 @@ class GravityForceCK : public LocalDynamics, public ForcePriorCK
 
   protected:
     const GravityType gravity_;
-    SingularVariable<Real> *sv_physical_time_;
+    SingleVariable<Real> *sv_physical_time_;
     DiscreteVariable<Vecd> *dv_pos_;
     DiscreteVariable<Real> *dv_mass_;
 };

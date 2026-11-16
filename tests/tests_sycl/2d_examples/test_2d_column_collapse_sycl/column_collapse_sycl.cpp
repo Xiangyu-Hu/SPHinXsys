@@ -4,6 +4,7 @@
  * @details Column collapse using computing kernels.
  * @author Shuang Li, Xiangyu Hu and Shuaihao Zhang
  */
+#include "all_continuum_dynamics_ck.h"
 #include "sphinxsys.h"
 using namespace SPH; // Namespace cite here.
 //----------------------------------------------------------------------
@@ -52,14 +53,14 @@ int main(int ac, char *av[])
     auto &initial_soil_block = sph_system.addShape<GeometricShapeBox>(
         Transform(soil_block_translation), soil_block_halfsize, "GranularBody");
     auto &soil_block = sph_system.addBody<RealBody>(initial_soil_block);
-    soil_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
+    soil_block.defineMatterMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     soil_block.generateParticles<BaseParticles, Lattice>();
 
     auto &wall_shape = sph_system.addShape<ComplexShape>("WallBoundary");
     wall_shape.add<GeometricShapeBox>(Transform(outer_wall_translation), outer_wall_halfsize);
     wall_shape.subtract<GeometricShapeBox>(Transform(inner_wall_translation), inner_wall_halfsize);
     auto &wall_boundary = sph_system.addBody<SolidBody>(wall_shape);
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -87,10 +88,10 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    auto &host_methods = sph_solver.getHostMethodContainer();
     host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall_boundary).exec();
 
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &main_methods = sph_solver.getMainMethodContainer();
     auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall_boundary);
 
     ParticleDynamicsGroup soil_update_configuration;
@@ -114,12 +115,12 @@ int main(int ac, char *av[])
                         continuum_dynamics::PlasticAcousticStep2ndHalf, AcousticRiemannSolverCK, NoKernelCorrectionCK>(soil_block_inner)
             .addPostContactInteraction<Wall, AcousticRiemannSolverCK, NoKernelCorrectionCK>(soil_block_contact);
     auto &soil_density_regularization =
-        main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(soil_block_inner)
+        main_methods.addInteractionDynamics<fluid_dynamics::CompressionSummation>(soil_block_inner)
             .addPostContactInteraction(soil_block_contact)
-            .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(soil_block);
+            .addPostStateDynamics<fluid_dynamics::DensityRegularization, WeaklyCompressibleFluid, FreeSurface>(soil_block);
     auto &stress_diffusion = main_methods.addInteractionDynamics<continuum_dynamics::StressDiffusionCK>(soil_block_inner);
 
-    auto &soil_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(soil_block, 0.4);
+    auto &soil_acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>>(soil_block, 0.4);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -135,7 +136,7 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     constant_gravity.exec();
     wall_cell_linked_list.exec();
     soil_update_configuration.exec();

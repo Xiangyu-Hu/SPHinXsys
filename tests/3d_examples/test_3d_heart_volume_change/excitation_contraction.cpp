@@ -24,7 +24,7 @@ int main(int ac, char *av[])
     SPHSystem sph_system(system_domain_bounds, dp_0);
     Real mechanical_time_ = 0.0;
     sph_system.setRunParticleRelaxation(false); // Tag for run particle relaxation for body-fitted distribution
-    sph_system.setReloadParticles(false);       // Tag for computation with save particles distribution
+    sph_system.setReloadParticles(true);        // Tag for computation with save particles distribution
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av); // handle command line arguments
 #endif
@@ -36,9 +36,8 @@ int main(int ac, char *av[])
     {
         SolidBody heart_model(sph_system, makeShared<Heart>("HeartModel"));
         heart_model.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
-        heart_model.defineClosure<LocallyOrthotropicMuscle, IsotropicDiffusion>(
-            ConstructArgs(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0),
-            ConstructArgs(diffusion_species_name, diffusion_coeff));
+        heart_model.defineMatterMaterial<LocallyOrthotropicMuscle>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+        heart_model.addMaterialProperty<IsotropicDiffusion>(species_name, diffusion_coeff);
         heart_model.generateParticles<BaseParticles, Lattice>();
         /** topology */
         InnerRelation herat_model_inner(heart_model);
@@ -107,15 +106,16 @@ int main(int ac, char *av[])
     //	SPH simulation section
     //----------------------------------------------------------------------
     SolidBody mechanics_heart(sph_system, makeShared<Heart>("MechanicalHeart"));
-    mechanics_heart.defineMaterial<ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
+    mechanics_heart.defineMatterMaterial<ActiveMuscle<LocallyOrthotropicMuscle>>(rho0_s, bulk_modulus, fiber_direction, sheet_direction, a0, b0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? mechanics_heart.generateParticles<BaseParticles, Reload>("HeartModel")
         : mechanics_heart.generateParticles<BaseParticles, Lattice>();
 
     SolidBody physiology_heart(sph_system, makeShared<Heart>("PhysiologyHeart"));
     AlievPanfilowModel aliev_panfilow_model(k_a, c_m, k, a, b, mu_1, mu_2, epsilon);
-    physiology_heart.defineClosure<Solid, MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
-        Solid(), ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
+    physiology_heart.defineMatterMaterial<Solid>();
+    physiology_heart.addMaterialProperty<MonoFieldElectroPhysiology<LocalDirectionalDiffusion>>(
+        ConstructArgs(&aliev_panfilow_model, ConstructArgs(diffusion_coeff, bias_coeff, fiber_direction)));
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
         ? physiology_heart.generateParticles<BaseParticles, Reload>("HeartModel")
         : physiology_heart.generateParticles<BaseParticles, Lattice>();
@@ -200,15 +200,15 @@ int main(int ac, char *av[])
     //	 Surfaces and operations - must be after system initialized
     //----------------------------------------------------------------------
     MeshData myo_mesh;
-    myo_mesh.load(full_path_to_myocardium, length_scale);
+    myo_mesh.load(mesh_myocardium, length_scale);
     myo_mesh.translate(translation);
     myo_mesh.initialize();
     MeshData lv_mesh;
-    lv_mesh.load(full_path_to_lv, length_scale);
+    lv_mesh.load(mesh_lv, length_scale);
     lv_mesh.translate(translation);
     lv_mesh.initialize();
     MeshData rv_mesh;
-    rv_mesh.load(full_path_to_rv, length_scale);
+    rv_mesh.load(mesh_rv, length_scale);
     rv_mesh.translate(translation);
     rv_mesh.initialize();
     MyocardiumSurfaces myo_srf(mechanics_heart);

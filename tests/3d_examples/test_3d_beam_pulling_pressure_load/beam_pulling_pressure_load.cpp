@@ -34,7 +34,7 @@ class Beam : public ComplexShape
     Beam(const std::string &shape_name)
         : ComplexShape(shape_name)
     {
-        std::string fname_ = "./input/beam.stl";
+        std::string fname_ = "beam.stl";
         Vecd translation(0.0, 0.0, 0.0);
         add<TriangleMeshShapeSTL>(fname_, translation, 0.001);
     }
@@ -117,7 +117,7 @@ int main(int ac, char *av[])
 
     /** Import a beam body, with corresponding material and particles. */
     SolidBody beam_body(sph_system, makeShared<Beam>("beam"));
-    beam_body.defineMaterial<LinearElasticSolid>(rho, Youngs_modulus, poisson_ratio);
+    beam_body.defineMatterMaterial<LinearElasticSolid>(rho, Youngs_modulus, poisson_ratio);
     beam_body.generateParticles<BaseParticles, Lattice>();
 
     // Define Observer

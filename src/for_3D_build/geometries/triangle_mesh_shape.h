@@ -60,7 +60,7 @@ class TriangleMeshShape : public Shape
     virtual BoundingBoxd findBounds() override;
     StdVec<std::array<Real, 3>> &getVertices() { return vertices_; }
     StdVec<std::array<int, 3>> &getFaces() { return faces_; }
-    void writeMeshToFile(SPHSystem &sph_system, Transform transform = Transform());
+    void writTriangleMeshShapeToVtp(Transform transform = Transform(), Real scale_factor = 1.0);
 
   protected:
     StdVec<std::array<Real, 3>> vertices_;
@@ -124,7 +124,7 @@ class TriangleMeshShapeCylinder : public TriangleMeshShape
 class TriangleMeshShapeSTL : public TriangleMeshShape
 {
   public:
-    explicit TriangleMeshShapeSTL(const std::string &file_path_name, Vec3d translation, Real scale_factor,
+    explicit TriangleMeshShapeSTL(const std::string &file_name, Vec3d translation, Real scale_factor,
                                   const std::string &shape_name = "TriangleMeshShapeSTL");
     virtual ~TriangleMeshShapeSTL() {};
 };

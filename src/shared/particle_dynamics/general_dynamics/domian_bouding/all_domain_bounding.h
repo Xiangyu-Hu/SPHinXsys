@@ -28,5 +28,4 @@
 
 #pragma once
 
-#include "domain_bounding.h"
 #include "ghost_bounding.h"

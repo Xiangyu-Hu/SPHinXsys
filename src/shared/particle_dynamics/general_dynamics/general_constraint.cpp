@@ -1,5 +1,8 @@
 #include "general_constraint.h"
 
+#include "adaptation.h"
+#include "complex_geometry.h"
+
 namespace SPH
 {
 //=================================================================================================//

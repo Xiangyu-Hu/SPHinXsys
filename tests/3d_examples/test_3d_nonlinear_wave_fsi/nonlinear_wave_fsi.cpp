@@ -3,6 +3,7 @@
  * @brief 	This is the 3d case file for wave impact with tension leg moored floating structure.
  * @author   Nicolò Salis
  */
+#include "all_simbody.h"
 #include "nonlinear_wave_fsi.h" //header for this case
 #include "sphinxsys.h"          //SPHinXsys Library.
 using namespace SPH;
@@ -19,7 +20,7 @@ int main(int ac, char *av[])
     SolidBody structure_fit(system_fit, makeShared<FloatingStructure>("Structure_Fit"));
     structure_fit.defineAdaptation<AdaptiveNearSurface>(1.3, 0.7, 3);
     structure_fit.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
-    structure_fit.defineMaterial<Solid>(StructureDensity);
+    structure_fit.defineMatterMaterial<Solid>(StructureDensity);
     structure_fit.generateParticles<BaseParticles, Lattice>();
 
     //----------------------------------------------------------------------
@@ -74,15 +75,16 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
-    structure.defineMaterial<Solid>(StructureDensity);
+    structure.defineMatterMaterial<Solid>(StructureDensity);
     structure.generateParticles<BaseParticles, Reload>("Structure_Fit");
 
     ObserverBody observer(sph_system, "Observer");
@@ -192,7 +194,7 @@ int main(int ac, char *av[])
     SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1, SimTK::Vec3(0), SimTK::UnitInertia(1)));
     /** mass properties of the structure. */
     StructureSystemForSimbody structure_multibody(structure, makeShared<TriangleMeshShapeSTL>(stl_structure_path, translation_str, StructureScale));
-    SimTK::Body::Rigid structure_info(*structure_multibody.body_part_mass_properties_);
+    SimTK::Body::Rigid structure_info(structure_multibody.getSimTKMassProperties());
     /** Free mobilizer */
     SimTK::MobilizedBody::Free tethered_struct(matter.Ground(), SimTK::Transform(SimTK::Vec3(translation_str[0], translation_str[1], translation_str[2])), structure_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));
     /** Mobility of the fixed spot. */
@@ -211,16 +213,16 @@ int main(int ac, char *av[])
     /*---------------------------------------------------------------------------*/
     // A SEASIDE PILLARS; B PORT_SIDE PILLARS
     /*-----------------------------------------------------------------------------*/
-    Vecd disp_cable_endAR = structure_tethering_AR - structure_multibody.initial_mass_center_;
+    Vecd disp_cable_endAR = structure_tethering_AR - structure_multibody.getMassCenter();
     SimTK::CablePath tethering_lineAR(cables, fixed_spotAR, SimTK::Vec3(0.0, 0.0, 0.0), tethered_struct, SimTK::Vec3(disp_cable_endAR[0], disp_cable_endAR[1], disp_cable_endAR[2]));
     /*-----------------------------------------------------------------------------*/
-    Vecd disp_cable_endAL = structure_tethering_AL - structure_multibody.initial_mass_center_;
+    Vecd disp_cable_endAL = structure_tethering_AL - structure_multibody.getMassCenter();
     SimTK::CablePath tethering_lineAL(cables, fixed_spotAL, SimTK::Vec3(0.0, 0.0, 0.0), tethered_struct, SimTK::Vec3(disp_cable_endAL[0], disp_cable_endAL[1], disp_cable_endAL[2]));
     /*-----------------------------------------------------------------------------*/
-    Vecd disp_cable_endBR = structure_tethering_BR - structure_multibody.initial_mass_center_;
+    Vecd disp_cable_endBR = structure_tethering_BR - structure_multibody.getMassCenter();
     SimTK::CablePath tethering_lineBR(cables, fixed_spotBR, SimTK::Vec3(0.0, 0.0, 0.0), tethered_struct, SimTK::Vec3(disp_cable_endBR[0], disp_cable_endBR[1], disp_cable_endBR[2]));
     /*-----------------------------------------------------------------------------*/
-    Vecd disp_cable_endBL = structure_tethering_BL - structure_multibody.initial_mass_center_;
+    Vecd disp_cable_endBL = structure_tethering_BL - structure_multibody.getMassCenter();
     SimTK::CablePath tethering_lineBL(cables, fixed_spotBL, SimTK::Vec3(0.0, 0.0, 0.0), tethered_struct, SimTK::Vec3(disp_cable_endBL[0], disp_cable_endBL[1], disp_cable_endBL[2]));
 
     Real lengthAR = G[2] + disp_cable_endAR[2];

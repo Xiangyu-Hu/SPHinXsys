@@ -8,4 +8,6 @@ endif()
 
 if(SPHINXSYS_USE_SYCL)
     ADD_SUBDIRECTORY(unit_test_src)
+elseif(SPHINXSYS_BUILD_UNIT_TESTS)
+    ADD_SUBDIRECTORY(unit_test_src/shared/materials)
 endif()

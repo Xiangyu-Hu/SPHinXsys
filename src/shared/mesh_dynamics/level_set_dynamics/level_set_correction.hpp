@@ -3,6 +3,8 @@
 
 #include "level_set_correction.h"
 
+#include "sphinxsys_atom_ref.h"
+
 namespace SPH
 {
 //=================================================================================================//

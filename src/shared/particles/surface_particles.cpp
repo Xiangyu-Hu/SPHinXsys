@@ -1,12 +1,14 @@
 #include "surface_particles.h"
 
 #include "base_body.h"
+#include "vector_functions.h"
+#include "adaptation.h"
 
 namespace SPH
 {
 //=============================================================================================//
-SurfaceParticles::SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_material)
-    : BaseParticles(sph_body, base_material), n_(nullptr), thickness_(nullptr),
+SurfaceParticles::SurfaceParticles(SPHBody &sph_body)
+    : BaseParticles(sph_body), n_(nullptr), thickness_(nullptr),
       transformation_matrix0_(nullptr)
 {
     //----------------------------------------------------------------------
@@ -15,9 +17,9 @@ SurfaceParticles::SurfaceParticles(SPHBody &sph_body, BaseMaterial *base_materia
     sph_body.getSPHAdaptation().getKernel()->reduceOnce();
 }
 //=================================================================================================//
-void SurfaceParticles::initializeBasicParticleVariables()
+void SurfaceParticles::initializeBasicDiscreteVariables()
 {
-    BaseParticles::initializeBasicParticleVariables();
+    BaseParticles::initializeBasicDiscreteVariables();
     registerTransformationMatrix();
 }
 //=================================================================================================//

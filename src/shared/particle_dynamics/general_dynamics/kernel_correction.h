@@ -32,6 +32,9 @@
 #define KERNEL_CORRECTION_H
 
 #include "base_general_dynamics.h"
+#include "particle_functors.h"
+
+#include <tuple>
 
 namespace SPH
 {

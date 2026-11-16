@@ -30,9 +30,14 @@
 #define IO_PLT_H
 
 #include "io_base.h"
+#include "simtk_wrapper.h"
+#include "sphinxsys_variable.h"
 
 namespace SPH
 {
+class BaseMeshField;
+using TorqueAndForce = std::pair<Vec3d, Vec3d>;
+
 /**
  * @class PltEngine
  * @brief The base class which defines Tecplot file related operation.
@@ -49,12 +54,14 @@ class PltEngine
     template <int N, int M>
     void writeAQuantityHeader(std::ofstream &out_file, const Eigen::Matrix<Real, N, M> &quantity, const std::string &quantity_name);
     void writeAQuantityHeader(std::ofstream &out_file, const SimTK::SpatialVec &quantity, const std::string &quantity_name);
+    void writeAQuantityHeader(std::ofstream &out_file, const TorqueAndForce &quantity, const std::string &quantity_name);
     void writeAQuantity(std::ofstream &out_file, const Real &quantity);
     template <int N>
     void writeAQuantity(std::ofstream &out_file, const Eigen::Matrix<Real, N, 1> &quantity);
     template <int N, int M>
     void writeAQuantity(std::ofstream &out_file, const Eigen::Matrix<Real, N, M> &quantity);
     void writeAQuantity(std::ofstream &out_file, const SimTK::SpatialVec &quantity);
+    void writeAQuantity(std::ofstream &out_file, const TorqueAndForce &quantity);
 };
 
 /**
@@ -70,8 +77,9 @@ class BodyStatesRecordingToPlt : public BodyStatesRecording
     virtual ~BodyStatesRecordingToPlt() {};
 
   protected:
-    void writePltFileHeader(std::ofstream &output_file, ParticleVariables &variables_to_write);
-    void writePltFileParticleData(std::ofstream &output_file, ParticleVariables &variables_to_write, Vecd *position, size_t index);
+    void writePltFileHeader(std::ofstream &output_file, DiscreteVariables &variables_to_write);
+    void writePltFileParticleData(std::ofstream &output_file, DiscreteVariables &variables_to_write,
+                                  const Vecd &position, size_t index);
     virtual void writeWithFileName(const std::string &sequence) override;
 };
 

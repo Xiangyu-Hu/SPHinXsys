@@ -3,7 +3,7 @@
 This file is intentionally written in the same style as Eigen's official
 printers: register a single lookup function via `obj.pretty_printers.append(...)`.
 
-Target: SPH::ParticleVariables / BaseParticles::all_discrete_variables_
+Target: SPH::DiscreteVariables / BaseParticles::all_discrete_variables_
 which is a std::tuple of std::vector<SPH::DiscreteVariable<...>*>.
 
 To use it:
@@ -140,7 +140,7 @@ def _iter_vector_elements(vec_val: gdb.Value):
 
 
 def _extract_entity_name(obj: gdb.Value):
-    """Try to extract SPH::Entity::name_ from a (possibly derived) object."""
+    """Try to extract SPH::Quantity::name_ from a (possibly derived) object."""
     # Prefer the public accessor; member name_ is protected and may not be
     # accessible depending on GDB settings / MI frontend.
     try:
@@ -153,7 +153,7 @@ def _extract_entity_name(obj: gdb.Value):
     except Exception:
         pass
 
-    # Search base classes (Entity may be a base).
+    # Search base classes (Quantity may be a base).
     t = obj.type
     try:
         fields = t.fields()
@@ -172,8 +172,8 @@ def _extract_entity_name(obj: gdb.Value):
     return None
 
 
-class SPHParticleVariablesPrinter:
-    """Pretty printer for SPH::ParticleVariables (all_discrete_variables_).
+class SPHDiscreteVariablesPrinter:
+    """Pretty printer for SPH::DiscreteVariables (all_discrete_variables_).
 
     This printer is intentionally *expandable* (tuple -> vectors -> variables)
     rather than returning a large single string.
@@ -183,7 +183,7 @@ class SPHParticleVariablesPrinter:
         self.val = val
 
     def to_string(self) -> str:
-        return "std::tuple (SPH ParticleVariables / all_discrete_variables_)"
+        return "std::tuple (SPH DiscreteVariables / all_discrete_variables_)"
 
     def children(self):
         idx = 0
@@ -264,7 +264,7 @@ class SPHDiscreteVariablePtrPrinter:
         except Exception:
             return iter(())
 
-        # Expose name_ via Entity base when possible.
+        # Expose name_ via Quantity base when possible.
         try:
             yield ("name_", obj["name_"])
         except Exception:
@@ -339,10 +339,10 @@ pretty_printers_dict = {}
 
 
 def build_sphinxsys_dictionary():
-    # ParticleVariables is a tuple of vectors of DiscreteVariable pointers.
+    # DiscreteVariables is a tuple of vectors of DiscreteVariable pointers.
     pretty_printers_dict[
         re.compile(r"^std::tuple<.*SPH::DiscreteVariable.*>$")
-    ] = lambda val: SPHParticleVariablesPrinter(val)
+    ] = lambda val: SPHDiscreteVariablesPrinter(val)
 
 
 def _looks_like_particle_variables(type_str: str) -> bool:
@@ -360,7 +360,7 @@ def _looks_like_particle_variables(type_str: str) -> bool:
         return True
     if "DataContainerAddressAssemble<" in s:
         return True
-    if "ParticleVariables" in s:
+    if "DiscreteVariables" in s:
         return True
     return False
 
@@ -380,9 +380,9 @@ def lookup_function(val):
     typename = str(t)
     typename_nospace = typename.replace(" ", "")
 
-    # Fast-path: ParticleVariables is a std::tuple of vectors.
+    # Fast-path: DiscreteVariables is a std::tuple of vectors.
     if _looks_like_particle_variables(typename):
-        return SPHParticleVariablesPrinter(val)
+        return SPHDiscreteVariablesPrinter(val)
 
     # Pointers to SPH::DiscreteVariable<...> only (avoid over-matching pointers
     # to vectors/tuples that merely contain DiscreteVariable in their template args).

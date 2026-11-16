@@ -91,7 +91,7 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody plate_body(sph_system, makeShared<DefaultShape>("PlateBody"));
-    plate_body.defineMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
+    plate_body.defineMatterMaterial<SaintVenantKirchhoffSolid>(rho0_s, Youngs_modulus, poisson);
     plate_body.generateParticles<SurfaceParticles, Plate>();
 
     ObserverBody plate_observer(sph_system, "PlateObserver");

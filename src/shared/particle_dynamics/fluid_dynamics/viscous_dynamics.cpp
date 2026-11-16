@@ -1,5 +1,7 @@
 #include "viscous_dynamics.hpp"
 
+#include "vector_functions.h"
+
 namespace SPH
 {
 namespace fluid_dynamics

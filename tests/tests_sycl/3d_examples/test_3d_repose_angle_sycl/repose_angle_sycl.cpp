@@ -4,6 +4,7 @@
  * @details This is a fundamental GPU-accelerated test for soil dynamics.
  * @author SHuang Li, Xiangyu Hu and Shuaihao Zhang
  */
+#include "all_continuum_dynamics_ck.h"
 #include "sphinxsys.h" // SPHinXsys Library.
 using namespace SPH;
 // general parameters for geometry
@@ -90,11 +91,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     RealBody soil_block(sph_system, makeShared<SoilBlock>("GranularBody"));
     soil_block.defineBodyLevelSetShape().writeLevelSet();
-    soil_block.defineMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
+    soil_block.defineMatterMaterial<PlasticContinuum>(rho0_s, c_s, Youngs_modulus, poisson, friction_angle);
     soil_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -110,7 +111,7 @@ int main(int ac, char *av[])
     // Combined relations built from basic relations
     // which is only used for update configuration.
     Inner<> soil_block_inner(soil_block);
-    Contact<> soil_block_contact(soil_block, {&wall_boundary});
+    Contact<> soil_block_contact(soil_block, wall_boundary);
 
     UpdateRelation<MainExecutionPolicy, Inner<>, Contact<>> soil_block_update_complex_relation(soil_block_inner, soil_block_contact);
     ParticleSortCK<MainExecutionPolicy> particle_sort(soil_block);
@@ -130,12 +131,12 @@ int main(int ac, char *av[])
         soil_acoustic_step_1st_half(soil_block_inner, soil_block_contact);
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::PlasticAcousticStep2ndHalfWithWallRiemannCK>
         soil_acoustic_step_2nd_half(soil_block_inner, soil_block_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
         soil_density_summation(soil_block_inner, soil_block_contact);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, FreeSurface>>
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, WeaklyCompressibleFluid, FreeSurface>>
         soil_density_regularization(soil_block);
     InteractionDynamicsCK<MainExecutionPolicy, continuum_dynamics::StressDiffusionInnerCK> stress_diffusion(soil_block_inner);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> soil_acoustic_time_step(soil_block, 0.4);
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>> soil_acoustic_time_step(soil_block, 0.4);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -154,7 +155,7 @@ int main(int ac, char *av[])
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     wall_boundary_normal_direction.exec();
     soil_initial_condition.exec();
     constant_gravity.exec();

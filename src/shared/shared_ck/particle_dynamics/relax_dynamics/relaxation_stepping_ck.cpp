@@ -1,10 +1,12 @@
 #include "relaxation_stepping_ck.h"
 
+#include "adaptation.h"
+
 namespace SPH
 {
 //=================================================================================================//
 RelaxationScalingCK::RelaxationScalingCK(SPHBody &sph_body)
-    : LocalDynamicsReduce<ReduceMax>(sph_body),
+    : LocalDynamicsReduce<ReduceMax<Real>>(sph_body),
       dv_residual_(particles_->getVariableByName<Vecd>("KernelGradientIntegral")),
       h_ref_(sph_body.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//

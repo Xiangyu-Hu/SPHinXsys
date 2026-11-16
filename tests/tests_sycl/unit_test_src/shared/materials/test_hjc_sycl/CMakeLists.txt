@@ -1,0 +1,6 @@
+if(SPHINXSYS_3D)
+    add_executable(test_hjc_sycl test_hjc_sycl.cpp)
+    target_link_libraries(test_hjc_sycl PRIVATE sphinxsys_3d GTest::gtest GTest::gtest_main)
+    add_test(NAME test_hjc_sycl COMMAND test_hjc_sycl)
+    set_tests_properties(test_hjc_sycl PROPERTIES LABELS "material;solid_dynamics")
+endif()

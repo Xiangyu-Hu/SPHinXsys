@@ -2,9 +2,81 @@
 #define ADAPTATION_HPP
 
 #include "adaptation.h"
+#include "level_set.h"
 
 namespace SPH
 {
+//=================================================================================================//
+class AdaptiveSmoothingLength::ContinuousSmoothingLengthRatio : public UnitSmoothingLengthRatio
+{
+    Real *h_ratio_;
+
+  public:
+    explicit ContinuousSmoothingLengthRatio(AdaptiveSmoothingLength &adaptation)
+        : UnitSmoothingLengthRatio(adaptation), h_ratio_(adaptation.h_ratio_) {};
+    template <class ExecutionPolicy>
+    ContinuousSmoothingLengthRatio(const ExecutionPolicy &ex_policy, AdaptiveSmoothingLength &adaptation)
+        : UnitSmoothingLengthRatio(adaptation), h_ratio_(adaptation.dv_h_ratio_->DelegatedData(ex_policy)){};
+    Real operator()(UnsignedInt index_i) const { return h_ratio_[index_i]; };
+};
+//=================================================================================================//
+class AdaptiveSmoothingLength::SmoothedSpacing
+{
+    KernelTabulatedCK smoothing_kernel_;
+    Real kernel_size_, inv_w0_;
+    Real finest_spacing_bound_, coarsest_spacing_bound_;
+
+  public:
+    SmoothedSpacing(AdaptiveSmoothingLength &encloser);
+    Real operator()(const Real &measure, const Real &transition_thickness);
+    Real FinestSpacingBound() const { return finest_spacing_bound_; };
+};
+//=================================================================================================//
+class AdaptiveNearSurface::LocalSpacing
+{
+    using ProbeSignedDistance = LevelSet::ProbeLevelSet<Real>;
+    SmoothedSpacing smoothed_spacing_;
+    LevelSet &level_set_;
+    Real spacing_ref_;
+
+  public:
+    LocalSpacing(AdaptiveNearSurface &encloser, LevelSetShape &level_set_shape);
+
+    class ComputingKernel
+    {
+        SmoothedSpacing smoothed_spacing_;
+        ProbeSignedDistance signed_distance_;
+        Real spacing_ref_;
+
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        Real operator()(const Vecd &position);
+    };
+};
+//=================================================================================================//
+class AdaptiveWithinShape::LocalSpacing
+{
+    using ProbeSignedDistance = LevelSet::ProbeLevelSet<Real>;
+    SmoothedSpacing smoothed_spacing_;
+    LevelSet &level_set_;
+    Real spacing_ref_;
+
+  public:
+    LocalSpacing(AdaptiveWithinShape &encloser, LevelSetShape &level_set_shape);
+
+    class ComputingKernel
+    {
+        SmoothedSpacing smoothed_spacing_;
+        ProbeSignedDistance signed_distance_;
+        Real spacing_ref_;
+
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        Real operator()(const Vecd &position);
+    };
+};
 //=================================================================================================//
 inline Real AdaptiveSmoothingLength::SmoothedSpacing::operator()(
     const Real &measure, const Real &transition_thickness)
@@ -47,6 +119,20 @@ inline Real AdaptiveWithinShape::LocalSpacing::ComputingKernel::operator()(const
     Real phi = signed_distance_(position);
     return phi < 0.0 ? smoothed_spacing_.FinestSpacingBound() : smoothed_spacing_(phi, 2.0 * spacing_ref_);
 }
+//=================================================================================================//
+class AnisotropicAdaptation::AnisotropicSmoothingLengthRatio : public ContinuousSmoothingLengthRatio
+{
+    Matd *deformation_matrix_;
+    Real *deformation_det_;
+
+  public:
+    template <class ExecutionPolicy>
+    AnisotropicSmoothingLengthRatio(const ExecutionPolicy &ex_policy, AnisotropicAdaptation &adaptation);
+    Vecd transform(const Vecd &original, UnsignedInt index_i) const;
+    Vecd inverseTransform(const Vecd &original, UnsignedInt index_i) const;
+    Real KernelTransform(UnsignedInt index_i) const;
+    Matd GradientTransform(UnsignedInt index_i) const;
+};
 //=================================================================================================//
 template <class ExecutionPolicy>
 AnisotropicAdaptation::AnisotropicSmoothingLengthRatio::

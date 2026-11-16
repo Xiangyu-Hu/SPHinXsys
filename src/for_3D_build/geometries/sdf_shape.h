@@ -31,20 +31,25 @@
 #define SDF_SHAPE_H
 
 #include "base_geometry.h"
-#include "sdf_primitive.h"
 #include "sdf_extension.hpp"
 #include "sdf_operation.hpp"
+#include "sdf_primitive.h"
+#include "sphinxsys_entity.h"
 
 namespace SPH
 {
 
-class SDFBase : public Entity
+class SDFBase
 {
   public:
-    explicit SDFBase(const std::string &name) : Entity(name) {};
+    explicit SDFBase(const std::string &name) : name_(name) {};
     virtual ~SDFBase() {};
     virtual Real operator()(const Vec3d &point) const = 0;
     virtual BoundingBoxd findBounds() const = 0;
+    std::string Name() { return name_; };
+
+  protected:
+    std::string name_;
 };
 
 template <typename SDFPrimitive>
@@ -79,7 +84,7 @@ class SDFShape : public Shape
     {
         SDFEntity<SDFPrimitive> *sdf_entity = sdf_ptrs_.createPtr<
             SDFEntity<SDFPrimitive>>(primitive_name, sdf_primitive);
-        sdf_manager_.addEntity<SDFEntity<SDFPrimitive>>(sdf_entity);
+        sdf_manager_.addEntity<SDFEntity<SDFPrimitive>>(sdf_entity->Name(), sdf_entity);
         primitives_and_ops_.push_back(SDFPrimitiveAndOp(sdf_entity, op));
         return *this;
     };
@@ -95,7 +100,7 @@ class SDFShape : public Shape
     StdVec<SDFPrimitiveAndOp> primitives_and_ops_;
 
     Real probeSignedDistance(const Vec3d &probe_point);
-    Vecd probeNormalDirection(const Vec3d &probe_point);
+    Vec3d probeNormalDirection(const Vec3d &probe_point);
 };
 } // namespace SPH
 #endif // SDF_SHAPE_H

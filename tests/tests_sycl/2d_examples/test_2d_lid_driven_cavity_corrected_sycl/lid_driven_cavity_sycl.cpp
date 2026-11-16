@@ -38,7 +38,7 @@ class WaterBlock : public MultiPolygonShape
         water_body_shape.push_back(Vecd(DL, DH));
         water_body_shape.push_back(Vecd(DL, 0.0));
         water_body_shape.push_back(Vecd(0.0, 0.0));
-        multi_polygon_.addAPolygon(water_body_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(water_body_shape, GeometricOps::add);
     }
 };
 /**
@@ -63,8 +63,8 @@ class WallBoundary : public MultiPolygonShape
         inner_wall_shape.push_back(Vecd(DL, 0.0));
         inner_wall_shape.push_back(Vecd(0.0, 0.0));
 
-        multi_polygon_.addAPolygon(outer_wall_shape, GeometricOps::add);
-        multi_polygon_.addAPolygon(inner_wall_shape, GeometricOps::sub);
+        multi_polygon_.addPolygon(outer_wall_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(inner_wall_shape, GeometricOps::sub);
     }
 };
 //----------------------------------------------------------------------
@@ -136,11 +136,12 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_body(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_body.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_body.addMaterialProperty<Viscosity>(mu_f);
     water_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("Wall"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Particle and body creation of fluid observers.
@@ -155,9 +156,9 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //----------------------------------------------------------------------
     Inner<> water_block_inner(water_body);
-    Contact<> water_wall_contact(water_body, {&wall_boundary});
-    Contact<> horizontal_observer_contact(horizontal_observer, {&water_body});
-    Contact<> vertical_observer_contact(vertical_observer, {&water_body});
+    Contact<> water_wall_contact(water_body, wall_boundary);
+    Contact<> horizontal_observer_contact(horizontal_observer, water_body);
+    Contact<> vertical_observer_contact(vertical_observer, water_body);
     // ComplexRelation water_block_complex(water_block_inner, water_wall_contact);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
@@ -183,21 +184,21 @@ int main(int ac, char *av[])
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_body);
 
-    /** Initial condition with momentum field */
-    SimpleDynamics<BoundaryVelocity> solid_initial_condition(wall_boundary);
     /** Kernel correction matrix and transport velocity formulation. */
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(DynamicsArgs(water_block_inner, 0.5), water_wall_contact);
-    /** Evaluation of density by summation approach. */
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
-        fluid_density_summation(water_block_inner, water_wall_contact);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, Internal>>
-        fluid_density_regularization(water_body);
+    /** Initial condition with momentum field */
+    SimpleDynamics<BoundaryVelocity> solid_initial_condition(wall_boundary);
     /** Pressure and density relaxation algorithm by using Verlet time stepping. */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCK>
         fluid_acoustic_step_2nd_half(water_block_inner, water_wall_contact);
+    /** Evaluation of density by summation approach. */
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
+        fluid_density_summation(water_block_inner, water_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, WeaklyCompressibleFluid, Internal>>
+        fluid_density_regularization(water_body);
     /**
      * Free Surface Indicator and BulkParticles for Transport Velocity Correction are not required for this simulation.
      * They are included here solely for testing and verification purposes,
@@ -208,7 +209,7 @@ int main(int ac, char *av[])
     InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedComplex> kernel_gradient_integral(water_block_inner, water_wall_contact);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear>> transport_correction(water_body);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>> fluid_acoustic_time_step(water_body);
     /** Computing viscous acceleration with wall. */
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_block_inner, water_wall_contact);
@@ -222,13 +223,13 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<int>(water_body, "Indicator");
     body_states_recording.addToWrite<Vecd>(wall_boundary, "Velocity");
 
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_horizontal_velocity("Velocity", horizontal_observer_contact);
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_vertical_velocity("Velocity", vertical_observer_contact);
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_horizontal_velocity(horizontal_observer_contact, "Velocity");
+    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Vecd>> write_vertical_velocity(vertical_observer_contact, "Velocity");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     wall_boundary_normal_direction.exec(); // run particle dynamics on CPU first
     water_cell_linked_list.exec();
     wall_cell_linked_list.exec();
@@ -306,7 +307,6 @@ int main(int ac, char *av[])
                 std::cout << std::fixed << std::setprecision(9) << "N=" << number_of_iterations << "	Time = "
                           << sv_physical_time->getValue()
                           << "	advection_dt = " << advection_dt << "	acoustic_dt = " << acoustic_dt << "\n";
-
             }
             number_of_iterations++;
 

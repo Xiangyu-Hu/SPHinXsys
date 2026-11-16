@@ -31,8 +31,9 @@
 
 #include "base_body.h"
 #include "base_body_part.h"
-#include "base_particles.hpp"
-#include "reduce_functors.h"
+#include "base_particles.h"
+#include "cell_linked_list.h"
+#include "sphinxsys_bitmask.h"
 
 namespace SPH
 {
@@ -45,7 +46,7 @@ class LoopRangeCK<ExecutionPolicy, SPHBody>
   public:
     LoopRangeCK(SPHBody &sph_body)
         : loop_bound_(sph_body.getBaseParticles().svTotalRealParticles()->DelegatedData(ExecutionPolicy{})) {};
-    LoopRangeCK(SingularVariable<UnsignedInt> *sv_total_particles)
+    LoopRangeCK(SingleVariable<UnsignedInt> *sv_total_particles)
         : loop_bound_(sv_total_particles->DelegatedData(ExecutionPolicy{})) {};
     template <class UnaryFunc>
     void computeUnit(const UnaryFunc &f, UnsignedInt i) const { f(i); };
@@ -60,58 +61,77 @@ class LoopRangeCK<ExecutionPolicy, SPHBody>
 template <class ExecutionPolicy>
 class LoopRangeCK<ExecutionPolicy, BodyPartByParticle>
 {
+    using MaskKernel = typename GroupManager::MaskKernel;
+
   public:
     LoopRangeCK(BodyPartByParticle &body_part)
-        : particle_list_(body_part.dvParticleList()->DelegatedData(ExecutionPolicy{})),
-          loop_bound_(body_part.svRangeSize()->DelegatedData(ExecutionPolicy{})) {};
-    template <class UnaryFunc>
-    void computeUnit(const UnaryFunc &f, UnsignedInt i) const { f(particle_list_[i]); };
-    template <class ReturnType, class BinaryFunc, class UnaryFunc>
-    ReturnType computeUnit(ReturnType temp, const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const
-    {
-        return uf(particle_list_[i]);
-    };
-    UnsignedInt LoopBound() const { return *loop_bound_; };
+        : body_part_mask_(ExecutionPolicy{}, body_part.getParticleGroupManager(), body_part.getPartMask()),
+          loop_bound_(body_part.getBaseParticles().svTotalRealParticles()->DelegatedData(ExecutionPolicy{})) {};
 
-  protected:
-    UnsignedInt *particle_list_;
-    UnsignedInt *loop_bound_;
-};
-
-template <class ExecutionPolicy>
-class LoopRangeCK<ExecutionPolicy, BodyPartByCell>
-{
-  public:
-    LoopRangeCK(BodyPartByCell &body_part)
-        : cell_list_(body_part.dvCellList()->DelegatedData(ExecutionPolicy{})),
-          loop_bound_(body_part.svRangeSize()->DelegatedData(ExecutionPolicy{})),
-          particle_index_(body_part.dvParticleIndex()->DelegatedData(ExecutionPolicy{})),
-          cell_offset_(body_part.dvCellOffset()->DelegatedData(ExecutionPolicy{})) {};
     template <class UnaryFunc>
-    void computeUnit(const UnaryFunc &uf, UnsignedInt i) const
+    void computeUnit(const UnaryFunc &f, UnsignedInt i) const
     {
-        UnsignedInt cell_index = cell_list_[i];
-        for (size_t k = cell_offset_[cell_index]; k != cell_offset_[cell_index + 1]; ++k)
+        if (body_part_mask_.check(i))
         {
-            uf(particle_index_[k]);
+            f(i);
         }
     };
-
     template <class ReturnType, class BinaryFunc, class UnaryFunc>
     ReturnType computeUnit(ReturnType temp, const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const
     {
-        UnsignedInt cell_index = cell_list_[i];
-        for (size_t k = cell_offset_[cell_index]; k != cell_offset_[cell_index + 1]; ++k)
+        if (body_part_mask_.check(i))
         {
-            temp = bf(temp, uf(particle_index_[k]));
+            temp = bf(temp, uf(i));
         }
         return temp;
     };
     UnsignedInt LoopBound() const { return *loop_bound_; };
 
   protected:
-    UnsignedInt *cell_list_;
+    MaskKernel body_part_mask_;
     UnsignedInt *loop_bound_;
+};
+
+template <class ExecutionPolicy>
+class LoopRangeCK<ExecutionPolicy, BodyPartByCell>
+{
+    using MaskKernel = typename GroupManager::MaskKernel;
+
+  public:
+    LoopRangeCK(BodyPartByCell &body_part)
+        : body_part_mask_(ExecutionPolicy{}, body_part.getCellGroupManager(), body_part.getPartMask()),
+          loop_bound_(body_part.getCellLinkedList().TotalNumberOfCells()),
+          particle_index_(body_part.dvParticleIndex()->DelegatedData(ExecutionPolicy{})),
+          cell_offset_(body_part.dvCellOffset()->DelegatedData(ExecutionPolicy{})) {};
+    template <class UnaryFunc>
+    void computeUnit(const UnaryFunc &uf, UnsignedInt i) const
+    {
+        if (body_part_mask_.check(i))
+        {
+            for (size_t k = cell_offset_[i]; k != cell_offset_[i + 1]; ++k)
+            {
+                uf(particle_index_[k]);
+            }
+        }
+    };
+
+    template <class ReturnType, class BinaryFunc, class UnaryFunc>
+    ReturnType computeUnit(ReturnType temp, const BinaryFunc &bf, const UnaryFunc &uf, UnsignedInt i) const
+    {
+        if (body_part_mask_.check(i))
+        {
+            for (size_t k = cell_offset_[i]; k != cell_offset_[i + 1]; ++k)
+            {
+                temp = bf(temp, uf(particle_index_[k]));
+            }
+        }
+        return temp;
+    };
+    UnsignedInt LoopBound() const { return loop_bound_; };
+
+  protected:
+    MaskKernel body_part_mask_;
+    UnsignedInt loop_bound_;
     UnsignedInt *particle_index_;
     UnsignedInt *cell_offset_;
 };

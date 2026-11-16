@@ -19,7 +19,7 @@ SurfaceStressForce<DataDelegationType>::SurfaceStressForce(BaseRelationType &bas
       surface_tension_force_(this->particles_->template registerStateVariableData<Vecd>("SurfaceTensionForce")),
       norm_direction_(this->particles_->template registerStateVariableData<Vecd>("NormDirection")),
       surface_tension_stress_(this->particles_->template getVariableDataByName<Matd>("SurfaceTensionStress")),
-      surface_tension_coeff_(*(particles_->template getSingularVariableByName<Real>("SurfaceTensionCoef")->Data())) {}
+      surface_tension_coeff_(*(particles_->template getSingleVariableByName<Real>("SurfaceTensionCoef")->Data())) {}
 //=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

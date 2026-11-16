@@ -3,6 +3,7 @@
  * @brief 	This is the test of wave interaction with Oscillating Wave Surge Converter (OWSC)
  * @author   Chi Zhang and Xiangyu Hu
  */
+#include "all_simbody.h"
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;
 #include "owsc.h" //header for this case
@@ -18,15 +19,16 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody flap(sph_system, makeShared<Flap>("Flap"));
-    flap.defineMaterial<Solid>(rho0_s);
+    flap.defineMatterMaterial<Solid>(rho0_s);
     flap.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody observer(sph_system, "Observer");
@@ -102,7 +104,7 @@ int main(int ac, char *av[])
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */
-    SimTK::Body::Rigid pin_spot_info(*flap_multibody.body_part_mass_properties_);
+    SimTK::Body::Rigid pin_spot_info(flap_multibody.getSimTKMassProperties());
     /**
      * @brief   Pin (MobilizedBody &parent, const Transform &X_PF, const Body &bodyInfo, const
                                             Transform &X_BM, Direction=Forward)1

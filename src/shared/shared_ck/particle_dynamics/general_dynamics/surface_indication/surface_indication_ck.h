@@ -1,8 +1,7 @@
 #ifndef SURFACE_INDICATION_CK_H
 #define SURFACE_INDICATION_CK_H
 
-#include "base_fluid_dynamics.h"
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
 #include "interaction_ck.hpp"
 
 namespace SPH
@@ -46,10 +45,8 @@ class FreeSurfaceIndicationCK<Base, RelationType<Parameters...>>
     class InteractKernel : public Interaction<RelationType<Parameters...>>::InteractKernel
     {
       public:
-        template <class ExecutionPolicy, typename... Args>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       FreeSurfaceIndicationCK<Base, RelationType<Parameters...>> &encloser,
-                       Args &&...args);
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
         void interact(size_t index_i, Real dt = 0.0);
 
@@ -81,7 +78,8 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>
     : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>
 {
   public:
-    explicit FreeSurfaceIndicationCK(Inner<Parameters...> &inner_relation);
+    template <class DynamicsIdentifier>
+    explicit FreeSurfaceIndicationCK(DynamicsIdentifier &identifier);
     virtual ~FreeSurfaceIndicationCK() {}
 
     //------------------------------------------------------------------------------------------//
@@ -93,9 +91,8 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>
         : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel
     {
       public:
-        template <class ExecutionPolicy>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> &encloser);
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
         void interact(size_t index_i, Real dt = 0.0);
 
@@ -114,9 +111,8 @@ class FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>>
         : public FreeSurfaceIndicationCK<Base, Inner<Parameters...>>::InteractKernel
     {
       public:
-        template <class ExecutionPolicy>
-        UpdateKernel(const ExecutionPolicy &ex_policy,
-                     FreeSurfaceIndicationCK<Inner<WithUpdate, Parameters...>> &encloser);
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
         void update(size_t index_i, Real dt = 0.0);
 
@@ -140,7 +136,8 @@ class FreeSurfaceIndicationCK<Contact<Parameters...>>
     : public FreeSurfaceIndicationCK<Base, Contact<Parameters...>>
 {
   public:
-    explicit FreeSurfaceIndicationCK(Contact<Parameters...> &contact_relation);
+    template <class DynamicsIdentifier>
+    explicit FreeSurfaceIndicationCK(DynamicsIdentifier &identifier);
     virtual ~FreeSurfaceIndicationCK() {}
 
     //------------------------------------------------------------------------------------------//
@@ -152,10 +149,8 @@ class FreeSurfaceIndicationCK<Contact<Parameters...>>
         : public FreeSurfaceIndicationCK<Base, Contact<Parameters...>>::InteractKernel
     {
       public:
-        template <class ExecutionPolicy>
-        InteractKernel(const ExecutionPolicy &ex_policy,
-                       FreeSurfaceIndicationCK<Contact<Parameters...>> &encloser,
-                       size_t contact_index);
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
 
         void interact(size_t index_i, Real dt = 0.0);
 
@@ -163,12 +158,34 @@ class FreeSurfaceIndicationCK<Contact<Parameters...>>
         Real *contact_Vol_;
     };
 };
-
-//------------------------------------------------------------------------------------------//
-// Common type alias for complex free-surface indication (inner + contact).
 using FreeSurfaceIndicationComplexSpatialTemporalCK = FreeSurfaceIndicationCK<Inner<WithUpdate>, Contact<>>;
-//------------------------------------------------------------------------------------------//
 
+template <typename...>
+class IsolationFactor;
+
+template <typename... Parameters>
+class IsolationFactor<Inner<Parameters...>>
+    : public Interaction<Inner<Parameters...>>
+{
+  public:
+    explicit IsolationFactor(Inner<Parameters...> &inner_relation);
+    virtual ~IsolationFactor() {}
+
+    class InteractKernel : public Interaction<Inner<Parameters...>>::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void interact(size_t index_i, Real dt = 0.0);
+
+      protected:
+        Real *isolation_factor_;
+        Real *Vol_;
+    };
+
+  protected:
+    DiscreteVariable<Real> *dv_isolation_factor_;
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 

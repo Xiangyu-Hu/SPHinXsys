@@ -44,7 +44,7 @@ void ParticleDataSort<ParallelPolicy>::exec(Real dt)
 {
     quick_sort_particle_range_.begin_ = sequence_;
     quick_sort_particle_range_.size_ = particles_->TotalRealParticles();
-    parallel_for(quick_sort_particle_range_, quick_sort_particle_body_, ap);
+    tbb::parallel_for(quick_sort_particle_range_, quick_sort_particle_body_, ap);
 }
 //=================================================================================================//
 UpdateSortedID::UpdateSortedID(RealBody &real_body)

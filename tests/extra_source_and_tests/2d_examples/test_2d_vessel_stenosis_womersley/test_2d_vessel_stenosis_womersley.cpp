@@ -5,8 +5,8 @@
  * @author 	Minhui Zhou, Dong Wu
  */
 #include "bidirectional_buffer.h"
-#include "density_correciton.h"
-#include "density_correciton.hpp"
+#include "density_correction.h"
+#include "density_correction.hpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
 #include "pressure_boundary.h"
@@ -31,9 +31,9 @@ Real DL3 = 16 * DH;
 Real DL = DL1 + DL2 + DL3;
 Real resolution_ref = DH / 12.0;
 Real BW = resolution_ref * 4.0;
-Real max_narrowing = 0.3; // chage to 0.5 or 0.7 for other stenosis cases
+Real max_narrowing = 0.3; // change to 0.5 or 0.7 for other stenosis cases
 Real interpolationNum = 100;
-BoundingBoxd system_domain_bounds(Vec2d(-DL1 - 0.5 * DL2 - BW, -0.5 * DH - BW), Vec2d(0.5 * DL2 + DL3, 0.5 * DH + BW));
+BoundingBoxd system_domain_bounds(Vec2d(-DL1 - 0.5 * DL2, -0.5 * DH), Vec2d(0.5 * DL2 + DL3, 0.5 * DH));
 //----------------------------------------------------------------------
 //	Observation points
 //----------------------------------------------------------------------
@@ -303,7 +303,7 @@ struct InflowVelocity
 
 //----------------------------------------------------------------------
 //	stenosis definition
-//  a - maximaum narrowing, X0 - halflength of stenosis
+//  a - maximum narrowing, X0 - halflength of stenosis
 //----------------------------------------------------------------------
 Real outline(Real x_rel, Real a, Real X0)
 {
@@ -465,17 +465,18 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     FluidBody blood(sph_system, makeShared<Blood>("WaterBody"));
     blood.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
-    blood.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    blood.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    blood.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> in_outlet_particle_buffer(6.0);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? blood.generateParticlesWithReserve<BaseParticles, Reload>(in_outlet_particle_buffer, blood.getName())
+        ? blood.generateParticlesWithReserve<BaseParticles, Reload>(in_outlet_particle_buffer, blood.Name())
         : blood.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
     wall_boundary.defineBodyLevelSetShape().correctLevelSetSign().writeLevelSet();
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.getName())
+        ? wall_boundary.generateParticles<BaseParticles, Reload>(wall_boundary.Name())
         : wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody velocity_axial_observer(sph_system, "VelocityAxialObserver");
@@ -562,12 +563,12 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //  Buffer
     //----------------------------------------------------------------------
-    AlignedBox left_emitter_shape(xAxis, Transform(Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize);
-    AlignedBoxByCell left_emitter(blood, left_emitter_shape);
+    OrientedBox left_emitter_shape(xAxis, Transform(Vec2d(left_bidirectional_translation)), bidirectional_buffer_halfsize);
+    OrientedBoxByCell left_emitter(blood, left_emitter_shape);
     fluid_dynamics::BidirectionalBuffer<LeftInflowPressure> left_bidirection_buffer(left_emitter, in_outlet_particle_buffer);
 
-    AlignedBox right_emitter_shape(xAxis, Transform(Rotation2d(Pi), Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize);
-    AlignedBoxByCell right_emitter(blood, right_emitter_shape);
+    OrientedBox right_emitter_shape(xAxis, Transform(Rotation2d(Pi), Vec2d(right_bidirectional_translation)), bidirectional_buffer_halfsize);
+    OrientedBoxByCell right_emitter(blood, right_emitter_shape);
     fluid_dynamics::BidirectionalBuffer<RightInflowPressure> right_bidirection_buffer(right_emitter, in_outlet_particle_buffer);
 
     InteractionWithUpdate<fluid_dynamics::DensitySummationPressureComplex> update_fluid_density(blood_inner, blood_contact);

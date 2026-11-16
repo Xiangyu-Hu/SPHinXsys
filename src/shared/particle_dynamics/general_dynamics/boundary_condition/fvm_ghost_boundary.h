@@ -33,6 +33,9 @@
 #include "particle_reserve.h"
 #include "unstructured_mesh.h"
 
+#include <mutex>
+#include <utility>
+
 namespace SPH
 {
 /**

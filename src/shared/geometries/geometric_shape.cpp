@@ -7,15 +7,27 @@ GeometricShapeBox::GeometricShapeBox(
     const Transform &transform, const Vecd &halfsize, const std::string &name)
     : TransformShape<GeometricBox>(name, transform, halfsize) {}
 //=================================================================================================//
+GeometricShapeBox::GeometricShapeBox(
+    const TransformGeometryBox &transformed_box, const std::string &name)
+    : GeometricShapeBox(Transform(transformed_box.initialTransform()), transformed_box.HalfSize(), name) {}
+//=================================================================================================//
 GeometricShapeBox::GeometricShapeBox(const BoundingBoxd &bounding_box, const std::string &name)
     : TransformShape<GeometricBox>(
           name,
           Transform(0.5 * (bounding_box.lower_ + bounding_box.upper_)),
           0.5 * (bounding_box.upper_ - bounding_box.lower_)) {}
 //=================================================================================================//
+TransformGeometryBox GeometricShapeBox::getExpandedBox(Real expansion) const
+{
+    Vecd new_halfsize = HalfSize() + Vecd::Constant(expansion);
+    return TransformGeometryBox(initialTransform(), new_halfsize);
+}
+//=================================================================================================//
 GeometricShapeBall::GeometricShapeBall(const Vecd &center, Real radius,
                                        const std::string &name)
-    : GeometricBall(radius), Shape(name), center_(center) {}
+    : GeometricBall(radius), Shape(name), center_(center)
+{
+}
 //=================================================================================================//
 bool GeometricShapeBall::checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED)
 {
@@ -32,9 +44,5 @@ BoundingBoxd GeometricShapeBall::findBounds()
     Vecd shift = radius_ * Vecd::Ones();
     return BoundingBoxd(center_ - shift, center_ + shift);
 }
-//=================================================================================================//
-GeometricShapeCylinder::GeometricShapeCylinder(const Transform &transform, Real radius, Real halflength,
-                                               const std::string &name)
-    : TransformShape<GeometricCylinder>(name, transform, radius, halflength) {}
 //=================================================================================================//
 } // namespace SPH

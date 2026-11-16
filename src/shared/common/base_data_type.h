@@ -29,41 +29,26 @@
 #ifndef BASE_DATA_TYPE_H
 #define BASE_DATA_TYPE_H
 
-#include <algorithm>
-#include <cassert>
-#include <climits>
 #include <cmath>
-#include <iostream>
 #include <limits>
-#include <map>
-#include <memory>
-#include <typeinfo>
-#include <vector>
 
 #if SPHINXSYS_USE_SYCL
-#include <CL/sycl.hpp>
-#define SYCL_DEVICE_ONLY
-#else
-#include <boost/atomic/atomic_ref.hpp>
+#include <sycl/sycl.hpp>
+// 1. Tell Eigen to strictly avoid any heap allocations (essential for GPU code)
+#define EIGEN_RUNTIME_NO_MALLOC
+#define EIGEN_NO_MALLOC
+// 2. Prevent Eigen from generating CPU-specific vector extensions (SSE/AVX) 
+//    that the GPU compiler backend cannot parse into SPIR-V.
+#define EIGEN_DONT_VECTORIZE
 #endif // SPHINXSYS_USE_SYCL
 
-#include <Eigen/Cholesky>
 #include <Eigen/Core>
-#include <Eigen/Dense>
-#include <Eigen/Eigenvalues>
-#include <Eigen/Geometry>
 
 namespace SPH
 {
 #if SPHINXSYS_USE_SYCL
-template <typename T>
-using AtomicRef = sycl::atomic_ref<
-    T, sycl::memory_order_relaxed, sycl::memory_scope_device,
-    sycl::access::address_space::global_space>;
 namespace math = sycl;
 #else
-template <typename T>
-using AtomicRef = boost::atomic_ref<T>;
 namespace math = std;
 #endif // SPHINXSYS_USE_SYCL
 
@@ -74,11 +59,15 @@ using UnsignedInt = uint32_t;
 #else
 using UnsignedInt = u_int32_t;
 #endif // _MSC_VER
+constexpr int UnsignedIntBits = 32;
 #else
 using Real = double;
 using UnsignedInt = size_t;
+constexpr int UnsignedIntBits = 64;
 #endif // SPHINXSYS_USE_FLOAT
 
+template <typename T>
+using StdVec = std::vector<T>;
 /** Vector with integers. */
 using Array2i = Eigen::Array<int, 2, 1>;
 using Array3i = Eigen::Array<int, 3, 1>;
@@ -226,6 +215,7 @@ constexpr Real TinyReal = Real(2.71051e-20);
 constexpr Real MinReal = std::numeric_limits<Real>::lowest();
 constexpr Real MaxReal = std::numeric_limits<Real>::max();
 constexpr UnsignedInt MaxUnsignedInt = std::numeric_limits<UnsignedInt>::max();
+constexpr int MinInt = std::numeric_limits<int>::lowest();
 constexpr int MaxInt = std::numeric_limits<int>::max();
 } // namespace SPH
 #endif // BASE_DATA_TYPE_H

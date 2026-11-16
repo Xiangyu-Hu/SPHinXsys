@@ -37,8 +37,14 @@ class FluidBody : public RealBody
 {
   public:
     template <typename... Args>
-    FluidBody(Args &&...args) : RealBody(std::forward<Args>(args)...){};
+    FluidBody(Args &&...args) : RealBody(std::forward<Args>(args)...) {};
     virtual ~FluidBody() {};
+
+    void setSurfaceType(const std::string &surface_type) { surface_type_ = surface_type; };
+    std::string getSurfaceType() const { return surface_type_; };
+
+  protected:
+    std::string surface_type_ = "free_surface";
 };
 
 class SolidBody : public RealBody

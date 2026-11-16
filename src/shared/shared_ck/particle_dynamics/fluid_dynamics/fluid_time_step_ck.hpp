@@ -1,6 +1,7 @@
 #ifndef FLUID_TIME_STEP_CK_HPP
 #define FLUID_TIME_STEP_CK_HPP
 
+#include "adaptation.h"
 #include "fluid_time_step_ck.h"
 
 namespace SPH
@@ -10,8 +11,8 @@ namespace fluid_dynamics
 //=================================================================================================//
 template <class FluidType>
 AcousticTimeStepCK<FluidType>::AcousticTimeStepCK(SPHBody &sph_body, Real acousticCFL)
-    : LocalDynamicsReduce<ReduceMax>(sph_body),
-      fluid_(DynamicCast<FluidType>(this, particles_->getBaseMaterial())),
+    : LocalDynamicsReduce<ReduceMax<Real>>(sph_body),
+      fluid_(DynamicCast<FluidType>(this, sph_body_->getMatterMaterial())),
       dv_mass_(particles_->getVariableByName<Real>("Mass")),
       dv_rho_(particles_->getVariableByName<Real>("Density")),
       dv_p_(particles_->getVariableByName<Real>("Pressure")),
@@ -38,7 +39,7 @@ template <class FluidType>
 template <class ExecutionPolicy>
 AcousticTimeStepCK<FluidType>::ReduceKernel::ReduceKernel(
     const ExecutionPolicy &ex_policy, AcousticTimeStepCK<FluidType> &encloser)
-    : eos_(encloser.fluid_),
+    : eos_(ex_policy, encloser.fluid_),
       mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
       rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
       p_(encloser.dv_p_->DelegatedData(ex_policy)),
@@ -52,7 +53,7 @@ Real AcousticTimeStepCK<FluidType>::ReduceKernel::reduce(size_t index_i, Real dt
 {
     Real force_norm = (force_[index_i] + force_prior_[index_i]).norm();
     Real acc_scale = math::sqrt(4.0 * h_min_ * force_norm / mass_[index_i]);
-    return SMAX(eos_.getSoundSpeed(p_[index_i], rho_[index_i]) + vel_[index_i].norm(), acc_scale);
+    return SMAX(eos_.getSoundSpeed(index_i, p_[index_i], rho_[index_i]) + vel_[index_i].norm(), acc_scale);
 }
 //=================================================================================================//
 template <class ExecutionPolicy>
@@ -65,8 +66,8 @@ template <class ExecutionPolicy>
 AdvectionStepSetup::UpdateKernel::
     UpdateKernel(const ExecutionPolicy &ex_policy, AdvectionStepSetup &encloser)
     : Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
-      mass_(encloser.dv_mass_->DelegatedData(ex_policy)),
-      rho_(encloser.dv_rho_->DelegatedData(ex_policy)),
+      Vol_ref_(encloser.dv_Vol_ref_->DelegatedData(ex_policy)),
+      compression_(encloser.dv_compression_->DelegatedData(ex_policy)),
       dpos_(encloser.dv_dpos_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class ExecutionPolicy>

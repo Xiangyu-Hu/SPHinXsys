@@ -31,6 +31,8 @@
 #include "fluid_integration.hpp"
 #include "riemann_solver.h"
 
+#include <tuple>
+
 namespace SPH
 {
 namespace fluid_dynamics

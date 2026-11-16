@@ -6,6 +6,7 @@
  *          especially when coupled with the wetting.
  * @author  Shuoguo Zhang and Xiangyu Hu
  */
+#include "all_simbody.h"
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;   // Namespace cite here.
 //----------------------------------------------------------------------
@@ -35,7 +36,7 @@ Real mu_f = 8.9e-7;                      /**< Water dynamics viscosity. */
 //----------------------------------------------------------------------
 //	Wetting parameters
 //----------------------------------------------------------------------
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real diffusion_coeff = 100.0 * pow(particle_spacing_ref, 2); /**< Wetting coefficient. */
 Real fluid_moisture = 1.0;                                   /**< fluid moisture. */
 Real cylinder_moisture = 0.0;                                /**< cylinder moisture. */
@@ -59,7 +60,7 @@ class WettingFluidBody : public MultiPolygonShape
   public:
     explicit WettingFluidBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createWaterBlockShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(createWaterBlockShape(), GeometricOps::add);
     }
 };
 
@@ -69,7 +70,7 @@ class WettingFluidBodyInitialCondition : public LocalDynamics
     explicit WettingFluidBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -110,8 +111,8 @@ class WettingWallBody : public MultiPolygonShape
   public:
     explicit WettingWallBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(createOuterWallShape(), GeometricOps::add);
-        multi_polygon_.addAPolygon(createInnerWallShape(), GeometricOps::sub);
+        multi_polygon_.addPolygon(createOuterWallShape(), GeometricOps::add);
+        multi_polygon_.addPolygon(createInnerWallShape(), GeometricOps::sub);
     }
 };
 class WettingWallBodyInitialCondition : public LocalDynamics
@@ -120,7 +121,7 @@ class WettingWallBodyInitialCondition : public LocalDynamics
     explicit WettingWallBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -139,7 +140,7 @@ class WettingCylinderBody : public MultiPolygonShape
   public:
     explicit WettingCylinderBody(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addACircle(cylinder_center, cylinder_radius, 100, GeometricOps::add);
+        multi_polygon_.addCircle(cylinder_center, cylinder_radius, 100, GeometricOps::add);
     }
 };
 class WettingCylinderBodyInitialCondition : public LocalDynamics
@@ -148,7 +149,7 @@ class WettingCylinderBodyInitialCondition : public LocalDynamics
     explicit WettingCylinderBodyInitialCondition(SPHBody &sph_body)
         : LocalDynamics(sph_body),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
-          phi_(particles_->registerStateVariableData<Real>(diffusion_species_name)) {};
+          phi_(particles_->registerStateVariableData<Real>(species_name)) {};
 
     void update(size_t index_i, Real dt)
     {
@@ -171,7 +172,7 @@ using CylinderFluidDiffusionDirichlet =
 MultiPolygon createSimbodyConstrainShape(SPHBody &sph_body)
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addACircle(cylinder_center, cylinder_radius, 100, GeometricOps::add);
+    multi_polygon.addCircle(cylinder_center, cylinder_radius, 100, GeometricOps::add);
     return multi_polygon;
 };
 //----------------------------------------------------------------------
@@ -191,20 +192,21 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WettingFluidBody>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WettingWallBody>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody cylinder(sph_system, makeShared<WettingCylinderBody>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 1.0);
     cylinder.defineBodyLevelSetShape();
-    cylinder.defineClosure<Solid, IsotropicDiffusion>(
-        rho0_s, ConstructArgs(diffusion_species_name, diffusion_coeff));
+    cylinder.defineMatterMaterial<Solid>(rho0_s);
+    cylinder.addMaterialProperty<IsotropicDiffusion>(species_name, diffusion_coeff);
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
+        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.Name())
         : cylinder.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody cylinder_observer(sph_system, "CylinderObserver");
@@ -319,14 +321,14 @@ int main(int ac, char *av[])
     SimTK::Body::Rigid fixed_spot_info(SimTK::MassProperties(1.0, SimTKVec3(0), SimTK::UnitInertia(1)));
     SolidBodyPartForSimbody cylinder_constraint_area(cylinder, makeShared<MultiPolygonShape>(createSimbodyConstrainShape(cylinder), "cylinder"));
     /** Mass properties of the constrained spot. */
-    SimTK::Body::Rigid tethered_spot_info(*cylinder_constraint_area.body_part_mass_properties_);
+    SimTK::Body::Rigid tethered_spot_info(cylinder_constraint_area.getSimTKMassProperties());
     /** Mobility of the fixed spot. */
     SimTK::MobilizedBody::Weld fixed_spot(matter.Ground(), SimTK::Transform(SimTKVec3(tethering_point[0], tethering_point[1], 0.0)),
                                           fixed_spot_info, SimTK::Transform(SimTKVec3(0)));
     /** Mobility of the tethered spot.
      * Set the mass center as the origin location of the planar mobilizer
      */
-    Vecd displacement0 = cylinder_constraint_area.initial_mass_center_ - tethering_point;
+    Vecd displacement0 = cylinder_constraint_area.getMassCenter() - tethering_point;
     SimTK::MobilizedBody::Planar tethered_spot(fixed_spot,
                                                SimTK::Transform(SimTKVec3(displacement0[0], displacement0[1], 0.0)),
                                                tethered_spot_info, SimTK::Transform(SimTKVec3(0)));

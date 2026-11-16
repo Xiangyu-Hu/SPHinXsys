@@ -31,18 +31,24 @@
 
 #include "base_geometry.h"
 #include "geometric_element.h"
-#include "transform_geometry.h"
+#include "transform_geometry.hpp"
 
 namespace SPH
 {
+using TransformGeometryBox = TransformGeometry<GeometricBox>;
+
 class GeometricShapeBox : public TransformShape<GeometricBox>
 {
   public:
     GeometricShapeBox(const Transform &transform, const Vecd &halfsize,
                       const std::string &name = "GeometricShapeBox");
+    GeometricShapeBox(const TransformGeometryBox &transformed_box,
+                      const std::string &name = "GeometricShapeBox");
     explicit GeometricShapeBox(const BoundingBoxd &bounding_box,
                                const std::string &name = "GeometricShapeBox");
-    virtual ~GeometricShapeBox() {};
+    virtual ~GeometricShapeBox(){};
+    TransformGeometryBox getExpandedBox(Real expansion) const;
+    void writeGeometricShapeBoxToVtp(Real scale_factor = 1.0);
 };
 
 class GeometricShapeBall : public GeometricBall, public Shape
@@ -52,21 +58,13 @@ class GeometricShapeBall : public GeometricBall, public Shape
   public:
     explicit GeometricShapeBall(const Vecd &center, Real radius,
                                 const std::string &name = "GeometricShapeBall");
-    virtual ~GeometricShapeBall() {};
+    virtual ~GeometricShapeBall(){};
 
     virtual bool checkContain(const Vecd &probe_point, bool BOUNDARY_INCLUDED = true) override;
     virtual Vecd findClosestPoint(const Vecd &probe_point) override;
 
   protected:
     virtual BoundingBoxd findBounds() override;
-};
-
-class GeometricShapeCylinder : public TransformShape<GeometricCylinder>
-{
-  public:
-    GeometricShapeCylinder(const Transform &transform, Real radius, Real halflength,
-                           const std::string &name = "GeometricShapeCylinder");
-    virtual ~GeometricShapeCylinder() {};
 };
 } // namespace SPH
 

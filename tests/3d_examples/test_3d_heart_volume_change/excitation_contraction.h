@@ -13,10 +13,10 @@
 #include "heart_volume_change.h"
 using namespace SPH; // Namespace cite here.
 /** Geometry parameter. */
-/** Set the file path to the stl file. */
-std::string full_path_to_myocardium = "./input/myocardium_simple.stl";
-std::string full_path_to_lv = "./input/myocardium_simple_lv.stl";
-std::string full_path_to_rv = "./input/myocardium_simple_rv.stl";
+/** Set the file name to the stl file. */
+std::string mesh_myocardium = "myocardium_simple.stl";
+std::string mesh_lv = "myocardium_simple_lv.stl";
+std::string mesh_rv = "myocardium_simple_rv.stl";
 Real length_scale = 1.0;
 Real time_scale = 1.0 / 12.9;
 Real stress_scale = 1.0e-6;
@@ -38,7 +38,7 @@ std::array<Real, 4> b0 = {Real(7.209), Real(20.417), Real(11.176), Real(9.466)};
 Real poisson = 0.4995;
 Real bulk_modulus = 2.0 * a0[0] * (1.0 + poisson) / (3.0 * (1.0 - 2.0 * poisson));
 /** Electrophysiology parameters. */
-std::string diffusion_species_name = "Phi";
+std::string species_name = "Phi";
 Real diffusion_coeff = 0.8;
 Real bias_coeff = 0.0;
 /** Electrophysiology parameters. */
@@ -63,7 +63,7 @@ class Heart : public ComplexShape
   public:
     explicit Heart(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<TriangleMeshShapeSTL>(full_path_to_myocardium, translation, length_scale);
+        add<TriangleMeshShapeSTL>(mesh_myocardium, translation, length_scale);
     }
 };
 /** Set diffusion relaxation method. */
@@ -115,7 +115,7 @@ class ComputeFiberAndSheetDirections : public LocalDynamics
   public:
     explicit ComputeFiberAndSheetDirections(SPHBody &sph_body, const std::string &species_name)
         : LocalDynamics(sph_body),
-          muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_->getBaseMaterial())),
+          muscle_material_(DynamicCast<LocallyOrthotropicMuscle>(this, sph_body_->getMatterMaterial())),
           pos_(particles_->getVariableDataByName<Vecd>("Position")),
           phi_(particles_->registerStateVariableData<Real>(species_name))
     {

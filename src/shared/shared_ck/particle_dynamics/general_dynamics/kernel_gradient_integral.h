@@ -29,7 +29,7 @@
 #ifndef KERNEL_GRADIENT_INTEGRAL_H
 #define KERNEL_GRADIENT_INTEGRAL_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
 #include "kernel_correction_ck.hpp"
 
 namespace SPH
@@ -57,7 +57,8 @@ class KernelGradientIntegral<Inner<KernelCorrectionType, Parameters...>>
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit KernelGradientIntegral(Inner<Parameters...> &inner_relation);
+    template <class DynamicsIdentifier>
+    explicit KernelGradientIntegral(DynamicsIdentifier &identifier);
     virtual ~KernelGradientIntegral() {}
 
     class InteractKernel : public BaseInteraction::InteractKernel
@@ -85,14 +86,15 @@ class KernelGradientIntegral<Contact<Boundary, KernelCorrectionType, Parameters.
     using CorrectionKernel = typename KernelCorrectionType::ComputingKernel;
 
   public:
-    explicit KernelGradientIntegral(Contact<Parameters...> &contact_relation);
+    template <class DynamicsIdentifier>
+    explicit KernelGradientIntegral(DynamicsIdentifier &identifier);
     virtual ~KernelGradientIntegral() {}
 
     class InteractKernel : public BaseInteraction::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:
@@ -110,6 +112,8 @@ using KernelGradientIntegralComplex =
 
 using KernelGradientIntegralCorrectedComplex =
     KernelGradientIntegral<Inner<LinearCorrectionCK>, Contact<Boundary, LinearCorrectionCK>>;
+using KernelGradientIntegralCorrectedForOpenBoundaryFlowComplex =
+    KernelGradientIntegral<Inner<LinearCorrectionWithinScopeCK<BulkParticles>>, Contact<Boundary, LinearCorrectionCK>>;
 
 } // namespace SPH
 #endif // KERNEL_GRADIENT_RESIDUAL_H

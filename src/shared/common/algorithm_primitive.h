@@ -31,6 +31,9 @@
 
 #include "sphinxsys_variable.h"
 
+#include "sphinxsys_tbb.h"
+#include "tbb/parallel_scan.h"
+
 #include <numeric>
 
 /** this is a reformulation of tbb parallel_sort for particle data */

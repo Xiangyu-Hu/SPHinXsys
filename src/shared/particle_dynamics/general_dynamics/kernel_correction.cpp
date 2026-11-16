@@ -1,5 +1,7 @@
 #include "kernel_correction.hpp"
 
+#include "vector_functions.h"
+
 namespace SPH
 {
 //=================================================================================================//

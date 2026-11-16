@@ -237,7 +237,7 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
   public:
     explicit CellContainDiffusion(
         SparseMeshField<4> &data_mesh, UnsignedInt resolution_level,
-        SingularVariable<UnsignedInt> &sv_count_modified);
+        SingleVariable<UnsignedInt> &sv_count_modified);
     virtual ~CellContainDiffusion() {};
 
     class UpdateKernel
@@ -259,7 +259,7 @@ class CellContainDiffusion : public BaseMeshLocalDynamics
     UnsignedInt boundary_pkg_index_offset_;
     CellVariable<int> &mcv_cell_contain_id_;
     CellVariable<UnsignedInt> &mcv_cell_package_index_;
-    SingularVariable<UnsignedInt> &sv_count_modified_;
+    SingleVariable<UnsignedInt> &sv_count_modified_;
 };
 
 class FinishPackageDatas : public BaseDynamics<void>
@@ -274,7 +274,7 @@ class FinishPackageDatas : public BaseDynamics<void>
     SparseMeshField<4> &mesh_data_;
     UnsignedInt resolution_level_;
     Shape &shape_;
-    SingularVariable<UnsignedInt> sv_count_modified_{"CountModifiedCell", 1};
+    SingleVariable<UnsignedInt> sv_count_modified_{"CountModifiedCell", 1};
 
     MeshInnerDynamics<execution::ParallelPolicy, InitializeCellNeighborhood> initialize_cell_neighborhood;
     MeshInnerDynamics<execution::ParallelPolicy, InitializeBasicPackageData> initialize_basic_data_for_a_package;

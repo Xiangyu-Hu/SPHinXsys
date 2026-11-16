@@ -29,11 +29,14 @@
 #ifndef FLUID_STRUCTURE_INTERACTION_H
 #define FLUID_STRUCTURE_INTERACTION_H
 
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
 #include "base_material.h"
+#include "dynamics_algorithms.h"
 #include "elastic_dynamics.h"
 #include "force_prior.hpp"
 #include "riemann_solver.h"
+
+#include <string>
 
 namespace SPH
 {

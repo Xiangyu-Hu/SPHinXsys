@@ -23,21 +23,21 @@ int main(int ac, char *av[])
 #ifdef BOOST_AVAILABLE
     sph_system.handleCommandlineOptions(ac, av);
 #endif
-    ParameterizationIO *parameterization_io = sph_system.getIOEnvironment().defineParameterizationIO();
+    ParameterizationIO *parameterization_io = IO::getEnvironment().defineParameterizationIO();
     //----------------------------------------------------------------------
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBlock"));
-    water_block.defineClosure<WeaklyCompressibleFluid, ParameterizedViscosity>(
-        ConstructArgs(rho0_f, c_f), ConstructArgs(parameterization_io, mu_f));
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<ParameterizedViscosity>(ConstructArgs(parameterization_io, mu_f));
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody cylinder(sph_system, makeShared<Cylinder>("Cylinder"));
     cylinder.defineAdaptationRatios(1.15, 2.0);
     cylinder.defineBodyLevelSetShape();
-    cylinder.defineMaterial<Solid>();
+    cylinder.defineMatterMaterial<Solid>();
     (!sph_system.RunParticleRelaxation() && sph_system.ReloadParticles())
-        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.getName())
+        ? cylinder.generateParticles<BaseParticles, Reload>(cylinder.Name())
         : cylinder.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");

@@ -52,7 +52,6 @@ class BodyStatesRecordingToTriangleMeshVtpCK : public BodyStatesRecordingToTrian
                 if (bodies_[i]->checkNewlyUpdated())
                 {
                     BaseParticles &base_particles = bodies_[i]->getBaseParticles();
-                    base_particles.dvParticlePosition()->prepareForOutput(ExecutionPolicy{});
                     prepare_variable_to_write_(base_particles.VariablesToWrite(), ExecutionPolicy{});
                 }
             }
@@ -61,7 +60,7 @@ class BodyStatesRecordingToTriangleMeshVtpCK : public BodyStatesRecordingToTrian
     };
 
   protected:
-    OperationOnDataAssemble<ParticleVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
+    OperationOnDataAssemble<DiscreteVariables, PrepareVariablesToWrite<DiscreteVariable>> prepare_variable_to_write_;
 };
 } // namespace SPH
 #endif // IO_VTK_MESH_CK_H

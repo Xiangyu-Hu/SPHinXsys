@@ -9,7 +9,7 @@ TEST(test_meshes, split_for)
     Real dp = 1;
 
     MultiPolygon shape;
-    shape.addABox(Transform(0.5 * length * Vec2d::Ones()), 0.5 * length * Vec2d::Ones(), GeometricOps::add);
+    shape.addBox(Transform(0.5 * length * Vec2d::Ones()), 0.5 * length * Vec2d::Ones(), GeometricOps::add);
     auto polygon_shape = makeShared<MultiPolygonShape>(shape, "PolygonShape");
 
     BoundingBoxd bb_system = polygon_shape->getBounds();
@@ -17,7 +17,7 @@ TEST(test_meshes, split_for)
     SPHSystem system(bb_system, dp);
 
     SolidBody body(system, polygon_shape);
-    body.defineMaterial<Solid>();
+    body.defineMatterMaterial<Solid>();
     body.generateParticles<BaseParticles, Lattice>();
     auto &particles = body.getBaseParticles();
     const auto pos = particles.registerStateVariableData<Vec2d>("Position");

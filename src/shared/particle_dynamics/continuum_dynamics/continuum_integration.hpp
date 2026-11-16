@@ -1,6 +1,10 @@
 #pragma once
-#include "base_particles.hpp"
+
 #include "continuum_integration.h"
+
+#include "base_particles.hpp"
+#include "vector_functions.h"
+
 namespace SPH
 {
 namespace continuum_dynamics
@@ -21,7 +25,7 @@ template <class DataDelegationType>
 template <class BaseRelationType>
 BasePlasticIntegration<DataDelegationType>::BasePlasticIntegration(BaseRelationType &base_relation)
     : fluid_dynamics::BaseIntegration<DataDelegationType>(base_relation),
-      plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->particles_->getBaseMaterial())),
+      plastic_continuum_(DynamicCast<PlasticContinuum>(this, this->sph_body_->getMatterMaterial())),
       stress_tensor_3D_(this->particles_->template registerStateVariableData<Mat3d>("StressTensor3D")),
       strain_tensor_3D_(this->particles_->template registerStateVariableData<Mat3d>("StrainTensor3D")),
       stress_rate_3D_(this->particles_->template registerStateVariableData<Mat3d>("StressRate3D")),
@@ -102,7 +106,7 @@ template <class RiemannSolverType>
 void PlasticIntegration1stHalf<Contact<Wall>, RiemannSolverType>::interaction(size_t index_i, Real dt)
 {
     Vecd force_prior_i = computeNonConservativeForce(index_i);
-    Vecd force = force_prior_i;
+    Vecd force = Vecd::Zero();
     Real rho_dissipation(0);
     Matd stress_tensor_i = degradeToMatd(stress_tensor_3D_[index_i]);
     for (size_t k = 0; k < this->contact_configuration_.size(); ++k)

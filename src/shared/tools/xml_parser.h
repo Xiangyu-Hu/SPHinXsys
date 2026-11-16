@@ -29,21 +29,19 @@
 
 #include "tinyxml2.h"
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 #include "sphinxsys_containers.h"
 
 #include <cassert>
 #include <charconv>
 #include <cstdio>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <string>
 
-#include <filesystem>
-#include <fstream>
-
 namespace fs = std::filesystem;
 #define assertm(exp, msg) assert(((void)msg, exp))
-
 namespace SPH
 {
 // Eigen::IOFormat CleanFmt(Eigen::StreamPrecision, 0, ", ", "\n", "[", "]");
@@ -52,12 +50,15 @@ namespace SPH
 // Eigen::IOFormat OctaveFmt(Eigen::StreamPrecision, 0, ", ", ";\n", "", "", "[", "]");
 // Eigen::IOFormat HeavyFmt(Eigen::FullPrecision, 0, ", ", ";\n", "[", "]", "[", "]");
 
+using TinyXMLElement = tinyxml2::XMLElement;
+constexpr int OutputPrecision = std::numeric_limits<Real>::digits10;
+
 template <typename DataType>
 std::string DataToString(const DataType &value)
 {
     std::ostringstream out;
-    out.precision(15);
-    out << std::fixed << value;
+    out.precision(OutputPrecision);
+    out << value;
     return std::move(out).str();
     // return std::to_string(value);
 }
@@ -66,7 +67,7 @@ template <int DIMENSION, auto... Rest>
 std::string DataToString(const Eigen::Matrix<Real, DIMENSION, Rest...> &value)
 {
     std::stringstream ss;
-    ss << value.format(Eigen::IOFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "", ""));
+    ss << value.format(Eigen::IOFormat(OutputPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "", ""));
     return ss.str();
 }
 
@@ -74,7 +75,7 @@ template <int DIMENSION, auto... Rest>
 std::string DataToString(const Eigen::Matrix<Real, DIMENSION, DIMENSION, Rest...> &value)
 {
     std::stringstream ss;
-    ss << value.format(Eigen::IOFormat(Eigen::StreamPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "", ""));
+    ss << value.format(Eigen::IOFormat(OutputPrecision, Eigen::DontAlignCols, ", ", ", ", "", "", "", ""));
     return ss.str();
 }
 
@@ -154,7 +155,7 @@ class XmlParser
      * Functions & Parameters
      */
     /** First element of the xml doc, also noted as root element in tinyxml-1. */
-    tinyxml2::XMLElement *first_element_;
+    TinyXMLElement *first_element_;
 
     /** Write to XML file */
     void writeToXmlFile(const std::string &filefullpath)
@@ -200,14 +201,14 @@ class XmlParser
     };
 
     /** Get the Tag of a element as a string */
-    std::string getElementTag(tinyxml2::XMLElement *element)
+    std::string getElementTag(TinyXMLElement *element)
     {
         const char *element_name = element->Name();
         return std::string(element_name);
     };
 
     /** Get a reference to a child element */
-    tinyxml2::XMLElement *getChildElement(const std::string &tag)
+    TinyXMLElement *getChildElement(const std::string &tag)
     {
         return findElement(tag);
     };
@@ -216,54 +217,105 @@ class XmlParser
     void addNewElement(const std::string &element_name);
 
     /**Add child element to a given element. */
-    void addNewElement(tinyxml2::XMLElement *father_element, const std::string &child_name);
+    void addNewElement(TinyXMLElement *father_element, const std::string &child_name);
 
     /** Get the size of Xml doc */
     size_t Size();
 
     /** Get the size of Xml Element */
-    size_t Size(tinyxml2::XMLElement *base);
+    size_t Size(TinyXMLElement *base);
 
     /** Find optional element in root element */
-    tinyxml2::XMLElement *findElement(const std::string &element_tag);
+    TinyXMLElement *findElement(const std::string &element_tag);
 
     /** Find optional element in optional element */
-    tinyxml2::XMLElement *findElement(tinyxml2::XMLElement *base, const std::string &element_tag);
+    TinyXMLElement *findElement(TinyXMLElement *base, const std::string &element_tag);
 
     /** resize of Xml doc */
     void resize(const size_t input_size, const std::string name);
 
     /** resize of an element */
-    void resize(tinyxml2::XMLElement *element, const size_t input_size, const std::string name);
+    void resize(TinyXMLElement *element, const size_t input_size, const std::string name);
 
     //----------------------------------------------------------------------
     //	Add an attribute of type string to an xml element.
     //----------------------------------------------------------------------
     template <typename T>
-    void setAttributeToElement(tinyxml2::XMLElement *base_ele, const std::string &attrib_name, const T &value)
+    void setAttributeToElement(TinyXMLElement *base_ele, const std::string &attrib_name, const T &value)
     {
         base_ele->SetAttribute(attrib_name.c_str(), DataToString(value).c_str());
     };
 
     template <int DIMENSION, auto... Rest>
-    void setAttributeToElement(tinyxml2::XMLElement *base_ele, const std::string &attrib_name,
+    void setAttributeToElement(TinyXMLElement *base_ele, const std::string &attrib_name,
                                const Eigen::Matrix<Real, DIMENSION, 1, Rest...> &value)
     {
         base_ele->SetAttribute(attrib_name.c_str(), DataToString(value).c_str());
     };
 
     template <int DIMENSION, auto... Rest>
-    void setAttributeToElement(tinyxml2::XMLElement *base_ele, const std::string &attrib_name,
+    void setAttributeToElement(TinyXMLElement *base_ele, const std::string &attrib_name,
                                const Eigen::Matrix<Real, DIMENSION, DIMENSION, Rest...> &value)
     {
         base_ele->SetAttribute(attrib_name.c_str(), DataToString(value).c_str());
     };
 
     //----------------------------------------------------------------------
+    //	Column-wise data: a child element named after the variable holds the
+    //	values of all items as text, separated by ";".
+    //----------------------------------------------------------------------
+    template <typename DataType, typename GetValue>
+    void setColumnToElement(TinyXMLElement *base_ele, const std::string &column_name,
+                            size_t number_of_items, const GetValue &get_value)
+    {
+        std::string text;
+        for (size_t i = 0; i != number_of_items; ++i)
+        {
+            if (i != 0)
+                text += "; ";
+            text += DataToString(get_value(i));
+        }
+        TinyXMLElement *column = base_ele->FirstChildElement(column_name.c_str());
+        if (column == nullptr)
+            column = base_ele->InsertNewChildElement(column_name.c_str());
+        column->SetText(text.c_str());
+    };
+
+    template <typename DataType, typename SetValue>
+    void queryColumnFromElement(TinyXMLElement *base_ele, const std::string &column_name,
+                                size_t number_of_items, const SetValue &set_value)
+    {
+        TinyXMLElement *column = base_ele->FirstChildElement(column_name.c_str());
+        if (column == nullptr || column->GetText() == nullptr)
+        {
+            std::cout << "\n Error: column " << column_name << " not found in xml file." << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+        std::istringstream text_stream(column->GetText());
+        size_t i = 0;
+        std::string item;
+        while (i != number_of_items && std::getline(text_stream, item, ';'))
+        {
+            DataType value;
+            StringToData(item, value);
+            set_value(i, value);
+            ++i;
+        }
+        if (i != number_of_items)
+        {
+            std::cout << "\n Error: column " << column_name << " has " << i
+                      << " items but " << number_of_items << " are expected." << std::endl;
+            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
+            exit(1);
+        }
+    };
+
+    //----------------------------------------------------------------------
     //	Get the required attribute value of an element.
     //----------------------------------------------------------------------
     template <typename T>
-    void queryAttributeValue(tinyxml2::XMLElement *base_ele, const std::string &attrib_name, T &value)
+    void queryAttributeValue(TinyXMLElement *base_ele, const std::string &attrib_name, T &value)
     {
         const char *value_char = 0;
         base_ele->QueryAttribute(attrib_name.c_str(), &value_char);
@@ -273,7 +325,7 @@ class XmlParser
     };
 
     template <int DIMENSION, auto... Rest>
-    void queryAttributeValue(tinyxml2::XMLElement *base_ele, const std::string &attrib_name,
+    void queryAttributeValue(TinyXMLElement *base_ele, const std::string &attrib_name,
                              Eigen::Matrix<Real, DIMENSION, 1, Rest...> &value)
     {
         const char *value_char = 0;
@@ -284,7 +336,7 @@ class XmlParser
     };
 
     template <int DIMENSION, auto... Rest>
-    void queryAttributeValue(tinyxml2::XMLElement *base_ele, const std::string &attrib_name,
+    void queryAttributeValue(TinyXMLElement *base_ele, const std::string &attrib_name,
                              Eigen::Matrix<Real, DIMENSION, DIMENSION, Rest...> &value)
     {
         const char *value_char = 0;

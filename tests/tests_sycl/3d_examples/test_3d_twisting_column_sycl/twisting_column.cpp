@@ -86,7 +86,7 @@ int main(int ac, char *av[])
     // Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     auto &column = sph_system.addBody<SolidBody>(column_shape);
-    column.defineMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
+    column.defineMatterMaterial<NeoHookeanSolid>(rho0_s, Youngs_modulus, poisson);
     column.generateParticles<BaseParticles, Lattice>();
     BodyRegionByParticle holder(column, holder_shape);
 
@@ -116,10 +116,8 @@ int main(int ac, char *av[])
     // Finally, the auxiliary models such as time step estimator, initial condition,
     // boundary condition and other constraints should be defined.
     //----------------------------------------------------------------------
-    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
-    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<VelocityProfile>>(column, "Velocity").exec();
-
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
+    auto &host_methods = sph_solver.getHostMethodContainer();
+    auto &main_methods = sph_solver.getMainMethodContainer();
     ParticleDynamicsGroup lagrangian_configuration;
     lagrangian_configuration.add(&main_methods.addCellLinkedListDynamics(column));
     lagrangian_configuration.add(&main_methods.addRelationDynamics(column_inner));
@@ -133,19 +131,20 @@ int main(int ac, char *av[])
 
     auto &column_acoustic_time_step = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(column, 0.5);
     auto &constraint_holder = main_methods.addStateDynamics<FixBodyPartConstraintCK>(holder);
+    host_methods.addStateDynamics<VariableAssignment, SpatialDistribution<VelocityProfile>>(column, "Velocity").exec();
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     auto &body_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(sph_system);
     auto &write_displacement = main_methods.addObserveRegression<
-        RegressionTestDynamicTimeWarping, Vecd>("Position", my_observer_contact);
+        RegressionTestDynamicTimeWarping, Vecd>(my_observer_contact, "Position");
     auto &write_velocity = main_methods.addObserveRegression<
-        RegressionTestDynamicTimeWarping, Vecd>("Velocity", my_observer_contact);
+        RegressionTestDynamicTimeWarping, Vecd>(my_observer_contact, "Velocity");
     //----------------------------------------------------------------------
     //	Define time stepper with end and start time.
     //----------------------------------------------------------------------
-    TimeStepper &time_stepper = sph_solver.defineTimeStepper(total_physical_time);
+    TimeStepper &time_stepper = sph_solver.getTimeStepper();
     //----------------------------------------------------------------------
     //	Setup for advection-step based time-stepping control
     //----------------------------------------------------------------------
@@ -176,7 +175,7 @@ int main(int ac, char *av[])
     //	Single time stepping loop is used for multi-time stepping.
     //----------------------------------------------------------------------
     TickCount t0 = TickCount::now();
-    while (!time_stepper.isEndTime())
+    while (!time_stepper.isEndTime(total_physical_time))
     {
         //----------------------------------------------------------------------
         //	the fastest and most frequent acostic time stepping.

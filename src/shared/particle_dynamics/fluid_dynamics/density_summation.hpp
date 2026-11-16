@@ -2,6 +2,7 @@
 
 #include "density_summation.h"
 
+#include "adaptation.h"
 namespace SPH
 {
 namespace fluid_dynamics
@@ -15,7 +16,7 @@ DensitySummation<Base, DataDelegationType>::DensitySummation(BaseRelationType &b
       mass_(this->particles_->template getVariableDataByName<Real>("Mass")),
       rho_sum_(this->particles_->template registerStateVariableData<Real>("DensitySummation")),
       Vol_(this->particles_->template getVariableDataByName<Real>("VolumetricMeasure")),
-      rho0_(this->sph_body_->getBaseMaterial().ReferenceDensity()),
+      rho0_(this->sph_body_->getMatterMaterial().ReferenceDensity()),
       inv_sigma0_(1.0 / this->getSPHAdaptation().LatticeNumberDensity()),
       W0_(this->getSPHAdaptation().getKernel()->W0(ZeroVecd)) {}
 //=================================================================================================//

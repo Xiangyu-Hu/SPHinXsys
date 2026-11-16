@@ -1,5 +1,8 @@
 #include "thin_structure_dynamics.h"
+
+#include "adaptation.h"
 #include "base_particles.hpp"
+#include "vector_functions.h"
 
 namespace SPH
 {
@@ -20,9 +23,9 @@ void UpdateShellNormalDirection::update(size_t index_i, Real dt)
 }
 //=================================================================================================//
 ShellAcousticTimeStepSize::ShellAcousticTimeStepSize(SPHBody &sph_body, Real CFL)
-    : LocalDynamicsReduce<ReduceMin>(sph_body),
+    : LocalDynamicsReduce<ReduceMin<Real>>(sph_body),
       CFL_(CFL),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body.getMatterMaterial())),
       vel_(particles_->getVariableDataByName<Vecd>("Velocity")),
       force_(particles_->getVariableDataByName<Vecd>("Force")),
       angular_vel_(particles_->getVariableDataByName<Vecd>("AngularVelocity")),
@@ -97,7 +100,7 @@ ShellStressRelaxationFirstHalf::
                                    int number_of_gaussian_points, bool hourglass_control,
                                    Real hourglass_control_factor)
     : BaseShellRelaxation(inner_relation),
-      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getBaseMaterial())),
+      elastic_solid_(DynamicCast<ElasticSolid>(this, sph_body_->getMatterMaterial())),
       rho0_(elastic_solid_.ReferenceDensity()),
       inv_rho0_(1.0 / rho0_),
       smoothing_length_(getSPHAdaptation().ReferenceSmoothingLength()),
@@ -115,6 +118,7 @@ ShellStressRelaxationFirstHalf::
       nu_(elastic_solid_.PoissonRatio()),
       hourglass_control_factor_(hourglass_control_factor),
       hourglass_control_(hourglass_control),
+      inv_W0_(1.0 / getSPHAdaptation().getKernel()->W0(ZeroVecd)),
       number_of_gaussian_points_(number_of_gaussian_points)
 {
     /** Note that, only three-point and five-point Gaussian quadrature rules are defined. */
@@ -141,7 +145,7 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
     // are defined in local coordinates, while others in global coordinates.
     pos_[index_i] += vel_[index_i] * dt * 0.5;
     rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
-    pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
+    pseudo_n_[index_i] = transformation_matrix0_[index_i].transpose() * getVectorAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i]);
 
     F_[index_i] += dF_dt_[index_i] * dt * 0.5;
     F_bending_[index_i] += dF_bending_dt_[index_i] * dt * 0.5;
@@ -162,6 +166,9 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
     Matd resultant_stress = Matd::Zero();
     Matd resultant_moment = Matd::Zero();
     Vecd resultant_shear_stress = Vecd::Zero();
+
+    /** correct out-plane numerical damping. */
+    numerical_damping_scaling_matrix_(Dimensions - 1, Dimensions - 1) = thickness_[index_i] < smoothing_length_ ? thickness_[index_i] : smoothing_length_;
 
     for (int i = 0; i != number_of_gaussian_points_; ++i)
     {
@@ -200,11 +207,9 @@ void ShellStressRelaxationFirstHalf::initialization(size_t index_i, Real dt)
                 E = (s_next - s_prev) / (e_next - e_prev);
             }
             if (cauchy_stress.allFinite() == false || it == max_iterations)
-                throw std::runtime_error("[ShellStressRelaxationFirstHalf::initialization] Enforcing plane stress condition failed in object: " + sph_body_->getName() + "\nWith normal stress in the out-of-plane direction: " + std::to_string(cauchy_stress(Dimensions - 1, Dimensions - 1)));
+                throw std::runtime_error("[ShellStressRelaxationFirstHalf::initialization] Enforcing plane stress condition failed in object: " + sph_body_->Name() + "\nWith normal stress in the out-of-plane direction: " + std::to_string(cauchy_stress(Dimensions - 1, Dimensions - 1)));
         }
 
-        /** correct out-plane numerical damping. */
-        numerical_damping_scaling_matrix_(Dimensions - 1, Dimensions - 1) = thickness_[i] < smoothing_length_ ? thickness_[i] : smoothing_length_;
         /// Impact of including numerical damping in the algorithm above unclear
         /// Left here in absence of discriminating factors
         Matd damping = transformation_matrix_0_to_current * F_gaussian_point *
@@ -254,7 +259,7 @@ void ShellStressRelaxationSecondHalf::initialization(size_t index_i, Real dt)
     rotation_[index_i] += angular_vel_[index_i] * dt * 0.5;
     dpseudo_n_dt_[index_i] = transformation_matrix0_[index_i].transpose() *
                              getVectorChangeRateAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i], angular_vel_[index_i]);
-    pseudo_n_[index_i] += dpseudo_n_dt_[index_i] * dt * 0.5;
+    pseudo_n_[index_i] = transformation_matrix0_[index_i].transpose() * getVectorAfterThinStructureRotation(local_pseudo_n_0, rotation_[index_i]);
 }
 //=================================================================================================//
 void ShellStressRelaxationSecondHalf::update(size_t index_i, Real dt)

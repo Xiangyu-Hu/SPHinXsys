@@ -3,6 +3,8 @@
 
 #include "force_on_structure.h"
 
+#include "base_body.hpp"
+
 namespace SPH
 {
 namespace FSI
@@ -13,50 +15,40 @@ template <class ContactRelationType>
 ForceFromFluid<KernelCorrectionType, Parameters...>::
     ForceFromFluid(ContactRelationType &contact_relation, const std::string &force_name)
     : Interaction<Contact<Parameters...>>(contact_relation), ForcePriorCK(this->particles_, force_name),
-      solid_(DynamicCast<Solid>(this, this->sph_body_->getBaseMaterial())),
+      solid_(DynamicCast<Solid>(this, this->sph_body_->getMatterMaterial())),
       dv_force_from_fluid_(ForcePriorCK::getCurrentForce()),
-      dv_vel_ave_(solid_.AverageVelocityVariable(this->particles_))
-{
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        contact_kernel_correction_.push_back(KernelCorrectionType(this->contact_particles_[k]));
-        dv_contact_vel_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("Velocity"));
-    }
-}
+      dv_vel_ave_(solid_.AverageVelocityVariable(this->particles_)),
+      contact_kernel_correction_(this->contact_particles_),
+      dv_contact_vel_(this->contact_particles_->template getVariableByName<Vecd>("Velocity")) {}
 //=================================================================================================//
 template <class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 ForceFromFluid<KernelCorrectionType, Parameters...>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : Interaction<Contact<Parameters...>>::InteractKernel(ex_policy, encloser, contact_index),
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : Interaction<Contact<Parameters...>>::InteractKernel(ex_policy, encloser),
       Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
       force_from_fluid_(encloser.dv_force_from_fluid_->DelegatedData(ex_policy)),
       vel_ave_(encloser.dv_vel_ave_->DelegatedData(ex_policy)),
-      contact_correction_(ex_policy, encloser.contact_kernel_correction_[contact_index]),
-      contact_Vol_(encloser.dv_contact_Vol_[contact_index]->DelegatedData(ex_policy)),
-      contact_vel_(encloser.dv_contact_vel_[contact_index]->DelegatedData(ex_policy)) {}
+      contact_correction_(ex_policy, encloser.contact_kernel_correction_),
+      contact_Vol_(encloser.dv_contact_Vol_->DelegatedData(ex_policy)),
+      contact_vel_(encloser.dv_contact_vel_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
 template <class ContactRelationType>
 ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>::
     ViscousForceFromFluid(ContactRelationType &contact_relation)
-    : BaseForceFromFluid(contact_relation, "ViscousForceFromFluid")
-{
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        ViscosityType *viscosity_model_k = DynamicCast<ViscosityType>(this, &this->contact_particles_[k]->getBaseMaterial());
-        contact_viscosity_model_.push_back(viscosity_model_k);
-        contact_smoothing_length_sq_.push_back(pow(this->contact_bodies_[k]->getSPHAdaptation().ReferenceSmoothingLength(), 2));
-    }
-}
+    : BaseForceFromFluid(contact_relation, "ViscousForceFromFluid"),
+      contact_viscosity_model_(&this->contact_body_->template getMaterialProperty<ViscosityType>()),
+      contact_smoothing_length_sq_(
+          pow(this->contact_body_->getSPHAdaptation().ReferenceSmoothingLength(), 2)) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
-      one_side_viscosity_(encloser.contact_viscosity_model_[contact_index]->getOneSideViscosity(ex_policy)),
-      smoothing_length_sq_(encloser.contact_smoothing_length_sq_[contact_index]) {}
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseForceFromFluid::InteractKernel(ex_policy, encloser),
+      one_side_viscosity_(encloser.contact_viscosity_model_->getOneSideViscosity(ex_policy)),
+      smoothing_length_sq_(encloser.contact_smoothing_length_sq_) {}
 //=================================================================================================//
 template <typename ViscosityType, class KernelCorrectionType, typename... Parameters>
 void ViscousForceFromFluid<Contact<WithUpdate, ViscosityType, KernelCorrectionType, Parameters...>>::
@@ -84,32 +76,27 @@ template <class ContactRelationType>
 PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrectionType, Parameters...>>::
     PressureForceFromFluid(ContactRelationType &contact_relation)
     : BaseForceFromFluid(contact_relation, "PressureForceFromFluid"),
+      contact_fluid_(DynamicCast<FluidType>(this, this->contact_body_->getMatterMaterial())),
+      contact_riemann_solver_(contact_fluid_, contact_fluid_),
       dv_acc_ave_(this->solid_.AverageAccelerationVariable(this->particles_)),
-      dv_n_(this->particles_->template getVariableByName<Vecd>("NormalDirection"))
-{
-    for (size_t k = 0; k != this->contact_particles_.size(); ++k)
-    {
-        FluidType &contact_fluid_k = DynamicCast<FluidType>(this, this->contact_particles_[k]->getBaseMaterial());
-        contact_riemann_solver_.push_back(RiemannSolverType(contact_fluid_k, contact_fluid_k));
-        dv_contact_rho_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Density"));
-        dv_contact_mass_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Mass"));
-        dv_contact_p_.push_back(this->contact_particles_[k]->template getVariableByName<Real>("Pressure"));
-        dv_contact_force_prior_.push_back(this->contact_particles_[k]->template getVariableByName<Vecd>("ForcePrior"));
-    }
-}
+      dv_n_(this->particles_->template getVariableByName<Vecd>("NormalDirection")),
+      dv_contact_rho_(this->contact_particles_->template getVariableByName<Real>("Density")),
+      dv_contact_mass_(this->contact_particles_->template getVariableByName<Real>("Mass")),
+      dv_contact_p_(this->contact_particles_->template getVariableByName<Real>("Pressure")),
+      dv_contact_force_prior_(this->contact_particles_->template getVariableByName<Vecd>("ForcePrior")) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
 PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrectionType, Parameters...>>::InteractKernel::
-    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index)
-    : BaseForceFromFluid::InteractKernel(ex_policy, encloser, contact_index),
+    InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
+    : BaseForceFromFluid::InteractKernel(ex_policy, encloser),
       acc_ave_(encloser.dv_acc_ave_->DelegatedData(ex_policy)),
       n_(encloser.dv_n_->DelegatedData(ex_policy)),
-      riemann_solver_(encloser.contact_riemann_solver_[contact_index]),
-      contact_rho_(encloser.dv_contact_rho_[contact_index]->DelegatedData(ex_policy)),
-      contact_mass_(encloser.dv_contact_mass_[contact_index]->DelegatedData(ex_policy)),
-      contact_p_(encloser.dv_contact_p_[contact_index]->DelegatedData(ex_policy)),
-      contact_force_prior_(encloser.dv_contact_force_prior_[contact_index]->DelegatedData(ex_policy)) {}
+      riemann_(ex_policy, encloser.contact_riemann_solver_),
+      contact_rho_(encloser.dv_contact_rho_->DelegatedData(ex_policy)),
+      contact_mass_(encloser.dv_contact_mass_->DelegatedData(ex_policy)),
+      contact_p_(encloser.dv_contact_p_->DelegatedData(ex_policy)),
+      contact_force_prior_(encloser.dv_contact_force_prior_->DelegatedData(ex_policy)) {}
 //=================================================================================================//
 template <class RiemannSolverType, class KernelCorrectionType, typename... Parameters>
 void PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrectionType, Parameters...>>::
@@ -128,7 +115,7 @@ void PressureForceFromFluid<Contact<WithUpdate, RiemannSolverType, KernelCorrect
         Real p_j_in_wall = contact_p_[index_j] + contact_rho_[index_j] * r_ij * SMAX(Real(0), face_wall_external_acceleration);
         Vecd face_to_fluid_n = -SGN(corrected_e_ij.dot(n_[index_i])) * n_[index_i];
         Real u_jump = 2.0 * (this->contact_vel_[index_j] - this->vel_ave_[index_i]).dot(face_to_fluid_n);
-        force -= (riemann_solver_.DissipativePJump(u_jump) * face_to_fluid_n +
+        force -= (riemann_.DissipativePJump(index_j, index_i, u_jump) * face_to_fluid_n +
                   (p_j_in_wall + contact_p_[index_j]) * corrected_e_ij) *
                  this->dW_ij(index_i, index_j) * this->contact_Vol_[index_j];
     }

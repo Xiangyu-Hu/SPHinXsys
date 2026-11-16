@@ -1,5 +1,5 @@
-#include "geometric_shape.h"
-#include "transform_geometry.h"
+#include "geometric_element_and_shape_3d.h"
+
 #include <gtest/gtest.h>
 
 using namespace SPH;

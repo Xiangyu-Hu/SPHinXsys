@@ -1,5 +1,7 @@
-#include "base_body.h"
 #include "solid_dynamics_variable.h"
+
+#include "base_body.h"
+#include "vector_functions.h"
 
 namespace SPH
 {

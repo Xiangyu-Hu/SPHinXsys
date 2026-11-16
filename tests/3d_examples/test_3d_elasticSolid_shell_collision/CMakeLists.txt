@@ -22,4 +22,4 @@ add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME}  --reload=true --state_rec
         WORKING_DIRECTORY ${EXECUTABLE_OUTPUT_PATH})
 set_tests_properties(${PROJECT_NAME} PROPERTIES DEPENDS "${PROJECT_NAME}_particle_relaxation")
 
-set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "particle_relaxation, thick_surface, solid_dynamics, contact")
+set_tests_properties(${PROJECT_NAME} PROPERTIES LABELS "particle_generation, thick_surface, solid_dynamics, contact")

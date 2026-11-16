@@ -11,9 +11,9 @@
 using namespace SPH;
 
 //----------------------------------------------------------------------
-//	Set the file path to the data file
+//	Set the file name to the data file
 //----------------------------------------------------------------------
-std::string input_body = "./input/SPHinXsys-2d.dat";
+std::string input_body = "SPHinXsys-2d.dat";
 //----------------------------------------------------------------------
 //	Basic geometry parameters
 //----------------------------------------------------------------------
@@ -37,9 +37,10 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     auto &input_shape = sph_system.addShape<ComplexShape>("SPHInXsysLogo");
     MultiPolygon original_logo;
-    original_logo.addAPolygonFromFile(input_body, GeometricOps::add);
-    input_shape.add<ExtrudeShape<MultiPolygonShape>>(4.0 * global_resolution, original_logo);
-    input_shape.subtract<MultiPolygonShape>(original_logo);
+    original_logo.addPolygonFromFile(input_body, GeometricOps::add);
+    MultiPolygonShape &inner_shape = sph_system.addShape<MultiPolygonShape>(original_logo);
+    input_shape.add<ExtrudeShape>(inner_shape, 4.0 * global_resolution);
+    input_shape.subtract(&inner_shape);
     auto &input_body = sph_system.addBody<RealBody>(input_shape);
     LevelSetShape &level_set_shape = input_body.defineBodyLevelSetShape(par_ck, 2.0)
                                          .addPackageVariableToWrite<Real>("KernelWeight")
@@ -68,8 +69,8 @@ int main(int ac, char *av[])
     // Generally, the host methods should be able to run immediately.
     //----------------------------------------------------------------------
     SPHSolver sph_solver(sph_system);
-    auto &main_methods = sph_solver.addParticleMethodContainer(par_ck);
-    auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+    auto &main_methods = sph_solver.getMainMethodContainer();
+    auto &host_methods = sph_solver.getHostMethodContainer();
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -85,7 +86,7 @@ int main(int ac, char *av[])
 
     host_methods.addStateDynamics<RandomizeParticlePositionCK>(real_bodies).exec(); // host method able to run immediately
 
-    ParticleDynamicsGroup update_cell_linked_list = main_methods.addCellLinkedListDynamics(real_bodies);
+    ParticleDynamicsGroup &update_cell_linked_list = main_methods.addCellLinkedListDynamics(real_bodies);
     ParticleDynamicsGroup update_relation;
     update_relation.add(&main_methods.addRelationDynamics(input_body_inner));
     update_relation.add(&main_methods.addRelationDynamics(filler_inner, filler_contact));
@@ -97,7 +98,7 @@ int main(int ac, char *av[])
     relaxation_residual.add(&main_methods.addInteractionDynamics<KernelGradientIntegral, NoKernelCorrectionCK>(filler_inner)
                                  .addPostContactInteraction<Boundary, NoKernelCorrectionCK>(filler_contact));
 
-    ReduceDynamicsGroup relaxation_scaling = main_methods.addReduceDynamics<ReduceMin, RelaxationScalingCK>(real_bodies);
+    ReduceDynamicsGroup relaxation_scaling = main_methods.addReduceDynamics<ReduceMin<Real>, RelaxationScalingCK>(real_bodies);
 
     ParticleDynamicsGroup update_particle_position = main_methods.addStateDynamics<PositionRelaxationCK>(real_bodies);
     update_particle_position.add(&main_methods.addStateDynamics<LevelsetBounding>(near_body_surface));

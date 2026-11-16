@@ -12,7 +12,7 @@ using namespace SPH;
 //	Setting for the first geometry.
 //	To use this, please commenting the setting for the second geometry.
 //----------------------------------------------------------------------
-// std::string full_path_to_file = "./input/SPHinXsys.stl";
+// std::string full_path_to_file = "SPHinXsys.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -25,7 +25,7 @@ Real scaling = 1.0; */
 //	Setting for the second geometry.
 //	To use this, please commenting the setting for the first geometry.
 //----------------------------------------------------------------------
-std::string full_path_to_file = "./input/triangle_prism.stl";
+std::string full_path_to_file = "triangle_prism.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------
@@ -44,18 +44,22 @@ Real dp_0 = (domain_upper_bound[0] - domain_lower_bound[0]) / 100.0;
 //--------------------------------------------------------------------
 class SolidBodyFromMesh : public ComplexShape
 {
+    UniquePtrKeeper<Shape> shape_ptr;
+
   public:
     explicit SolidBodyFromMesh(const std::string &shape_name) : ComplexShape(shape_name)
     {
-        add<ExtrudeShape<TriangleMeshShapeSTL>>(4.0 * dp_0, full_path_to_file, translation, scaling);
-        subtract<TriangleMeshShapeSTL>(full_path_to_file, translation, scaling);
+        TriangleMeshShapeSTL *inner_shape = shape_ptr.createPtr<TriangleMeshShapeSTL>(
+            full_path_to_file, translation, scaling);
+        add<ExtrudeShape>(*inner_shape, 4.0 * dp_0);
+        subtract(inner_shape);
     }
 };
 //----------------------------------------------------------------------
 //	Setting for the second geometry.
 //	To use this, please commenting the setting for the first geometry.
 //----------------------------------------------------------------------
-// std::string full_path_to_file = "./input/fluid.stl";
+// std::string full_path_to_file = "fluid.stl";
 //----------------------------------------------------------------------
 //	Basic geometry parameters and numerical setup.
 //----------------------------------------------------------------------

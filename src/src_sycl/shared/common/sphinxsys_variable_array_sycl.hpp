@@ -7,40 +7,40 @@
 namespace SPH
 {
 //=================================================================================================//
-template <typename DataType, template <typename> class VariableType>
+template <typename DataType>
 template <class PolicyType>
-DataArray<DataType> *VariableArray<DataType, VariableType>::DelegatedOnDevice()
+MultiEntryView<DataType> *VariableArray<DataType>::DelegatedOnDevice()
 {
-    if (!isDataArrayDelegated())
+    if (!isVariableArrayViewDelegated())
     {
-        device_only_variable_array_keeper_
-            .createPtr<DeviceOnlyVariableArray<DataType, VariableType>>(DeviceExecution<PolicyType>{}, this);
+        device_only_variable_array_ = device_only_variable_array_keeper_.createPtr<
+            DeviceOnlyVariableArray<DataType>>(DeviceExecution<PolicyType>{}, this);
     }
-    return delegated_data_array_;
+    return device_only_variable_array_->DeviceOnlyMultiEntryView();
 }
 //=================================================================================================//
-template <typename DataType, template <typename> class VariableType>
+template <typename DataType>
 template <class PolicyType>
-DeviceOnlyVariableArray<DataType, VariableType>::
+DeviceOnlyVariableArray<DataType>::
     DeviceOnlyVariableArray(const DeviceExecution<PolicyType> &ex_policy,
-                            VariableArray<DataType, VariableType> *host_variable_array)
-    : Entity(host_variable_array->Name()), device_only_data_array_(nullptr)
+                            VariableArray<DataType> *host_variable_array)
+    : Quantity(host_variable_array->Name()), device_only_multi_entry_view_(nullptr)
 {
-    StdVec<VariableType<DataType> *> host_variables = host_variable_array->getVariables();
+    StdVec<DiscreteVariable<DataType> *> host_variables = host_variable_array->getVariables();
     size_t data_size = host_variable_array->getArraySize();
-    device_only_data_array_ = allocateDeviceOnly<DataArray<DataType>>(data_size);
+    device_only_multi_entry_view_ = allocateDeviceOnly<MultiEntryView<DataType>>(data_size);
+    MultiEntryView<DataType> *host_multi_entry_view_ = host_variable_array->getArrayData();
     for (size_t i = 0; i != data_size; ++i)
     {
-        DataType *data = host_variables[i]->DelegatedData(ex_policy);
-        copyToDevice(data, device_only_data_array_ + i, 1);
+        host_multi_entry_view_[i].setData(host_variables[i]->DelegatedData(ex_policy));
     }
-    host_variable_array->setDelegateDataArray(device_only_data_array_);
+    copyToDevice(host_multi_entry_view_, device_only_multi_entry_view_, data_size);
 }
 //=================================================================================================//
-template <typename DataType, template <typename> class VariableType>
-DeviceOnlyVariableArray<DataType, VariableType>::~DeviceOnlyVariableArray()
+template <typename DataType>
+DeviceOnlyVariableArray<DataType>::~DeviceOnlyVariableArray()
 {
-    freeDeviceData(device_only_data_array_);
+    freeDeviceData(device_only_multi_entry_view_);
 }
 //=================================================================================================//
 } // namespace SPH

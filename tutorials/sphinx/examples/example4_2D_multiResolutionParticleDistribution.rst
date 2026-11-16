@@ -88,9 +88,9 @@ When you decide to choose multi-resolution particle distribution, the :code:`Par
 				the boolean operation "sub" denotes particles will not be generated in this region.
 			*/
 			ComplexShape original_body_shape;
-			original_body_shape.addAPolygonFromFile(airfoil_flap_front, ShapeBooleanOps::add);
-			original_body_shape.addAPolygonFromFile(airfoil_wing, ShapeBooleanOps::add);
-			original_body_shape.addAPolygonFromFile(airfoil_flap_rear, ShapeBooleanOps::add);
+			original_body_shape.addPolygonFromFile(airfoil_flap_front, ShapeBooleanOps::add);
+			original_body_shape.addPolygonFromFile(airfoil_wing, ShapeBooleanOps::add);
+			original_body_shape.addPolygonFromFile(airfoil_flap_rear, ShapeBooleanOps::add);
 			/** Creat the levelset field for airfoil, parameter "true" denotes to clean the gemoetry. */
 			body_shape_ = new LevelSetComplexShape(this, original_body_shape, true);
 			

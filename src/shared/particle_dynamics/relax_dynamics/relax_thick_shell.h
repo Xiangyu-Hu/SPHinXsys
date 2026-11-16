@@ -34,6 +34,9 @@
 #include "particle_smoothing.hpp"
 #include "relax_stepping.hpp"
 
+#include <cmath>
+#include <mutex>
+
 namespace SPH
 {
 class GeometryShape;

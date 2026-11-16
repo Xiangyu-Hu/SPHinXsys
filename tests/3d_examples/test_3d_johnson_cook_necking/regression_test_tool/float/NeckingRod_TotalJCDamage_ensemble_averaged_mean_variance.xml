@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<meanvariance>
+    <Mean_Element>
+        <Snapshot_0 TotalJCDamage_0="0" />
+        <Snapshot_1 TotalJCDamage_0="0.014876114284890777" />
+        <Snapshot_2 TotalJCDamage_0="0.047613909851334957" />
+        <Snapshot_3 TotalJCDamage_0="0.070867163287621354" />
+        <Snapshot_4 TotalJCDamage_0="0.086822927047330078" />
+    </Mean_Element>
+    <Variance_Element>
+        <Snapshot_0 TotalJCDamage_0="0" />
+        <Snapshot_1 TotalJCDamage_0="2.2129877621713145e-08" />
+        <Snapshot_2 TotalJCDamage_0="2.2670844113310522e-07" />
+        <Snapshot_3 TotalJCDamage_0="5.0221548324343884e-07" />
+        <Snapshot_4 TotalJCDamage_0="7.5382206610660004e-07" />
+    </Variance_Element>
+</meanvariance>

@@ -1,4 +1,6 @@
 #include "vector_functions.h"
+
+#include <Eigen/Eigenvalues>
 //=================================================================================================//
 namespace SPH
 {

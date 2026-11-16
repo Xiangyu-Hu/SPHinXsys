@@ -121,11 +121,12 @@ int main(int ac, char *av[])
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
     //----------------------------------------------------------------------
     //	Define body relation map.
@@ -153,8 +154,8 @@ int main(int ac, char *av[])
     InteractionWithUpdate<fluid_dynamics::VelocityGradientWithWall<LinearGradientCorrection>> vel_grad_calculation(water_block_inner, water_wall_contact);
     BodyRegionByParticle upper_wall(wall_boundary, makeShared<UpperBoundary>("UpperWall"));
     SimpleDynamics<BoundaryVelocity> upper_wall_velocity(upper_wall);
-    ReduceDynamics<VariableNorm<Matd, ReduceMax>> maximum_velocity_gradient_norm(water_block, "VelocityGradient");
-    ReduceDynamics<VariableNorm<Matd, ReduceMin>> minimum_velocity_gradient_norm(water_block, "VelocityGradient");
+    ReduceDynamics<VariableNorm<Matd, ReduceMax<Real>>> maximum_velocity_gradient_norm(water_block, "VelocityGradient");
+    ReduceDynamics<VariableNorm<Matd, ReduceMin<Real>>> minimum_velocity_gradient_norm(water_block, "VelocityGradient");
 
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations

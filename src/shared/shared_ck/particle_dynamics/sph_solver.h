@@ -32,21 +32,60 @@
 
 #include "particle_method_container.h"
 
+#include <cstdint>
+#include <functional>
+#include <queue>
+
 namespace SPH
 {
+class EventScheduler
+{
+  public:
+    using Callback = std::function<void()>;
+    // Schedule a callback at an absolute simulation time.
+    void schedule(Real time, Callback cb);
+    // Execute every event whose time is ≤ current_time, and remove them from the queue.
+    void processEventsUpTo(Real current_time);
+    bool empty() const { return queue_.empty(); }
+
+  private:
+    struct Event
+    {
+        Real time_;
+        UnsignedInt order_;   // tie-breaker for simultaneous events
+        mutable Callback cb_; // mutable to allow move on top() (which is const)
+        bool operator<(const Event &other) const;
+    };
+
+    std::priority_queue<Event> queue_;
+    UnsignedInt nextOrder_ = 0;
+};
+
 class TimeStepper
 {
   public:
-    TimeStepper(SPHSystem &sph_system, Real end_time, Real start_time = 0.0);
+    TimeStepper(SPHSystem &sph_system);
     ~TimeStepper() {};
 
-    bool isEndTime();
+    EventScheduler &getEventScheduler() { return event_scheduler_; }
+    bool isEndTime(Real end_time);
     void setPhysicalTime(Real time);
     Real getPhysicalTime();
     Real getGlobalTimeStepSize();
-    Real getEndTime() { return end_time_; };
+    Real getPhysicalTimeWithScalingRef();
+    Real getGlobalTimeStepSizeWithScalingRef();
     Real incrementPhysicalTime(Real global_time_step);
     Real incrementPhysicalTime(BaseDynamics<Real> &step_evaluator);
+    UnsignedInt getIterationStep() const { return iteration_step_; }
+    void setRestartStep(UnsignedInt restart_step);
+    bool isFirstComputingStep() const { return iteration_step_ == first_computing_step_; }
+    UnsignedInt incrementIterationStep() { return ++iteration_step_; }
+    UnsignedInt getScreeningInterval() const { return screening_interval_; }
+    UnsignedInt getObservationInterval() const { return observation_interval_; }
+    void setScreeningInterval(UnsignedInt interval) { screening_interval_ = interval; }
+    void setObservationInterval(UnsignedInt interval) { observation_interval_ = interval; }
+    bool isScreeningStep() const { return (iteration_step_ % screening_interval_ == 0); }
+    bool isObservationStep() const { return (iteration_step_ % observation_interval_ == 0); }
 
     template <class Integrator>
     UnsignedInt integrateMatchedTimeInterval( // designed to avoid too small last step
@@ -103,20 +142,22 @@ class TimeStepper
         bool operator()();
 
       private:
-        SingularVariable<Real> *sv_physical_time_;
+        SingleVariable<Real> *sv_physical_time_;
         Real trigger_time_;
     };
 
     class TriggerByInterval
     {
       public:
-        TriggerByInterval(Real initial_interval);
+        TriggerByInterval(TimeStepper &time_stepper, Real initial_interval);
         bool operator()(BaseDynamics<Real> &interval_evaluator);
         bool operator()();
         Real getInterval() const;
+        Real getIntervalWithScalingRef() const;
         void incrementPresentTime(Real dt);
 
       private:
+        SingleVariable<Real> *sv_physical_time_;
         Real present_time_, interval_;
     };
 
@@ -128,35 +169,38 @@ class TimeStepper
     UniquePtrsKeeper<TriggerByPhysicalTime> execution_by_physical_time_keeper_;
 
   protected:
+    EventScheduler event_scheduler_;
     StdVec<TriggerByInterval *> interval_executers_;
     StdVec<TriggerByPhysicalTime *> physical_time_executers_;
-    Real end_time_, start_time_;
     Real global_dt_;
-    SingularVariable<Real> *sv_physical_time_;
+    SingleVariable<Real> *sv_physical_time_;
+    UnsignedInt iteration_step_{0};
+    UnsignedInt first_computing_step_{0};
+    UnsignedInt screening_interval_{100};
+    UnsignedInt observation_interval_{200};
 };
+
+using MainMethods = ParticleMethodContainer<MainExecutionPolicy>;
+using HostMethods = ParticleMethodContainer<ParallelPolicy>;
+using SequenceMethods = ParticleMethodContainer<SequencedPolicy>;
 
 class SPHSolver
 {
-    UniquePtrsKeeper<BaseMethodContainer> methods_keeper_;
-    UniquePtrKeeper<TimeStepper> time_stepper_keeper_;
+    UniquePtrKeeper<MainMethods> main_methods_keeper_;
+    UniquePtrKeeper<HostMethods> host_methods_keeper_;
+    UniquePtrKeeper<SequenceMethods> seq_methods_keeper_;
 
   public:
-    SPHSolver(SPHSystem &sph_system) : sph_system_(sph_system) {};
+    SPHSolver(SPHSystem &sph_system) : sph_system_(sph_system), time_stepper_(sph_system) {};
     virtual ~SPHSolver() {};
-
-    template <typename ExecutionPolicy>
-    auto &addParticleMethodContainer(const ExecutionPolicy &ex_policy)
-    {
-        return *methods_keeper_.createPtr<ParticleMethodContainer<ExecutionPolicy>>(ex_policy);
-    };
-
-    auto &defineTimeStepper(Real end_time, Real start_time = 0.0)
-    {
-        return *time_stepper_keeper_.createPtr<TimeStepper>(sph_system_, end_time, start_time);
-    };
+    MainMethods &getMainMethodContainer();
+    HostMethods &getHostMethodContainer();
+    SequenceMethods &getSequenceMethodContainer();
+    TimeStepper &getTimeStepper() { return time_stepper_; };
 
   protected:
     SPHSystem &sph_system_;
+    TimeStepper time_stepper_;
 };
 } // namespace SPH
 #endif // SPH_SOLVER_H

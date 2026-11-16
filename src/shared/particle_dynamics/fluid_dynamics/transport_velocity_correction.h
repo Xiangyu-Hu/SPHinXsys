@@ -38,6 +38,8 @@
 
 #include "base_fluid_dynamics.h"
 
+#include <tuple>
+
 namespace SPH
 {
 namespace fluid_dynamics
@@ -52,7 +54,7 @@ class TransportVelocityCorrection<Base, DataDelegationType, KernelCorrectionType
   public:
     template <class BaseRelationType>
     explicit TransportVelocityCorrection(BaseRelationType &base_relation);
-    virtual ~TransportVelocityCorrection() {};
+    virtual ~TransportVelocityCorrection(){};
 
   protected:
     Vecd *kernel_gradient_integral_;
@@ -71,12 +73,12 @@ class TransportVelocityCorrection<Inner<AdaptationType, LimiterType>, CommonCont
     template <typename BodyRelationType, typename FirstArg>
     explicit TransportVelocityCorrection(DynamicsArgs<BodyRelationType, FirstArg> parameters)
         : TransportVelocityCorrection(parameters.identifier_, std::get<0>(parameters.others_)){};
-    virtual ~TransportVelocityCorrection() {};
+    virtual ~TransportVelocityCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
     void update(size_t index_i, Real dt = 0.0);
 
   protected:
-    const Real h_ref_, correction_scaling_;
+    const Real h_ref_, squared_h_ref_, correction_scaling_;
     Real *Vol_;
     Vecd *pos_;
     SmoothingLengthRatioType h_ratio_;
@@ -92,7 +94,7 @@ class TransportVelocityCorrection<Contact<Boundary>, CommonControlTypes...>
 {
   public:
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation);
-    virtual ~TransportVelocityCorrection() {};
+    virtual ~TransportVelocityCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:
@@ -105,7 +107,7 @@ class TransportVelocityCorrection<Contact<>, KernelCorrectionType, CommonControl
 {
   public:
     explicit TransportVelocityCorrection(BaseContactRelation &contact_relation);
-    virtual ~TransportVelocityCorrection() {};
+    virtual ~TransportVelocityCorrection(){};
     void interaction(size_t index_i, Real dt = 0.0);
 
   protected:

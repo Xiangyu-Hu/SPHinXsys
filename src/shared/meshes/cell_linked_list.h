@@ -36,6 +36,8 @@
 #include "execution_policy.h"
 #include "neighborhood.h"
 
+#include "tbb/concurrent_vector.h"
+
 namespace SPH
 {
 
@@ -43,6 +45,12 @@ class BaseParticles;
 class Kernel;
 class SPHAdaptation;
 class AdaptiveSmoothingLength;
+
+template <typename T>
+using ConcurrentVec = tbb::concurrent_vector<T>;
+using ConcurrentIndexVector = ConcurrentVec<size_t>;
+using ConcurrentCellLists = ConcurrentVec<ConcurrentIndexVector *>;
+using CellLists = std::pair<ConcurrentCellLists, DataListsInCells>;
 
 /**
  * @class BaseCellLinkedList

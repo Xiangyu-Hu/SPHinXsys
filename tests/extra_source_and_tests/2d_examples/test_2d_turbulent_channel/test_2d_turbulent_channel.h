@@ -6,8 +6,8 @@
  */
 
 #include "bidirectional_buffer.h"
-#include "density_correciton.h"
-#include "density_correciton.hpp"
+#include "density_correction.h"
+#include "density_correction.hpp"
 #include "k-epsilon_turbulent_model.cpp"
 #include "kernel_summation.h"
 #include "kernel_summation.hpp"
@@ -76,11 +76,14 @@ std::vector<Vecd> createWaterBlockShape()
 }
 class WaterBlock : public ComplexShape
 {
+    UniquePtrKeeper<Shape> shape_ptr;
+
   public:
     explicit WaterBlock(const std::string &shape_name) : ComplexShape(shape_name)
     {
         MultiPolygon computational_domain(createWaterBlockShape());
-        add<ExtrudeShape<MultiPolygonShape>>(-offset_distance, computational_domain, "ComputationalDomain");
+        MultiPolygonShape *original_shape = shape_ptr.createPtr<MultiPolygonShape>(computational_domain);
+        add<ExtrudeShape>(*original_shape, -offset_distance, "ComputationalDomain");
     }
 };
 
@@ -112,14 +115,20 @@ std::vector<Vecd> createInnerWallShape()
  */
 class WallBoundary : public ComplexShape
 {
+    UniquePtrsKeeper<Shape> shape_ptrs;
+
   public:
     explicit WallBoundary(const std::string &shape_name) : ComplexShape(shape_name)
     {
         MultiPolygon outer_dummy_boundary(createOuterWallShape());
-        add<ExtrudeShape<MultiPolygonShape>>(-offset_distance + BW, outer_dummy_boundary, "OuterDummyBoundary");
+        MultiPolygonShape *outer_shape = shape_ptrs.createPtr<MultiPolygonShape>(
+            outer_dummy_boundary, "OuterDummyBoundary");
+        add<ExtrudeShape>(*outer_shape, -offset_distance + BW);
 
         MultiPolygon inner_dummy_boundary(createInnerWallShape());
-        subtract<ExtrudeShape<MultiPolygonShape>>(-offset_distance, inner_dummy_boundary, "InnerDummyBoundary");
+        MultiPolygonShape *inner_shape = shape_ptrs.createPtr<MultiPolygonShape>(
+            inner_dummy_boundary, "InnerDummyBoundary");
+        subtract<ExtrudeShape>(*inner_shape, -offset_distance);
     }
 };
 
@@ -129,14 +138,14 @@ class WallBoundary : public ComplexShape
 struct InflowVelocity
 {
     Real u_ref_, t_ref_;
-    AlignedBox &aligned_box_;
+    OrientedBox &oriented_box_;
     Vecd halfsize_;
 
     template <class BoundaryConditionType>
     InflowVelocity(BoundaryConditionType &boundary_condition)
         : u_ref_(U_inlet), t_ref_(2.0),
-          aligned_box_(boundary_condition.getAlignedBox()),
-          halfsize_(aligned_box_.HalfSize()) {}
+          oriented_box_(boundary_condition.getOrientedBox()),
+          halfsize_(oriented_box_.HalfSize()) {}
 
     Vecd operator()(Vecd &position, Vecd &velocity, Real current_time)
     {

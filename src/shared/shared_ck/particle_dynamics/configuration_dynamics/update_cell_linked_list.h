@@ -31,9 +31,6 @@
 
 #include "base_configuration_dynamics.h"
 
-#include "all_bodies.h"
-#include "all_particle_dynamics.h"
-
 namespace SPH
 {
 template <typename... T>

@@ -3,7 +3,6 @@
 #include "adaptation.h"
 #include "base_material.h"
 #include "base_particle_dynamics.h"
-#include "base_particles.hpp"
 #include "neighborhood.h"
 
 namespace SPH

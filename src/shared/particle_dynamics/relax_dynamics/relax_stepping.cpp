@@ -1,5 +1,8 @@
 #include "relax_stepping.hpp"
 
+#include "adaptation.h"
+#include "complex_geometry.h"
+
 namespace SPH
 {
 namespace relax_dynamics
@@ -124,7 +127,7 @@ void RelaxationResidual<Contact<>>::interaction(size_t index_i, Real dt)
 }
 //=================================================================================================//
 RelaxationScaling::RelaxationScaling(SPHBody &sph_body)
-    : LocalDynamicsReduce<ReduceMax>(sph_body),
+    : LocalDynamicsReduce<ReduceMax<Real>>(sph_body),
       residual_(particles_->getVariableDataByName<Vecd>("ZeroOrderResidual")),
       h_ref_(sph_body.getSPHAdaptation().ReferenceSmoothingLength()) {}
 //=================================================================================================//

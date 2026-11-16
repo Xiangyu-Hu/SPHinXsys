@@ -34,7 +34,11 @@
 #ifndef PARTICLE_DYNAMICS_DISSIPATION_H
 #define PARTICLE_DYNAMICS_DISSIPATION_H
 
-#include "all_particle_dynamics.h"
+#include "base_local_dynamics.h"
+
+#include <string>
+#include <tuple>
+#include <utility>
 
 namespace SPH
 {
@@ -53,8 +57,8 @@ class FixedDampingRate
 {
   public:
     FixedDampingRate(BaseParticles *particles, Real eta, Real c = 1.0)
-        : damping_rate_(particles->registerSingularVariable<Real>("DampingRate", eta)->Data()),
-          specific_capacity_(particles->registerSingularVariable<Real>("SpecificCapacity", c)->Data()),
+        : damping_rate_(particles->registerSingleVariable<Real>("DampingRate", eta)->Data()),
+          specific_capacity_(particles->registerSingleVariable<Real>("SpecificCapacity", c)->Data()),
           mass_(particles->getVariableDataByName<Real>("Mass")) {};
     virtual ~FixedDampingRate() {};
 

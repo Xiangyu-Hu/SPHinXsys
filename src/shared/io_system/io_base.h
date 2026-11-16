@@ -29,13 +29,7 @@
 #ifndef IO_BASE_H
 #define IO_BASE_H
 
-#include "base_body.h"
 #include "base_data_type_package.h"
-#include "base_particle_dynamics.h"
-#include "parameterization.h"
-#include "sphinxsys_containers.h"
-#include "xml_engine.h"
-#include "xml_parser.h"
 
 #include <filesystem>
 #include <fstream>
@@ -47,6 +41,12 @@ namespace SPH
 {
 class SPHSystem;
 class IOEnvironment;
+class SPHBody;
+template <typename T>
+class SingleVariable;
+template <typename ReturnType>
+class BaseDynamics;
+using SPHBodyVector = StdVec<SPHBody *>;
 
 /**
  * @class BaseIO
@@ -64,7 +64,7 @@ class BaseIO
   protected:
     SPHSystem &sph_system_;
     IOEnvironment &io_environment_;
-    SingularVariable<Real> *sv_physical_time_;
+    SingleVariable<Real> *sv_physical_time_;
 
     std::string convertPhysicalTimeToString(Real physical_time);
 
@@ -76,7 +76,7 @@ class BaseIO
         return s_time.str();
     }
 
-    bool isBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body);
+    void checkBodyIncluded(const SPHBodyVector &bodies, SPHBody *sph_body);
 };
 
 /**
@@ -91,48 +91,17 @@ class BodyStatesRecording : public BaseIO
   public:
     BodyStatesRecording(SPHSystem &sph_system);
     BodyStatesRecording(SPHBody &body);
-    virtual ~BodyStatesRecording() {};
+    virtual ~BodyStatesRecording();
+    SPHBodyVector getBodiesForRecording() { return bodies_; };
     /** write with filename indicated by physical time */
     virtual void writeToFile();
     virtual void writeToFile(size_t iteration_step) override;
 
     template <typename DataType>
-    BodyStatesRecording &addToWrite(SPHBody &sph_body, const std::string &name)
-    {
-        if (isBodyIncluded(bodies_, &sph_body))
-        {
-            sph_body.getBaseParticles().addVariableToWrite<DataType>(name);
-        }
-        else
-        {
-            std::cout << "\n Error: the body:" << sph_body.getName()
-                      << " is not in the recording list" << std::endl;
-            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-            exit(1);
-        }
-        return *this;
-    };
+    BodyStatesRecording &addToWrite(SPHBody &sph_body, const std::string &name);
 
-    template <typename DerivedVariableMethod,
-              typename DynamicsIdentifier, typename... Args>
-    BodyStatesRecording &addDerivedVariableRecording(DynamicsIdentifier &identifier, Args &&...args)
-    {
-        SPHBody &sph_body = identifier.getSPHBody();
-        if (isBodyIncluded(bodies_, &sph_body))
-        {
-            derived_variables_.push_back(
-                derived_variables_keeper_.createPtr<DerivedVariableMethod>(
-                    identifier, std::forward<Args>(args)...));
-        }
-        else
-        {
-            std::cout << "\n Error: the body:" << sph_body.getName()
-                      << " is not in the recording body list" << std::endl;
-            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-            exit(1);
-        }
-        return *this;
-    };
+    template <typename DerivedVariableMethod, typename DynamicsIdentifier, typename... Args>
+    BodyStatesRecording &addDerivedVariableRecording(DynamicsIdentifier &identifier, Args &&...args);
 
   protected:
     SPHBodyVector bodies_;
@@ -148,6 +117,7 @@ class BodyStatesRecording : public BaseIO
 class RestartIO : public BaseIO
 {
   protected:
+    bool summary_enabled_{false};
     SPHBodyVector real_bodies_;
     std::string overall_file_path_;
     StdVec<std::string> file_names_;
@@ -155,8 +125,9 @@ class RestartIO : public BaseIO
     Real readRestartTime(size_t restart_step);
 
   public:
-    RestartIO(SPHSystem &sph_system);
+    RestartIO(SPHSystem &sph_system, bool summary_enabled = false);
     virtual ~RestartIO() {};
+    void setReportSummary(bool summary_enabled) { summary_enabled_ = summary_enabled; };
 
     virtual void writeToFile(size_t iteration_step) override;
     virtual void readFromFile(size_t iteration_step);
@@ -166,6 +137,8 @@ class RestartIO : public BaseIO
         readFromFile(restart_step);
         return readRestartTime(restart_step);
     };
+
+    virtual void reportRestartSummary(size_t restart_step);
 };
 
 /**
@@ -176,7 +149,8 @@ class ReloadParticleIO : public BaseIO
 {
   protected:
     SPHBodyVector bodies_;
-    StdVec<std::string> file_names_;
+    StdVec<std::string> body_names_;
+    std::string overall_file_path_;
 
   public:
     ReloadParticleIO(SPHSystem &sph_system);
@@ -186,20 +160,7 @@ class ReloadParticleIO : public BaseIO
     virtual ~ReloadParticleIO() {};
 
     template <typename DataType>
-    void addToReload(SPHBody &sph_body, const std::string &name)
-    {
-        if (isBodyIncluded(bodies_, &sph_body))
-        {
-            sph_body.getBaseParticles().addEvolvingVariable<DataType>(name);
-        }
-        else
-        {
-            std::cout << "\n Error: the body:" << sph_body.getName()
-                      << " is not in the recording list" << std::endl;
-            std::cout << __FILE__ << ':' << __LINE__ << std::endl;
-            exit(1);
-        }
-    };
+    void addToReload(SPHBody &sph_body, const std::string &name);
 
     virtual void writeToFile(size_t iteration_step = 0) override;
 };

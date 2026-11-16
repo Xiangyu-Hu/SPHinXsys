@@ -33,6 +33,7 @@
 #include "base_fluid_dynamics.h"
 #include "force_prior.h"
 #include "viscosity.h"
+#include "base_body.hpp"
 
 namespace SPH
 {
@@ -44,8 +45,8 @@ class FixedViscosity : public PairGeomAverageFixed<Real>
   public:
     FixedViscosity(BaseParticles *particles1, BaseParticles *particles2)
         : PairGeomAverageFixed<Real>(
-              DynamicCast<Viscosity>(this, particles1->getBaseMaterial()).ReferenceViscosity(),
-              DynamicCast<Viscosity>(this, particles2->getBaseMaterial()).ReferenceViscosity()) {};
+              particles1->getSPHBody().getMaterialProperty<Viscosity>().ReferenceViscosity(),
+              particles2->getSPHBody().getMaterialProperty<Viscosity>().ReferenceViscosity()) {};
     explicit FixedViscosity(BaseParticles *particles)
         : FixedViscosity(particles, particles) {};
     virtual ~FixedViscosity() {};

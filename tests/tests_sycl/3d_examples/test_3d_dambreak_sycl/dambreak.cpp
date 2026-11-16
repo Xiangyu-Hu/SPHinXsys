@@ -79,11 +79,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     WaterBlock initial_water_block("WaterBody");
     FluidBody water_block(sph_system, initial_water_block);
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
@@ -95,8 +95,8 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
     Inner<> water_block_inner(water_block);
-    Contact<> water_wall_contact(water_block, {&wall_boundary});
-    Contact<> fluid_observer_contact(fluid_observer, {&water_block});
+    Contact<> water_wall_contact(water_block, wall_boundary);
+    Contact<> fluid_observer_contact(fluid_observer, water_block);
     //----------------------------------------------------------------------
     // Define the numerical methods used in the simulation.
     // Note that there may be data dependence on the sequence of constructions.
@@ -126,14 +126,14 @@ int main(int ac, char *av[])
         fluid_acoustic_step_1st_half(water_block_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_2nd_half(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
         fluid_density_summation(water_block_inner, water_wall_contact);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, FreeSurface>>
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, WeaklyCompressibleFluid, FreeSurface>>
         fluid_density_regularization(water_block);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
         fluid_boundary_indicator(water_block_inner, water_wall_contact);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_block, U_f);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_block);
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>> fluid_acoustic_time_step(water_block);
     //----------------------------------------------------------------------
     //	Define the methods for I/O operations, observations
     //	and regression tests of the simulation.
@@ -146,12 +146,12 @@ int main(int ac, char *av[])
     RegressionTestDynamicTimeWarping<ReducedQuantityRecording<MainExecutionPolicy, TotalMechanicalEnergyCK>>
         record_water_mechanical_energy(water_block, gravity);
     RegressionTestDynamicTimeWarping<ObservedQuantityRecording<MainExecutionPolicy, Real>>
-        fluid_observer_pressure("Pressure", fluid_observer_contact);
+        fluid_observer_pressure(fluid_observer_contact, "Pressure");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     wall_boundary_normal_direction.exec(); // run particle dynamics with host kernels first
     constant_gravity.exec();
 

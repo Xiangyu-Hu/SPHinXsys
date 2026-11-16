@@ -64,11 +64,11 @@ Vec3d translation_fluid(0.5 * DL, 0.5 * DH, 0.5 * DH);
 //----------------------------------------------------------------------
 //  Inlet velocity profile for the left boundary (Poiseuille-like).
 //----------------------------------------------------------------------
-class InflowVelocityPrescribed : public VelocityPrescribed<>
+class InflowVelocityPrescribed : public VelocityPrescribed<WeaklyCompressibleFluid>
 {
   public:
     InflowVelocityPrescribed(Real DH, Real U_f, Real mu_f)
-        : VelocityPrescribed<>(),
+        : VelocityPrescribed<WeaklyCompressibleFluid>(),
           DH_(DH), U_f_(U_f), tau_(0.1) {};
 
     Real getAxisVelocity(const Vecd &input_position, const Real &input_axis_velocity, Real time)
@@ -76,8 +76,8 @@ class InflowVelocityPrescribed : public VelocityPrescribed<>
         Real y_centered = input_position[1];
         Real z_centered = input_position[2];
         Real r = std::sqrt(y_centered * y_centered + z_centered * z_centered);
-        Real u_steady = U_f_ * (1.0 - math::pow((2.0 * r / DH_), 2));
-        Real transient_factor = 1.0 - math::exp(-time / tau_);
+        Real u_steady = U_f_ * (Real(1) - math::pow((Real(2) * r / DH_), Real(2)));
+        Real transient_factor = Real(1) - math::exp(-time / tau_);
         return u_steady * transient_factor;
     };
 
@@ -226,13 +226,13 @@ int main(int ac, char *av[])
 
         Inner<> wall_inner(wall);
         Inner<> water_inner(water_body);
-        Contact<> wall_contact(wall, {&water_body});
+        Contact<> wall_contact(wall, water_body);
         //----------------------------------------------------------------------
         //	Methods used for particle relaxation.
         //----------------------------------------------------------------------
         SPHSolver sph_solver(relaxation_system);
-        auto &main_methods = sph_solver.addParticleMethodContainer(par_host);
-        auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
+        auto &main_methods = sph_solver.getHostMethodContainer();
+        auto &host_methods = sph_solver.getHostMethodContainer();
 
         auto &wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall);
         auto &water_body_cell_linked_list = main_methods.addCellLinkedListDynamics(water_body);
@@ -319,13 +319,14 @@ int main(int ac, char *av[])
         }
     }
     FluidBody water_body(sph_system, water_body_shape);
-    water_body.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_body.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_body.addMaterialProperty<Viscosity>(mu_f);
     ParticleBuffer<ReserveSizeFactor> particle_buffer(0.5);
-    water_body.generateParticlesWithReserve<BaseParticles, Reload>(particle_buffer, water_body.getName());
+    water_body.generateParticlesWithReserve<BaseParticles, Reload>(particle_buffer, water_body.Name());
 
     SolidBody wall(sph_system, wall_body_shape);
-    wall.defineMaterial<Solid>();
-    wall.generateParticles<BaseParticles, Reload>(wall.getName())
+    wall.defineMatterMaterial<Solid>();
+    wall.generateParticles<BaseParticles, Reload>(wall.Name())
         .reloadExtraVariable<Vecd>("NormalDirection");
     // Add observer
     {
@@ -349,16 +350,16 @@ int main(int ac, char *av[])
     // //----------------------------------------------------------------------
     // //	Creating body parts.
     // //----------------------------------------------------------------------
-    AlignedBoxByCell left_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
-    left_emitter_by_cell.writeShapeProxy();
+    OrientedBoxByCell left_emitter_by_cell(water_body, OrientedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
+    left_emitter_by_cell.writeOrientedBoxToVtp();
 
     auto default_normal = Vec3d::UnitX();
     auto rotated_normal = -1 * Vec3d::UnitX();
     auto rotation_axis = Vec3d::UnitY();
     auto rot3d = Rotation3d(std::acos(default_normal.dot(rotated_normal)), rotation_axis);
-    AlignedBoxByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(rot3d, right_bidirectional_translation), bidirectional_buffer_halfsize));
-    right_emitter_by_cell.writeShapeProxy();
-    // AlignedBoxByCell right_emitter_by_cell(water_body, AlignedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
+    OrientedBoxByCell right_emitter_by_cell(water_body, OrientedBox(xAxis, Transform(rot3d, right_bidirectional_translation), bidirectional_buffer_halfsize));
+    right_emitter_by_cell.writeOrientedBoxToVtp();
+    // OrientedBoxByCell right_emitter_by_cell(water_body, OrientedBox(xAxis, Transform(left_bidirectional_translation), bidirectional_buffer_halfsize));
     //----------------------------------------------------------------------
     //	Define body relation map.
     //	The contact map gives the topological connections between the bodies.
@@ -366,8 +367,8 @@ int main(int ac, char *av[])
     //  Generally, we first define all the inner relations, then the contact relations.
     // ----------------------------------------------------------------------
     Inner<> water_body_inner(water_body);
-    Contact<> water_wall_contact(water_body, {&wall});
-    Contact<> velocity_observer_contact(velocity_observer, {&water_body});
+    Contact<> water_wall_contact(water_body, wall);
+    Contact<> velocity_observer_contact(velocity_observer, water_body);
     //----------------------------------------------------------------------
     // Combined relations built from basic relations
     // which is only used for update configuration.
@@ -388,27 +389,29 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     StateDynamics<MainExecutionPolicy, fluid_dynamics::AdvectionStepSetup> water_advection_step_setup(water_body);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::UpdateParticlePosition> water_update_particle_position(water_body);
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
+        fluid_boundary_indicator(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(DynamicsArgs(water_body_inner, 0.5), water_wall_contact);
+    StateDynamics<MainExecutionPolicy, LinearCorrectionMatrixScope<SPHBody, BulkParticles>>
+        fluid_linear_correction_scope(water_body);        
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         fluid_acoustic_step_1st_half(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallNoRiemannCK>
         fluid_acoustic_step_2nd_half(water_body_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::DensitySummationCK<Inner<>, Contact<>>>
+    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::CompressionSummation<Inner<>, Contact<>>>
         fluid_density_summation(water_body_inner, water_wall_contact);
-    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, Internal, ExcludeBufferParticles>>
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::DensityRegularization<SPHBody, WeaklyCompressibleFluid, Internal, ExcludeBufferParticles>>
         fluid_density_regularization(water_body);
-    InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::FreeSurfaceIndicationComplexSpatialTemporalCK>
-        fluid_boundary_indicator(water_body_inner, water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedComplex> kernel_gradient_integral(water_body_inner, water_wall_contact);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear, BulkParticles>> transport_correction(water_body);
     ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AdvectionTimeStepCK> fluid_advection_time_step(water_body, U_f);
-    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<>> fluid_acoustic_time_step(water_body);
+    ReduceDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticTimeStepCK<WeaklyCompressibleFluid>> fluid_acoustic_time_step(water_body);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::ViscousForceWithWallCK>
         fluid_viscous_force(water_body_inner, water_wall_contact);
     fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, InflowVelocityPrescribed>
         bidirectional_velocity_condition_left(left_emitter_by_cell, DH, U_f, mu_f);
-    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, PressurePrescribed<>>
+    fluid_dynamics::BidirectionalBoundaryCK<MainExecutionPolicy, LinearCorrectionCK, PressurePrescribed<WeaklyCompressibleFluid>>
         bidirectional_pressure_condition_right(right_emitter_by_cell, Outlet_pressure);
     StateDynamics<MainExecutionPolicy, fluid_dynamics::OutflowParticleDeletion> out_flow_particle_deletion(water_body);
     //----------------------------------------------------------------------
@@ -420,7 +423,7 @@ int main(int ac, char *av[])
     body_states_recording.addToWrite<int>(water_body, "BufferIndicator");
     body_states_recording.addToWrite<int>(water_body, "Indicator");
     body_states_recording.addToWrite<Vecd>(wall, "NormalDirection");
-    ObservedQuantityRecording<MainExecutionPolicy, Vec3d, RestoringCorrection> write_centerline_velocity("Velocity", velocity_observer_contact);
+    ObservedQuantityRecording<MainExecutionPolicy, Vec3d, RestoringCorrection> write_centerline_velocity(velocity_observer_contact, "Velocity");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.
@@ -435,7 +438,7 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     //	Setup for time-stepping control
     //----------------------------------------------------------------------
-    SingularVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
+    SingleVariable<Real> *sv_physical_time = sph_system.getSystemVariableByName<Real>("PhysicalTime");
     size_t number_of_iterations = 0;
     size_t screen_output_interval = 100;
     size_t observation_sample_interval = screen_output_interval * 2;

@@ -4,8 +4,6 @@
  * @author  Weiyi Kong, Xiangyu Hu
  */
 
-#include "base_data_type.h"
-#include "large_data_containers.h"
 #include "sphinxsys.h"
 #include <gtest/gtest.h>
 using namespace SPH;
@@ -109,7 +107,7 @@ class Beam : public MultiPolygonShape
   public:
     explicit Beam(const std::string &shape_name, const Vec2d &center, Real length, Real height, Real extension_length) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addABox(Transform(center), 0.5 * Vec2d(length + extension_length, height), GeometricOps::add);
+        multi_polygon_.addBox(Transform(center), 0.5 * Vec2d(length + extension_length, height), GeometricOps::add);
     }
 };
 
@@ -167,9 +165,6 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     // time
     const Real end_time = 1.5;
 
-    // Material models
-    auto material = makeShared<NeoHookeanSolid>(params.rho, params.youngs_modulus, params.poisson_ratio);
-
     // Import meshes
     const auto translation = 0.5 * (params.length - extension_length) * Vec2d::UnitX();
     auto mesh = std::make_shared<Beam>("Beam", translation, params.length, params.height, extension_length);
@@ -180,7 +175,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
         const Vec2d refinement_halfsize = 0.5 * Vec2d(refinement_region_length, params.height);
         const Vec2d refinement_translation = (params.length - 0.5 * refinement_region_length) * Vec2d::UnitX();
         MultiPolygon shape;
-        shape.addABox(Transform(refinement_translation), refinement_halfsize, GeometricOps::add);
+        shape.addBox(Transform(refinement_translation), refinement_halfsize, GeometricOps::add);
         return MultiPolygonShape(shape, "RefinementRegion");
     }();
 
@@ -195,7 +190,7 @@ return_data beam_multi_resolution(Real dp_factor, bool damping_on, int refinemen
     if (refinement_level > 0)
         beam_body.defineAdaptation<AdaptiveWithinShape>(1.15, 1.0, refinement_level);
     beam_body.defineBodyLevelSetShape();
-    beam_body.defineMaterial<NeoHookeanSolid>(*material.get());
+    beam_body.defineMatterMaterial<NeoHookeanSolid>(params.rho, params.youngs_modulus, params.poisson_ratio);
     if (refinement_level > 0)
         beam_body.generateParticles<BaseParticles, Lattice>(refinement_region);
     else

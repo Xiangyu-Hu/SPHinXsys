@@ -29,7 +29,7 @@
 #ifndef DATA_PACKAGE_TYPE_H
 #define DATA_PACKAGE_TYPE_H
 
-#include "base_data_type_package.h"
+#include "data_type.h"
 #include "mesh_iterators.h"
 
 namespace SPH

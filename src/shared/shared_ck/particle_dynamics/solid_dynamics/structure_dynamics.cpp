@@ -1,14 +1,17 @@
 #include "structure_dynamics.h"
 
+#include "adaptation.h"
+#include "base_particles.hpp"
+
 namespace SPH
 {
 namespace solid_dynamics
 {
 //=================================================================================================//
 AcousticTimeStepCK::AcousticTimeStepCK(SPHBody &sph_body, Real acousticCFL)
-    : LocalDynamicsReduce<ReduceMax>(sph_body), acousticCFL_(acousticCFL),
+    : LocalDynamicsReduce<ReduceMax<Real>>(sph_body), acousticCFL_(acousticCFL),
       h_min_(sph_body.getSPHAdaptation().MinimumSmoothingLength()),
-      c0_(DynamicCast<ElasticSolid>(this, sph_body.getBaseMaterial()).ReferenceSoundSpeed()),
+      c0_(DynamicCast<ElasticSolid>(this, sph_body.getMatterMaterial()).ReferenceSoundSpeed()),
       dv_mass_(particles_->getVariableByName<Real>("Mass")),
       dv_vel_(particles_->getVariableByName<Vecd>("Velocity")),
       dv_force_(particles_->getVariableByName<Vecd>("Force")),
@@ -28,7 +31,7 @@ StructureDynamicsVariables::StructureDynamicsVariables(BaseParticles *particles)
     : dv_rho_(particles->getVariableByName<Real>("Density")),
       dv_mass_(particles->getVariableByName<Real>("Mass")),
       dv_pos_(particles->getVariableByName<Vecd>("Position")),
-      dv_vel_(particles->getVariableByName<Vecd>("Velocity")),
+      dv_vel_(particles->registerStateVariable<Vecd>("Velocity")),
       dv_force_(particles->registerStateVariable<Vecd>("Force")),
       dv_B_(particles->getVariableByName<Matd>("LinearCorrectionMatrix")),
       dv_F_(particles->registerStateVariable<Matd>(
@@ -40,6 +43,7 @@ StructureDynamicsVariables::StructureDynamicsVariables(BaseParticles *particles)
       dv_scaling_matrix_(particles->registerStateVariable<Matd>("ScalingMatrix"))
 {
     particles->addEvolvingVariable<Vecd>(dv_pos_);
+    particles->addEvolvingVariable<Vecd>(dv_force_);
     particles->addEvolvingVariable<Vecd>(dv_vel_);
     particles->addEvolvingVariable<Matd>(dv_F_);
     particles->addEvolvingVariable<Matd>(dv_dF_dt_);
@@ -54,8 +58,8 @@ UpdateElasticNormalDirectionCK::UpdateElasticNormalDirectionCK(SPHBody &sph_body
       dv_n_(particles_->getVariableByName<Vecd>("NormalDirection")),
       dv_n0_(particles_->registerStateVariableFrom<Vecd>("InitialNormalDirection", "NormalDirection")),
       dv_phi_(particles_->getVariableByName<Real>("SignedDistance")),
-      dv_phi0_(particles_->getVariableByName<Real>("InitialSignedDistance")),
-      dv_F_(particles_->getVariableByName<Matd>("DeformationGradient")){}
+      dv_phi0_(particles_->registerStateVariableFrom<Real>("InitialSignedDistance", "SignedDistance")),
+      dv_F_(particles_->getVariableByName<Matd>("DeformationGradient")) {}
 //=================================================================================================//
 UpdateAnisotropicMeasure::UpdateAnisotropicMeasure(SPHBody &sph_body)
     : LocalDynamics(sph_body),

@@ -36,6 +36,7 @@
 #define PARTICLE_RESERVE_H
 
 #include "base_particles.hpp"
+#include "sphinxsys_tbb.h"
 
 namespace SPH
 {

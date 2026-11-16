@@ -29,45 +29,71 @@
 #ifndef GENERAL_ASSIGNMENT_H
 #define GENERAL_ASSIGNMENT_H
 
-#include "base_general_dynamics.h"
+#include "base_local_dynamics.h"
+
+#include <string>
+#include <utility>
 
 namespace SPH
 {
+class OrientedBoxByCell;
+  
+template <typename...>
+class VariableAssignment;
+
 template <class DynamicsIdentifier, typename AssignmentFunctionType>
-class VariableAssignment : public BaseLocalDynamics<DynamicsIdentifier>
+class VariableAssignment<DynamicsIdentifier, AssignmentFunctionType>
+    : public BaseLocalDynamics<DynamicsIdentifier>
 {
-    using DataType = typename AssignmentFunctionType::ReturnType;
     using Assign = typename AssignmentFunctionType::ComputingKernel;
 
   public:
     template <typename... Args>
-    VariableAssignment(DynamicsIdentifier &identifier, const std::string &variable_name, Args &&...args)
-        : BaseLocalDynamics<DynamicsIdentifier>(identifier),
-          dv_variable_(this->particles_->template registerStateVariable<DataType>(variable_name)),
-          assignment_method_(this->particles_, std::forward<Args>(args)...){};
+    VariableAssignment(DynamicsIdentifier &identifier, Args &&...args);
     virtual ~VariableAssignment() {};
 
     class UpdateKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : variable_(encloser.dv_variable_->DelegatedData(ex_policy)),
-              assign_(ex_policy, encloser.assignment_method_){};
-
-        void update(UnsignedInt index_i, Real dt = 0.0)
-        {
-            variable_[index_i] = assign_(index_i);
-        };
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(UnsignedInt index_i, Real dt = 0.0) { assign_(index_i); };
 
       protected:
-        DataType *variable_;
         Assign assign_;
     };
 
   protected:
-    DiscreteVariable<DataType> *dv_variable_;
     AssignmentFunctionType assignment_method_;
+};
+
+template <typename AssignmentFunctionType>
+class VariableAssignment<OrientedBoxByCell, AssignmentFunctionType>
+    : public BaseLocalDynamics<OrientedBoxByCell>
+{
+    using Assign = typename AssignmentFunctionType::ComputingKernel;
+
+  public:
+    template <typename... Args>
+    VariableAssignment(OrientedBoxByCell &oriented_box_part, Args &&...args);
+
+    class UpdateKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType>
+        UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void update(size_t index_i, Real dt = 0.0);
+
+      protected:
+        OrientedBox *oriented_box_;
+        Assign assign_;
+        DataView<Vecd> pos_;
+    };
+
+  protected:
+    SingleVariable<OrientedBox> *sv_oriented_box_;
+    AssignmentFunctionType assignment_method_;
+    DiscreteVariable<Vecd> *dv_pos_;
 };
 
 template <typename...>
@@ -81,77 +107,48 @@ class SpatialDistribution<DistributionType>
 
   public:
     template <typename... Args>
-    SpatialDistribution(BaseParticles *particles, Args &&...args)
-        : dv_pos_(particles->template getVariableByName<Vecd>("Position")),
-          distribution_(std::forward<Args>(args)...){};
+    SpatialDistribution(BaseParticles *particles, const std::string &variable_name, Args &&...args);
 
     class ComputingKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : pos_(encloser.dv_pos_->DelegatedData(ex_policy)),
-              distribution_(encloser.distribution_){};
-
-        DataType operator()(UnsignedInt index_i) { return distribution_(pos_[index_i]); };
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void operator()(UnsignedInt index_i) { variable_[index_i] = distribution_(pos_[index_i]); };
 
       protected:
-        Vecd *pos_;
+        DataView<DataType> variable_;
+        DataView<Vecd> pos_;
         DistributionType distribution_;
     };
 
   protected:
+    DiscreteVariable<DataType> *dv_variable_;
     DiscreteVariable<Vecd> *dv_pos_;
     DistributionType distribution_;
 };
 
 template <typename DataType>
-class ConstantValue : public ReturnFunction<DataType>
+class ConstantValue
 {
   public:
-    ConstantValue(BaseParticles *particles, DataType constant_value)
-        : constant_value_(constant_value) {};
+    ConstantValue(BaseParticles *particles, const std::string &variable_name, DataType constant_value);
 
     class ComputingKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : constant_value_(encloser.constant_value_){};
-
-        DataType operator()(UnsignedInt index_i) { return constant_value_; };
+        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
+        void operator()(UnsignedInt index_i) { variable_[index_i] = constant_value_; };
 
       protected:
+        DataView<DataType> variable_;
         DataType constant_value_;
     };
 
   protected:
+    DiscreteVariable<DataType> *dv_variable_;
     DataType constant_value_;
-};
-
-template <typename DataType>
-class CopyVariable : public ReturnFunction<DataType>
-{
-  public:
-    CopyVariable(BaseParticles *particles, const std::string &copy_variable_name)
-        : dv_copy_variable_(particles->template getVariableByName<DataType>(
-              copy_variable_name)) {};
-
-    class ComputingKernel
-    {
-      public:
-        template <class ExecutionPolicy, class EncloserType>
-        ComputingKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : copy_variable_(encloser.dv_copy_variable_->DelegatedData(ex_policy)){};
-
-        DataType operator()(UnsignedInt index_i) { return copy_variable_[index_i]; };
-
-      protected:
-        DataType *copy_variable_;
-    };
-
-  protected:
-    DiscreteVariable<DataType> *dv_copy_variable_;
 };
 } // namespace SPH
 #endif // GENERAL_ASSIGNMENT_H

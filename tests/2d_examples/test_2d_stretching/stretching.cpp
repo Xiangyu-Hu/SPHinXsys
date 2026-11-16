@@ -19,7 +19,7 @@ Real BW = global_resolution * 4.0; // boundary width, at least three particles
 
 /** Domain bounds of the system. */
 BoundingBoxd system_domain_bounds(Vec2d(-PL / 2.0, -PL / 2.0),
-                                 Vec2d(2.0 * PL, PL / 2.0));
+                                  Vec2d(2.0 * PL, PL / 2.0));
 // two dimensional should be circle smooth between two parts.
 //----------------------------------------------------------------------
 Real rho0_s = 7850.0;           /**< Reference density. */
@@ -76,9 +76,9 @@ class Beam : public MultiPolygonShape
   public:
     explicit Beam(const std::string &shape_name) : MultiPolygonShape(shape_name)
     {
-        multi_polygon_.addAPolygon(beam_right_stretch_shape, GeometricOps::add);
-        multi_polygon_.addAPolygon(beam_shape, GeometricOps::add);
-        multi_polygon_.addAPolygon(beam_left_stretch_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(beam_right_stretch_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(beam_shape, GeometricOps::add);
+        multi_polygon_.addPolygon(beam_left_stretch_shape, GeometricOps::add);
     }
 };
 
@@ -125,22 +125,22 @@ class RightStretchSolidBodyRegion : public BodyPartMotionConstraint
 MultiPolygon createBeamRightStretchShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_right_stretch_shape, GeometricOps::add);
+    multi_polygon.addPolygon(beam_right_stretch_shape, GeometricOps::add);
     return multi_polygon;
 };
 
 MultiPolygon createBeamLeftStretchShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_left_stretch_shape, GeometricOps::add);
+    multi_polygon.addPolygon(beam_left_stretch_shape, GeometricOps::add);
     return multi_polygon;
 };
 
 MultiPolygon createConstrainBeamShape()
 {
     MultiPolygon multi_polygon;
-    multi_polygon.addAPolygon(beam_left_stretch_shape, GeometricOps::add);
-    multi_polygon.addAPolygon(beam_right_stretch_shape, GeometricOps::add);
+    multi_polygon.addPolygon(beam_left_stretch_shape, GeometricOps::add);
+    multi_polygon.addPolygon(beam_right_stretch_shape, GeometricOps::add);
 
     return multi_polygon;
 };
@@ -176,7 +176,7 @@ int main(int ac, char *av[])
     /** Tag for running particle relaxation for the initially body-fitted distribution */
     system.setRunParticleRelaxation(false);
     /** Tag for starting with relaxed body-fitted particles distribution */
-    system.setReloadParticles(true);
+    system.setReloadParticles(false);
     system.setGenerateRegressionData(false);
     system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
@@ -184,11 +184,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     SolidBody beam_body(system, makeShared<Beam>("StretchingBody"));
     beam_body.defineBodyLevelSetShape();
-    beam_body.defineMaterial<NonLinearHardeningPlasticSolid>(
+    beam_body.defineMatterMaterial<NonLinearHardeningPlasticSolid>(
         rho0_s, Youngs_modulus, poisson, yield_stress, hardening_modulus, saturation_flow_stress, saturation_exponent);
 
     (!system.RunParticleRelaxation() && system.ReloadParticles())
-        ? beam_body.generateParticles<BaseParticles, Reload>(beam_body.getName())
+        ? beam_body.generateParticles<BaseParticles, Reload>(beam_body.Name())
         : beam_body.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody beam_observer(system, "BeamObserver");
@@ -317,7 +317,7 @@ int main(int ac, char *av[])
             Real refer_total_kinetic_energy = 10000.0;
             while (relaxation_time < Dt)
             {
-                if (refer_total_kinetic_energy > 0.005)
+                if (refer_total_kinetic_energy > 0.005 && stress_ite < 50)
                 {
                     stress_relaxation_first_half.exec(dt);
                     constrain_beam_end.exec(dt);
@@ -336,7 +336,7 @@ int main(int ac, char *av[])
                         std::cout << "N=" << ite << " Time: "
                                   << physical_time
                                   << "	Dt: " << Dt << "	dt: " << dt
-                                  << "	Dt:dt = " << Dt / dt << "\n";
+                                  << "	stress_ite: " << stress_ite << "\n";
                     }
 
                     if (ite != 0 && ite % observation_sample_interval == 0)

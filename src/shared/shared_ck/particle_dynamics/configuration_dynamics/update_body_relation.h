@@ -29,16 +29,69 @@
 #ifndef UPDATE_BODY_RELATION_H
 #define UPDATE_BODY_RELATION_H
 
-#include "all_body_relations.h"
-#include "all_particle_dynamics.h"
-#include "base_body.h"
 #include "base_configuration_dynamics.h"
 #include "base_local_dynamics.h"
-#include "base_particles.hpp"
 #include "relation_ck.hpp"
+#include "sphinxsys_bitmask.h"
 
 namespace SPH
 {
+
+template <typename... T>
+class TargetParticleMask;
+
+template <typename TargetCriterion>
+class TargetParticleMask<TargetCriterion, SPHBody>
+{
+  public:
+    TargetParticleMask(SPHBody &sph_body) {};
+    ~TargetParticleMask() {}
+
+    class ComputingKernel : public TargetCriterion
+    {
+      public:
+        template <class ExecutionPolicy, typename EnclosureType, typename... Args>
+        ComputingKernel(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args)
+            : TargetCriterion(std::forward<Args>(args)...) {};
+
+        template <typename... Args>
+        bool operator()(UnsignedInt target_index, Args &&...args)
+        {
+            return TargetCriterion::operator()(target_index, std::forward<Args>(args)...);
+        }
+    };
+};
+
+template <typename TargetCriterion>
+class TargetParticleMask<TargetCriterion, BodyPartByParticle>
+{
+    using MaskKernel = typename GroupManager::MaskKernel;
+
+  public:
+    TargetParticleMask(BodyPartByParticle &body_by_particle);
+    ~TargetParticleMask() {}
+
+    class ComputingKernel : public TargetCriterion
+    {
+      public:
+        template <class ExecutionPolicy, typename EnclosureType, typename... Args>
+        ComputingKernel(ExecutionPolicy &ex_policy, EnclosureType &encloser, Args &&...args);
+
+        template <typename... Args>
+        bool operator()(UnsignedInt target_index, Args &&...args)
+        {
+            return (body_part_mask_.check(target_index)) &&
+                   TargetCriterion::operator()(target_index, std::forward<Args>(args)...);
+        }
+
+      protected:
+        MaskKernel body_part_mask_;
+    };
+
+  protected:
+    GroupManager &particle_group_manager_;
+    UnsignedInt body_part_bit_;
+};
 
 template <typename... T>
 class UpdateRelation;
@@ -58,7 +111,8 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
     using NeighborMethodType = typename InnerRelationType::NeighborhoodType;
     using CutOff = typename NeighborMethodType::CutOff;
     using NeighborCriterion = typename NeighborMethodType::NeighborCriterion;
-    using MaskedCriterion = typename RangeIdentifier::template TargetParticleMask<NeighborCriterion>;
+    using TargetParticleMaskMethod = TargetParticleMask<NeighborCriterion, RangeIdentifier>;
+    using MaskedCriterion = typename TargetParticleMaskMethod::ComputingKernel;
 
     class OneSidedCheck
     {
@@ -67,7 +121,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
       public:
         template <class EncloserType>
         OneSidedCheck(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : reverse_criterion_(ex_policy, encloser){};
+            : reverse_criterion_(ex_policy, encloser) {};
         bool operator()(UnsignedInt i, UnsignedInt j) const
         {
             return i < j || !reverse_criterion_(i, j);
@@ -103,6 +157,7 @@ class UpdateRelation<ExecutionPolicy, Inner<Parameters...>>
 
     ExecutionPolicy ex_policy_;
     InnerRelationType &inner_relation_;
+    TargetParticleMaskMethod target_particle_mask_method_;
     CellLinkedList<CellLinkedListIdentifier> &cell_linked_list_;
     Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel> kernel_implementation_;
 };
@@ -121,9 +176,11 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     using Neighborhood = typename ContactRelationType::NeighborhoodType;
     using CutOff = typename Neighborhood::CutOff;
     using RangeIdentifier = typename BaseLocalDynamicsType::RangeIdentifier;
+    using TargetRangeIdentifier = typename TargetType::RangeIdentifier;
     using MaskedSource = typename SourceType::SourceParticleMask;
     using NeighborCriterion = typename Neighborhood::NeighborCriterion;
-    using MaskedCriterion = typename TargetType::template TargetParticleMask<NeighborCriterion>;
+    using TargetParticleMaskMethod = TargetParticleMask<NeighborCriterion, TargetRangeIdentifier>;
+    using MaskedCriterion = typename TargetParticleMaskMethod::ComputingKernel;
 
   public:
     UpdateRelation(ContactRelationType &contact_relation);
@@ -135,7 +192,7 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
     {
       public:
         template <class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, UnsignedInt contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void incrementNeighborSize(UnsignedInt source_index);
         void updateNeighborList(UnsignedInt source_index);
 
@@ -149,11 +206,12 @@ class UpdateRelation<ExecutionPolicy, Contact<Parameters...>>
 
     typedef UpdateRelation<ExecutionPolicy, Contact<Parameters...>> LocalDynamicsType;
     using KernelImplementation = Implementation<ExecutionPolicy, LocalDynamicsType, InteractKernel>;
-    UniquePtrsKeeper<KernelImplementation> contact_kernel_implementation_ptrs_;
+    UniquePtrKeeper<KernelImplementation> contact_kernel_implementation_ptr_;
     ExecutionPolicy ex_policy_;
     ContactRelationType &contact_relation_;
-    StdVec<CellLinkedList<CellLinkedListIdentifier> *> contact_cell_linked_list_;
-    StdVec<KernelImplementation *> contact_kernel_implementation_;
+    TargetParticleMaskMethod contact_target_particle_mask_method_;
+    CellLinkedList<CellLinkedListIdentifier> *contact_cell_linked_list_;
+    KernelImplementation *contact_kernel_implementation_;
 };
 
 template <class ExecutionPolicy>

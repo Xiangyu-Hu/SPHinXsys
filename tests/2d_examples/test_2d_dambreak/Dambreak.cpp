@@ -61,11 +61,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     GeometricShapeBox initial_water_block(Transform(water_block_translation), water_block_halfsize, "WaterBody");
     FluidBody water_block(sph_system, initial_water_block);
-    water_block.defineMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody fluid_observer(sph_system, "FluidObserver");
@@ -131,7 +131,7 @@ int main(int ac, char *av[])
     Real &physical_time = *sph_system.getSystemVariableDataByName<Real>("PhysicalTime");
     if (sph_system.RestartStep() != 0)
     {
-        physical_time = restart_io.readRestartFiles(sph_system.RestartStep());
+        restart_io.readRestartFiles(sph_system.RestartStep());
         water_block.updateCellLinkedList();
         water_wall_complex.updateConfiguration();
         fluid_observer_contact.updateConfiguration();

@@ -29,8 +29,8 @@
 #ifndef FLUID_BOUNDARY_STATE_H
 #define FLUID_BOUNDARY_STATE_H
 
-#include "base_data_type_package.h"
 #include "base_particles.hpp"
+#include "data_type.h"
 #include "weakly_compressible_fluid.h"
 namespace SPH
 {
@@ -56,7 +56,7 @@ class BaseStateCondition
     DiscreteVariable<Real> *dv_p_, *dv_rho_;
 };
 
-template <class FluidType = WeaklyCompressibleFluid>
+template <class FluidType>
 struct PressurePrescribed
 {
     typedef FluidType Fluid;
@@ -69,7 +69,7 @@ struct PressurePrescribed
     };
 };
 
-template <class FluidType = WeaklyCompressibleFluid>
+template <class FluidType>
 struct VelocityPrescribed
 {
     typedef FluidType Fluid;
@@ -78,5 +78,29 @@ struct VelocityPrescribed
     // to be implemented in derived class
 };
 
+struct ConstantInflowSpeed
+{
+    Real speed_;
+    ConstantInflowSpeed(Real speed) : speed_(speed) {};
+
+    Real getAxisVelocity(const Vecd &, const Real &, Real)
+    {
+        return speed_;
+    };
+};
+
+struct StartupToConstantInflowSpeed
+{
+    Real speed_, startup_time_;
+
+    StartupToConstantInflowSpeed(Real speed, Real startup_time)
+        : speed_(speed), startup_time_(startup_time) {};
+    Real getAxisVelocity(const Vecd &, const Real &, Real time)
+    {
+        return time < startup_time_
+                   ? 0.5 * speed_ * (1.0 - math::cos(Pi * time / startup_time_))
+                   : speed_;
+    };
+};
 } // namespace SPH
 #endif // FLUID_BOUNDARY_STATE_H

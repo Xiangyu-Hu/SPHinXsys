@@ -130,7 +130,7 @@ struct observer_point_shell
 
     void interpolate(SurfaceParticles &particles)
     {
-        ElasticSolid &elastic_solid_ = DynamicCast<ElasticSolid>(this, particles.getBaseMaterial());
+        ElasticSolid &elastic_solid_ = DynamicCast<ElasticSolid>(this, particles.getSPHBody().getMatterMaterial());
         pos_n = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
                                             { return (particles.getVariableDataByName<Vec3d>("Position"))[id]; });
         displacement = interpolate_observer<Vec3d>(particles, neighbor_ids, pos_0, [&](size_t id)
@@ -238,7 +238,7 @@ return_data bending_circular_plate(Real dp_ratio)
     // starting the actual simulation
     SPHSystem system(bb_system, dp);
     SolidBody shell_body(system, shell_shape);
-    shell_body.defineMaterial<LinearElasticSolid>(rho, E, mu);
+    shell_body.defineMatterMaterial<LinearElasticSolid>(rho, E, mu);
     shell_body.generateParticles<SurfaceParticles, ShellCircle>(obj_vertices, sym_vec, particle_area, thickness);
     auto shell_particles = dynamic_cast<SurfaceParticles *>(&shell_body.getBaseParticles());
 
@@ -278,7 +278,7 @@ return_data bending_circular_plate(Real dp_ratio)
     BodyStatesRecordingToVtp vtp_output({shell_body});
     vtp_output.addToWrite<Vec3d>(shell_body, "NormalDirection");
     vtp_output.addDerivedVariableRecording<SimpleDynamics<Displacement>>(shell_body);
-    ReduceDynamics<VariableNorm<Vecd, ReduceMax>> maximum_displace_norm(shell_body, "Displacement");
+    ReduceDynamics<VariableNorm<Vecd, ReduceMax<Real>>> maximum_displace_norm(shell_body, "Displacement");
     vtp_output.writeToFile(0);
 
     Vecd *pos0_ = shell_particles->registerStateVariableDataFrom<Vecd>("InitialPosition", "Position");

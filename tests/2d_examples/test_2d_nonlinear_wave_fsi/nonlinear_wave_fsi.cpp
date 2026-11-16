@@ -3,6 +3,7 @@
  * @brief 	This is the 2d case file for wave impact with tension leg moored floating structure.
  * @author  Nicolò Salis
  */
+#include "all_simbody.h"
 #include "sphinxsys.h" //SPHinXsys Library.
 using namespace SPH;
 #include "nonlinear_wave_fsi.h" //header for this case
@@ -18,15 +19,16 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
 
     SolidBody wall_boundary(sph_system, makeShared<WallBoundary>("WallBoundary"));
-    wall_boundary.defineMaterial<Solid>();
+    wall_boundary.defineMatterMaterial<Solid>();
     wall_boundary.generateParticles<BaseParticles, Lattice>();
 
     SolidBody structure(sph_system, makeShared<FloatingStructure>("Structure"));
-    structure.defineMaterial<Solid>(rho_s);
+    structure.defineMatterMaterial<Solid>(rho_s);
     structure.generateParticles<BaseParticles, Lattice>();
 
     ObserverBody observer(sph_system, "Observer");
@@ -111,7 +113,7 @@ int main(int ac, char *av[])
     /** Mass properties of the constrained spot.
      * SimTK::MassProperties(mass, center of mass, inertia)
      */
-    SimTK::Body::Rigid structure_info(*structure_multibody.body_part_mass_properties_);
+    SimTK::Body::Rigid structure_info(structure_multibody.getSimTKMassProperties());
 
     SimTK::MobilizedBody::Planar tethered_spot(matter.Ground(), SimTK::Transform(SimTK::Vec3(G[0], G[1], 0.0)),
                                                structure_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));
@@ -123,11 +125,11 @@ int main(int ac, char *av[])
                                            fixed_spot_info, SimTK::Transform(SimTK::Vec3(0.0, 0.0, 0.0)));
 
     // A SEASIDE PILLAR; B PORTSIDE PILLAR
-    Vecd disp_cable_endA = cable_endA - structure_multibody.initial_mass_center_;
+    Vecd disp_cable_endA = cable_endA - structure_multibody.getMassCenter();
     SimTK::CablePath tethering_lineA(cables, fixed_spotA, SimTK::Vec3(0.0, 0.0, 0.0), tethered_spot,
                                      SimTK::Vec3(disp_cable_endA[0], disp_cable_endA[1], 0.0));
     /*-----------------------------------------------------------------------------*/
-    Vecd disp_cable_endB = cable_endB - structure_multibody.initial_mass_center_;
+    Vecd disp_cable_endB = cable_endB - structure_multibody.getMassCenter();
     SimTK::CablePath tethering_lineB(cables, fixed_spotB, SimTK::Vec3(0.0, 0.0, 0.0), tethered_spot,
                                      SimTK::Vec3(disp_cable_endB[0], disp_cable_endB[1], 0.0));
 
@@ -146,8 +148,8 @@ int main(int ac, char *av[])
     std::cout << "MASS CENTER GOAL"
               << " " << G[0] << " " << G[1] << std::endl;
     std::cout << "MASS CENTER SIMBODY"
-              << " " << structure_multibody.initial_mass_center_[0] << " "
-              << structure_multibody.initial_mass_center_[1] << std::endl;
+              << " " << structure_multibody.getMassCenter()[0] << " "
+              << structure_multibody.getMassCenter()[1] << std::endl;
     std::cout << "INERTIA " << Ix << " " << Iy << " " << Iz << std::endl;
     //----------------------------------------------------------------------
     integ.setAccuracy(1e-3);

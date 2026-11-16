@@ -33,7 +33,6 @@
 #include "base_continuum_dynamics.h"
 #include "constraint_dynamics.h"
 #include "fluid_integration.hpp"
-#include "general_continuum.h"
 #include "general_continuum.hpp"
 namespace SPH
 {
@@ -50,7 +49,7 @@ class ContinuumInitialCondition : public LocalDynamics
     Mat3d *stress_tensor_3D_;
 };
 
-class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax>
+class AcousticTimeStep : public LocalDynamicsReduce<ReduceMax<Real>>
 {
   public:
     explicit AcousticTimeStep(SPHBody &sph_body, Real acousticCFL = 0.6);

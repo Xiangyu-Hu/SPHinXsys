@@ -33,8 +33,12 @@
 #include "base_data_type_package.h"
 #include "sphinxsys_containers.h"
 
-#include <spdlog/spdlog.h>
 #include <string>
+
+namespace spdlog
+{
+class logger;
+}
 
 namespace SPH
 {
@@ -70,7 +74,7 @@ class Shape
     explicit Shape(const std::string &shape_name);
     virtual ~Shape() {};
 
-    std::string getName() { return name_; };
+    std::string Name() { return name_; };
     void setName(const std::string &name) { name_ = name; };
     BoundingBoxd getBounds();
     virtual bool isValid() { return true; };
@@ -144,6 +148,8 @@ class BinaryShapes : public Shape
     UniquePtrsKeeper<Shape> sub_shapes_keeper_;
     StdVec<SubShapeAndOp> sub_shapes_and_ops_;
 };
+
+using DefaultShape = BinaryShapes;
 
 /**
  * @class Edge

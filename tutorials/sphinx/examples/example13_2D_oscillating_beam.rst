@@ -91,8 +91,8 @@ Here,we creat the beam shape, beam base shape and define the beam body.
 		{
 			/** Geometry definition. */
 			MultiPolygon multi_polygon;
-			multi_polygon.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-			multi_polygon.addAPolygon(beam_shape, ShapeBooleanOps::add);
+			multi_polygon.addPolygon(beam_base_shape, ShapeBooleanOps::add);
+			multi_polygon.addPolygon(beam_shape, ShapeBooleanOps::add);
 			body_shape_.add<MultiPolygonShape>(multi_polygon);
 		}
 	};
@@ -108,8 +108,8 @@ Thus, the gate constrain needs to be defined.
 	MultiPolygon createBeamConstrainShape()
 	{
 		MultiPolygon multi_polygon;
-		multi_polygon.addAPolygon(beam_base_shape, ShapeBooleanOps::add);
-		multi_polygon.addAPolygon(beam_shape, ShapeBooleanOps::sub);
+		multi_polygon.addPolygon(beam_base_shape, ShapeBooleanOps::add);
+		multi_polygon.addPolygon(beam_shape, ShapeBooleanOps::sub);
 		return multi_polygon;
 	};
 

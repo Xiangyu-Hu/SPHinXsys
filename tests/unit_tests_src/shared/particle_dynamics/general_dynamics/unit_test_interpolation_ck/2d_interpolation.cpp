@@ -51,14 +51,15 @@ int main(int ac, char *av[])
     //	Build up an SPHSystem and IO environment.
     //----------------------------------------------------------------------
     BoundingBoxd system_domain_bounds(Vecd(-boundary_width * 2, -boundary_width * 2),
-                                     Vecd(width + boundary_width * 2, height + boundary_width * 2));
+                                      Vecd(width + boundary_width * 2, height + boundary_width * 2));
     SPHSystem sph_system(system_domain_bounds, particle_spacing);
     sph_system.handleCommandlineOptions(ac, av);
     //----------------------------------------------------------------------
     //	Creating bodies with corresponding materials and particles.
     //----------------------------------------------------------------------
     FluidBody water_block(sph_system, makeShared<WaterBlock>("WaterBody"));
-    water_block.defineClosure<WeaklyCompressibleFluid, Viscosity>(ConstructArgs(rho0_f, c_f), mu_f);
+    water_block.defineMatterMaterial<WeaklyCompressibleFluid>(rho0_f, c_f);
+    water_block.addMaterialProperty<Viscosity>(mu_f);
     water_block.generateParticles<BaseParticles, Lattice>();
     SimpleDynamics<relax_dynamics::RandomizeParticlePosition> random_fluid_particles(water_block);
     random_fluid_particles.exec(0.5);
@@ -72,7 +73,7 @@ int main(int ac, char *av[])
     //	Basically the the range of bodies to build neighbor particle lists.
     //  Generally, we first define all the inner relations, then the contact relations.
     //----------------------------------------------------------------------
-    Contact<> fluid_observer_contact(fluid_observer, {&water_block});
+    Contact<> fluid_observer_contact(fluid_observer, water_block);
     //----------------------------------------------------------------------
     // Define the main execution policy for this case.
     //----------------------------------------------------------------------
@@ -95,7 +96,7 @@ int main(int ac, char *av[])
     //	and regression tests of the simulation.
     //----------------------------------------------------------------------
     ObservedQuantityRecording<MainExecutionPolicy, Vecd, RestoringCorrection>
-        fluid_observer_position("Position", fluid_observer_contact);
+        fluid_observer_position(fluid_observer_contact, "Position");
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

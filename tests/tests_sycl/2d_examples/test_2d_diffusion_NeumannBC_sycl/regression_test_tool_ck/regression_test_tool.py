@@ -69,7 +69,7 @@ case name: test_2d_diffusion_NeumannBC
 
 case_name = "test_2d_diffusion_NeumannBC_ck"
 body_name = "TemperatureObserver"
-parameter_name = "Phi"
+parameter_name = "SpeciesPhi"
 
 number_of_run_times = 0
 converged = 0

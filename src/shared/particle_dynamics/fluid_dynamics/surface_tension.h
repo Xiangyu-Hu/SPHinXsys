@@ -36,6 +36,8 @@
 #include "base_fluid_dynamics.h"
 #include "force_prior.h"
 
+#include <tuple>
+
 namespace SPH
 {
 namespace fluid_dynamics

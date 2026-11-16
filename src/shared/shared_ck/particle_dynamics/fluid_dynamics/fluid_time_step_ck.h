@@ -32,6 +32,7 @@
 #ifndef FLUID_TIME_STEP_CK_H
 #define FLUID_TIME_STEP_CK_H
 
+#include "base_dynamics.h"
 #include "base_fluid_dynamics.h"
 #include "weakly_compressible_fluid.h"
 
@@ -39,8 +40,8 @@ namespace SPH
 {
 namespace fluid_dynamics
 {
-template <class FluidType = WeaklyCompressibleFluid>
-class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
+template <class FluidType>
+class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax<Real>>
 {
     using EosKernel = typename FluidType::EosKernel;
 
@@ -80,7 +81,7 @@ class AcousticTimeStepCK : public LocalDynamicsReduce<ReduceMax>
     Real acousticCFL_;
 };
 
-class AdvectionTimeStepCK : public LocalDynamicsReduce<ReduceMax>
+class AdvectionTimeStepCK : public LocalDynamicsReduce<ReduceMax<Real>>
 {
   public:
     AdvectionTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
@@ -119,6 +120,19 @@ class AdvectionTimeStepCK : public LocalDynamicsReduce<ReduceMax>
     DiscreteVariable<Vecd> *dv_vel_;
 };
 
+class ViscousDominance : public BaseDynamics<bool>
+{
+  public:
+    ViscousDominance(SPHBody &sph_body, Real U_max);
+    virtual ~ViscousDominance() {};
+
+    virtual bool exec(Real dt = 0.0) override { return is_viscous_dominance_; };
+
+  protected:
+    Real h_min_;
+    bool is_viscous_dominance_;
+};
+
 /**
  * @class AdvectionViscousTimeStepCK
  * @brief Computing the advection time step size
@@ -144,17 +158,17 @@ class AdvectionStepSetup : public LocalDynamics
 
         void update(size_t index_i, Real dt = 0.0)
         {
-            Vol_[index_i] = mass_[index_i] / rho_[index_i];
+            Vol_[index_i] = Vol_ref_[index_i] / compression_[index_i];
             dpos_[index_i] = Vecd::Zero();
         };
 
       protected:
-        Real *Vol_, *mass_, *rho_;
+        Real *Vol_, *Vol_ref_, *compression_;
         Vecd *dpos_;
     };
 
   protected:
-    DiscreteVariable<Real> *dv_Vol_, *dv_mass_, *dv_rho_;
+    DiscreteVariable<Real> *dv_Vol_, *dv_Vol_ref_, *dv_compression_;
     DiscreteVariable<Vecd> *dv_dpos_;
 };
 

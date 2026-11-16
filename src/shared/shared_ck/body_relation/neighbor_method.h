@@ -30,10 +30,11 @@
 #define NEIGHBOR_METHOD_H
 
 #include "kernel_tabulated_ck.h"
-#include "sphinxsys_containers.h"
+#include "sphinxsys_variable.h"
 
 namespace SPH
 {
+class Base;
 class SPHAdaptation;
 class AnisotropicAdaptation;
 
@@ -47,7 +48,7 @@ class Neighbor<Base>
     Neighbor(SharedPtr<Kernel> base_kernel,
              DiscreteVariable<Vecd> *dv_src_pos, DiscreteVariable<Vecd> *dv_tar_pos);
     Neighbor(SharedPtr<Kernel> base_kernel);
-    ~Neighbor() {};
+    virtual ~Neighbor() {};
 
     class SmoothingKernel : public KernelTabulatedCK
     {

@@ -2,6 +2,7 @@
 #define BASE_MESH_HXX
 
 #include "base_mesh.h"
+#include "sphinxsys_bitmask.h"
 
 namespace SPH
 {
@@ -126,6 +127,18 @@ void MultiResolutionMeshField<MeshType>::writeMeshFieldToPlt(
         out_file.close();
     }
 }
+//=================================================================================================//
+template <class MeshType>
+GroupManager &MultiResolutionMeshField<MeshType>::getCellGroupManager()
+{
+    if (cell_group_manager_ptr_.getPtr() == nullptr)
+    {
+        DiscreteVariable<UnsignedInt> *group_variable =
+            registerCellVariable<UnsignedInt>("ParticleGroups");
+        cell_group_manager_ptr_.createPtr<GroupManager>(group_variable);
+    }
+    return *cell_group_manager_ptr_.getPtr();
+}
 //=============================================================================================//
 template <class MeshType>
 template <typename DataType>
@@ -139,10 +152,10 @@ DiscreteVariable<DataType> *MultiResolutionMeshField<MeshType>::getCellVariable(
 }
 //=============================================================================================//
 template <class MeshType>
-template <typename DataType, template <typename> class EntityType, typename... Args>
-EntityType<DataType> *MultiResolutionMeshField<MeshType>::createUniqueEnity(Args &&...args)
+template <typename DataType, template <typename> class QuantityType, typename... Args>
+QuantityType<DataType> *MultiResolutionMeshField<MeshType>::createUniqueQuantity(Args &&...args)
 {
-    return unique_entity_ptrs_.template createPtr<EntityType<DataType>>(std::forward<Args>(args)...);
+    return unique_entity_ptrs_.template createPtr<QuantityType<DataType>>(std::forward<Args>(args)...);
 }
 //=============================================================================================//
 template <class MeshType>

@@ -23,8 +23,8 @@ int main(int ac, char *av[])
     //	Creating body, materials and particles.
     //----------------------------------------------------------------------
     SolidBody diffusion_body(sph_system, makeShared<MultiPolygonShape>(createOverallStructureBody(), "DiffusionBody"));
-    diffusion_body.defineClosure<Solid, LocalIsotropicDiffusion>(
-        Solid(), ConstructArgs(diffusion_species_name, wood_cond, epdm_cond));
+    diffusion_body.defineMatterMaterial<Solid>();
+    diffusion_body.addMaterialProperty<LocalIsotropicDiffusion>(species_name, wood_cond, epdm_cond);
     diffusion_body.generateParticles<BaseParticles, Lattice>();
 
     SolidBody boundary_Robin_in(sph_system, makeShared<MultiPolygonShape>(createInternalAirBody(), "InternalConvectionBoundary"));
@@ -79,11 +79,11 @@ int main(int ac, char *av[])
     //----------------------------------------------------------------------
     BodyStatesRecordingToVtp write_states(sph_system);
     ReducedQuantityRecording<Average<QuantitySummation<Real, SPHBody>>>
-        write_heat_transfer_from_internal_boundary(diffusion_body, diffusion_species_name + "TransferFromInternalConvectionBoundary");
+        write_heat_transfer_from_internal_boundary(diffusion_body, species_name + "TransferFromInternalConvectionBoundary");
     ReducedQuantityRecording<Average<QuantitySummation<Real, SPHBody>>>
-        write_heat_transfer_from_external_boundary(diffusion_body, diffusion_species_name + "TransferFromExternalConvectionBoundary");
+        write_heat_transfer_from_external_boundary(diffusion_body, species_name + "TransferFromExternalConvectionBoundary");
     RegressionTestEnsembleAverage<ObservedQuantityRecording<Real>>
-        write_solid_temperature(diffusion_species_name, temperature_observer_contact);
+        write_solid_temperature(species_name, temperature_observer_contact);
     //----------------------------------------------------------------------
     //	Prepare the simulation with cell linked list, configuration
     //	and case specified initial condition if necessary.

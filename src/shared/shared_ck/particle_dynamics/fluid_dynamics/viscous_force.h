@@ -51,7 +51,7 @@ class ViscousForceCK<Base, ViscosityType, KernelCorrectionType, RelationType<Par
   public:
     template <class BaseRelationType>
     explicit ViscousForceCK(BaseRelationType &base_relation);
-    virtual ~ViscousForceCK() {};
+    virtual ~ViscousForceCK(){};
 
   protected:
     using ViscosityModel = ViscosityType;
@@ -71,8 +71,9 @@ class ViscousForceCK<Inner<WithUpdate, ViscosityType, KernelCorrectionType, Para
     using BaseViscousForceType = ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Inner<Parameters...>>;
 
   public:
-    explicit ViscousForceCK(Inner<Parameters...> &inner_relation);
-    virtual ~ViscousForceCK() {};
+    template <class DynamicsIdentifier>
+    explicit ViscousForceCK(DynamicsIdentifier &identifier);
+    virtual ~ViscousForceCK(){};
 
     class InteractKernel : public BaseViscousForceType::InteractKernel
     {
@@ -100,14 +101,15 @@ class ViscousForceCK<Contact<Wall, ViscosityType, KernelCorrectionType, Paramete
     using BaseViscousForceType = ViscousForceCK<Base, ViscosityType, KernelCorrectionType, Contact<Parameters...>>;
 
   public:
-    explicit ViscousForceCK(Contact<Parameters...> &contact_relation);
-    virtual ~ViscousForceCK() {};
+    template <class DynamicsIdentifier>
+    explicit ViscousForceCK(DynamicsIdentifier &identifier);
+    virtual ~ViscousForceCK(){};
 
     class InteractKernel : public BaseViscousForceType::InteractKernel
     {
       public:
         template <class ExecutionPolicy, class EncloserType>
-        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, size_t contact_index);
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser);
         void interact(size_t index_i, Real dt = 0.0);
 
       protected:

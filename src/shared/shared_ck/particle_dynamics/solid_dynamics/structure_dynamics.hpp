@@ -38,10 +38,11 @@ inline void BaseStructureIntegration1stHalf::UpdateKernel::update(size_t index_i
 }
 //=================================================================================================//
 template <class MaterialType, typename KernelCorrectionType, typename... Parameters>
+template <class DynamicsIdentifier>
 StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionType, Parameters...>>::
-    StructureIntegration1stHalf(Inner<Parameters...> &inner_relation, Real numerical_damping_factor)
-    : BaseInteraction(inner_relation), BaseStructureIntegration1stHalf(this->particles_),
-      material_(DynamicCast<MaterialType>(this, this->particles_->getBaseMaterial())),
+    StructureIntegration1stHalf(DynamicsIdentifier &identifier, Real numerical_damping_factor)
+    : BaseInteraction(identifier), BaseStructureIntegration1stHalf(this->particles_),
+      material_(DynamicCast<MaterialType>(this, this->sph_body_->getMatterMaterial())),
       adaptation_(DynamicCast<Adaptation>(this, this->sph_body_->getSPHAdaptation())),
       kernel_correction_(this->particles_), h_ref_(adaptation_.ReferenceSmoothingLength()),
       numerical_damping_factor_(numerical_damping_factor) {}
@@ -125,10 +126,11 @@ void StructureIntegration1stHalf<Inner<OneLevel, MaterialType, KernelCorrectionT
 };
 //=================================================================================================//
 template <class MaterialType, typename... Parameters>
+template <class DynamicsIdentifier>
 StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...>>::
-    StructureIntegration1stHalfPK2(Inner<Parameters...> &inner_relation)
-    : BaseInteraction(inner_relation), BaseStructureIntegration1stHalf(this->particles_),
-      material_(DynamicCast<MaterialType>(this, this->particles_->getBaseMaterial())),
+    StructureIntegration1stHalfPK2(DynamicsIdentifier &identifier)
+    : BaseInteraction(identifier), BaseStructureIntegration1stHalf(this->particles_),
+      material_(DynamicCast<MaterialType>(this, this->sph_body_->getMatterMaterial())),
       adaptation_(DynamicCast<Adaptation>(this, this->sph_body_->getSPHAdaptation())) {}
 //=================================================================================================//
 template <class MaterialType, typename... Parameters>
@@ -181,9 +183,10 @@ void StructureIntegration1stHalfPK2<Inner<OneLevel, MaterialType, Parameters...>
 }
 //=================================================================================================//
 template <typename... Parameters>
+template <class DynamicsIdentifier>
 StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>::StructureIntegration2ndHalf(
-    Inner<Parameters...> &inner_relation)
-    : BaseInteraction(inner_relation), StructureDynamicsVariables(this->particles_) {}
+    DynamicsIdentifier &identifier)
+    : BaseInteraction(identifier), StructureDynamicsVariables(this->particles_) {}
 //=================================================================================================//
 template <typename... Parameters>
 template <class ExecutionPolicy, class EncloserType>
@@ -238,11 +241,12 @@ void StructureIntegration2ndHalf<Inner<OneLevel, Parameters...>>::UpdateKernel::
 }
 //=================================================================================================//
 template <class MaterialType, typename... Parameters>
+template <class DynamicsIdentifier>
 StructureNumericalDamping<Inner<WithUpdate, MaterialType, Parameters...>>::
-    StructureNumericalDamping(Inner<Parameters...> &inner_relation, Real numerical_damping_factor)
-    : BaseInteraction(inner_relation), StructureDynamicsVariables(this->particles_),
+    StructureNumericalDamping(DynamicsIdentifier &identifier, Real numerical_damping_factor)
+    : BaseInteraction(identifier), StructureDynamicsVariables(this->particles_),
       ForcePriorCK(this->particles_, "NumericalDampingForce"),
-      material_(DynamicCast<MaterialType>(this, this->particles_->getBaseMaterial())),
+      material_(DynamicCast<MaterialType>(this, this->sph_body_->getMatterMaterial())),
       adaptation_(DynamicCast<Adaptation>(this, this->sph_body_->getSPHAdaptation())),
       h_ref_(adaptation_.ReferenceSmoothingLength()),
       numerical_damping_factor_(numerical_damping_factor),

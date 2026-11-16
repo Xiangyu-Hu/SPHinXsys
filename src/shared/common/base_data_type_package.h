@@ -30,11 +30,9 @@
 
 #include "common_functors.h"
 #include "data_type.h"
-#include "large_data_containers.h"
 #include "ownership.h"
-#include "vector_functions.h"
 
-#define TBB_PARALLEL true
+#include <utility>
 
 namespace SPH
 {
@@ -52,6 +50,9 @@ using DataContainerUniquePtrKeeper = UniquePtrsKeeper<ContainedDataType>;
 /** Generalized data container allocated data keeper */
 template <typename DataType>
 using AllocatedData = DataType *;
+/** Generalized data container alias data type */
+template <typename DataType>
+using TypeAlias = DataType;
 
 template <template <typename> typename KeeperType, template <typename> typename ContainerType>
 using DataAssemble = std::tuple<KeeperType<ContainerType<UnsignedInt>>,

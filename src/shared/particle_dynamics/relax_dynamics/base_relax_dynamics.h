@@ -31,9 +31,8 @@
 #define BASE_RELAX_DYNAMICS_H
 
 #include "all_body_relations.h"
-#include "all_particle_dynamics.h"
 #include "base_kernel.h"
-#include "base_particles.hpp"
+#include "base_local_dynamics.h"
 #include "cell_linked_list.h"
 
 namespace SPH

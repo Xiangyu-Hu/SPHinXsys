@@ -23,10 +23,12 @@ void write_csv_files(
     myfile.close();
 }
 
-void MeshData::load(std::string path_to_mesh, Real scale)
+void MeshData::load(std::string file_name, Real scale)
 {
+    IOEnvironment &io_env = IO::getEnvironment();
+    std::string file_path_name = io_env.InputFolder() + "/" + file_name;
     SimTK::PolygonalMesh inner_mesh;
-    inner_mesh.loadStlFile(path_to_mesh);
+    inner_mesh.loadStlFile(file_path_name);
     inner_mesh.scaleMesh(scale);
     stl_mesh.vertices.reserve(inner_mesh.getNumVertices());
     for (int i = 0; i < inner_mesh.getNumVertices(); i++)
