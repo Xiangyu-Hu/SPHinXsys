@@ -504,6 +504,337 @@ class ComputeOphelieEdgeFluxPhiRhsFromASrcCK<Inner<Parameters...>>
     }
 };
 
+/**
+ * Doc213 formal Neumann for DivΣA + LegacyPairwise:
+ *   rhs_i += amp * a_sign * ω * A_i · Σ_j C_ij (x_j − x_i)
+ * Uses the same C_ij as LegacyFlux / LHS. For constant A this equals the LegacyFlux
+ * truncation moment (surface flux); volume EMF pollution is omitted (A_i not A_avg).
+ * G11: optional shell_only gates on PhiBoundaryMask (skip interior lattice deficiency).
+ * Doc214 B1b: optional shell_region gates by |n_z| (side vs end; needs PhiBoundaryNormal).
+ */
+template <typename... RelationTypes>
+class ComputeOpheliePhiPairwiseNeumannMomentCK;
+
+template <template <typename...> class RelationType, typename... Parameters>
+class ComputeOpheliePhiPairwiseNeumannMomentCK<Base, RelationType<Parameters...>>
+    : public Interaction<RelationType<Parameters...>>
+{
+    using BaseInteraction = Interaction<RelationType<Parameters...>>;
+
+  public:
+    ComputeOpheliePhiPairwiseNeumannMomentCK(RelationType<Parameters...> &relation, const OphelieGlassFieldNames &names,
+                                             const OphelieEdgeFluxComponent &component, Real omega,
+                                             Real pair_weight_regularization, Real amp = Real(1),
+                                             bool shell_only = true, int shell_region = 0,
+                                             Real nz_end_threshold = Real(0.5), int a_form = 0)
+        : BaseInteraction(relation), omega_(omega), pair_weight_regularization_(pair_weight_regularization),
+          a_sign_(component.a_sign), amp_(amp), shell_only_(shell_only), shell_region_(shell_region),
+          nz_end_threshold_(nz_end_threshold), a_form_(a_form),
+          reference_smoothing_length_(this->getSPHAdaptation().ReferenceSmoothingLength()),
+          dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
+          dv_active_a_(this->particles_->template getVariableByName<Vecd>(component.active_a_field)),
+          dv_sigma_(this->particles_->template getVariableByName<Real>(names.sigma)),
+          dv_phi_rhs_(this->particles_->template getVariableByName<Real>(component.phi_rhs_field)),
+          dv_boundary_mask_(this->particles_->template getVariableByName<Real>(names.phi_boundary_mask)),
+          dv_boundary_normal_(this->particles_->template getVariableByName<Vecd>(names.phi_boundary_normal))
+    {
+    }
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType, typename... Args>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
+            : BaseInteraction::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
+              Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+              active_a_(encloser.dv_active_a_->DelegatedData(ex_policy)),
+              sigma_(encloser.dv_sigma_->DelegatedData(ex_policy)),
+              phi_rhs_(encloser.dv_phi_rhs_->DelegatedData(ex_policy)),
+              boundary_mask_(encloser.dv_boundary_mask_->DelegatedData(ex_policy)),
+              boundary_normal_(encloser.dv_boundary_normal_->DelegatedData(ex_policy)), omega_(encloser.omega_),
+              a_sign_(encloser.a_sign_), amp_(encloser.amp_), shell_only_(encloser.shell_only_),
+              shell_region_(encloser.shell_region_), nz_end_threshold_(encloser.nz_end_threshold_),
+              a_form_(encloser.a_form_), pair_weight_regularization_(encloser.pair_weight_regularization_),
+              reference_smoothing_length_(encloser.reference_smoothing_length_)
+        {
+        }
+
+        void interact(size_t index_i, Real dt = 0.0)
+        {
+            (void)dt;
+            if (shell_only_ && boundary_mask_[index_i] <= Real(0.5))
+            {
+                return;
+            }
+            const Vecd n_out = boundary_normal_[index_i];
+            const Real n_norm = n_out.norm();
+            const bool have_n = n_norm > TinyReal;
+            const Real abs_nz = have_n ? std::abs(n_out[2] / n_norm) : Real(0);
+            const bool is_end = have_n && (abs_nz >= nz_end_threshold_);
+            if (shell_region_ != 0)
+            {
+                if (!have_n)
+                {
+                    return;
+                }
+                if (shell_region_ == 1 && is_end)
+                {
+                    return; // side-only
+                }
+                if (shell_region_ == 2 && !is_end)
+                {
+                    return; // end-only
+                }
+            }
+            const Real sigma_i = sigma_[index_i];
+            const Vecd a_i = active_a_[index_i];
+            Vecd m_i = Vecd::Zero();
+            for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+            {
+                const UnsignedInt index_j = this->neighbor_index_[n];
+                const Vecd r_ij_vec = this->vec_r_ij(index_i, index_j);
+                const Vecd xj_minus_xi = -r_ij_vec;
+                const Real distance = r_ij_vec.norm();
+                const Real distance_sq = r_ij_vec.squaredNorm();
+                const Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
+                const Real c_ij = computeOphelieEdgeFluxPairConductance(
+                    sigma_i, sigma_[index_j], dW_ijV_j, distance, distance_sq, pair_weight_regularization_,
+                    reference_smoothing_length_);
+                m_i += c_ij * xj_minus_xi;
+            }
+            Real s_dot_a = a_i.dot(m_i);
+            // Doc214 B1c/B1d: side normal projection; end keeps full A·m.
+            // a_form=1 (B1c): (n·A)(n·m); a_form=2 (B1d): (n·A)|m|sign(n·m).
+            if (a_form_ == 1 || a_form_ == 2)
+            {
+                if (!have_n)
+                {
+                    return;
+                }
+                const Vecd n_hat = n_out / n_norm;
+                if (is_end)
+                {
+                    s_dot_a = a_i.dot(m_i);
+                }
+                else
+                {
+                    const Real n_dot_a = n_hat.dot(a_i);
+                    const Real n_dot_m = n_hat.dot(m_i);
+                    if (a_form_ == 1)
+                    {
+                        s_dot_a = n_dot_a * n_dot_m;
+                    }
+                    else
+                    {
+                        const Real m_norm = m_i.norm();
+                        const Real sgn = (n_dot_m >= Real(0)) ? Real(1) : Real(-1);
+                        s_dot_a = n_dot_a * m_norm * sgn;
+                    }
+                }
+            }
+            phi_rhs_[index_i] += amp_ * a_sign_ * omega_ * s_dot_a;
+        }
+
+      protected:
+        Real *Vol_;
+        Vecd *active_a_;
+        Real *sigma_;
+        Real *phi_rhs_;
+        Real *boundary_mask_;
+        Vecd *boundary_normal_;
+        Real omega_;
+        Real a_sign_;
+        Real amp_;
+        bool shell_only_;
+        int shell_region_;
+        Real nz_end_threshold_;
+        int a_form_;
+        Real pair_weight_regularization_;
+        Real reference_smoothing_length_;
+    };
+
+  protected:
+    Real omega_;
+    Real pair_weight_regularization_;
+    Real a_sign_;
+    Real amp_;
+    bool shell_only_;
+    int shell_region_;
+    Real nz_end_threshold_;
+    int a_form_;
+    Real reference_smoothing_length_;
+    DiscreteVariable<Real> *dv_Vol_;
+    DiscreteVariable<Vecd> *dv_active_a_;
+    DiscreteVariable<Real> *dv_sigma_;
+    DiscreteVariable<Real> *dv_phi_rhs_;
+    DiscreteVariable<Real> *dv_boundary_mask_;
+    DiscreteVariable<Vecd> *dv_boundary_normal_;
+};
+
+template <typename... Parameters>
+class ComputeOpheliePhiPairwiseNeumannMomentCK<Inner<Parameters...>>
+    : public ComputeOpheliePhiPairwiseNeumannMomentCK<Base, Inner<Parameters...>>
+{
+  public:
+    ComputeOpheliePhiPairwiseNeumannMomentCK(Inner<Parameters...> &inner_relation, const OphelieGlassFieldNames &names,
+                                             const OphelieEdgeFluxComponent &component, Real omega,
+                                             Real pair_weight_regularization, Real amp = Real(1),
+                                             bool shell_only = true, int shell_region = 0,
+                                             Real nz_end_threshold = Real(0.5), int a_form = 0)
+        : ComputeOpheliePhiPairwiseNeumannMomentCK<Base, Inner<Parameters...>>(
+              inner_relation, names, component, omega, pair_weight_regularization, amp, shell_only, shell_region,
+              nz_end_threshold, a_form)
+    {
+    }
+};
+
+/** Doc213 formal Neumann: run pairwise truncation-moment onto component.phi_rhs_field. */
+template <class ExecutionPolicy>
+inline void applyOpheliePhiPairwiseTruncationMomentNeumann(Inner<> &inner, const OphelieGlassFieldNames &names,
+                                                           const OphelieParameters &params,
+                                                           const OphelieEdgeFluxComponent &component)
+{
+    const Real amp = params.phi_boundary_neumann_rhs_amplification_;
+    const bool shell_only = params.phi_boundary_neumann_moment_shell_only_;
+    const int shell_region = static_cast<int>(params.phi_boundary_neumann_moment_shell_region_);
+    const int a_form = static_cast<int>(params.phi_boundary_neumann_moment_a_form_);
+    InteractionDynamicsCK<ExecutionPolicy, ComputeOpheliePhiPairwiseNeumannMomentCK<Inner<>>> moment(
+        inner, names, component, params.omega(), params.pair_weight_regularization_, amp, shell_only, shell_region,
+        Real(0.5), a_form);
+    moment.exec();
+    std::cout << "[ophelie][doc213] neumann_rhs kind=pairwise-truncation-moment amp=" << amp
+              << " shell_only=" << (shell_only ? 1 : 0)
+              << " shell_region=" << phiNeumannMomentShellRegionName(params.phi_boundary_neumann_moment_shell_region_)
+              << " a_form=" << phiNeumannMomentAFormName(params.phi_boundary_neumann_moment_a_form_)
+              << " chain=" << component.chain_label << " a_sign=" << component.a_sign
+              << " active_a=" << component.active_a_field << " phi_rhs=" << component.phi_rhs_field << std::endl;
+}
+
+/**
+ * Doc213 G12: DivΣA-consistent surface flux (g-family, not C_ij):
+ *   m_i = Σ_j g_ij,  g_n = −a_sign ω n·A_i
+ *   rhs_i += amp * σ_i * g_n * n_i · (−m_i)
+ */
+template <typename... RelationTypes>
+class ComputeOpheliePhiDivSigmaASurfaceFluxCK;
+
+template <template <typename...> class RelationType, typename... Parameters>
+class ComputeOpheliePhiDivSigmaASurfaceFluxCK<Base, RelationType<Parameters...>>
+    : public Interaction<RelationType<Parameters...>>
+{
+    using BaseInteraction = Interaction<RelationType<Parameters...>>;
+
+  public:
+    ComputeOpheliePhiDivSigmaASurfaceFluxCK(RelationType<Parameters...> &relation, const OphelieGlassFieldNames &names,
+                                            const OphelieEdgeFluxComponent &component, Real omega, Real amp = Real(1),
+                                            bool shell_only = true)
+        : BaseInteraction(relation), omega_(omega), a_sign_(component.a_sign), amp_(amp), shell_only_(shell_only),
+          dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
+          dv_active_a_(this->particles_->template getVariableByName<Vecd>(component.active_a_field)),
+          dv_sigma_(this->particles_->template getVariableByName<Real>(names.sigma)),
+          dv_phi_rhs_(this->particles_->template getVariableByName<Real>(component.phi_rhs_field)),
+          dv_boundary_mask_(this->particles_->template getVariableByName<Real>(names.phi_boundary_mask)),
+          dv_boundary_normal_(this->particles_->template getVariableByName<Vecd>(names.phi_boundary_normal))
+    {
+    }
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType, typename... Args>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
+            : BaseInteraction::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
+              Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)),
+              active_a_(encloser.dv_active_a_->DelegatedData(ex_policy)),
+              sigma_(encloser.dv_sigma_->DelegatedData(ex_policy)),
+              phi_rhs_(encloser.dv_phi_rhs_->DelegatedData(ex_policy)),
+              boundary_mask_(encloser.dv_boundary_mask_->DelegatedData(ex_policy)),
+              boundary_normal_(encloser.dv_boundary_normal_->DelegatedData(ex_policy)), omega_(encloser.omega_),
+              a_sign_(encloser.a_sign_), amp_(encloser.amp_), shell_only_(encloser.shell_only_)
+        {
+        }
+
+        void interact(size_t index_i, Real dt = 0.0)
+        {
+            (void)dt;
+            if (shell_only_ && boundary_mask_[index_i] <= Real(0.5))
+            {
+                return;
+            }
+            const Vecd n_out = boundary_normal_[index_i];
+            const Real n_norm = n_out.norm();
+            if (n_norm <= TinyReal)
+            {
+                return;
+            }
+            const Vecd n_hat = n_out / n_norm;
+            Vecd m_i = Vecd::Zero();
+            for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+            {
+                const UnsignedInt index_j = this->neighbor_index_[n];
+                const Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
+                m_i += pairwiseGradientWeightUncorrected(dW_ijV_j, this->e_ij(index_i, index_j));
+            }
+            const Real g_n = -a_sign_ * omega_ * n_hat.dot(active_a_[index_i]);
+            phi_rhs_[index_i] += amp_ * sigma_[index_i] * g_n * n_hat.dot(-m_i);
+        }
+
+      protected:
+        Real *Vol_;
+        Vecd *active_a_;
+        Real *sigma_;
+        Real *phi_rhs_;
+        Real *boundary_mask_;
+        Vecd *boundary_normal_;
+        Real omega_;
+        Real a_sign_;
+        Real amp_;
+        bool shell_only_;
+    };
+
+  protected:
+    Real omega_;
+    Real a_sign_;
+    Real amp_;
+    bool shell_only_;
+    DiscreteVariable<Real> *dv_Vol_;
+    DiscreteVariable<Vecd> *dv_active_a_;
+    DiscreteVariable<Real> *dv_sigma_;
+    DiscreteVariable<Real> *dv_phi_rhs_;
+    DiscreteVariable<Real> *dv_boundary_mask_;
+    DiscreteVariable<Vecd> *dv_boundary_normal_;
+};
+
+template <typename... Parameters>
+class ComputeOpheliePhiDivSigmaASurfaceFluxCK<Inner<Parameters...>>
+    : public ComputeOpheliePhiDivSigmaASurfaceFluxCK<Base, Inner<Parameters...>>
+{
+  public:
+    ComputeOpheliePhiDivSigmaASurfaceFluxCK(Inner<Parameters...> &inner_relation, const OphelieGlassFieldNames &names,
+                                            const OphelieEdgeFluxComponent &component, Real omega, Real amp = Real(1),
+                                            bool shell_only = true)
+        : ComputeOpheliePhiDivSigmaASurfaceFluxCK<Base, Inner<Parameters...>>(inner_relation, names, component, omega,
+                                                                                amp, shell_only)
+    {
+    }
+};
+
+template <class ExecutionPolicy>
+inline void applyOpheliePhiDivSigmaASurfaceFluxNeumann(Inner<> &inner, const OphelieGlassFieldNames &names,
+                                                       const OphelieParameters &params,
+                                                       const OphelieEdgeFluxComponent &component)
+{
+    const Real amp = params.phi_boundary_neumann_rhs_amplification_;
+    const bool shell_only = params.phi_boundary_neumann_moment_shell_only_;
+    InteractionDynamicsCK<ExecutionPolicy, ComputeOpheliePhiDivSigmaASurfaceFluxCK<Inner<>>> flux(
+        inner, names, component, params.omega(), amp, shell_only);
+    flux.exec();
+    std::cout << "[ophelie][doc213] neumann_rhs kind=div-sigma-a-surface-flux amp=" << amp
+              << " shell_only=" << (shell_only ? 1 : 0) << " chain=" << component.chain_label
+              << " a_sign=" << component.a_sign << " active_a=" << component.active_a_field
+              << " phi_rhs=" << component.phi_rhs_field << std::endl;
+}
+
 template <typename... RelationTypes>
 class ComputeOphelieEdgeFluxResidualCK;
 

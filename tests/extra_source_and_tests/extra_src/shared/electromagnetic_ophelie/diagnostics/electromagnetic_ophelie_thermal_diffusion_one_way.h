@@ -2189,11 +2189,57 @@ class ApplyOphelieThermalFrenchNaturalBcParticleCpCK : public LocalDynamics
     DiscreteVariable<Real> *dv_temperature_;
 };
 
+/**
+ * Doc219 C2: U = Σ ρ cp ΔT V from the delta-T field (not T−T_ref).
+ * Under SYCL Real=float, T0+ε can round back to T0 for ε≲1e−4 K; ΔT keeps the energy.
+ */
+inline Real hostOphelieThermalInternalEnergyJ(BaseParticles &particles, const std::string & /*temperature_field*/,
+                                             Real /*t_ref*/, Real rho, Real cp)
+{
+    syncVariableToHost<Real>(particles, kOphelieThermalDeltaTField);
+    syncVariableToHost<Real>(particles, "VolumetricMeasure");
+    const Real *dT = particles.getVariableDataByName<Real>(kOphelieThermalDeltaTField);
+    const Real *Vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+    const size_t n = particles.TotalRealParticles();
+    Real U = Real(0);
+    for (size_t i = 0; i < n; ++i)
+        U += rho * cp * dT[i] * Vol[i];
+    return U;
+}
+
+inline Real hostOphelieThermalEmEnergyStepJ(BaseParticles &particles, const std::string &q_field, Real dt)
+{
+    syncVariableToHost<Real>(particles, q_field);
+    syncVariableToHost<Real>(particles, "VolumetricMeasure");
+    const Real *Q = particles.getVariableDataByName<Real>(q_field);
+    const Real *Vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+    const size_t n = particles.TotalRealParticles();
+    Real e = Real(0);
+    for (size_t i = 0; i < n; ++i)
+        e += Q[i] * Vol[i] * dt;
+    return e;
+}
+
+/** Internal conduction energy change proxy: −dt · Σ V L (L≈−∇·k∇T). Diagnostic only. */
+inline Real hostOphelieThermalConductionResidualStepJ(BaseParticles &particles, Real dt)
+{
+    syncVariableToHost<Real>(particles, kOphelieThermalLaplaceTField);
+    syncVariableToHost<Real>(particles, "VolumetricMeasure");
+    const Real *L = particles.getVariableDataByName<Real>(kOphelieThermalLaplaceTField);
+    const Real *Vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+    const size_t n = particles.TotalRealParticles();
+    Real e = Real(0);
+    for (size_t i = 0; i < n; ++i)
+        e += -dt * Vol[i] * L[i];
+    return e;
+}
+
 template <class ExecutionPolicy>
 inline void execOphelieJouleHeatDiffusionOneWayStep(SolidBody &glass_body, Inner<> &glass_inner,
                                                     const std::string &q_field, const std::string &temperature_field,
                                                     Real t_initial, Real dt, const OphelieJouleHeatOneWayMaterialProps &material,
-                                                    const OphelieThermalDiffusionOneWayOptions &options)
+                                                    const OphelieThermalDiffusionOneWayOptions &options,
+                                                    OphelieJouleHeatOneWayStepResult *step_ledger = nullptr)
 {
     if (options.enable_diffusion)
     {
@@ -2212,10 +2258,29 @@ inline void execOphelieJouleHeatDiffusionOneWayStep(SolidBody &glass_body, Inner
         zero_laplace.exec();
     }
 
+    // Doc219 C2: E_EM and conduction residual from fields about to be consumed by the combined step.
+    Real e_em = Real(0), e_cond = Real(0);
+    if (step_ledger != nullptr)
+    {
+        e_em = hostOphelieThermalEmEnergyStepJ(glass_body.getBaseParticles(), q_field, dt);
+        e_cond = hostOphelieThermalConductionResidualStepJ(glass_body.getBaseParticles(), dt);
+    }
+
     StateDynamics<ExecutionPolicy, ApplyOphelieJouleHeatDiffusionCombinedStepCK> combined_step(
         glass_body, q_field, kOphelieThermalDeltaTField, temperature_field, kOphelieThermalLaplaceTField, t_initial, dt,
         material.rho, material.cp, material.k, options.enable_diffusion);
     combined_step.exec();
+
+    // Loss powers at the T layer the BC kernel actually uses (post-combined, pre-BC).
+    Real p_side = 0, p_bottom = 0, p_conv = 0, p_rad = 0, p_tot = 0;
+    const Real shell_thickness =
+        options.boundary_shell_thickness > TinyReal ? options.boundary_shell_thickness
+                                                    : options.boundary_width_factor;
+    if (step_ledger != nullptr && options.enable_french_natural_bc)
+    {
+        hostOphelieThermalFrenchNaturalHeatLossPowers(glass_body.getBaseParticles(), options, shell_thickness, p_side,
+                                                      p_bottom, p_conv, p_rad, p_tot);
+    }
 
     if (options.enable_cold_wall_dirichlet)
     {
@@ -2225,14 +2290,42 @@ inline void execOphelieJouleHeatDiffusionOneWayStep(SolidBody &glass_body, Inner
     }
     else if (options.enable_french_natural_bc)
     {
-        const Real shell_thickness =
-            options.boundary_shell_thickness > TinyReal
-                ? options.boundary_shell_thickness
-                : options.boundary_width_factor; // fallback; prefer explicit setup
         StateDynamics<ExecutionPolicy, ApplyOphelieThermalFrenchNaturalBcCK> natural_bc(
             glass_body, kOphelieThermalDeltaTField, temperature_field, t_initial, material.rho, material.cp,
             shell_thickness, options);
         natural_bc.exec(dt);
+    }
+
+    if (step_ledger != nullptr)
+    {
+        const Real U_after = hostOphelieThermalInternalEnergyJ(glass_body.getBaseParticles(), temperature_field,
+                                                               t_initial, material.rho, material.cp);
+        const Real dU_step = U_after - step_ledger->delta_U_j; // delta_U_j holds U_before for this step
+        const Real e_side = p_side * dt;
+        const Real e_bottom = p_bottom * dt;
+        const Real e_conv = p_conv * dt;
+        const Real e_rad = p_rad * dt;
+        const Real e_other = Real(0);
+        const Real R_step =
+            dU_step - (e_em - e_side - e_bottom - e_conv - e_rad + e_other);
+        const Real loss_sum =
+            std::abs(e_em) + std::abs(e_side) + std::abs(e_bottom) + std::abs(e_conv) + std::abs(e_rad) +
+            std::abs(e_other);
+        const Real S_step = std::max({std::abs(dU_step), loss_sum, step_ledger->E_floor_j});
+        const Real rel_step = std::abs(R_step) / (S_step + TinyReal);
+
+        step_ledger->E_em_j += e_em;
+        step_ledger->E_side_j += e_side;
+        step_ledger->E_bottom_j += e_bottom;
+        step_ledger->E_top_conv_j += e_conv;
+        step_ledger->E_top_rad_j += e_rad;
+        step_ledger->E_other_j += e_other;
+        step_ledger->E_conduction_residual_j += e_cond;
+        step_ledger->delta_U_j = U_after; // running U relative to t_initial
+        step_ledger->energy_closure_step_max_rel =
+            std::max(step_ledger->energy_closure_step_max_rel, rel_step);
+        step_ledger->energy_closure_measured = true;
+        step_ledger->joule_only_metrics_na = options.enable_french_natural_bc;
     }
 }
 
@@ -2302,6 +2395,21 @@ inline void copyOphelieJouleHeatOneWayStepResult(OphelieJouleHeatOneWayStepResul
     dst.free_surface_conv_loss_w = src.free_surface_conv_loss_w;
     dst.free_surface_rad_loss_w = src.free_surface_rad_loss_w;
     dst.total_heat_loss_w = src.total_heat_loss_w;
+    dst.E_em_j = src.E_em_j;
+    dst.E_side_j = src.E_side_j;
+    dst.E_bottom_j = src.E_bottom_j;
+    dst.E_top_conv_j = src.E_top_conv_j;
+    dst.E_top_rad_j = src.E_top_rad_j;
+    dst.E_other_j = src.E_other_j;
+    dst.E_conduction_residual_j = src.E_conduction_residual_j;
+    dst.delta_U_j = src.delta_U_j;
+    dst.R_E_j = src.R_E_j;
+    dst.S_E_j = src.S_E_j;
+    dst.E_floor_j = src.E_floor_j;
+    dst.energy_closure_rel_err = src.energy_closure_rel_err;
+    dst.energy_closure_step_max_rel = src.energy_closure_step_max_rel;
+    dst.energy_closure_measured = src.energy_closure_measured;
+    dst.joule_only_metrics_na = src.joule_only_metrics_na;
 }
 
 template <class ExecutionPolicy>
@@ -2327,15 +2435,59 @@ inline OphelieThermalDiffusionOneWayStepResult applyOphelieJouleHeatDiffusionOne
     ensureOphelieVariableDelegatedOnDevice<ExecutionPolicy, Real>(particles, "VolumetricMeasure");
     syncOphelieJouleHeatOneWayThermalFieldsToDevice(particles, kOphelieThermalDeltaTField, temperature_field);
 
+    // Doc219 C2 ledger: E_floor ≈ 1e-6 · ρ cp · 1K · V_total
+    Real vol_sum = Real(0);
+    {
+        syncVariableToHost<Real>(particles, "VolumetricMeasure");
+        const Real *Vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+        for (size_t i = 0; i < n; ++i)
+            vol_sum += Vol[i];
+    }
+    result.E_floor_j = Real(1.0e-6) * material.rho * material.cp * Real(1) * vol_sum;
+    result.delta_U_j = hostOphelieThermalInternalEnergyJ(particles, temperature_field, material.t_initial,
+                                                         material.rho, material.cp); // U_before (=0 if T=T0)
+
     for (size_t step = 0; step < n_steps; ++step)
     {
+        // Pack U_before into delta_U_j for the step kernel; restored to U_after inside.
         execOphelieJouleHeatDiffusionOneWayStep<ExecutionPolicy>(glass_body, glass_inner, q_field, temperature_field,
-                                                                 material.t_initial, dt, material, options);
+                                                                 material.t_initial, dt, material, options, &result);
         writeOphelieThermalVtpIfDue(recording, step, n_steps);
     }
 
-    result = execOphelieThermalDiffusionDiagnostics<ExecutionPolicy>(
+    OphelieThermalDiffusionOneWayStepResult diag = execOphelieThermalDiffusionDiagnostics<ExecutionPolicy>(
         glass_body, q_field, effective_dt, material.rho, material.cp, n, material.t_initial, q_threshold, options);
+    // Preserve Doc219 cumulative ledger; overlay end-of-run diagnostics.
+    const OphelieJouleHeatOneWayStepResult ledger = result;
+    result = diag;
+    result.E_em_j = ledger.E_em_j;
+    result.E_side_j = ledger.E_side_j;
+    result.E_bottom_j = ledger.E_bottom_j;
+    result.E_top_conv_j = ledger.E_top_conv_j;
+    result.E_top_rad_j = ledger.E_top_rad_j;
+    result.E_other_j = ledger.E_other_j;
+    result.E_conduction_residual_j = ledger.E_conduction_residual_j;
+    result.delta_U_j = ledger.delta_U_j;
+    result.E_floor_j = ledger.E_floor_j;
+    result.energy_closure_step_max_rel = ledger.energy_closure_step_max_rel;
+    result.energy_closure_measured = ledger.energy_closure_measured;
+    result.joule_only_metrics_na = ledger.joule_only_metrics_na || options.enable_french_natural_bc;
+    result.R_E_j = result.delta_U_j -
+                   (result.E_em_j - result.E_side_j - result.E_bottom_j - result.E_top_conv_j - result.E_top_rad_j +
+                    result.E_other_j);
+    const Real loss_sum = std::abs(result.E_em_j) + std::abs(result.E_side_j) + std::abs(result.E_bottom_j) +
+                          std::abs(result.E_top_conv_j) + std::abs(result.E_top_rad_j) + std::abs(result.E_other_j);
+    result.S_E_j = std::max({std::abs(result.delta_U_j), loss_sum, result.E_floor_j});
+    result.energy_closure_rel_err = std::abs(result.R_E_j) / (result.S_E_j + TinyReal);
+    std::cout << "[ophelie][doc219][energy] measured=" << (result.energy_closure_measured ? 1 : 0)
+              << " E_EM=" << result.E_em_j << " E_side=" << result.E_side_j << " E_bottom=" << result.E_bottom_j
+              << " E_top_conv=" << result.E_top_conv_j << " E_top_rad=" << result.E_top_rad_j
+              << " E_other=" << result.E_other_j << " delta_U=" << result.delta_U_j << " R_E=" << result.R_E_j
+              << " S_E=" << result.S_E_j << " E_floor=" << result.E_floor_j
+              << " closure_cum_rel=" << result.energy_closure_rel_err
+              << " closure_step_max_rel=" << result.energy_closure_step_max_rel
+              << " conduction_resid=" << result.E_conduction_residual_j
+              << " joule_only_NA=" << (result.joule_only_metrics_na ? 1 : 0) << std::endl;
     return result;
 }
 

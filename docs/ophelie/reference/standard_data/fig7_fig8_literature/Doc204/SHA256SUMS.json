@@ -1,0 +1,17 @@
+{
+  "204_CURSOR_NEXT_PLAN.md": "661c05098074b6aca40d7565357c87e346d06df900067e605849cc6ad5867723",
+  "README_FIRST.md": "ab1d95c76349aa1fe4c8f7fb87bf73f1bc4ad51fdea075e0ac3ca0fb6eb73244",
+  "qa/fig7_direction_overlay.png": "8ac3e3e5984039dde297ec14ed3c55d3d744b569cf564beaf6bc1a1e95009983",
+  "qa/fig8_contour_overlay.png": "28185ebecd9a0063a7bff49aec94eae5302be46cf55fd88150aec021be44ca62",
+  "qa/fig8_partial_reconstruction.png": "9c9289d7d6e076072ad7c9d359a7cac9a3565740ee78e51642a20cc141fd6c2e",
+  "reference/digitization_provenance.json": "7251aaffe209abd8ae0f01f1d74b680a6d0268a0bca5ce299d3885ac0a411a4a",
+  "reference/fig7_direction_samples.csv": "56321caef910f3ad55ec7742049ca51f199a9f803654f00cd37a06d7bffb8cc5",
+  "reference/fig7_native.png": "e6987e0a254bea74b8dc68e35ff149a256c7baa90f10c53f831ec43ad8a8730a",
+  "reference/fig7_topology_regions.csv": "65f7c65c12e203e638219b558cef36c2e59194d12410d3c6bf33f5099dc9849e",
+  "reference/fig8_labelled_contour_points.csv": "0c2de7d3992fa516e116007552618f02f654be44cf33c9e346879920962cf561",
+  "reference/fig8_midline_contour_intersections.csv": "6d26020d97c12cd58b0e3afb4d912029c3674cd219526fd4b083fec10e7ba6b3",
+  "reference/fig8_native.png": "6718bfe258c5de2fd2964934dab0d69d76d3b9f6a15998cc8f9452c85212ab83",
+  "reference/fig8_partial_linear_reconstruction.csv": "21048016ad32c18d019db662aac38017f9938f05ffa2c96ba3882705cd354f2d",
+  "scripts/digitize_figures.py": "1080fac7791bce4e3400714ccda321eb699315eb42f7dc8ab29cd372d0d86c06",
+  "scripts/validate_reference.py": "d426a36a8e3b92bee60b98ccb72117796e4c1c820af23becaee8e8799611a81d"
+}

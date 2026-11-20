@@ -2,12 +2,17 @@
 #define ELECTROMAGNETIC_OPHELIE_PHI_COMPONENT_H
 
 #include "electromagnetic_ophelie_edge_flux.h"
+#include "electromagnetic_ophelie_phi_variational.h"
+#include "electromagnetic_ophelie_phi_p1_projection.h"
+#include "electromagnetic_ophelie_phi_d2_local_poly.h"
 #include "electromagnetic_ophelie_phi_gmres.h"
 #include "electromagnetic_ophelie_phi_boundary_diagnostics.h"
 #include "electromagnetic_ophelie_phi_rhs_diagnostics.h"
 #include "electromagnetic_ophelie_progress.h"
 
 #include <Eigen/Dense>
+#include <limits>
+#include <cmath>
 
 namespace SPH
 {
@@ -92,16 +97,62 @@ inline void applyOpheliePhiComponentLegacyPairwiseLhsOperator(SolidBody &glass_b
     apply_gauge_penalty.exec();
 }
 
+/** Doc213 G12: DivΣA-consistent LHS = div(σ ∇φ) for imag/real edge-flux components. */
+template <class ExecutionPolicy>
+inline void applyOpheliePhiComponentDivSigmaGradLhsOperator(SolidBody &glass_body, Inner<> &inner,
+                                                            const OphelieGlassFieldNames &names,
+                                                            const OphelieEdgeFluxComponent &component,
+                                                            const OphelieParameters &params)
+{
+    const bool imag_chain = (component.phi_field == names.phi_imag);
+    const std::string &grad_field = imag_chain ? names.grad_phi_imag : names.grad_phi_real;
+    const std::string &sigma_grad_scratch = imag_chain ? names.j_imag : names.j_real;
+    const std::string &gn_field = imag_chain ? names.phi_boundary_gn : names.phi_boundary_gn_real;
+
+    UpdateCellLinkedList<ExecutionPolicy, RealBody> update_cell_linked_list(glass_body);
+    UpdateRelation<ExecutionPolicy, Inner<>> update_inner_relation(inner);
+    StateDynamics<ExecutionPolicy, ZeroOphelieScalarFieldCK> zero_lhs(glass_body, component.phi_lhs_field);
+    StateDynamics<ExecutionPolicy, OphelieScaleVecdFieldBySigmaCK> scale_sigma_grad(
+        glass_body, names, grad_field, sigma_grad_scratch);
+    StateDynamics<ExecutionPolicy, OpheliePhiGaugePenaltyToLhsCK> apply_gauge_penalty(
+        glass_body, component.phi_field, component.phi_lhs_field, params.phi_gauge_penalty_);
+
+    update_cell_linked_list.exec();
+    update_inner_relation.exec();
+    zero_lhs.exec();
+    InteractionDynamicsCK<ExecutionPolicy, ComputeOphelieNamedScalarGradientCK<Inner<>>> compute_grad(
+        inner, component.phi_field, grad_field);
+    compute_grad.exec();
+    if (opheliePhiBoundaryGradNeumannInLhs(params))
+    {
+        applyOpheliePhiBoundaryGradNeumannProjectionFromFields(glass_body.getBaseParticles(), names, grad_field,
+                                                               gn_field);
+    }
+    scale_sigma_grad.exec();
+    execOphelieVecdDivergence<ExecutionPolicy>(inner, names, params, sigma_grad_scratch, component.phi_lhs_field);
+    apply_gauge_penalty.exec();
+}
+
 template <class ExecutionPolicy>
 inline void applyOpheliePhiComponentLhsOperator(SolidBody &glass_body, Inner<> &inner,
                                                 const OphelieGlassFieldNames &names,
                                                 const OphelieEdgeFluxComponent &component,
                                                 const OphelieParameters &params)
 {
+    if (params.doc214_e2_variational_)
+    {
+        const bool imag_chain = (component.phi_field == names.phi_imag);
+        const std::string &grad_field = imag_chain ? names.grad_phi_imag : names.grad_phi_real;
+        const std::string &sigma_grad_scratch = imag_chain ? names.j_imag : names.j_real;
+        applyOpheliePhiLhsDoc214E2Variational<ExecutionPolicy>(
+            glass_body, inner, names, params, component.phi_field, grad_field, sigma_grad_scratch,
+            component.phi_lhs_field, params.phi_gauge_penalty_);
+        return;
+    }
     if (params.phi_lhs_operator_kind_ == OpheliePhiLhsOperatorKind::DivSigmaGrad)
     {
-        std::cout << "[ophelie] WARNING: DivSigmaGrad LHS not yet parameterized for edge-flux component "
-                  << component.chain_label << "; using legacy pairwise." << std::endl;
+        applyOpheliePhiComponentDivSigmaGradLhsOperator<ExecutionPolicy>(glass_body, inner, names, component, params);
+        return;
     }
     applyOpheliePhiComponentLegacyPairwiseLhsOperator<ExecutionPolicy>(glass_body, inner, names, component, params);
 }
@@ -152,6 +203,55 @@ inline void setupOphelieEdgeFluxComponentRhsFromA(SolidBody &glass_body, Inner<>
     compute_rhs.exec();
 }
 
+/** Doc213: formal pairwise truncation-moment Neumann when kind is set (device CK).
+ * Only for DivΣA: LegacyFlux EMF already carries Σ C A·Δx — applying moment would double-count. */
+template <class ExecutionPolicy>
+inline bool maybeApplyOpheliePhiPairwiseTruncationMomentNeumann(Inner<> &inner, const OphelieGlassFieldNames &names,
+                                                                const OphelieParameters &params,
+                                                                const OphelieEdgeFluxComponent &component)
+{
+    const bool div_sigma_rhs = params.doc212_shared_complex_div_sigma_rhs_ ||
+                               params.phi_rhs_operator_kind_ == OpheliePhiRhsOperatorKind::DivSigmaA;
+    if (!div_sigma_rhs || params.phi_boundary_mode_ != OpheliePhiBoundaryMode::OneSidedNeumann ||
+        params.phi_boundary_lhs_grad_neumann_ ||
+        params.phi_boundary_neumann_rhs_kind_ != OpheliePhiNeumannRhsKind::PairwiseTruncationMoment)
+    {
+        return false;
+    }
+    applyOpheliePhiPairwiseTruncationMomentNeumann<ExecutionPolicy>(inner, names, params, component);
+    return true;
+}
+
+/** Doc213 G12: DivΣA g-family surface flux Neumann (mutually exclusive with pairwise moment / shell). */
+template <class ExecutionPolicy>
+inline bool maybeApplyOpheliePhiDivSigmaASurfaceFluxNeumann(Inner<> &inner, const OphelieGlassFieldNames &names,
+                                                            const OphelieParameters &params,
+                                                            const OphelieEdgeFluxComponent &component)
+{
+    const bool div_sigma_rhs = params.doc212_shared_complex_div_sigma_rhs_ ||
+                               params.phi_rhs_operator_kind_ == OpheliePhiRhsOperatorKind::DivSigmaA;
+    if (!div_sigma_rhs || params.phi_boundary_mode_ != OpheliePhiBoundaryMode::OneSidedNeumann ||
+        params.phi_boundary_lhs_grad_neumann_ ||
+        params.phi_boundary_neumann_rhs_kind_ != OpheliePhiNeumannRhsKind::DivSigmaASurfaceFlux)
+    {
+        return false;
+    }
+    applyOpheliePhiDivSigmaASurfaceFluxNeumann<ExecutionPolicy>(inner, names, params, component);
+    return true;
+}
+
+template <class ExecutionPolicy>
+inline void maybeApplyOpheliePhiFormalNeumannRhs(Inner<> &inner, const OphelieGlassFieldNames &names,
+                                                 const OphelieParameters &params,
+                                                 const OphelieEdgeFluxComponent &component)
+{
+    if (maybeApplyOpheliePhiPairwiseTruncationMomentNeumann<ExecutionPolicy>(inner, names, params, component))
+    {
+        return;
+    }
+    (void)maybeApplyOpheliePhiDivSigmaASurfaceFluxNeumann<ExecutionPolicy>(inner, names, params, component);
+}
+
 template <class ExecutionPolicy>
 inline void finalizeOpheliePhiComponentRhsHost(BaseParticles &particles, const std::string &phi_rhs_field,
                                                OphelieParameters &params,
@@ -161,6 +261,7 @@ inline void finalizeOpheliePhiComponentRhsHost(BaseParticles &particles, const s
                                                OpheliePhiNeumannRhsCorrectionStats *neumann_stats = nullptr)
 {
     // Doc212 E-A: same host finalize for imag/real; Neumann is opt-in (default mode None).
+    // ShellVdB only here; PairwiseTruncationMoment already applied via CK before finalize.
     if (names != nullptr && geom != nullptr)
     {
         if (phi_rhs_field == names->phi_rhs_imag)
@@ -535,12 +636,28 @@ inline Real solvePhiComponentWithCurrentRhs(SolidBody &glass_body, Inner<> &inne
     return solvePhiComponentPCGWithCurrentRhs<ExecutionPolicy>(glass_body, inner, names, component, params);
 }
 
+/**
+ * Doc217 E-R: residual fields carry an explicit measurement flag.
+ * Unmeasured floats must not be treated as 0 (= perfect convergence).
+ */
 struct OphelieComplexEdgeFluxSolveReport
 {
     Real phi_imag_solver_rel_residual = 0.0;
     Real phi_real_solver_rel_residual = 0.0;
     Real phi_eq_res_vol_imag = 0.0;
     Real phi_eq_res_vol_real = 0.0;
+    /** True when *_solver_rel_residual came from a linear Kφ−b solve. */
+    bool phi_solver_residual_measured = true;
+    /**
+     * True when phi_eq_res_vol_* is a meaningful equation/stationarity residual
+     * (full-space weak residual OR reduced P1 stationarity).
+     */
+    bool phi_eq_res_measured = true;
+    /** Doc217: ||Gφ+F||σ/||F||σ (P1 path); NaN if not computed. */
+    Real remaining_field_ratio_imag = std::numeric_limits<Real>::quiet_NaN();
+    Real remaining_field_ratio_real = std::numeric_limits<Real>::quiet_NaN();
+    /** Doc217 space tag for logs: "full" | "p1" | "unknown". */
+    const char *phi_space = "unknown";
 };
 
 /** Solve imag (+ optional real) edge-flux scalar systems from current active A fields. */
@@ -562,21 +679,102 @@ inline OphelieComplexEdgeFluxSolveReport solveOphelieComplexEdgeFluxWithCurrentA
         zero_phi_real.exec();
     }
 
+    // Doc217 D2 / E-G: local quadratic Neumann collocation (host SparseLU). Opt-in only.
+    if (params.doc217_d2_local_poly_)
+    {
+        if (params.doc216_e5_p1_projection_)
+        {
+            std::cerr << "[ophelie][doc217][d2] FATAL: mutually exclusive with --doc216-e5-p1" << std::endl;
+            std::exit(2);
+        }
+        const OphelieDoc217D2ComplexBundle d2 =
+            execOphelieDoc217D2LocalPolySolveComplex<ExecutionPolicy>(glass_body, inner, names, params,
+                                                                      skip_real_phi_solve);
+        report.phi_space = "d2";
+        report.phi_solver_residual_measured = true;
+        report.phi_eq_res_measured = true;
+        report.phi_imag_solver_rel_residual = d2.imag.linear_rel_residual;
+        report.phi_real_solver_rel_residual =
+            d2.solved_real ? d2.realp.linear_rel_residual : std::numeric_limits<Real>::quiet_NaN();
+        report.phi_eq_res_vol_imag = d2.imag.linear_rel_residual;
+        report.phi_eq_res_vol_real = d2.solved_real ? d2.realp.linear_rel_residual : Real(0);
+        report.remaining_field_ratio_imag = d2.imag.remaining_field_ratio;
+        report.remaining_field_ratio_real =
+            d2.solved_real ? d2.realp.remaining_field_ratio : std::numeric_limits<Real>::quiet_NaN();
+        std::cout << "[ophelie][doc217][e-r] report space=d2"
+                  << " linear_solver_residual=MEASURED"
+                  << " imag_rel=" << report.phi_imag_solver_rel_residual
+                  << " real_rel=" << report.phi_real_solver_rel_residual
+                  << " remaining_field_ratio_imag=" << report.remaining_field_ratio_imag
+                  << " d2_ok=" << (d2.ok ? 1 : 0) << std::endl;
+        // Doc219 B: failed D2 must not feed thermal / Picard with a usable Q.
+        if (!d2.ok)
+        {
+            std::cerr << "[ophelie][doc219][d2] FATAL solve/recon path not ok"
+                      << " fail_stage=" << (d2.imag.fail_stage[0] ? d2.imag.fail_stage : "unknown")
+                      << " — refusing to continue with invalid φ/Q" << std::endl;
+            std::exit(3);
+        }
+        return report;
+    }
+
+    // Doc216 E5 / Doc217 E-R: P1 projection replaces truncated full-space GᵀσG (opt-in).
+    // Do NOT hard-code solver/eq residuals to 0 (Doc216 self-ind logs were misleading).
+    if (params.doc216_e5_p1_projection_)
+    {
+        if (!params.doc214_e2_variational_)
+        {
+            std::cout << "[ophelie][doc216][e5] WARN enabling e2_variational for P1 projection path" << std::endl;
+            params.doc214_e2_variational_ = true;
+            params.doc212_shared_complex_div_sigma_rhs_ = false;
+            params.doc212_shared_complex_pairwise_rhs_ = false;
+            params.doc212_shared_complex_edge_rhs_ = false;
+        }
+        const OphelieDoc216E5P1ComplexSolveBundle p1 =
+            execOphelieDoc216E5P1ProjectionSolveComplex<ExecutionPolicy>(glass_body, inner, names, params,
+                                                                         skip_real_phi_solve);
+        report.phi_space = "p1";
+        report.phi_solver_residual_measured = false; // no linear Kφ−b solve on this path
+        report.phi_eq_res_measured = true;           // reduced-space stationarity is measured
+        report.phi_imag_solver_rel_residual = std::numeric_limits<Real>::quiet_NaN();
+        report.phi_real_solver_rel_residual = std::numeric_limits<Real>::quiet_NaN();
+        // Picard / eq gate uses reduced stationarity — NOT remaining_field_ratio.
+        report.phi_eq_res_vol_imag = p1.imag.stationarity_rel;
+        report.phi_eq_res_vol_real = p1.solved_real ? p1.realp.stationarity_rel : Real(0);
+        report.remaining_field_ratio_imag = p1.imag.remaining_field_ratio;
+        report.remaining_field_ratio_real =
+            p1.solved_real ? p1.realp.remaining_field_ratio : std::numeric_limits<Real>::quiet_NaN();
+        std::cout << "[ophelie][doc217][e-r] report space=p1"
+                  << " linear_solver_residual=NOT_MEASURED"
+                  << " phi_eq_res_vol=stationarity_rel"
+                  << " imag_stat=" << report.phi_eq_res_vol_imag
+                  << " real_stat=" << report.phi_eq_res_vol_real
+                  << " remaining_field_ratio_imag=" << report.remaining_field_ratio_imag << std::endl;
+        return report;
+    }
+
     // Doc212 E-A: complex edge-flux uses one shared component RHS for imag and real.
     // Production previously mixed DivΣA (imag) with edge EMF (real); that breaks A→iA.
     // Historical DivΣA imag path remains only when edge_flux_complex_ is false.
     // Doc213 production: doc212_shared_complex_div_sigma_rhs_ → unified DivΣA imag+real.
     // Diagnostic: doc212_shared_complex_pairwise_rhs_ → unified pairwise (A_i−A_j).
     // Rollback: shared edge EMF when doc212_shared_complex_edge_rhs_ (via --phi-rhs-operator=legacy-flux).
+    const bool shared_complex_e2 =
+        params.edge_flux_complex_ && params.doc214_e2_variational_;
     const bool shared_complex_div =
-        params.edge_flux_complex_ && params.doc212_shared_complex_div_sigma_rhs_;
+        params.edge_flux_complex_ && params.doc212_shared_complex_div_sigma_rhs_ && !shared_complex_e2;
     const bool shared_complex_pairwise =
-        params.edge_flux_complex_ && params.doc212_shared_complex_pairwise_rhs_ && !shared_complex_div;
-    const bool shared_complex_edge = !shared_complex_div && !shared_complex_pairwise &&
+        params.edge_flux_complex_ && params.doc212_shared_complex_pairwise_rhs_ && !shared_complex_div &&
+        !shared_complex_e2;
+    const bool shared_complex_edge = !shared_complex_div && !shared_complex_pairwise && !shared_complex_e2 &&
                                      ophelieUseEdgeFluxElectromotiveRhs(params) && params.edge_flux_complex_ &&
                                      params.doc212_shared_complex_edge_rhs_;
     OpheliePhiNeumannRhsCorrectionStats neumann_stats;
-    if (shared_complex_div)
+    if (shared_complex_e2)
+    {
+        std::cout << "[ophelie][doc214][e2] shared complex variational G^*(σG) ON (imag+real; opt-in)" << std::endl;
+    }
+    else if (shared_complex_div)
     {
         std::cout << "[ophelie][doc213] shared complex DivΣA ON (imag+real; production)" << std::endl;
     }
@@ -592,15 +790,33 @@ inline OphelieComplexEdgeFluxSolveReport solveOphelieComplexEdgeFluxWithCurrentA
                                                                                             : "div-sigma-a")
                   << " (not production)" << std::endl;
     }
-    if (shared_complex_div)
+    if (shared_complex_e2)
+    {
+        const OphelieEdgeFluxComponent imag_component = makeOphelieEdgeFluxImagComponent(names, params);
+        setupOpheliePhiRhsDoc214E2Variational<ExecutionPolicy>(
+            glass_body, inner, names, params, names.a_src_real, names.j_imag, names.phi_rhs_imag, imag_component.a_sign,
+            params.omega());
+        finalizeOpheliePhiImagRhsHost(particles, names, params, boundary_geom, dp, &neumann_stats);
+    }
+    else if (shared_complex_div)
     {
         setupOpheliePhiImagRhsFromASrcDivConsistent<ExecutionPolicy>(glass_body, inner, names, params);
+        {
+            const OphelieEdgeFluxComponent imag_component = makeOphelieEdgeFluxImagComponent(names, params);
+            maybeApplyOpheliePhiFormalNeumannRhs<ExecutionPolicy>(inner, names, params,
+                                                                                 imag_component);
+        }
         finalizeOpheliePhiImagRhsHost(particles, names, params, boundary_geom, dp, &neumann_stats);
     }
     else if (shared_complex_pairwise)
     {
         setupOpheliePhiRhsFromASrcPairwiseFields<ExecutionPolicy>(glass_body, inner, names, names.a_src_real,
                                                                   names.phi_rhs_imag, params.omega());
+        {
+            const OphelieEdgeFluxComponent imag_component = makeOphelieEdgeFluxImagComponent(names, params);
+            maybeApplyOpheliePhiFormalNeumannRhs<ExecutionPolicy>(inner, names, params,
+                                                                                 imag_component);
+        }
         finalizeOpheliePhiImagRhsHost(particles, names, params, boundary_geom, dp, &neumann_stats);
     }
     else if (shared_complex_edge)
@@ -614,12 +830,19 @@ inline OphelieComplexEdgeFluxSolveReport solveOphelieComplexEdgeFluxWithCurrentA
         const OphelieEdgeFluxComponent imag_component = makeOphelieEdgeFluxImagComponent(names, params);
         logOphelieEdgeFluxComponentAssembly(imag_component, params, "shared_complex_edge");
         setupOphelieEdgeFluxComponentRhsFromA<ExecutionPolicy>(glass_body, inner, names, imag_component, params);
+        maybeApplyOpheliePhiFormalNeumannRhs<ExecutionPolicy>(inner, names, params,
+                                                                             imag_component);
         finalizeOpheliePhiComponentRhsHost<ExecutionPolicy>(particles, imag_component.phi_rhs_field, params, &names,
                                                             boundary_geom, dp, &neumann_stats);
     }
     else
     {
         setupOpheliePhiImagRhsFromASrc<ExecutionPolicy>(glass_body, inner, names, params);
+        {
+            const OphelieEdgeFluxComponent imag_component = makeOphelieEdgeFluxImagComponent(names, params);
+            maybeApplyOpheliePhiFormalNeumannRhs<ExecutionPolicy>(inner, names, params,
+                                                                                 imag_component);
+        }
         finalizeOpheliePhiImagRhsHost(particles, names, params, boundary_geom, dp, &neumann_stats);
     }
     if (boundary_geom != nullptr && params.phi_boundary_mode_ == OpheliePhiBoundaryMode::OneSidedNeumann)
@@ -641,8 +864,10 @@ inline OphelieComplexEdgeFluxSolveReport solveOphelieComplexEdgeFluxWithCurrentA
         std::cout << "[ophelie] solver-local scale phi_rhs_imag on particles by " << solver_local_scale << std::endl;
         hostScaleScalarFieldInPlace(particles, names.phi_rhs_imag, solver_local_scale, n);
     }
-    if (shared_complex_edge)
+    if (shared_complex_e2 || shared_complex_edge)
     {
+        // E2/edge: PCG matvec must use the same component LHS as the RHS assembly
+        // (ImagLhsOperator stays LegacyPairwise/DivSigmaGrad and would desync E2).
         const OphelieEdgeFluxComponent imag_component = makeOphelieEdgeFluxImagComponent(names, params);
         report.phi_imag_solver_rel_residual = solvePhiComponentWithCurrentRhs<ExecutionPolicy>(
             glass_body, inner, names, imag_component, params);
@@ -663,10 +888,21 @@ inline OphelieComplexEdgeFluxSolveReport solveOphelieComplexEdgeFluxWithCurrentA
     if (params.edge_flux_complex_ && !skip_real_phi_solve)
     {
         const OphelieEdgeFluxComponent real_component = makeOphelieEdgeFluxRealComponent(names, params);
-        if (shared_complex_div)
+        if (shared_complex_e2)
+        {
+            logOphelieEdgeFluxComponentAssembly(real_component, params, "shared_complex_e2_variational");
+            setupOpheliePhiRhsDoc214E2Variational<ExecutionPolicy>(
+                glass_body, inner, names, params, names.a_src_imag, names.j_real, names.phi_rhs_real,
+                real_component.a_sign, params.omega());
+            finalizeOpheliePhiComponentRhsHost<ExecutionPolicy>(particles, real_component.phi_rhs_field, params, &names,
+                                                                boundary_geom, dp);
+        }
+        else if (shared_complex_div)
         {
             logOphelieEdgeFluxComponentAssembly(real_component, params, "shared_complex_div_sigma");
             setupOpheliePhiRealRhsFromASrcDivConsistent<ExecutionPolicy>(glass_body, inner, names, params);
+            maybeApplyOpheliePhiFormalNeumannRhs<ExecutionPolicy>(inner, names, params,
+                                                                                 real_component);
             finalizeOpheliePhiComponentRhsHost<ExecutionPolicy>(particles, real_component.phi_rhs_field, params, &names,
                                                                 boundary_geom, dp);
         }
@@ -676,6 +912,8 @@ inline OphelieComplexEdgeFluxSolveReport solveOphelieComplexEdgeFluxWithCurrentA
             // a_sign=-1 ⇒ ω_signed=-ω in rhs -= ω_signed * σ g·(A_i−A_j).
             setupOpheliePhiRhsFromASrcPairwiseFields<ExecutionPolicy>(glass_body, inner, names, names.a_src_imag,
                                                                       names.phi_rhs_real, -params.omega());
+            maybeApplyOpheliePhiFormalNeumannRhs<ExecutionPolicy>(inner, names, params,
+                                                                                 real_component);
             finalizeOpheliePhiComponentRhsHost<ExecutionPolicy>(particles, real_component.phi_rhs_field, params, &names,
                                                                 boundary_geom, dp);
         }
@@ -684,10 +922,13 @@ inline OphelieComplexEdgeFluxSolveReport solveOphelieComplexEdgeFluxWithCurrentA
             logOphelieEdgeFluxComponentAssembly(real_component, params,
                                                 shared_complex_edge ? "shared_complex_edge" : "complex_real_only");
             setupOphelieEdgeFluxComponentRhsFromA<ExecutionPolicy>(glass_body, inner, names, real_component, params);
+            maybeApplyOpheliePhiFormalNeumannRhs<ExecutionPolicy>(inner, names, params,
+                                                                                 real_component);
             finalizeOpheliePhiComponentRhsHost<ExecutionPolicy>(particles, real_component.phi_rhs_field, params, &names,
                                                                 boundary_geom, dp);
         }
-        if (shared_complex_div || shared_complex_pairwise || ophelieUseEdgeFluxElectromotiveRhs(params))
+        if (shared_complex_e2 || shared_complex_div || shared_complex_pairwise ||
+            ophelieUseEdgeFluxElectromotiveRhs(params))
         {
             if (solver_local_scale < Real(1) - TinyReal)
             {
@@ -709,7 +950,7 @@ inline OphelieComplexEdgeFluxSolveReport solveOphelieComplexEdgeFluxWithCurrentA
         }
     }
 
-    if (shared_complex_edge)
+    if (shared_complex_e2 || shared_complex_edge)
     {
         const OphelieEdgeFluxComponent imag_component = makeOphelieEdgeFluxImagComponent(names, params);
         applyOpheliePhiComponentLhsOperator<ExecutionPolicy>(glass_body, inner, names, imag_component, params);
@@ -721,6 +962,9 @@ inline OphelieComplexEdgeFluxSolveReport solveOphelieComplexEdgeFluxWithCurrentA
         applyOpheliePhiImagLhsOperator<ExecutionPolicy>(glass_body, inner, names, params);
         report.phi_eq_res_vol_imag = hostPhiEqResVolFromCurrentLhsRhs(particles, names, n);
     }
+    report.phi_space = "full";
+    report.phi_solver_residual_measured = true;
+    report.phi_eq_res_measured = true;
     return report;
 }
 
@@ -737,7 +981,27 @@ inline Real execOphelieComplexEdgeFluxSolveReconAndPower(
     {
         *solve_report = report;
     }
-    execOphelieEdgeFluxPostPhiPipeline<ExecutionPolicy>(glass_body, inner, names, params, skip_real_phi_solve);
+    if (params.doc217_d2_local_poly_)
+    {
+        // Plan §5.3.8: same local-poly gradient family as the D2 solve (not SPH G).
+        execOphelieDoc217D2LocalPolyRecon<ExecutionPolicy>(glass_body, inner, names, params, skip_real_phi_solve);
+        // Doc219 B: recon must keep the assembly fit cache; otherwise Q is poisoned.
+        if (!ophelieDoc217D2FitCache().valid)
+        {
+            std::cerr << "[ophelie][doc219][d2] FATAL recon fit cache invalid — refusing power/Q consume"
+                      << std::endl;
+            std::exit(3);
+        }
+    }
+    else if (params.doc214_e2_variational_)
+    {
+        // Plan §5.2: E=-(Gφ+iωA) with the same G used in K/b — not edge LS recon.
+        execOphelieDoc214E2ParticleGRecon<ExecutionPolicy>(glass_body, inner, names, params, skip_real_phi_solve);
+    }
+    else
+    {
+        execOphelieEdgeFluxPostPhiPipeline<ExecutionPolicy>(glass_body, inner, names, params, skip_real_phi_solve);
+    }
     syncOphelieEdgeReconToPrimaryEJQ<ExecutionPolicy>(glass_body, names, params);
     BaseParticles &particles = glass_body.getBaseParticles();
     return hostEdgeFluxReconPower(particles, names, particles.TotalRealParticles(), params);

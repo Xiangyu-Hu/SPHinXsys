@@ -23,8 +23,9 @@
 | [`archive/DOCS_051_100_MERGED.md`](archive/DOCS_051_100_MERGED.md) | Docs 51–100 combined archive |
 | [`archive/DOCS_101_150_MERGED.md`](archive/DOCS_101_150_MERGED.md) | Docs 101–150 combined archive |
 | [`archive/DOCS_151_200_MERGED.md`](archive/DOCS_151_200_MERGED.md) | Docs 151–200 combined archive |
-| [`archive/README_MERGED_DOCS.md`](archive/README_MERGED_DOCS.md) | Merge policy (201+ stay standalone) |
-| [packs/gpt_doc76_to_83_discussion_2026-10-03.tar.gz](packs/gpt_doc76_to_83_discussion_2026-10-03.tar.gz) | Pack: Docs76–83 + A/B/C/French code + results |
+| [`archive/DOCS_201_250_MERGED.md`](archive/DOCS_201_250_MERGED.md) | Docs 201–227 combined archive (through Doc227 plan) |
+| [`archive/README_MERGED_DOCS.md`](archive/README_MERGED_DOCS.md) | Merge policy / volume index |
+| [`OPHELIE_BRANCH_STATUS_2026-11-20.md`](OPHELIE_BRANCH_STATUS_2026-11-20.md) | Branch snapshot: natural / stirring done vs gaps (2026-11-20) |
 | [OPHELIE_CURRENT_CODE_AUDIT.md](OPHELIE_CURRENT_CODE_AUDIT.md) | 2026-08 code audit vs Jacoutot papers |
 | [OPHELIE_STAGE3_4_CLOSEOUT_AND_FRENCH_NATURAL_NEXT_PLAN_2026-08-11.md](OPHELIE_STAGE3_4_CLOSEOUT_AND_FRENCH_NATURAL_NEXT_PLAN_2026-08-11.md) | Binding plan: φ dual gate, σ_nat, Stage 3.5 → Natural thermal / Stage 4.x |
 
@@ -44,22 +45,13 @@
 
 | Doc | Role |
 |-----|------|
-| [`reference/doc180_runs/`](reference/doc180_runs/) | Results: P1/P2 refs, coupled cold dt005/dt0025, readiness |
-| [`reference/doc183_runs/`](reference/doc183_runs/) | Field exports, diagnostics figures, A/B/C compares |
-| [`reference/doc186_runs/`](reference/doc186_runs/) | Classifier tests, U0/U1/U2, bulk/flux reviews |
-| [`reference/doc200_runs/`](reference/doc200_runs/) | Doc200 results + pack under `PACKAGES/` |
-| [201_OPHELIE_UNIFIED_COMPLEX_EM_AND_LIVE_BUOYANCY_CURSOR_PLAN_2026-10-30.md](201_OPHELIE_UNIFIED_COMPLEX_EM_AND_LIVE_BUOYANCY_CURSOR_PLAN_2026-10-30.md) | Doc201: unified complex EM + live buoyancy / acoustic top |
-| [202_DOC201_ROUND_SUMMARY_AND_CLOSE_2026-10-31.md](202_DOC201_ROUND_SUMMARY_AND_CLOSE_2026-10-31.md) | Doc201 closeout; §13 answers |
-| [`reference/doc201_runs/`](reference/doc201_runs/) | Single-layer evidence; [`DELIVERABLE_CHECKLIST.md`](reference/doc201_runs/DELIVERABLE_CHECKLIST.md); brief + NEXT |
-| [202_OPHELIE_B2_LID_SIDE_SPLIT_ACOUSTIC_CURSOR_PLAN_2026-10-31.md](202_OPHELIE_B2_LID_SIDE_SPLIT_ACOUSTIC_CURSOR_PLAN_2026-10-31.md) | Doc202: B2 lid/side acoustic split (non-dens) |
-| [`reference/doc202_runs/`](reference/doc202_runs/) | H1/H1b split reviews; [`H1_SPLIT_REVIEW.md`](reference/doc202_runs/H1_SPLIT_REVIEW.md) |
-| [203_DOC201_DOC202_ROUND_PACK_2026-10-31.md](203_DOC201_DOC202_ROUND_PACK_2026-10-31.md) | Round pack pointer; `packs/Doc201_Doc202_UNIFIED_EM_LIVE_B2_2026-10-31.tar.gz` |
-| [212_OPHELIE_TARGETED_HYDRO_EM_REPAIR_CURSOR_PLAN_2026-11-06.md](212_OPHELIE_TARGETED_HYDRO_EM_REPAIR_CURSOR_PLAN_2026-11-06.md) | Doc212: cavity CFL + shared complex EMF; phase/edge PASS; field PARTIAL |
-| [213_OPHELIE_LEGACYFLUX_EMF_SKIN_CLOSURE_CURSOR_PLAN_2026-11-07.md](213_OPHELIE_LEGACYFLUX_EMF_SKIN_CLOSURE_CURSOR_PLAN_2026-11-07.md) | Doc213: EMF-internal skin/field closure (current) |
-| [`reference/doc213_runs/`](reference/doc213_runs/) | G0 baselines / EMF surgery evidence（本地 runs） |
+| [`archive/DOCS_201_250_MERGED.md`](archive/DOCS_201_250_MERGED.md) | Docs 201–227 plans/summaries (standalone files removed) |
+| [`reference/standard_data/`](reference/standard_data/) | Fig.7/8 literature PNG+CSV + Fig.8 ASSUMED T input |
+| [`reference/jacoutot_sigma_t/`](reference/jacoutot_sigma_t/) | Thesis σ(T) digitization CSVs |
 
-**Geometry freeze:** glass Ø **500 mm** (thesis; user-confirmed 2026-09-30). Crucible Ø650 mm ≠ melt diameter.  
-σ(T) tables: [`reference/jacoutot_sigma_t/`](reference/jacoutot_sigma_t/)
+`reference/doc*_runs/` and `DOC*_ROUND_PACK*` are **local-only** (gitignored); use your local packs for run evidence.
+
+**Geometry freeze:** glass Ø **500 mm** (thesis; user-confirmed 2026-09-30). Crucible Ø650 mm ≠ melt diameter.
 
 ## Client-facing report
 

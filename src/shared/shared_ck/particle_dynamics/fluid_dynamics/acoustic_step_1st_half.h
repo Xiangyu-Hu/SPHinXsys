@@ -178,6 +178,8 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
         Real *contact_Vol_;
         Vecd *wall_acc_ave_, *wall_n_;
         Real *wall_free_slip_; /**< Doc201: >0.5 → project mom force onto wall normal */
+        /** Doc224: >0.5 with free-slip → keep DissipativeUJump dens (impermeability). Default 0. */
+        Real *wall_keep_dens_jump_;
         Real *wall_contact_omit_; /**< Doc202: >0.5 → skip both acoustic halves */
         Real *wall_contact_omit_1st_; /**< Doc202 H1c: >0.5 → skip 1st-half pair only */
     };
@@ -188,6 +190,8 @@ class AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType,
     RiemannSolverType riemann_solver_;
     /** Shared with AcousticStep2ndHalf Contact<Wall>; default 0 = legacy. */
     StdVec<DiscreteVariable<Real> *> dv_wall_free_slip_;
+    /** Doc224: opt-in keep dens jump on free-slip faces; default 0 = Doc201 omit. */
+    StdVec<DiscreteVariable<Real> *> dv_wall_keep_dens_jump_;
     /** Doc202 H1: omit both halves; shared register with 2nd-half. */
     StdVec<DiscreteVariable<Real> *> dv_wall_contact_omit_;
     /** Doc202 H1c: omit 1st-half only; shared register. */

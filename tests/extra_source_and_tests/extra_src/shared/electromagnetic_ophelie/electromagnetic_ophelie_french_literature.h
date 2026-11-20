@@ -151,7 +151,45 @@ inline OphelieFrenchEmSolveResult runFrenchReducedEmPipeline(SolidBody &glass_bo
     StateDynamics<ExecutionPolicy, ComputeOphelieEJQFromASrcNoPhiCK> compute_ejq_no_phi(glass_body, glass_names,
                                                                                           params);
 
-    if (params.enable_phi_correction_)
+    if (params.enable_phi_correction_ &&
+        (params.doc217_d2_local_poly_ || params.doc216_e5_p1_projection_))
+    {
+        // Doc217 F-M opt-in: D2 or P1 via complex edge-flux solve/recon entry
+        // (same as cylinder). Production default remains the branch below.
+        if (params.doc217_d2_local_poly_ && params.doc216_e5_p1_projection_)
+        {
+            std::cerr << "[ophelie][doc217] FATAL: d2_local_poly exclusive vs e5_p1 in French pipeline"
+                      << std::endl;
+            std::exit(2);
+        }
+        compute_ejq_no_phi.exec();
+        result.div_j_level0 =
+            computeOphelieDivJImag<ExecutionPolicy>(glass_body, glass_inner, glass_names, params, french.glass_radius);
+
+        OpheliePhiBoundaryGeometryContext boundary_geom;
+        boundary_geom.normal_source = params.phi_boundary_normal_source_;
+        boundary_geom.french = french;
+
+        OphelieComplexEdgeFluxSolveReport solve_report;
+        const Real p_recon = execOphelieComplexEdgeFluxSolveReconAndPower<ExecutionPolicy>(
+            glass_body, glass_inner, glass_names, params, &boundary_geom, french.dp, &solve_report, false);
+        result.phi_solver_rel_residual = solve_report.phi_imag_solver_rel_residual;
+        result.phi_eq_res_vol = solve_report.phi_eq_res_vol_imag;
+        result.phi_p0.phi_eq_res_vol_post_solve = solve_report.phi_eq_res_vol_imag;
+        result.joule_power_recon_edge = p_recon;
+        result.edge_power.p_total_recon = p_recon;
+        result.q_spatial = computeHostEdgeFluxQSpatialMetrics(
+            glass_particles, glass_names, params, n_glass, french.glass_center, Real(0.70) * french.glass_radius,
+            Real(0.35) * french.glass_radius, params.q_spatial_max_over_mean_max_,
+            params.q_spatial_outer_over_center_min_);
+        logOphelieEdgeFluxQSpatialMetrics(result.q_spatial);
+        result.q_spatial_valid = true;
+        std::cout << "[ophelie][doc217][fm] French EM used profile=" << solve_report.phi_space
+                  << " phi_imag_rel=" << solve_report.phi_imag_solver_rel_residual
+                  << " remaining_field_ratio_imag=" << solve_report.remaining_field_ratio_imag
+                  << " P_recon=" << p_recon << std::endl;
+    }
+    else if (params.enable_phi_correction_)
     {
         compute_ejq_no_phi.exec();
         result.div_j_level0 =

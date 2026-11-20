@@ -1,0 +1,24 @@
+{
+  "schema": "RECONSTRUCTED_ASSUMED_INPUT",
+  "NOT_literature_absolute_T": true,
+  "source_grid": "docs/ophelie/reference/doc204_literature/Doc204/reference/fig8_partial_linear_reconstruction.csv",
+  "absolute_Tmax_K_assumed": 1500.0,
+  "hot_core_Tstar_fill": 0.95,
+  "outside_hull_fill": "nearest_neighbor_in_normalized_rz",
+  "R_m": 0.25,
+  "H_m": 0.185,
+  "n_rows": 10201,
+  "fill_counts": {
+    "INTERPOLATED_NOT_OBSERVED": 6326,
+    "HOT_CORE_UNRESOLVED_ABOVE_0P9": 1308,
+    "OUTSIDE_NN": 2567
+  },
+  "T_K_min": 750.0,
+  "T_K_max": 1425.0,
+  "notes": [
+    "Fig.8 provides T/Tmax only; usable_for_absolute_F1=0 on source grid.",
+    "Original text '~1500K' is NOT exact Tmax; this file uses an engineering assumption.",
+    "Do not claim heat-equation validation from fixed-T forcing with this field.",
+    "Prefer --fixed-spatial-T-demean so buoyancy sees zero-mean DeltaT pattern."
+  ]
+}

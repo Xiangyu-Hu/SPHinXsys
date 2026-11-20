@@ -31,9 +31,14 @@
 #include <cstring>
 #include <filesystem>
 #include <fstream>
+#include <functional>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <random>
+#include <sstream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -70,6 +75,283 @@ inline std::string resolveDefaultFrenchReloadFolder()
     return candidates.front();
 }
 
+/** Doc224 D: regular r–z Kelvin grid from CSV (bilinear sample; O(n_particles) reapply). */
+struct Doc224RzTemperatureGrid
+{
+    std::vector<double> r_axis;
+    std::vector<double> z_axis;
+    std::vector<double> T; // row-major: ir + nr*iz
+    double T_min = 0;
+    double T_max = 0;
+    size_t n_nodes = 0;
+    bool ok = false;
+
+    size_t nr() const { return r_axis.size(); }
+    size_t nz() const { return z_axis.size(); }
+    double at(size_t ir, size_t iz) const { return T[ir + nr() * iz]; }
+
+    double sample(double r, double z) const
+    {
+        if (!ok || nr() < 2 || nz() < 2)
+            return T.empty() ? 0.0 : T.front();
+        r = std::max(r_axis.front(), std::min(r_axis.back(), r));
+        z = std::max(z_axis.front(), std::min(z_axis.back(), z));
+        auto upper = [](const std::vector<double> &ax, double v) {
+            return static_cast<size_t>(
+                std::max<std::ptrdiff_t>(1, std::lower_bound(ax.begin(), ax.end(), v) - ax.begin()));
+        };
+        const size_t ir1 = std::min(upper(r_axis, r), nr() - 1);
+        const size_t iz1 = std::min(upper(z_axis, z), nz() - 1);
+        const size_t ir0 = ir1 - 1;
+        const size_t iz0 = iz1 - 1;
+        const double r0 = r_axis[ir0], r1 = r_axis[ir1];
+        const double z0 = z_axis[iz0], z1 = z_axis[iz1];
+        const double tr = (r1 > r0) ? (r - r0) / (r1 - r0) : 0.0;
+        const double tz = (z1 > z0) ? (z - z0) / (z1 - z0) : 0.0;
+        const double t00 = at(ir0, iz0), t10 = at(ir1, iz0), t01 = at(ir0, iz1), t11 = at(ir1, iz1);
+        return (1.0 - tr) * (1.0 - tz) * t00 + tr * (1.0 - tz) * t10 + (1.0 - tr) * tz * t01 + tr * tz * t11;
+    }
+};
+
+inline bool hostLoadDoc224RzTemperatureGrid(const std::string &csv_path, Doc224RzTemperatureGrid &grid,
+                                            std::string &err)
+{
+    grid = Doc224RzTemperatureGrid{};
+    std::ifstream in(csv_path);
+    if (!in)
+    {
+        err = "cannot open init-T-rz-csv";
+        return false;
+    }
+    std::string line;
+    if (!std::getline(in, line))
+    {
+        err = "empty init-T-rz-csv";
+        return false;
+    }
+    auto strip = [](std::string s) {
+        while (!s.empty() && (s.back() == '\r' || s.back() == ' ' || s.back() == '\t'))
+            s.pop_back();
+        size_t i = 0;
+        while (i < s.size() && (s[i] == ' ' || s[i] == '\t'))
+            ++i;
+        return s.substr(i);
+    };
+    auto lower = [&](std::string s) {
+        s = strip(s);
+        for (char &c : s)
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        return s;
+    };
+    std::vector<std::string> hdr;
+    {
+        std::stringstream ss(line);
+        std::string cell;
+        while (std::getline(ss, cell, ','))
+            hdr.push_back(lower(cell));
+    }
+    int i_r = -1, i_z = -1, i_T = -1;
+    for (int i = 0; i < static_cast<int>(hdr.size()); ++i)
+    {
+        if (hdr[static_cast<size_t>(i)] == "r_m" || hdr[static_cast<size_t>(i)] == "r")
+            i_r = i;
+        else if (hdr[static_cast<size_t>(i)] == "z_m" || hdr[static_cast<size_t>(i)] == "z")
+            i_z = i;
+        else if (hdr[static_cast<size_t>(i)] == "t_k" || hdr[static_cast<size_t>(i)] == "t" ||
+                 hdr[static_cast<size_t>(i)] == "temperature_k")
+            i_T = i;
+    }
+    if (i_r < 0 || i_z < 0 || i_T < 0)
+    {
+        err = "init-T-rz-csv needs r_m,z_m,T_K";
+        return false;
+    }
+    std::vector<double> rs, zs, Ts;
+    while (std::getline(in, line))
+    {
+        if (line.empty())
+            continue;
+        std::stringstream ss(line);
+        std::vector<std::string> cells;
+        std::string cell;
+        while (std::getline(ss, cell, ','))
+            cells.push_back(strip(cell));
+        if (static_cast<int>(cells.size()) <= std::max(i_r, std::max(i_z, i_T)))
+            continue;
+        const double r = std::atof(cells[static_cast<size_t>(i_r)].c_str());
+        const double z = std::atof(cells[static_cast<size_t>(i_z)].c_str());
+        const double Tv = std::atof(cells[static_cast<size_t>(i_T)].c_str());
+        if (!(std::isfinite(r) && std::isfinite(z) && std::isfinite(Tv)) || r < 0.0 || !(Tv > 0.0))
+        {
+            err = "non-finite/non-positive T or bad r in init-T-rz-csv";
+            return false;
+        }
+        rs.push_back(r);
+        zs.push_back(z);
+        Ts.push_back(Tv);
+    }
+    if (rs.empty())
+    {
+        err = "no usable rows in init-T-rz-csv";
+        return false;
+    }
+    auto uniq_sorted = [](std::vector<double> v) {
+        std::sort(v.begin(), v.end());
+        v.erase(std::unique(v.begin(), v.end(),
+                            [](double a, double b) { return std::fabs(a - b) < 1e-12; }),
+                v.end());
+        return v;
+    };
+    grid.r_axis = uniq_sorted(rs);
+    grid.z_axis = uniq_sorted(zs);
+    if (grid.nr() < 2 || grid.nz() < 2 || grid.nr() * grid.nz() != rs.size())
+    {
+        err = "init-T-rz-csv is not a complete regular r-z grid";
+        return false;
+    }
+    grid.T.assign(grid.nr() * grid.nz(), std::numeric_limits<double>::quiet_NaN());
+    grid.T_min = Ts.front();
+    grid.T_max = Ts.front();
+    for (size_t k = 0; k < rs.size(); ++k)
+    {
+        const auto ir = static_cast<size_t>(
+            std::lower_bound(grid.r_axis.begin(), grid.r_axis.end(), rs[k]) - grid.r_axis.begin());
+        const auto iz = static_cast<size_t>(
+            std::lower_bound(grid.z_axis.begin(), grid.z_axis.end(), zs[k]) - grid.z_axis.begin());
+        if (ir >= grid.nr() || iz >= grid.nz() || std::fabs(grid.r_axis[ir] - rs[k]) > 1e-12 ||
+            std::fabs(grid.z_axis[iz] - zs[k]) > 1e-12)
+        {
+            err = "init-T-rz-csv grid axis mismatch";
+            return false;
+        }
+        grid.T[ir + grid.nr() * iz] = Ts[k];
+        grid.T_min = std::min(grid.T_min, Ts[k]);
+        grid.T_max = std::max(grid.T_max, Ts[k]);
+    }
+    for (double v : grid.T)
+    {
+        if (!std::isfinite(v))
+        {
+            err = "init-T-rz-csv missing grid node";
+            return false;
+        }
+    }
+    grid.n_nodes = rs.size();
+    grid.ok = true;
+    return true;
+}
+
+/**
+ * Doc225 B: sample CSV absolute T; thermal_deltaT = T_abs - T_thermal_ref.
+ * `legacy_demean` restores Doc224 ABSOLUTE_T_SHIFTED_LEGACY (shifts Temperature); forbidden on
+ * acceptance mainline.
+ */
+inline void hostApplyDoc224RzTemperatureGrid(BaseParticles &particles, const Vecd &center, Real t_thermal_ref,
+                                             const Doc224RzTemperatureGrid &grid, bool legacy_demean, bool quiet)
+{
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Real>(particles, kOphelieTemperatureField);
+    syncVariableToHost<Real>(particles, kOphelieThermalDeltaTField);
+    Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    Real *temp = particles.getVariableDataByName<Real>(kOphelieTemperatureField);
+    Real *delta_t = particles.getVariableDataByName<Real>(kOphelieThermalDeltaTField);
+    const size_t n = particles.TotalRealParticles();
+    double Tmin = 1.0e300, Tmax = -1.0e300, Tsum = 0.0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const double dx = static_cast<double>(pos[i][0] - center[0]);
+        const double dy = static_cast<double>(pos[i][1] - center[1]);
+        const double r = std::sqrt(dx * dx + dy * dy);
+        const double z = static_cast<double>(pos[i][2]);
+        const double Ti = grid.sample(r, z);
+        temp[i] = static_cast<Real>(Ti);
+        delta_t[i] = static_cast<Real>(Ti) - t_thermal_ref;
+        Tmin = std::min(Tmin, Ti);
+        Tmax = std::max(Tmax, Ti);
+        Tsum += Ti;
+    }
+    double demean_shift = 0.0;
+    if (legacy_demean && n > 0)
+    {
+        double sum = 0.0;
+        for (size_t i = 0; i < n; ++i)
+            sum += static_cast<double>(delta_t[i]);
+        demean_shift = sum / static_cast<double>(n);
+        for (size_t i = 0; i < n; ++i)
+        {
+            delta_t[i] = static_cast<Real>(static_cast<double>(delta_t[i]) - demean_shift);
+            temp[i] = t_thermal_ref + delta_t[i];
+        }
+    }
+    syncVariableToDevice<Real>(particles, kOphelieTemperatureField);
+    syncVariableToDevice<Real>(particles, kOphelieThermalDeltaTField);
+    if (!quiet)
+    {
+        std::cout << "[ophelie][doc225][T-rz] n_nodes=" << grid.n_nodes << " nr=" << grid.nr()
+                  << " nz=" << grid.nz() << " T_csv=[" << grid.T_min << "," << grid.T_max
+                  << "] T_particle=[" << Tmin << "," << Tmax << "] T_particle_arith_mean="
+                  << (n > 0 ? Tsum / static_cast<double>(n) : 0.0)
+                  << " T_thermal_ref=" << t_thermal_ref << " legacy_demean=" << (legacy_demean ? 1 : 0)
+                  << " demean_shift_K=" << demean_shift
+                  << (legacy_demean ? " ABSOLUTE_T_SHIFTED_LEGACY" : " ABSOLUTE_T_PRESERVED") << std::endl;
+    }
+}
+
+inline Real hostMassWeightedMeanTemperature(BaseParticles &particles,
+                                            const std::string &temperature_field = "Temperature")
+{
+    syncVariableToHost<Real>(particles, temperature_field);
+    syncVariableToHost<Real>(particles, "Mass");
+    const Real *temp = particles.getVariableDataByName<Real>(temperature_field);
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    double wT = 0.0, w = 0.0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        wT += static_cast<double>(mass[i]) * static_cast<double>(temp[i]);
+        w += static_cast<double>(mass[i]);
+    }
+    return w > 0.0 ? static_cast<Real>(wT / w) : Real(0);
+}
+
+/** Doc225 B4: bilinear sample vs analytic T=1000+100*r/R+50*z/H on particle positions. */
+inline bool hostDoc225AnalyticRzSampleSelfTest(BaseParticles &particles, const Vecd &center, Real R, Real H,
+                                               Real &max_abs_err_K)
+{
+    Doc224RzTemperatureGrid grid;
+    grid.r_axis.resize(3);
+    grid.z_axis.resize(3);
+    grid.T.resize(9);
+    grid.n_nodes = 9;
+    grid.r_axis = {0.0, 0.5 * static_cast<double>(R), static_cast<double>(R)};
+    grid.z_axis = {0.0, 0.5 * static_cast<double>(H), static_cast<double>(H)};
+    auto setT = [&](size_t ir, size_t iz, double Ti) { grid.T[iz * 3 + ir] = Ti; };
+    for (size_t ir = 0; ir < 3; ++ir)
+        for (size_t iz = 0; iz < 3; ++iz)
+        {
+            const double r = grid.r_axis[ir], z = grid.z_axis[iz];
+            setT(ir, iz, 1000.0 + 100.0 * r / static_cast<double>(R) + 50.0 * z / static_cast<double>(H));
+        }
+    grid.T_min = 1000.0;
+    grid.T_max = 1000.0 + 100.0 + 50.0;
+    syncVariableToHost<Vecd>(particles, "Position");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const size_t n = particles.TotalRealParticles();
+    max_abs_err_K = 0.0;
+    const size_t n_check = std::min(n, size_t(512));
+    for (size_t i = 0; i < n_check; ++i)
+    {
+        const double dx = static_cast<double>(pos[i][0] - center[0]);
+        const double dy = static_cast<double>(pos[i][1] - center[1]);
+        const double r = std::sqrt(dx * dx + dy * dy);
+        const double z = static_cast<double>(pos[i][2]);
+        const double exact = 1000.0 + 100.0 * r / static_cast<double>(R) + 50.0 * z / static_cast<double>(H);
+        const double samp = grid.sample(r, z);
+        max_abs_err_K = std::max(max_abs_err_K, static_cast<Real>(std::abs(samp - exact)));
+    }
+    return max_abs_err_K <= Real(1.0e-3);
+}
+
 struct LocalCli
 {
     std::string reload_dir;
@@ -89,6 +371,26 @@ struct LocalCli
     Real prescribe_t_hot_bottom_dT = 0.0;
     /** Doc77 §3: if >0, prescribe radial hot-core T=T0+dT*(1-r/R); overrides hot-bottom if both set. */
     Real prescribe_t_radial_dT = 0.0;
+    /**
+     * Doc224 D: axisymmetric T(r,z) CSV (r_m,z_m,T_K). Exclusive with F2 / radial / hot-bottom.
+     * With --freeze-prescribed-t, re-sampled each advection (Eulerian fixed spatial T).
+     */
+    std::string init_T_rz_csv;
+    /**
+     * Doc224 legacy: demean shifted absolute Temperature (ABSOLUTE_T_SHIFTED_LEGACY).
+     * Doc225: bare `--init-T-rz-demean` errors; use `--init-T-rz-demean-legacy` to reproduce only.
+     */
+    bool init_T_rz_demean_legacy = false;
+    /**
+     * Doc225 B3: after Fig8 CSV load, set T_force_ref = mass-weighted mean(T) once (default ON for CSV).
+     * F2 / radial / hot-bottom keep literature t0. Disable with `--no-t-force-ref-from-mass-mean`.
+     */
+    bool t_force_ref_from_mass_mean = true;
+    bool t_force_ref_from_mass_mean_user_set = false;
+    /** Explicit override; NaN => unset. */
+    Real t_force_ref_override = std::numeric_limits<Real>::quiet_NaN();
+    /** Doc225 A: refuse warm Spatial-Q runs that miss thermal diffusion / use legacy demean / etc. */
+    bool doc225_warm_spatial_q_preflight = false;
     bool freeze_prescribed_temperature = false;
     bool prescribe_radial_z_taper = false;
     bool require_validation = false;
@@ -96,11 +398,19 @@ struct LocalCli
     bool boundary_area_normalize = true;
     bool enable_self_induction = true;
     bool enable_target_power = true;
+    /** Doc219 E: host D2 for frozen Q snapshot (opt-in; matches C/D EM identity). */
+    bool doc217_d2_local_poly = false;
+    /**
+     * Doc219 E: freeze Q as Eulerian spatial field; re-sample to particles each thermal update.
+     * Default ON so particle motion does not advect Q as a material label.
+     */
+    bool spatial_frozen_q = true;
     /**
      * Doc95: quieter WCSPH defaults from Doc91/92 (free-surface: dens-sum normalize +
      * analytic p_h + LinearCorrectionCK). Off by default for regression; enable for lit-β SNR.
      */
     bool dens_sum_normalize = false;
+    bool dens_sum_normalize_user_set = false;
     /**
      * Doc101/102 opt-in: apply dens_sum only for z <= z_free - surface_depth (keep FreeSurface
      * density in the surface band). Default false = historical full-domain overwrite.
@@ -114,7 +424,16 @@ struct LocalCli
      */
     bool dens_fs_atm_consistent = false;
     bool background_hydro_p = false;
-    bool kernel_correction = false;
+    /**
+     * Doc219 D: validated cavity hydro identity (B + Riemann correction + TVF 0.2 +
+     * viscous advection dt + thermal after position/neighborhood update).
+     * Default ON; --no-doc219-hydro-profile restores legacy French path.
+     */
+    bool doc219_hydro_profile = true;
+    bool kernel_correction = false; // resolved after CLI from doc219 profile
+    bool kernel_correction_user_set = false;
+    bool enable_tvf = false;
+    bool enable_tvf_user_set = false;
     /**
      * Doc105 P2d opt-in: AcousticDensMode for wall dens dissipation.
      * 0 = legacy (default): dens jump on Adami momentum pressure (−C_ext).
@@ -123,6 +442,7 @@ struct LocalCli
      * Do NOT copy closed-box P2b (PM=1, GravityForceCK off, a_ref=0).
      */
     int acoustic_dens_mode = 0;
+    bool acoustic_dens_mode_user_set = false;
     /** Doc97 P4: scale acoustic + advection CFL together (1=default; 0.5 => ~dt/2). */
     Real dt_scale = 1.0;
     Real acoustic_cfl = 0.55;
@@ -148,6 +468,277 @@ struct LocalCli
      * dump zone residuals periodically, score pollution budget, then exit (skip EM/long thermo).
      */
     Real doc105_p2_quiet_keep = 0.0;
+    /**
+     * Doc220 S0: after settle (velocity zeroed), prescribe radial hot-core if requested,
+     * dump by OriginalID, run one ParticleSortCK with no physics, dump again, compare, exit.
+     * Opt-in audit; never a production default.
+     */
+    bool doc220_s0_sort_audit = false;
+    /**
+     * Doc220 D/H0: same as --doc105-p2-hydro-stage-probe, plus per-particle CSV dumps
+     * (OriginalID) at dens/gravity/acoustic stages for same-state operator diagnosis.
+     */
+    bool doc220_h0_hydro_probe = false;
+    /**
+     * Doc220 E2: French free-surface perturbation-pressure hydrostatic package (not closed-box
+     * P2b copy). Enables BackgroundPressure p_h, PerturbationMomentum=1 (momentum on p'),
+     * AcousticDensMode=1 with a_ref=0, and omits GravityForceCK (g lives in ∇p_h).
+     * Free surface: depth→0 ⇒ p_h→0 ⇒ p_total≈p' ; keep Density~ρ0 so p'≈0 at rest.
+     * Opt-in; never a production default until H1 gate passes.
+     */
+    bool doc220_pprime_hydro = false;
+    /** When true, skip GravityForceCK (used by doc220_pprime_hydro). */
+    bool omit_gravity_force = false;
+    /**
+     * Doc221 A: restore the Doc220 omit-gravity bug that wiped shared ForcePrior each
+     * advection step (evidence-only). Default false = Doc221 B fixed omit (noop).
+     */
+    bool doc221_legacy_omit_clears_forceprior = false;
+    /**
+     * Doc221: dump ForcePrior ledger stages for the first N keep-loop advection steps
+     * (0 = off). Writes output/doc221_force_ledger_stages.csv (+ summary log lines).
+     */
+    int doc221_force_ledger_probe_adv = 0;
+    /** Doc221 C/D: after first keep advection force assemble, run lifecycle asserts then exit. */
+    bool doc221_force_lifecycle_selftest = false;
+    /**
+     * Doc221 K diagnostic: before each position update, subtract mass-weighted mean Uz from all
+     * fluid particles (enforce zero net vertical volume flux). Controlled closed-topology probe —
+     * NOT a literature open free-surface claim; never a production default.
+     */
+    bool diag_zero_net_uz = false;
+    /**
+     * Doc221 L diagnostic: kinematic hard lid at z_free — kill upward Uz in a surface band and
+     * clamp z <= z_free after position update (impermeable free-slip top). NOT literature open FS.
+     * `--diag-flat-lid` enables this and also `--diag-zero-net-uz`.
+     */
+    bool diag_hard_lid = false;
+    /**
+     * Doc221 N diagnostic: soft lid on K skeleton — enables zero-net-Uz and kills upward Uz in a
+     * thin surface band, but does NOT clamp z (no hard lid / no M settle reset). Goal: keep
+     * axis-up/rim-down polarity while discouraging tip venting. NOT literature open FS.
+     */
+    bool diag_soft_lid = false;
+    /**
+     * Doc221 O diagnostic: physical closed crucible wall (side+bottom+flat lid via
+     * OphelieFrenchClosedCrucibleWallShape). No kinematic kill-up / z-clamp. Optional pairing with
+     * `--diag-zero-net-uz` for ablation. NOT literature open free-surface.
+     */
+    bool diag_wall_flat_lid = false;
+    /**
+     * Doc221 P diagnostic: quiet ClosedCrucible lid contact (Doc201 B2 pattern).
+     * Implies `--diag-wall-flat-lid`. Acoustic stays on closed wall with AcousticWallFreeSlip on
+     * the flat lid (mom∥n, omit dens DissipativeUJump, free-slip dens ghost); viscous no-slip
+     * uses open-cup wall (rim=0) so the lid has no viscous traction. Goal: U_rms→O(10⁻³).
+     * NOT literature open free-surface; never a production default.
+     * P1: arm free-slip from t=0 (shown noisy). Prefer P2 post-settle arming below.
+     */
+    bool diag_lid_free_slip = false;
+    /**
+     * Doc221 P2: same geometry as `--diag-lid-free-slip`, but settle uses O-style no-slip lid
+     * (no AcousticWallFreeSlip, viscous on ClosedCrucible). After settle + hostZeroVelocity,
+     * tag free-slip and switch viscous to OpenCup. NOT literature open FS.
+     */
+    bool diag_lid_free_slip_post_settle = false;
+    /**
+     * Doc221 O3 ablation: ClosedCrucible acoustic (no AcousticWallFreeSlip) + viscous OpenCup
+     * (rim=0, lid omitted). Isolates viscous-omit-lid vs P acoustic free-slip noise.
+     * Implies `--diag-wall-flat-lid`. NOT literature open FS.
+     */
+    bool diag_wall_lid_viscous_omit = false;
+    /**
+     * Doc221 O4: quiet ClosedCrucible dens/Riemann WITHOUT AcousticWallFreeSlip.
+     * Implies O3 skeleton + acoustic_dens_mode=3 (omit DissipativeUJump) + lid
+     * AcousticWallContSilent + AcousticWallOmitPJump. NOT literature open FS.
+     */
+    bool diag_lid_dens_silence = false;
+    /**
+     * Doc221 O5: O3 + lid ContSilent/OmitPJump ONLY, keep dens_mode=1.
+     * Split of O4 package — no dens_mode=3, no AcousticWallFreeSlip.
+     * NOT literature open FS.
+     */
+    bool diag_lid_cont_silent = false;
+    /**
+     * Doc221 O6a: O3 + lid ContSilent ONLY (no OmitPJump), dens_mode=1.
+     * Split of O5. NOT literature open FS.
+     */
+    bool diag_lid_cont_silent_only = false;
+    /**
+     * Doc221 O6b: O3 + lid OmitPJump ONLY (no ContSilent), dens_mode=1.
+     * Split of O5. NOT literature open FS.
+     */
+    bool diag_lid_omit_pjump_only = false;
+    /**
+     * Doc221 N2: soft tip seal — K zero-net-Uz + kill upward Uz only for r < tip_r
+     * in the surface band (no full-lid kill-up, no z clamp). Tests whether tip-local
+     * venting seal recovers TOPO. NOT literature open FS.
+     */
+    bool diag_soft_lid_tip = false;
+    /** Tip radius for --diag-soft-lid-tip (m). Default ~J r_eff. */
+    Real diag_soft_lid_tip_r = 0.10;
+    /**
+     * Doc221 N3: scale applied to upward Uz inside tip seal (0=kill=N2, 1=no-op, 0.5=dampen).
+     * Only used with diag_soft_lid_tip. NOT literature open FS.
+     */
+    Real diag_soft_lid_tip_uz_scale = 0.0;
+    /**
+     * Doc221 N4: tip soft physical lid — K zero-net-Uz + ForcePrior spring/dashpot in tip
+     * surface band (NO host Uz kill/dampen, NO z clamp). NOT literature open FS.
+     */
+    bool diag_tip_soft_force = false;
+    /** Tip radius for --diag-tip-soft-force (m). Default = min kill PASS ~0.05. */
+    Real diag_tip_soft_force_r = 0.05;
+    /**
+     * Spring rate a_z -= k * max(z-z_free,0) [1/s^2].
+     * Default 0: N4 ablation showed spring harms polarity; N4c dashpot-only PASS.
+     */
+    Real diag_tip_soft_force_k = 0.0;
+    /** Upward dashpot a_z -= c * max(Uz,0) [1/s]. Default 100 = N4c PASS. */
+    Real diag_tip_soft_force_c = 100.0;
+    /**
+     * Doc221 N5: same tip ForcePrior dashpot as N4c, but only on free-surface incomplete
+     * particles (DensitySummation < rho0) inside tip cylinder — binds seal to FS path
+     * rather than pure geometric surface band. k forced 0. NOT literature open FS.
+     */
+    bool diag_tip_fs_dashpot = false;
+    /**
+     * Doc222 B0: restore Doc221 tip ForcePrior direct-accumulate bug (no previous revoke).
+     * Opt-in repro only; never a production/default path.
+     */
+    bool diag_tip_soft_force_legacy_accumulate = false;
+    /**
+     * Doc222 B: after particles+ForcePrior exist, run tip ForcePrior lifecycle self-test and exit.
+     */
+    bool doc222_tip_force_selftest = false;
+    /**
+     * Doc222 D2: after hydro settle, apply volume-preserving axisymmetric free-surface
+     * deformation η(r)=eps*[1-2(r/R)^2] via column stretch, then re-init density/pressure
+     * per active path. eps=0 disables. NOT a tip/lid intervention.
+     */
+    Real doc222_fs_deform_eps = 0.0;
+    /**
+     * Doc222 E1: BackgroundPressure p_h = ρ0 g (z_free−z) with signed depth (default true).
+     * Legacy Doc220/221 used max(0,z_free−z), which zeros ∇p_h above the reference plane and
+     * (with omit GravityForceCK) removes free-surface restoring — D2 FAIL. Opt-out:
+     * --doc222-ph-clamp-legacy.
+     */
+    bool doc222_ph_signed = true;
+    /**
+     * Doc222 C3: after settle(+deform), compare clamp vs signed BackgroundPressure on the
+     * same geometry via one acoustic-1st force probe each; write JSON and exit.
+     * Implies p' path; if fs_deform_eps==0 uses 0.02.
+     */
+    bool doc222_c3_ph_compare = false;
+    /**
+     * Doc222 E2a: after free-surface deform, keep FreeSurface Density (do NOT freeze to ρ0)
+     * so p' = Pressure−p_h can become nonzero. Default true. Opt-out:
+     * --doc222-deform-rho-freeze (legacy E1/D2 path where p_mom≡0).
+     */
+    bool doc222_deform_skip_rho_freeze = true;
+    /**
+     * Doc222 E2b: BackgroundPressure from local free-surface height η(r) (radial bin z_max),
+     * p_h=ρ0 g (η−z). Fixed z_free reference cannot restore η(r) (∇p_h has no radial part).
+     * Opt-in via --doc222-ph-local-eta; --doc222-ph-fixed-zfree restores E1/E2a path.
+     */
+    bool doc222_ph_local_eta = false;
+    int doc222_ph_local_eta_bins = 12;
+    /**
+     * Doc223 B: after hydro settle, dump ForcePrior ledger (post-settle → legacy
+     * ForcePrior-only zero + gravity.exec → full channel reset + gravity.exec) then exit.
+     * Requires GravityForceCK ON (do not combine with --doc220-pprime-hydro).
+     */
+    bool doc223_force_reset_probe = false;
+    /**
+     * Doc223 D: paper flat slip impermeable top (single entry). ClosedCrucible + P2
+     * post-settle AcousticWallFreeSlip + OpenCup viscous + p' (omit GravityForceCK) +
+     * Internal density (not FreeSurface). Illegal with tip/zero-net/z-clamp/ContSilent/deform.
+     */
+    bool doc223_paper_flat_slip_top = false;
+    /**
+     * Doc223 E1 ablation: keep paper-top closed domain (Internal + dens_norm + p') but
+     * leave lid acoustic/viscous as ClosedCrucible no-slip (no AcousticWallFreeSlip).
+     * Requires --doc223-paper-flat-slip-top. Not the paper slip model.
+     */
+    bool doc223_ablate_no_free_slip = false;
+    /**
+     * Doc224 C3: on AcousticWallFreeSlip lid, keep DissipativeUJump dens (impermeability).
+     * Mom force still projected onto n; OpenCup viscous unchanged. Default ON for paper-top.
+     * Disable with --doc224-no-lid-keep-dens-jump (restores Doc201 free-slip dens omit).
+     */
+    bool doc224_lid_keep_dens_jump = false;
+    bool doc224_lid_keep_dens_jump_user_set = false;
+    /**
+     * Doc224 C3c ablation: arm AcousticWallFreeSlip (+keep dens) but keep wall viscous on
+     * ClosedCrucible (do not switch to OpenCup). Isolates OpenCup lid viscous omit.
+     */
+    bool doc224_ablate_opencup = false;
+    /**
+     * Doc224 C3d: OpenCup viscous (no lid shear) but do NOT tag AcousticWallFreeSlip
+     * (acoustic stays ClosedCrucible / impermeable). Doc221 O3-style.
+     * Default ON for --doc223-paper-flat-slip-top after C3a–C3d evidence.
+     * Opt out with --doc224-acoustic-freeslip (legacy P2; penetrates ~0.26dp by 10s).
+     */
+    bool doc224_ablate_acoustic_freeslip = false;
+    bool doc224_ablate_acoustic_freeslip_user_set = false;
+    /**
+     * Doc223 E2: after paper-top settle+arm, impose uniform tangential U=(U0,0,0),
+     * measure wall-only ViscousForce in lid-core vs side/bot; OpenCup (slip) vs
+     * ClosedCrucible (no-slip lid) contrast. Snapshot/restore; early return.
+     * Requires --doc223-paper-flat-slip-top (P2 OpenCup contact available).
+     */
+    bool doc223_e2_lid_slip_probe = false;
+    /**
+     * Doc226 B: after paper-top settle+arm, fixed-state top-operator probe.
+     * U=(0,0,0) vs U=(0.01,0,0); split wall 1st-half pressure, 2nd-half dissipative,
+     * continuity DensityChangeRate, OpenCup vs Closed viscous; lid_core only.
+     * Snapshot/restore; early return. Requires --doc223-paper-flat-slip-top.
+     */
+    bool doc226_top_operator_probe = false;
+    /**
+     * Doc226 D/E: bind ParticleViscosity → OphelieDynamicViscosity (pairwise/one-side).
+     * Default OFF keeps Viscosity mean path. Does not alone change cp/k/enthalpy.
+     */
+    bool doc226_local_particle_viscosity = false;
+    /**
+     * Doc226: refresh μ(T) onto particle field while keeping cp/k at T0 diagnostic values.
+     * Requires --doc226-local-particle-viscosity. Independent of constant_thermal_rheology energy path.
+     */
+    bool doc226_mu_T_only = false;
+    /** Optional μ_cap (Pa·s); 0 = no clamp. Diagnostic only when set. */
+    Real doc226_mu_cap = Real(0);
+    /**
+     * Doc226 E1: after settle, fixed-state local-μ probe (uniform μ=4 vs half-swap 4/40),
+     * snapshot/restore; early return. Requires --doc226-local-particle-viscosity.
+     */
+    bool doc226_e1_local_mu_probe = false;
+    /**
+     * Doc227 B: matched outer advection budget — truncate each acoustic substep so
+     * sum(dt_actual) ≤ min(inertial, viscous) and viscous ForcePrior age stays inside limit.
+     * Isolates French keep-loop only; does not change global TriggerByInterval semantics.
+     */
+    bool doc227_actual_timestep = false;
+    /** Optional CSV path for actual_step_audit (Doc227 B1). Empty → output/doc227_actual_step_audit.csv */
+    std::string doc227_step_audit_csv;
+    /** Host-only schedule truncation self-test; early return. */
+    bool doc227_schedule_selftest = false;
+    /**
+     * Doc227 C1: after settle, same-state Viscosity vs uniform ParticleViscosity (μ=4)
+     * force comparison; snapshot/restore; early return. Needs --doc226-local-particle-viscosity.
+     */
+    bool doc227_c_uniform_mu_probe = false;
+    /**
+     * Doc223 E3: after paper-top settle+arm, impose smooth near-lid normal velocity
+     * (mass-mean removed, Ma≪1), then integrate; gate on no lid penetration / no
+     * runaway KE / no COM lift. Requires --doc223-paper-flat-slip-top.
+     */
+    bool doc223_e3_normal_perturb = false;
+    /**
+     * Doc223 F2: qualitative annular hot ring T (plan §11 fixed formula; NOT Fig8 digitization).
+     * Mutual exclusive with --prescribe-t-radial / hot-bottom.
+     */
+    bool doc223_f2_annular_hot = false;
+    /** PerturbationMomentum flag written to particles (0=total p, 1=p'). */
+    int perturbation_momentum = 0;
     /**
      * Doc105 P2f diagnostic: after dens/bgp(/fsatm), force Density=rho0 so p_eos=0 and
      * p_total=p_h only. Isolates SPH discrete ∇p_h error from dens_sum packing error.
@@ -204,7 +795,7 @@ struct LocalCli
     FrenchSkullShellParams skull_shell;
 };
 
-inline void applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &french, LocalCli &cli)
+inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &french, LocalCli &cli)
 {
     for (int i = 1; i < ac; ++i)
     {
@@ -237,6 +828,18 @@ inline void applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fr
         {
             cli.enable_self_induction = false;
             cli.literature.enable_aind = false;
+        }
+        else if (std::strcmp(av[i], "--doc217-d2-local-poly") == 0)
+        {
+            cli.doc217_d2_local_poly = true;
+        }
+        else if (std::strcmp(av[i], "--spatial-frozen-q") == 0)
+        {
+            cli.spatial_frozen_q = true;
+        }
+        else if (std::strcmp(av[i], "--no-spatial-frozen-q") == 0)
+        {
+            cli.spatial_frozen_q = false;
         }
         else if (tryApplyFrenchLiteratureCli(av[i], cli.literature, cli.thermal_diffusion_explicit))
         {
@@ -271,6 +874,11 @@ inline void applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fr
         {
             cli.wall_rim_height = static_cast<Real>(std::atof(av[i] + 11));
         }
+        else if (std::strncmp(av[i], "--wall-rim-height=", 18) == 0)
+        {
+            // Doc221 H alias of --wall-rim= (splash-guard height above melt).
+            cli.wall_rim_height = static_cast<Real>(std::atof(av[i] + 18));
+        }
         else if (std::strncmp(av[i], "--hydro-settle-time=", 20) == 0)
         {
             cli.hydro_settle_time = static_cast<Real>(std::atof(av[i] + 20));
@@ -295,6 +903,40 @@ inline void applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fr
         {
             cli.prescribe_t_radial_dT = static_cast<Real>(std::atof(av[i] + 21));
         }
+        else if (std::strncmp(av[i], "--init-T-rz-csv=", 16) == 0)
+        {
+            cli.init_T_rz_csv = std::string(av[i] + 16);
+        }
+        else if (std::strcmp(av[i], "--init-T-rz-demean") == 0)
+        {
+            std::cerr
+                << "[ophelie][doc225] FATAL: --init-T-rz-demean silently shifted absolute Temperature "
+                   "(ABSOLUTE_T_SHIFTED_LEGACY). Mainline keeps CSV T. Re-run without demean, or use "
+                   "--init-T-rz-demean-legacy only to reproduce Doc224 shifted cases (not for acceptance).\n";
+            std::exit(2);
+        }
+        else if (std::strcmp(av[i], "--init-T-rz-demean-legacy") == 0)
+        {
+            cli.init_T_rz_demean_legacy = true;
+        }
+        else if (std::strncmp(av[i], "--t-force-ref=", 14) == 0)
+        {
+            cli.t_force_ref_override = static_cast<Real>(std::atof(av[i] + 14));
+        }
+        else if (std::strcmp(av[i], "--t-force-ref-from-mass-mean") == 0)
+        {
+            cli.t_force_ref_from_mass_mean = true;
+            cli.t_force_ref_from_mass_mean_user_set = true;
+        }
+        else if (std::strcmp(av[i], "--no-t-force-ref-from-mass-mean") == 0)
+        {
+            cli.t_force_ref_from_mass_mean = false;
+            cli.t_force_ref_from_mass_mean_user_set = true;
+        }
+        else if (std::strcmp(av[i], "--doc225-warm-spatial-q-preflight") == 0)
+        {
+            cli.doc225_warm_spatial_q_preflight = true;
+        }
         else if (std::strcmp(av[i], "--freeze-prescribed-t") == 0)
         {
             cli.freeze_prescribed_temperature = true;
@@ -318,6 +960,7 @@ inline void applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fr
         else if (std::strcmp(av[i], "--dens-sum-normalize") == 0)
         {
             cli.dens_sum_normalize = true;
+            cli.dens_sum_normalize_user_set = true;
         }
         else if (std::strcmp(av[i], "--no-dens-sum-normalize") == 0 || std::strcmp(av[i], "--nodens") == 0 ||
                  std::strcmp(av[i], "--no-extra-normalize") == 0)
@@ -325,6 +968,7 @@ inline void applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fr
             // Doc105: nodens / no-extra-normalize = disable extra dens_sum_normalize only
             // (DensitySummationCK + FreeSurface regularization still run).
             cli.dens_sum_normalize = false;
+            cli.dens_sum_normalize_user_set = true;
             cli.dens_sum_interior_only = false;
         }
         else if (std::strcmp(av[i], "--doc105-p2-hydro-stage-probe") == 0)
@@ -334,6 +978,401 @@ inline void applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fr
         else if (std::strncmp(av[i], "--doc105-p2-quiet-keep=", 23) == 0)
         {
             cli.doc105_p2_quiet_keep = static_cast<Real>(std::atof(av[i] + 23));
+        }
+        else if (std::strcmp(av[i], "--doc220-s0-sort-audit") == 0)
+        {
+            cli.doc220_s0_sort_audit = true;
+        }
+        else if (std::strcmp(av[i], "--doc220-h0-hydro-probe") == 0)
+        {
+            cli.doc220_h0_hydro_probe = true;
+            cli.doc105_p2_hydro_stage_probe = true;
+        }
+        else if (std::strcmp(av[i], "--doc220-pprime-hydro") == 0)
+        {
+            // Coherent free-surface p' hydro: p_h in BackgroundPressure, momentum on p',
+            // no GravityForceCK, wall dens on p' with a_ref=0.
+            cli.doc220_pprime_hydro = true;
+            cli.background_hydro_p = true;
+            cli.omit_gravity_force = true;
+            cli.perturbation_momentum = 1;
+            cli.acoustic_dens_mode = 1;
+            cli.acoustic_dens_mode_user_set = true;
+        }
+        else if (std::strcmp(av[i], "--doc222-totalp-bgp-hydro") == 0)
+        {
+            // Doc222 E2: total-p + BackgroundPressure p_h + GravityForceCK (PM=0).
+            // Flat rest: ∇p_h cancels g. FS restoring requires --doc222-ph-local-eta
+            // (fixed z_free p_h has no radial ∇). Not the p' omit-g path (E2b falsified).
+            cli.doc220_pprime_hydro = false;
+            cli.background_hydro_p = true;
+            cli.omit_gravity_force = false;
+            cli.perturbation_momentum = 0;
+            cli.acoustic_dens_mode = 1;
+            cli.acoustic_dens_mode_user_set = true;
+        }
+        else if (std::strcmp(av[i], "--doc221-legacy-omit-clears-forceprior") == 0)
+        {
+            cli.doc221_legacy_omit_clears_forceprior = true;
+        }
+        else if (std::strncmp(av[i], "--doc221-force-ledger-probe=", 28) == 0)
+        {
+            cli.doc221_force_ledger_probe_adv = std::atoi(av[i] + 28);
+        }
+        else if (std::strcmp(av[i], "--doc221-force-lifecycle-selftest") == 0)
+        {
+            cli.doc221_force_lifecycle_selftest = true;
+        }
+        else if (std::strcmp(av[i], "--diag-zero-net-uz") == 0)
+        {
+            // Doc221 K: volume-closure diagnostic (not literature open FS).
+            cli.diag_zero_net_uz = true;
+        }
+        else if (std::strcmp(av[i], "--diag-hard-lid") == 0)
+        {
+            // Doc221 L: kinematic impermeable lid at z_free (not literature open FS).
+            cli.diag_hard_lid = true;
+        }
+        else if (std::strcmp(av[i], "--diag-flat-lid") == 0)
+        {
+            // Doc221 L convenience: hard lid + zero-net-Uz volume closure.
+            cli.diag_hard_lid = true;
+            cli.diag_zero_net_uz = true;
+        }
+        else if (std::strcmp(av[i], "--diag-soft-lid") == 0)
+        {
+            // Doc221 N: K skeleton + thin-band kill-up, no z clamp (not literature open FS).
+            cli.diag_soft_lid = true;
+            cli.diag_soft_lid_tip = false;
+            cli.diag_tip_soft_force = false;
+            cli.diag_tip_fs_dashpot = false;
+            cli.diag_zero_net_uz = true;
+            cli.diag_hard_lid = false; // never combine with hard clamp
+        }
+        else if (std::strcmp(av[i], "--diag-soft-lid-tip") == 0)
+        {
+            // Doc221 N2: K + tip-local kill-up only (r < tip_r), no full-band, no z clamp.
+            cli.diag_soft_lid_tip = true;
+            cli.diag_soft_lid = false;
+            cli.diag_tip_soft_force = false;
+            cli.diag_tip_fs_dashpot = false;
+            cli.diag_zero_net_uz = true;
+            cli.diag_hard_lid = false;
+            // keep existing uz_scale (default 0 = kill); N3 sets scale via dedicated flag.
+        }
+        else if (std::strcmp(av[i], "--diag-soft-lid-tip-dampen") == 0)
+        {
+            // Doc221 N3: tip-local dampen upward Uz (scale=0.5), not hard kill.
+            cli.diag_soft_lid_tip = true;
+            cli.diag_soft_lid = false;
+            cli.diag_tip_soft_force = false;
+            cli.diag_tip_fs_dashpot = false;
+            cli.diag_zero_net_uz = true;
+            cli.diag_hard_lid = false;
+            cli.diag_soft_lid_tip_uz_scale = Real(0.5);
+        }
+        else if (std::strncmp(av[i], "--diag-soft-lid-tip-r=", 22) == 0)
+        {
+            // Prefix length is 22 ("--diag-soft-lid-tip-r="); old 21 made atof("=0.08")==0
+            // and the TinyReal fallback silently reset tip_r→0.10 (N2r scan invalid).
+            cli.diag_soft_lid_tip_r = static_cast<Real>(std::atof(av[i] + 22));
+        }
+        else if (std::strncmp(av[i], "--diag-soft-lid-tip-uz-scale=", 29) == 0)
+        {
+            cli.diag_soft_lid_tip_uz_scale = static_cast<Real>(std::atof(av[i] + 29));
+            // Enabling a non-trivial scale implies tip path (N3-style).
+            cli.diag_soft_lid_tip = true;
+            cli.diag_soft_lid = false;
+            cli.diag_tip_soft_force = false;
+            cli.diag_tip_fs_dashpot = false;
+            cli.diag_zero_net_uz = true;
+            cli.diag_hard_lid = false;
+        }
+        else if (std::strcmp(av[i], "--diag-tip-soft-force") == 0)
+        {
+            // Doc221 N4: K + tip ForcePrior spring/dashpot; no host Uz edit.
+            cli.diag_tip_soft_force = true;
+            cli.diag_tip_fs_dashpot = false;
+            cli.diag_soft_lid = false;
+            cli.diag_soft_lid_tip = false;
+            cli.diag_zero_net_uz = true;
+            cli.diag_hard_lid = false;
+            cli.diag_wall_flat_lid = false;
+            cli.diag_lid_free_slip = false;
+            cli.diag_lid_free_slip_post_settle = false;
+        }
+        else if (std::strcmp(av[i], "--diag-tip-fs-dashpot") == 0)
+        {
+            // Doc221 N5: K + tip dashpot only on FS-incomplete particles (DensitySummation<rho0).
+            cli.diag_tip_fs_dashpot = true;
+            cli.diag_tip_soft_force = false;
+            cli.diag_soft_lid = false;
+            cli.diag_soft_lid_tip = false;
+            cli.diag_zero_net_uz = true;
+            cli.diag_hard_lid = false;
+            cli.diag_wall_flat_lid = false;
+            cli.diag_lid_free_slip = false;
+            cli.diag_lid_free_slip_post_settle = false;
+            cli.diag_tip_soft_force_k = Real(0); // spring abandoned
+        }
+        else if (std::strncmp(av[i], "--diag-tip-soft-force-r=", 24) == 0)
+        {
+            cli.diag_tip_soft_force_r = static_cast<Real>(std::atof(av[i] + 24));
+        }
+        else if (std::strncmp(av[i], "--diag-tip-soft-force-k=", 24) == 0)
+        {
+            cli.diag_tip_soft_force_k = static_cast<Real>(std::atof(av[i] + 24));
+        }
+        else if (std::strncmp(av[i], "--diag-tip-soft-force-c=", 24) == 0)
+        {
+            cli.diag_tip_soft_force_c = static_cast<Real>(std::atof(av[i] + 24));
+        }
+        else if (std::strcmp(av[i], "--diag-tip-soft-force-legacy-accumulate") == 0)
+        {
+            // Doc222 B0: old ForcePrior += m*a without previous revoke (bug repro).
+            cli.diag_tip_soft_force_legacy_accumulate = true;
+        }
+        else if (std::strcmp(av[i], "--doc222-tip-force-selftest") == 0)
+        {
+            cli.doc222_tip_force_selftest = true;
+        }
+        else if (std::strcmp(av[i], "--doc223-force-reset-probe") == 0)
+        {
+            cli.doc223_force_reset_probe = true;
+        }
+        else if (std::strcmp(av[i], "--doc223-paper-flat-slip-top") == 0)
+        {
+            cli.doc223_paper_flat_slip_top = true;
+        }
+        else if (std::strcmp(av[i], "--doc223-ablate-no-free-slip") == 0)
+        {
+            cli.doc223_ablate_no_free_slip = true;
+        }
+        else if (std::strcmp(av[i], "--doc224-lid-keep-dens-jump") == 0)
+        {
+            cli.doc224_lid_keep_dens_jump = true;
+            cli.doc224_lid_keep_dens_jump_user_set = true;
+        }
+        else if (std::strcmp(av[i], "--doc224-no-lid-keep-dens-jump") == 0)
+        {
+            cli.doc224_lid_keep_dens_jump = false;
+            cli.doc224_lid_keep_dens_jump_user_set = true;
+        }
+        else if (std::strcmp(av[i], "--doc224-ablate-opencup") == 0)
+        {
+            cli.doc224_ablate_opencup = true;
+        }
+        else if (std::strcmp(av[i], "--doc224-ablate-acoustic-freeslip") == 0)
+        {
+            cli.doc224_ablate_acoustic_freeslip = true;
+            cli.doc224_ablate_acoustic_freeslip_user_set = true;
+        }
+        else if (std::strcmp(av[i], "--doc224-acoustic-freeslip") == 0)
+        {
+            // Legacy Doc223 P2: tag AcousticWallFreeSlip (known lid penetration under F2).
+            cli.doc224_ablate_acoustic_freeslip = false;
+            cli.doc224_ablate_acoustic_freeslip_user_set = true;
+        }
+        else if (std::strcmp(av[i], "--doc223-e2-lid-slip-probe") == 0)
+        {
+            cli.doc223_e2_lid_slip_probe = true;
+        }
+        else if (std::strcmp(av[i], "--doc226-top-operator-probe") == 0)
+        {
+            cli.doc226_top_operator_probe = true;
+        }
+        else if (std::strcmp(av[i], "--doc226-local-particle-viscosity") == 0)
+        {
+            cli.doc226_local_particle_viscosity = true;
+        }
+        else if (std::strcmp(av[i], "--doc226-mu-T-only") == 0)
+        {
+            cli.doc226_mu_T_only = true;
+        }
+        else if (std::strncmp(av[i], "--doc226-mu-cap=", 16) == 0)
+        {
+            cli.doc226_mu_cap = std::strtod(av[i] + 16, nullptr);
+        }
+        else if (std::strcmp(av[i], "--doc226-e1-local-mu-probe") == 0)
+        {
+            cli.doc226_e1_local_mu_probe = true;
+        }
+        else if (std::strcmp(av[i], "--doc227-actual-timestep") == 0)
+        {
+            cli.doc227_actual_timestep = true;
+        }
+        else if (std::strncmp(av[i], "--doc227-step-audit=", 20) == 0)
+        {
+            cli.doc227_step_audit_csv = av[i] + 20;
+        }
+        else if (std::strcmp(av[i], "--doc227-schedule-selftest") == 0)
+        {
+            cli.doc227_schedule_selftest = true;
+        }
+        else if (std::strcmp(av[i], "--doc227-c-uniform-mu-probe") == 0)
+        {
+            cli.doc227_c_uniform_mu_probe = true;
+        }
+        else if (std::strcmp(av[i], "--doc223-e3-normal-perturb") == 0)
+        {
+            cli.doc223_e3_normal_perturb = true;
+        }
+        else if (std::strcmp(av[i], "--doc223-f2-annular-hot") == 0)
+        {
+            cli.doc223_f2_annular_hot = true;
+        }
+        else if (std::strncmp(av[i], "--doc222-fs-deform-eps=", 23) == 0)
+        {
+            cli.doc222_fs_deform_eps = static_cast<Real>(std::atof(av[i] + 23));
+        }
+        else if (std::strcmp(av[i], "--doc222-ph-signed") == 0)
+        {
+            cli.doc222_ph_signed = true;
+        }
+        else if (std::strcmp(av[i], "--doc222-ph-clamp-legacy") == 0)
+        {
+            // Doc222 E1 A/B: restore max(0,z_free-z) truncation (pre-fix D2 FAIL path).
+            cli.doc222_ph_signed = false;
+        }
+        else if (std::strcmp(av[i], "--doc222-c3-ph-compare") == 0)
+        {
+            cli.doc222_c3_ph_compare = true;
+            cli.doc220_pprime_hydro = true;
+            cli.background_hydro_p = true;
+            cli.perturbation_momentum = 1;
+            cli.omit_gravity_force = true;
+            if (!cli.acoustic_dens_mode_user_set)
+            {
+                cli.acoustic_dens_mode = 1;
+                cli.acoustic_dens_mode_user_set = true;
+            }
+            if (cli.doc222_fs_deform_eps <= TinyReal)
+                cli.doc222_fs_deform_eps = Real(0.02);
+        }
+        else if (std::strcmp(av[i], "--doc222-deform-rho-freeze") == 0)
+        {
+            // Legacy: freeze Density=ρ0 after deform (C3 showed p_mom≡0).
+            cli.doc222_deform_skip_rho_freeze = false;
+        }
+        else if (std::strcmp(av[i], "--doc222-deform-no-rho-freeze") == 0)
+        {
+            cli.doc222_deform_skip_rho_freeze = true;
+        }
+        else if (std::strcmp(av[i], "--doc222-ph-local-eta") == 0)
+        {
+            // Doc222 E2b: p_h from local free-surface η(r).
+            cli.doc222_ph_local_eta = true;
+        }
+        else if (std::strcmp(av[i], "--doc222-ph-fixed-zfree") == 0)
+        {
+            cli.doc222_ph_local_eta = false;
+        }
+        else if (std::strncmp(av[i], "--doc222-ph-local-eta-bins=", 27) == 0)
+        {
+            cli.doc222_ph_local_eta_bins = std::max(4, std::atoi(av[i] + 27));
+            cli.doc222_ph_local_eta = true;
+        }
+        else if (std::strcmp(av[i], "--diag-wall-flat-lid") == 0)
+        {
+            // Doc221 O: physical closed crucible (flat lid wall contact); not literature open FS.
+            cli.diag_wall_flat_lid = true;
+            cli.diag_hard_lid = false;
+            cli.diag_soft_lid = false;
+            cli.diag_soft_lid_tip = false;
+        }
+        else if (std::strcmp(av[i], "--diag-lid-free-slip") == 0)
+        {
+            // Doc221 P1: free-slip from t=0 (legacy; noisy — prefer post-settle).
+            cli.diag_lid_free_slip = true;
+            cli.diag_wall_flat_lid = true;
+            cli.diag_hard_lid = false;
+            cli.diag_soft_lid = false;
+        }
+        else if (std::strcmp(av[i], "--diag-lid-free-slip-post-settle") == 0)
+        {
+            // Doc221 P2: settle no-slip lid, then zero U and arm free-slip for keep.
+            cli.diag_lid_free_slip = true;
+            cli.diag_lid_free_slip_post_settle = true;
+            cli.diag_wall_flat_lid = true;
+            cli.diag_hard_lid = false;
+            cli.diag_soft_lid = false;
+        }
+        else if (std::strcmp(av[i], "--diag-wall-lid-viscous-omit") == 0)
+        {
+            // Doc221 O3: ClosedCrucible acoustic + viscous OpenCup; NO AcousticWallFreeSlip.
+            cli.diag_wall_lid_viscous_omit = true;
+            cli.diag_wall_flat_lid = true;
+            cli.diag_lid_free_slip = false;
+            cli.diag_lid_free_slip_post_settle = false;
+            cli.diag_hard_lid = false;
+            cli.diag_soft_lid = false;
+        }
+        else if (std::strcmp(av[i], "--diag-lid-dens-silence") == 0)
+        {
+            // Doc221 O4: O3 + dens_mode=3 + lid ContSilent/OmitPJump; NO AcousticWallFreeSlip.
+            cli.diag_lid_dens_silence = true;
+            cli.diag_lid_cont_silent = false;
+            cli.diag_lid_cont_silent_only = false;
+            cli.diag_lid_omit_pjump_only = false;
+            cli.diag_wall_lid_viscous_omit = true;
+            cli.diag_wall_flat_lid = true;
+            cli.diag_lid_free_slip = false;
+            cli.diag_lid_free_slip_post_settle = false;
+            cli.diag_hard_lid = false;
+            cli.diag_soft_lid = false;
+            cli.diag_soft_lid_tip = false;
+            cli.acoustic_dens_mode = 3;
+            cli.acoustic_dens_mode_user_set = true;
+        }
+        else if (std::strcmp(av[i], "--diag-lid-cont-silent") == 0)
+        {
+            // Doc221 O5: O3 + lid ContSilent/OmitPJump; dens_mode stays 1 (no dens_mode=3).
+            cli.diag_lid_cont_silent = true;
+            cli.diag_lid_cont_silent_only = false;
+            cli.diag_lid_omit_pjump_only = false;
+            cli.diag_lid_dens_silence = false;
+            cli.diag_wall_lid_viscous_omit = true;
+            cli.diag_wall_flat_lid = true;
+            cli.diag_lid_free_slip = false;
+            cli.diag_lid_free_slip_post_settle = false;
+            cli.diag_hard_lid = false;
+            cli.diag_soft_lid = false;
+            cli.diag_soft_lid_tip = false;
+            // Do NOT force dens_mode=3; pprime / explicit --acoustic-dens-mode=1 keep mode 1.
+        }
+        else if (std::strcmp(av[i], "--diag-lid-cont-silent-only") == 0)
+        {
+            // Doc221 O6a: O3 + ContSilent only; dens_mode=1.
+            cli.diag_lid_cont_silent_only = true;
+            cli.diag_lid_omit_pjump_only = false;
+            cli.diag_lid_cont_silent = false;
+            cli.diag_lid_dens_silence = false;
+            cli.diag_wall_lid_viscous_omit = true;
+            cli.diag_wall_flat_lid = true;
+            cli.diag_lid_free_slip = false;
+            cli.diag_lid_free_slip_post_settle = false;
+            cli.diag_hard_lid = false;
+            cli.diag_soft_lid = false;
+            cli.diag_soft_lid_tip = false;
+        }
+        else if (std::strcmp(av[i], "--diag-lid-omit-pjump-only") == 0)
+        {
+            // Doc221 O6b: O3 + OmitPJump only; dens_mode=1.
+            cli.diag_lid_omit_pjump_only = true;
+            cli.diag_lid_cont_silent_only = false;
+            cli.diag_lid_cont_silent = false;
+            cli.diag_lid_dens_silence = false;
+            cli.diag_wall_lid_viscous_omit = true;
+            cli.diag_wall_flat_lid = true;
+            cli.diag_lid_free_slip = false;
+            cli.diag_lid_free_slip_post_settle = false;
+            cli.diag_hard_lid = false;
+            cli.diag_soft_lid = false;
+            cli.diag_soft_lid_tip = false;
+        }
+        else if (std::strcmp(av[i], "--no-doc220-pprime-hydro") == 0)
+        {
+            cli.doc220_pprime_hydro = false;
         }
         else if (std::strcmp(av[i], "--hydro-rho-freeze-rho0") == 0)
         {
@@ -402,6 +1441,7 @@ inline void applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fr
         else if (std::strcmp(av[i], "--dens-sum-interior-only") == 0)
         {
             cli.dens_sum_normalize = true;
+            cli.dens_sum_normalize_user_set = true;
             cli.dens_sum_interior_only = true;
         }
         else if (std::strcmp(av[i], "--no-dens-sum-interior-only") == 0)
@@ -425,20 +1465,42 @@ inline void applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fr
         {
             cli.background_hydro_p = false;
         }
+        else if (std::strcmp(av[i], "--doc219-hydro-profile") == 0)
+        {
+            cli.doc219_hydro_profile = true;
+        }
+        else if (std::strcmp(av[i], "--no-doc219-hydro-profile") == 0)
+        {
+            cli.doc219_hydro_profile = false;
+        }
         else if (std::strcmp(av[i], "--kernel-correction") == 0)
         {
             cli.kernel_correction = true;
+            cli.kernel_correction_user_set = true;
         }
         else if (std::strcmp(av[i], "--no-kernel-correction") == 0)
         {
             cli.kernel_correction = false;
+            cli.kernel_correction_user_set = true;
+        }
+        else if (std::strcmp(av[i], "--tvf") == 0)
+        {
+            cli.enable_tvf = true;
+            cli.enable_tvf_user_set = true;
+        }
+        else if (std::strcmp(av[i], "--no-tvf") == 0)
+        {
+            cli.enable_tvf = false;
+            cli.enable_tvf_user_set = true;
         }
         else if (std::strncmp(av[i], "--acoustic-dens-mode=", 21) == 0)
         {
             cli.acoustic_dens_mode = std::atoi(av[i] + 21);
-            if (cli.acoustic_dens_mode != 0 && cli.acoustic_dens_mode != 1)
+            cli.acoustic_dens_mode_user_set = true;
+            // 0/1 legacy; 3 = Doc201 omit DissipativeUJump (Doc221 O4 lid dens silence).
+            if (cli.acoustic_dens_mode != 0 && cli.acoustic_dens_mode != 1 && cli.acoustic_dens_mode != 3)
             {
-                std::cerr << "[ophelie] --acoustic-dens-mode must be 0 or 1\n";
+                std::cerr << "[ophelie] --acoustic-dens-mode must be 0, 1, or 3\n";
                 std::exit(1);
             }
         }
@@ -480,6 +1542,180 @@ inline void applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fr
             cli.dens_sum_surface_recapture_interval = std::max(0, std::atoi(av[i] + 38));
         }
     }
+    if (cli.doc223_paper_flat_slip_top)
+    {
+        const bool illegal =
+            cli.diag_tip_soft_force || cli.diag_tip_fs_dashpot || cli.diag_soft_lid ||
+            cli.diag_soft_lid_tip || cli.diag_hard_lid || cli.diag_zero_net_uz ||
+            cli.diag_lid_dens_silence || cli.diag_lid_cont_silent ||
+            cli.diag_lid_cont_silent_only || cli.diag_lid_omit_pjump_only ||
+            cli.doc222_fs_deform_eps > TinyReal || cli.doc222_c3_ph_compare ||
+            cli.doc222_ph_local_eta || cli.doc223_force_reset_probe;
+        if (illegal)
+        {
+            std::cerr << "[ophelie][doc223][D] --doc223-paper-flat-slip-top is illegal with "
+                         "tip/zero-net/z-clamp/ContSilent/fs-deform/local-eta/force-reset-probe\n";
+            return 2;
+        }
+        cli.diag_wall_flat_lid = true;
+        cli.diag_lid_free_slip = true;
+        cli.diag_lid_free_slip_post_settle = true;
+        cli.doc220_pprime_hydro = true;
+        cli.background_hydro_p = true;
+        cli.omit_gravity_force = true;
+        cli.perturbation_momentum = 1;
+        if (!cli.acoustic_dens_mode_user_set)
+        {
+            cli.acoustic_dens_mode = 1;
+            cli.acoustic_dens_mode_user_set = true;
+        }
+        // Settle: Internal dens + packing normalize (absorb overpack into σ0/ρ).
+        // Keep: do NOT re-run dens reinit every advection — Doc223 E1 showed that
+        // periodic Internal+normalize snaps (Δρ∼O(10²)) are CFL-sensitive forcing
+        // (halving acoustic OR advection both raised U_rms by ∼100×). Keep uses
+        // acoustic continuity only after settle/flush dens.
+        if (!cli.dens_sum_normalize_user_set)
+        {
+            cli.dens_sum_normalize = false;
+            cli.settle_dens_sum_normalize = true;
+        }
+        // Doc223 E1: Doc219 default B-matrix amplifies ClosedCrucible side-wall noise
+        // (~30×; keep_adv200 u_side 3e-4→3e-6). Mark user_set so Doc219 cannot re-enable.
+        if (!cli.kernel_correction_user_set)
+        {
+            cli.kernel_correction = false;
+            cli.kernel_correction_user_set = true;
+        }
+        if (cli.doc223_ablate_no_free_slip)
+        {
+            cli.diag_lid_free_slip = false;
+            cli.diag_lid_free_slip_post_settle = false;
+            cli.doc224_lid_keep_dens_jump = false;
+            cli.doc224_ablate_acoustic_freeslip = false;
+        }
+        else
+        {
+            if (!cli.doc224_lid_keep_dens_jump_user_set)
+            {
+                // Retained for legacy --doc224-acoustic-freeslip path.
+                cli.doc224_lid_keep_dens_jump = true;
+            }
+            if (!cli.doc224_ablate_acoustic_freeslip_user_set)
+            {
+                // Doc224 C3d: impermeable acoustic + OpenCup viscous (default paper-top).
+                cli.doc224_ablate_acoustic_freeslip = true;
+            }
+        }
+    }
+    else if (cli.doc223_ablate_no_free_slip)
+    {
+        std::cerr << "[ophelie][doc223][E1] --doc223-ablate-no-free-slip requires "
+                     "--doc223-paper-flat-slip-top\n";
+        return 2;
+    }
+    if (cli.doc223_e2_lid_slip_probe)
+    {
+        if (!cli.doc223_paper_flat_slip_top || cli.doc223_ablate_no_free_slip)
+        {
+            std::cerr << "[ophelie][doc223][E2] --doc223-e2-lid-slip-probe requires "
+                         "--doc223-paper-flat-slip-top (not ablate-no-free-slip)\n";
+            return 2;
+        }
+    }
+    if (cli.doc226_top_operator_probe)
+    {
+        if (!cli.doc223_paper_flat_slip_top || cli.doc223_ablate_no_free_slip)
+        {
+            std::cerr << "[ophelie][doc226][B] --doc226-top-operator-probe requires "
+                         "--doc223-paper-flat-slip-top (not ablate-no-free-slip)\n";
+            return 2;
+        }
+        if (cli.doc223_e2_lid_slip_probe || cli.doc223_e3_normal_perturb ||
+            cli.doc226_e1_local_mu_probe)
+        {
+            std::cerr << "[ophelie][doc226][B] do not combine with E2/E3/E1 probes\n";
+            return 2;
+        }
+    }
+    if (cli.doc226_mu_T_only && !cli.doc226_local_particle_viscosity)
+    {
+        std::cerr << "[ophelie][doc226] --doc226-mu-T-only requires --doc226-local-particle-viscosity\n";
+        return 2;
+    }
+    if (cli.doc227_c_uniform_mu_probe)
+    {
+        if (!cli.doc226_local_particle_viscosity)
+        {
+            std::cerr << "[ophelie][doc227][C] --doc227-c-uniform-mu-probe requires "
+                         "--doc226-local-particle-viscosity\n";
+            return 2;
+        }
+        if (cli.doc226_e1_local_mu_probe || cli.doc226_top_operator_probe)
+        {
+            std::cerr << "[ophelie][doc227][C] do not combine with E1/B probes\n";
+            return 2;
+        }
+    }
+    if (cli.doc226_e1_local_mu_probe)
+    {
+        if (!cli.doc226_local_particle_viscosity)
+        {
+            std::cerr << "[ophelie][doc226][E1] --doc226-e1-local-mu-probe requires "
+                         "--doc226-local-particle-viscosity\n";
+            return 2;
+        }
+        if (cli.doc226_top_operator_probe || cli.doc223_e2_lid_slip_probe ||
+            cli.doc223_e3_normal_perturb || cli.doc227_c_uniform_mu_probe)
+        {
+            std::cerr << "[ophelie][doc226][E1] do not combine with B/E2/E3/C probes\n";
+            return 2;
+        }
+    }
+    if (cli.doc223_e3_normal_perturb)
+    {
+        if (!cli.doc223_paper_flat_slip_top || cli.doc223_ablate_no_free_slip)
+        {
+            std::cerr << "[ophelie][doc223][E3] --doc223-e3-normal-perturb requires "
+                         "--doc223-paper-flat-slip-top (not ablate-no-free-slip)\n";
+            return 2;
+        }
+        if (cli.doc223_e2_lid_slip_probe)
+        {
+            std::cerr << "[ophelie][doc223][E3] do not combine with --doc223-e2-lid-slip-probe\n";
+            return 2;
+        }
+    }
+    if (cli.doc223_f2_annular_hot)
+    {
+        if (!cli.doc223_paper_flat_slip_top)
+        {
+            std::cerr << "[ophelie][doc223][F2] --doc223-f2-annular-hot requires "
+                         "--doc223-paper-flat-slip-top\n";
+            return 2;
+        }
+        if (cli.prescribe_t_radial_dT > TinyReal || cli.prescribe_t_hot_bottom_dT > TinyReal ||
+            !cli.init_T_rz_csv.empty())
+        {
+            std::cerr << "[ophelie][doc223][F2] annular-hot is exclusive with "
+                         "--prescribe-t-radial / --prescribe-t-hot-bottom / --init-T-rz-csv\n";
+            return 2;
+        }
+    }
+    if (!cli.init_T_rz_csv.empty())
+    {
+        if (cli.prescribe_t_radial_dT > TinyReal || cli.prescribe_t_hot_bottom_dT > TinyReal)
+        {
+            std::cerr << "[ophelie][doc224][D] --init-T-rz-csv exclusive with "
+                         "--prescribe-t-radial / --prescribe-t-hot-bottom\n";
+            return 2;
+        }
+        if (!cli.doc223_paper_flat_slip_top)
+        {
+            std::cerr << "[ophelie][doc224][D] --init-T-rz-csv requires "
+                         "--doc223-paper-flat-slip-top for paper-top fluid identity\n";
+            return 2;
+        }
+    }
     if (!(cli.dt_scale > TinyReal))
         cli.dt_scale = Real(1);
     if (!(cli.acoustic_cfl > TinyReal))
@@ -494,17 +1730,52 @@ inline void applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fr
     {
         cli.literature.target_glass_absorbed_power_w = cli.target_power_w;
     }
-    if (cli.prescribe_t_hot_bottom_dT > TinyReal || cli.prescribe_t_radial_dT > TinyReal)
+    if (cli.prescribe_t_hot_bottom_dT > TinyReal || cli.prescribe_t_radial_dT > TinyReal ||
+        cli.doc223_f2_annular_hot || !cli.init_T_rz_csv.empty())
     {
-        // Independent buoyancy path: no EM heating; optional freeze keeps ΔT fixed.
-        cli.literature.zero_q = true;
+        // Freeze-T buoyancy smoke: hold ΔT, no EM heating / diffusion (pass --zero-q explicitly too).
+        // Thaw path (no --freeze-prescribed-t): prescribe is IC only; Q + diffusion + Robin evolve.
         if (cli.freeze_prescribed_temperature)
         {
+            cli.literature.zero_q = true;
             cli.literature.enable_thermal_diffusion = false;
             cli.thermal_diffusion_explicit = false;
         }
     }
     finalizeFrenchPeriodicLiteratureDefaults(cli.literature, cli.thermal_diffusion_explicit);
+
+    // Doc225 A: warm Spatial-Q preflight (auto when thaw + CSV + Q on, or explicit flag).
+    const bool warm_csv_q = !cli.init_T_rz_csv.empty() && !cli.freeze_prescribed_temperature &&
+                            !cli.literature.zero_q;
+    if (cli.doc225_warm_spatial_q_preflight || warm_csv_q)
+    {
+        auto fail = [](const char *msg) {
+            std::cerr << "[ophelie][doc225][warm-preflight] FATAL: " << msg << std::endl;
+            return 2;
+        };
+        if (cli.freeze_prescribed_temperature)
+            return fail("freeze_T must be 0 for warm Spatial-Q");
+        if (!cli.literature.enable_thermal_diffusion)
+            return fail("thermal_diffusion must be ON (--enable-thermal-diffusion)");
+        // Explicit --init-T-rz-demean-legacy is allowed for F0 read-only probe only; never acceptance.
+        if (cli.init_T_rz_demean_legacy)
+        {
+            std::cout << "[ophelie][doc225][warm-preflight] WARN ABSOLUTE_T_SHIFTED_LEGACY probe path "
+                         "(explicit --init-T-rz-demean-legacy); NOT for acceptance\n";
+        }
+        if (cli.diag_soft_lid_tip || cli.diag_tip_soft_force || cli.diag_tip_fs_dashpot ||
+            cli.diag_zero_net_uz || cli.diag_lid_cont_silent)
+            return fail("diagnostic velocity interventions must be OFF");
+        if (!(cli.target_power_w > Real(1) && std::abs(cli.target_power_w - Real(50000)) <= Real(50)))
+        {
+            std::cerr << "[ophelie][doc225][warm-preflight] WARN target_power_w=" << cli.target_power_w
+                      << " (expected ~50000)\n";
+        }
+        std::cout << "[ophelie][doc225][warm-preflight] PASS freeze=0 diffusion=1 legacy_demean="
+                  << (cli.init_T_rz_demean_legacy ? 1 : 0)
+                  << " no tip/Uz-kill ContSilent=0 Q_target=" << cli.target_power_w << std::endl;
+    }
+    return 0;
 }
 
 inline void finalizeNaturalHydroDefaults(LocalCli &cli, const OphelieFrenchReducedCaseParams &french)
@@ -604,6 +1875,528 @@ inline void hostZeroVecFieldFrench(BaseParticles &particles, const std::string &
     syncVariableToDevice<Vecd>(particles, name);
 }
 
+/**
+ * Doc227 B5: deterministic schedule truncation (no fluid). Verifies last acoustic
+ * substep is min(candidate, remaining) for Dt ≷ / non-integer multiple of dt_ac.
+ */
+inline bool hostDoc227ScheduleSelftest(std::string &reason)
+{
+    auto run_case = [](Real Dt, Real dt_ac_fixed, Real end_cap) -> std::pair<Real, int> {
+        Real integrated = 0;
+        int n = 0;
+        constexpr Real eps = Real(1.0e-14);
+        while (integrated + eps < Dt)
+        {
+            const Real rem = Dt - integrated;
+            const Real dt = std::min({dt_ac_fixed, rem, end_cap});
+            if (dt <= TinyReal)
+                break;
+            if (dt > rem + Real(1.0e-12) || dt > dt_ac_fixed + Real(1.0e-12))
+                return {-1, -1};
+            integrated += dt;
+            ++n;
+        }
+        return {integrated, n};
+    };
+    {
+        const auto r = run_case(Real(1.0e-3), Real(7.0e-4), Real(1.0)); // ac > rem on last
+        if (r.second < 0 || std::abs(r.first - Real(1.0e-3)) > Real(1.0e-12) || r.second != 2)
+        {
+            reason = "case_ac_gt_remaining_failed";
+            return false;
+        }
+    }
+    {
+        const auto r = run_case(Real(2.0e-3), Real(5.0e-4), Real(1.0)); // ac < Dt
+        if (r.second < 0 || std::abs(r.first - Real(2.0e-3)) > Real(1.0e-12) || r.second != 4)
+        {
+            reason = "case_ac_lt_Dt_failed";
+            return false;
+        }
+    }
+    {
+        const auto r = run_case(Real(1.25e-3), Real(5.0e-4), Real(1.0)); // non-integer
+        if (r.second < 0 || std::abs(r.first - Real(1.25e-3)) > Real(1.0e-12) || r.second != 3)
+        {
+            reason = "case_noninteger_Dt_failed";
+            return false;
+        }
+    }
+    reason = "ok";
+    return true;
+}
+
+/** Doc227 keep-loop schedule compare: Real is float; 1e-12 is below ulp near 1e-3. */
+inline Real doc227ScheduleTol(Real scale)
+{
+    const Real a = std::max(std::abs(scale), Real(1.0e-6));
+    const Real eps = std::numeric_limits<Real>::epsilon();
+    return std::max({Real(1.0e-6), Real(1.0e-4) * a, Real(64) * eps * std::max(a, Real(1))});
+}
+
+/**
+ * Doc226 F: thin BaseDynamics wrapper so ViscousForce wall can sit in
+ * addPostContactInteraction while still switching Closed↔OpenCup after settle.
+ * Couette / Viscosity+post-contact need wall BEFORE ForcePriorCK update.
+ */
+class OphelieCallFnDynamicsCK : public BaseDynamics<void>
+{
+    std::function<void()> fn_;
+
+  public:
+    explicit OphelieCallFnDynamicsCK(std::function<void()> fn) : fn_(std::move(fn)) {}
+    void exec(Real dt = 0.0) override
+    {
+        (void)dt;
+        fn_();
+    }
+};
+
+/** Doc223: ForcePriorCK channels that must be cleared as one transaction with ForcePrior. */
+inline const char *const kDoc223ForcePriorCurrentNames[] = {
+    "GravityForceCK", "BoussinesqBuoyancyForceCK", "ViscousForce", "TipSoftForce"};
+
+inline void hostDoc223ZeroAllForcePriorChannels(BaseParticles &particles)
+{
+    hostZeroVecFieldFrench(particles, "ForcePrior");
+    for (const char *cur : kDoc223ForcePriorCurrentNames)
+    {
+        hostZeroVecFieldFrench(particles, cur);
+        hostZeroVecFieldFrench(particles, std::string("Previous") + cur);
+    }
+}
+
+struct Doc223ForceFieldMoments
+{
+    Real mean_z = 0;
+    Real rms = 0;
+    Real max_abs = 0;
+    Real a_z_mean = 0; // mass-weighted Fz/m
+};
+
+inline Doc223ForceFieldMoments hostDoc223ForceFieldMoments(BaseParticles &particles, const std::string &name)
+{
+    Doc223ForceFieldMoments m;
+    syncVariableToHost<Vecd>(particles, name);
+    syncVariableToHost<Real>(particles, "Mass");
+    const Vecd *v = particles.getVariableDataByName<Vecd>(name);
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    Real s2 = 0, sz = 0, fz_sum = 0, msum = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        s2 += v[i].squaredNorm();
+        sz += v[i][2];
+        m.max_abs = std::max(m.max_abs, v[i].norm());
+        fz_sum += v[i][2];
+        msum += mass[i];
+    }
+    const Real inv = n > 0 ? Real(1) / Real(n) : Real(0);
+    m.mean_z = sz * inv;
+    m.rms = std::sqrt(s2 * inv);
+    m.a_z_mean = (msum > TinyReal) ? (fz_sum / msum) : Real(0);
+    return m;
+}
+
+inline void hostDoc223LogForceStage(const std::string &tag, BaseParticles &particles, Real g)
+{
+    const auto fp = hostDoc223ForceFieldMoments(particles, "ForcePrior");
+    const auto grav = hostDoc223ForceFieldMoments(particles, "GravityForceCK");
+    const auto prev = hostDoc223ForceFieldMoments(particles, "PreviousGravityForceCK");
+    const auto visc = hostDoc223ForceFieldMoments(particles, "ViscousForce");
+    std::cout << "[ophelie][doc223][B] " << tag
+              << " a_fp_z=" << fp.a_z_mean << " (expect ~" << -g << ")"
+              << " fp_z_mean=" << fp.mean_z << " fp_rms=" << fp.rms
+              << " grav_z_mean=" << grav.mean_z << " prevG_z_mean=" << prev.mean_z
+              << " visc_rms=" << visc.rms << "\n";
+}
+
+/** Doc223 E2: wall-viscous a=F/m band stats under imposed tangential U. */
+struct Doc223E2ViscBand
+{
+    size_t n = 0;
+    Real a_tx_rms = 0; // Fx/m
+    Real a_tz_rms = 0; // Fz/m
+    Real a_rms = 0;
+};
+
+inline Doc223E2ViscBand hostDoc223E2ViscBand(BaseParticles &particles, const Vecd &center, Real radius,
+                                              Real z_bottom, Real z_lid, Real dp, const char *band)
+{
+    Doc223E2ViscBand out;
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Vecd>(particles, "ViscousForce");
+    syncVariableToHost<Real>(particles, "Mass");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Vecd *fv = particles.getVariableDataByName<Vecd>("ViscousForce");
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    const Real lid_band = Real(2.5) * dp;
+    const Real wall_band = Real(2.5) * dp;
+    const Real core_clear = Real(3.0) * dp;
+    Real s_tx = 0, s_tz = 0, s_a = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real dx = pos[i][0] - center[0];
+        const Real dy = pos[i][1] - center[1];
+        const Real r = std::sqrt(dx * dx + dy * dy);
+        const Real z = pos[i][2];
+        bool take = false;
+        if (std::strcmp(band, "lid_core") == 0)
+            take = (z > z_lid - lid_band) && (r < radius - core_clear);
+        else if (std::strcmp(band, "side") == 0)
+            take = (r > radius - wall_band) && (z > z_bottom + wall_band) && (z < z_lid - lid_band);
+        else if (std::strcmp(band, "bot") == 0)
+            take = (z < z_bottom + wall_band) && (r < radius - wall_band);
+        if (!take)
+            continue;
+        const Real m = std::max(mass[i], TinyReal);
+        const Real ax = fv[i][0] / m;
+        const Real az = fv[i][2] / m;
+        s_tx += ax * ax;
+        s_tz += az * az;
+        s_a += (fv[i] / m).squaredNorm();
+        ++out.n;
+    }
+    if (out.n > 0)
+    {
+        const Real inv = Real(1) / Real(out.n);
+        out.a_tx_rms = std::sqrt(s_tx * inv);
+        out.a_tz_rms = std::sqrt(s_tz * inv);
+        out.a_rms = std::sqrt(s_a * inv);
+    }
+    return out;
+}
+
+/** Doc226 B: lid_core band stats for Force / DensityChangeRate / ViscousForce. */
+struct Doc226TopOpBand
+{
+    size_t n = 0;
+    Real a_tx_rms = 0; // Fx/m
+    Real a_tz_rms = 0; // Fz/m
+    Real a_t_rms = 0;  // sqrt(ax^2+ay^2)/m tangential RMS
+    Real a_rms = 0;
+    Real drho_dt_rms = 0;
+    Real work_tx = 0; // Σ F·U (tangential U imposed)
+};
+
+inline Doc226TopOpBand hostDoc226LidCoreForceBand(BaseParticles &particles, const Vecd &center,
+                                                   Real radius, Real z_bottom, Real z_lid, Real dp,
+                                                   const std::string &force_name, Real u_tx_for_work)
+{
+    Doc226TopOpBand out;
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Vecd>(particles, force_name);
+    syncVariableToHost<Real>(particles, "Mass");
+    syncVariableToHost<Real>(particles, "DensityChangeRate");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Vecd *fv = particles.getVariableDataByName<Vecd>(force_name);
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const Real *drho = particles.getVariableDataByName<Real>("DensityChangeRate");
+    const size_t n = particles.TotalRealParticles();
+    const Real lid_band = Real(2.5) * dp;
+    const Real core_clear = Real(3.0) * dp;
+    Real s_tx = 0, s_tz = 0, s_t = 0, s_a = 0, s_dr = 0, work = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real dx = pos[i][0] - center[0];
+        const Real dy = pos[i][1] - center[1];
+        const Real r = std::sqrt(dx * dx + dy * dy);
+        const Real z = pos[i][2];
+        if (!(z > z_lid - lid_band) || !(r < radius - core_clear))
+            continue;
+        const Real m = std::max(mass[i], TinyReal);
+        const Real ax = fv[i][0] / m;
+        const Real ay = fv[i][1] / m;
+        const Real az = fv[i][2] / m;
+        s_tx += ax * ax;
+        s_tz += az * az;
+        s_t += ax * ax + ay * ay;
+        s_a += (fv[i] / m).squaredNorm();
+        s_dr += drho[i] * drho[i];
+        work += fv[i][0] * u_tx_for_work;
+        ++out.n;
+    }
+    if (out.n > 0)
+    {
+        const Real inv = Real(1) / Real(out.n);
+        out.a_tx_rms = std::sqrt(s_tx * inv);
+        out.a_tz_rms = std::sqrt(s_tz * inv);
+        out.a_t_rms = std::sqrt(s_t * inv);
+        out.a_rms = std::sqrt(s_a * inv);
+        out.drho_dt_rms = std::sqrt(s_dr * inv);
+        out.work_tx = work;
+    }
+    return out;
+}
+
+inline void hostDoc223SnapshotVecField(BaseParticles &particles, const std::string &name,
+                                       std::vector<Vecd> &buf)
+{
+    syncVariableToHost<Vecd>(particles, name);
+    const Vecd *v = particles.getVariableDataByName<Vecd>(name);
+    buf.assign(v, v + particles.TotalRealParticles());
+}
+
+inline void hostDoc223RestoreVecField(BaseParticles &particles, const std::string &name,
+                                      const std::vector<Vecd> &buf)
+{
+    syncVariableToHost<Vecd>(particles, name);
+    Vecd *v = particles.getVariableDataByName<Vecd>(name);
+    const size_t n = particles.TotalRealParticles();
+    for (size_t i = 0; i < n; ++i)
+        v[i] = buf[i];
+    syncVariableToDevice<Vecd>(particles, name);
+}
+
+inline void hostDoc223SetUniformTangentialVelocity(BaseParticles &particles, Real u_tx)
+{
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const size_t n = particles.TotalRealParticles();
+    for (size_t i = 0; i < n; ++i)
+        vel[i] = Vecd(u_tx, Real(0), Real(0));
+    syncVariableToDevice<Vecd>(particles, "Velocity");
+}
+
+/** Doc223 E3 IC + end metrics. */
+struct Doc223E3State
+{
+    bool active = false;
+    Real amp = 0;
+    Real ma = 0;
+    Real u_rms0 = 0;
+    Real uz_mean0 = 0;
+    Real ke0 = 0;
+    Real z_com0 = 0;
+    Real z_max0 = 0;
+    size_t n_above0 = 0;
+};
+
+inline Real hostDoc223MassComZ(BaseParticles &particles)
+{
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Real>(particles, "Mass");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    Real mz = 0, msum = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        mz += mass[i] * pos[i][2];
+        msum += mass[i];
+    }
+    return (msum > TinyReal) ? (mz / msum) : Real(0);
+}
+
+inline Real hostDoc223KineticEnergy(BaseParticles &particles)
+{
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    syncVariableToHost<Real>(particles, "Mass");
+    const Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    Real ke = 0;
+    for (size_t i = 0; i < n; ++i)
+        ke += Real(0.5) * mass[i] * vel[i].squaredNorm();
+    return ke;
+}
+
+/**
+ * Near-lid normal bump Uz=A·exp(-((z_lid-z)/(3dp))²)·(1-(r/R)²), then remove
+ * mass-weighted mean velocity (all components). Amp default 1e-3 ⇒ Ma≪1 for c0~13.
+ */
+inline Doc223E3State hostDoc223ApplyE3NormalPerturb(BaseParticles &particles, const Vecd &center,
+                                                    Real radius, Real z_lid, Real dp, Real c0,
+                                                    Real amp)
+{
+    Doc223E3State st;
+    st.active = true;
+    st.amp = amp;
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    syncVariableToHost<Real>(particles, "Mass");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    const Real inv_r2 = Real(1) / std::max(radius * radius, TinyReal);
+    const Real sig = Real(3) * dp;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real dx = pos[i][0] - center[0];
+        const Real dy = pos[i][1] - center[1];
+        const Real r2 = dx * dx + dy * dy;
+        const Real radial = std::max(Real(0), Real(1) - r2 * inv_r2);
+        const Real s = (z_lid - pos[i][2]) / sig;
+        const Real uz = amp * std::exp(-s * s) * radial;
+        vel[i] = Vecd(Real(0), Real(0), uz);
+    }
+    Real msum = 0, mx = 0, my = 0, mz = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        msum += mass[i];
+        mx += mass[i] * vel[i][0];
+        my += mass[i] * vel[i][1];
+        mz += mass[i] * vel[i][2];
+    }
+    const Vecd umean = (msum > TinyReal) ? Vecd(mx / msum, my / msum, mz / msum) : Vecd::Zero();
+    Real s2 = 0, umax = 0, zmax = -Real(1e30);
+    size_t n_above = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        vel[i] -= umean;
+        s2 += vel[i].squaredNorm();
+        umax = std::max(umax, vel[i].norm());
+        zmax = std::max(zmax, pos[i][2]);
+        if (pos[i][2] > z_lid)
+            ++n_above;
+    }
+    syncVariableToDevice<Vecd>(particles, "Velocity");
+    st.u_rms0 = (n > 0) ? std::sqrt(s2 / Real(n)) : Real(0);
+    st.uz_mean0 = Real(0); // removed
+    st.ma = (c0 > TinyReal) ? (umax / c0) : Real(0);
+    st.ke0 = hostDoc223KineticEnergy(particles);
+    st.z_com0 = hostDoc223MassComZ(particles);
+    st.z_max0 = zmax;
+    st.n_above0 = n_above;
+    return st;
+}
+
+inline void hostDoc223LogE3LidAudit(const char *tag, BaseParticles &particles, Real z_lid, Real dp,
+                                    Real ke0, Real z_com0)
+{
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const size_t n = particles.TotalRealParticles();
+    const Real band = Real(2.5) * dp;
+    size_t n_lid = 0, n_above = 0;
+    Real un2 = 0, un_max = 0, z_max = -Real(1e30), overshoot = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real z = pos[i][2];
+        z_max = std::max(z_max, z);
+        if (z > z_lid)
+        {
+            ++n_above;
+            overshoot = std::max(overshoot, z - z_lid);
+        }
+        if (z > z_lid - band)
+        {
+            ++n_lid;
+            const Real un = vel[i][2];
+            un2 += un * un;
+            un_max = std::max(un_max, std::abs(un));
+        }
+    }
+    const Real un_rms = (n_lid > 0) ? std::sqrt(un2 / Real(n_lid)) : Real(0);
+    const Real ke = hostDoc223KineticEnergy(particles);
+    const Real z_com = hostDoc223MassComZ(particles);
+    std::cout << "[ophelie][doc223][E3][" << tag << "]"
+              << " n_lid_band=" << n_lid << " un_rms=" << un_rms << " un_abs_max=" << un_max
+              << " n_above_lid=" << n_above << " overshoot_max=" << overshoot
+              << " z_max=" << z_max << " z_lid=" << z_lid
+              << " ke=" << ke << " ke/ke0=" << ((ke0 > TinyReal) ? (ke / ke0) : Real(0))
+              << " dz_com=" << (z_com - z_com0) << " support~" << (Real(2) * dp) << "\n";
+}
+
+/** Doc221: ForcePrior ledger vs registered non-pressure channels (Gravity+Boussinesq+Viscous). */
+struct Doc221ForceLedgerStats
+{
+    size_t n = 0;
+    Real fp_rms = 0;
+    Real grav_rms = 0;
+    Real buoy_rms = 0;
+    Real visc_rms = 0;
+    Real sum_rms = 0;
+    Real residual_rms = 0;
+    Real residual_max = 0;
+    Real residual_rel_rms = 0;
+    Real fp_z_mean = 0;
+    Real buoy_z_mean = 0;
+    Real visc_z_mean = 0;
+};
+
+inline Doc221ForceLedgerStats hostDoc221ForceLedgerStats(BaseParticles &particles)
+{
+    Doc221ForceLedgerStats st;
+    syncVariableToHost<Vecd>(particles, "ForcePrior");
+    syncVariableToHost<Vecd>(particles, "GravityForceCK");
+    syncVariableToHost<Vecd>(particles, "BoussinesqBuoyancyForceCK");
+    syncVariableToHost<Vecd>(particles, "ViscousForce");
+    const Vecd *fp = particles.getVariableDataByName<Vecd>("ForcePrior");
+    const Vecd *fg = particles.getVariableDataByName<Vecd>("GravityForceCK");
+    const Vecd *fb = particles.getVariableDataByName<Vecd>("BoussinesqBuoyancyForceCK");
+    const Vecd *fv = particles.getVariableDataByName<Vecd>("ViscousForce");
+    st.n = particles.TotalRealParticles();
+    Real s_fp = 0, s_g = 0, s_b = 0, s_v = 0, s_sum = 0, s_r = 0, s_scale = 0;
+    Real s_fpz = 0, s_bz = 0, s_vz = 0;
+    for (size_t i = 0; i < st.n; ++i)
+    {
+        const Vecd sum = fg[i] + fb[i] + fv[i];
+        const Vecd r = fp[i] - sum;
+        const Real nfp = fp[i].squaredNorm();
+        const Real ng = fg[i].squaredNorm();
+        const Real nb = fb[i].squaredNorm();
+        const Real nv = fv[i].squaredNorm();
+        const Real ns = sum.squaredNorm();
+        const Real nr = r.squaredNorm();
+        s_fp += nfp;
+        s_g += ng;
+        s_b += nb;
+        s_v += nv;
+        s_sum += ns;
+        s_r += nr;
+        st.residual_max = std::max(st.residual_max, std::sqrt(nr));
+        const Real scale = std::sqrt(ng + nb + nv) + Real(1.0e-12);
+        s_scale += (nr / (scale * scale));
+        s_fpz += fp[i][2];
+        s_bz += fb[i][2];
+        s_vz += fv[i][2];
+    }
+    const Real inv = st.n > 0 ? Real(1) / Real(st.n) : Real(0);
+    st.fp_rms = std::sqrt(s_fp * inv);
+    st.grav_rms = std::sqrt(s_g * inv);
+    st.buoy_rms = std::sqrt(s_b * inv);
+    st.visc_rms = std::sqrt(s_v * inv);
+    st.sum_rms = std::sqrt(s_sum * inv);
+    st.residual_rms = std::sqrt(s_r * inv);
+    st.residual_rel_rms = std::sqrt(s_scale * inv);
+    st.fp_z_mean = s_fpz * inv;
+    st.buoy_z_mean = s_bz * inv;
+    st.visc_z_mean = s_vz * inv;
+    return st;
+}
+
+inline void hostDoc221AppendForceLedgerCsv(const std::string &path, const std::string &tag, int adv_step,
+                                           Real physical_time, const Doc221ForceLedgerStats &st, bool write_header)
+{
+    std::ofstream out(path, write_header ? std::ios::out : std::ios::app);
+    if (!out.good())
+        return;
+    if (write_header)
+    {
+        out << "tag,adv_step,physical_time_s,n,fp_rms,grav_rms,buoy_rms,visc_rms,sum_rms,"
+               "residual_rms,residual_max,residual_rel_rms,fp_z_mean,buoy_z_mean,visc_z_mean\n";
+    }
+    out << tag << "," << adv_step << "," << physical_time << "," << st.n << "," << st.fp_rms << ","
+        << st.grav_rms << "," << st.buoy_rms << "," << st.visc_rms << "," << st.sum_rms << ","
+        << st.residual_rms << "," << st.residual_max << "," << st.residual_rel_rms << ","
+        << st.fp_z_mean << "," << st.buoy_z_mean << "," << st.visc_z_mean << "\n";
+}
+
+inline void logDoc221ForceLedger(const std::string &tag, const Doc221ForceLedgerStats &st)
+{
+    std::cout << "[ophelie][doc221][ledger] " << tag << " n=" << st.n << " fp_rms=" << st.fp_rms
+              << " grav_rms=" << st.grav_rms << " buoy_rms=" << st.buoy_rms << " visc_rms=" << st.visc_rms
+              << " sum_rms=" << st.sum_rms << " residual_rms=" << st.residual_rms
+              << " residual_max=" << st.residual_max << " residual_rel_rms=" << st.residual_rel_rms
+              << " fp_z_mean=" << st.fp_z_mean << " buoy_z_mean=" << st.buoy_z_mean
+              << " visc_z_mean=" << st.visc_z_mean << std::endl;
+}
+
 /** Doc105 P2d: wall dens mode (fields registered by AcousticStep1stHalf). */
 inline void hostSetAcousticDensModeFrench(BaseParticles &particles, Real mode)
 {
@@ -613,6 +2406,81 @@ inline void hostSetAcousticDensModeFrench(BaseParticles &particles, Real mode)
     for (size_t i = 0; i < n; ++i)
         m[i] = mode;
     syncVariableToDevice<Real>(particles, "AcousticDensMode");
+}
+
+/**
+ * Doc201 B2 / Doc221 P: tag flat-lid wall particles AcousticWallFreeSlip=1 so acoustic dens ghost
+ * is free-slip and 1st-half mom force projects onto n. Side/bottom stay no-slip. Requires
+ * AcousticWallFreeSlip already registered (AcousticStep Contact<Wall> ctor) and normals set.
+ */
+inline size_t hostTagLidWallRealFieldFrench(BaseParticles &wall_particles, Real z_top, Real wall_thickness,
+                                            const char *var_name)
+{
+    syncVariableToHost<Vecd>(wall_particles, "Position");
+    syncVariableToHost<Vecd>(wall_particles, "NormalDirection");
+    syncVariableToHost<Real>(wall_particles, var_name);
+    const Vecd *pos = wall_particles.getVariableDataByName<Vecd>("Position");
+    const Vecd *n = wall_particles.getVariableDataByName<Vecd>("NormalDirection");
+    Real *f = wall_particles.getVariableDataByName<Real>(var_name);
+    const size_t nn = wall_particles.TotalRealParticles();
+    const Real z_cut = z_top - Real(0.25) * wall_thickness;
+    size_t n_lid = 0;
+    for (size_t i = 0; i < nn; ++i)
+    {
+        const bool is_lid = (pos[i][2] > z_cut) && (std::abs(n[i][2]) > Real(0.5));
+        f[i] = is_lid ? Real(1) : Real(0);
+        if (is_lid)
+            ++n_lid;
+    }
+    syncVariableToDevice<Real>(wall_particles, var_name);
+    return n_lid;
+}
+
+inline size_t hostTagAcousticWallFreeSlipLid(BaseParticles &wall_particles, Real z_top, Real wall_thickness)
+{
+    return hostTagLidWallRealFieldFrench(wall_particles, z_top, wall_thickness, "AcousticWallFreeSlip");
+}
+
+/** Doc224 C3: keep dens jump on free-slip lid faces (mom still ∥ n). */
+inline size_t hostTagAcousticWallKeepDensJumpLid(BaseParticles &wall_particles, Real z_top, Real wall_thickness)
+{
+    return hostTagLidWallRealFieldFrench(wall_particles, z_top, wall_thickness, "AcousticWallKeepDensJump");
+}
+
+inline size_t hostArmDoc224FreeSlipLid(BaseParticles &wall_particles, Real z_top, Real wall_thickness,
+                                       bool keep_dens_jump)
+{
+    const size_t n_lid = hostTagAcousticWallFreeSlipLid(wall_particles, z_top, wall_thickness);
+    if (keep_dens_jump)
+    {
+        const size_t n_keep = hostTagAcousticWallKeepDensJumpLid(wall_particles, z_top, wall_thickness);
+        std::cout << "[ophelie][doc224][C3] AcousticWallKeepDensJump lid tags=" << n_keep
+                  << " (free-slip mom∥n + dens jump ON)\n";
+    }
+    return n_lid;
+}
+
+/** Doc202 H2a / Doc221 O4/O5: lid skip 2nd-half continuity dens (keep PJump). */
+inline size_t hostTagAcousticWallContSilentLid(BaseParticles &wall_particles, Real z_top, Real wall_thickness)
+{
+    return hostTagLidWallRealFieldFrench(wall_particles, z_top, wall_thickness, "AcousticWallContSilent");
+}
+
+/** Doc202 H2b / Doc221 O4/O5: lid omit DissipativePJump (keep continuity). */
+inline size_t hostTagAcousticWallOmitPJumpLid(BaseParticles &wall_particles, Real z_top, Real wall_thickness)
+{
+    return hostTagLidWallRealFieldFrench(wall_particles, z_top, wall_thickness, "AcousticWallOmitPJump");
+}
+
+/** Doc220 E2: PerturbationMomentum 1 ⇒ acoustic momentum uses p' = p − BackgroundPressure. */
+inline void hostSetPerturbationMomentumFrench(BaseParticles &particles, Real flag)
+{
+    syncVariableToHost<Real>(particles, "PerturbationMomentum");
+    Real *pm = particles.getVariableDataByName<Real>("PerturbationMomentum");
+    const size_t n = particles.TotalRealParticles();
+    for (size_t i = 0; i < n; ++i)
+        pm[i] = flag;
+    syncVariableToDevice<Real>(particles, "PerturbationMomentum");
 }
 
 inline void hostSetReferenceBodyAccelerationFrench(BaseParticles &particles, const Vecd &a_ref)
@@ -895,6 +2763,80 @@ inline FrenchHydroStageSnapshot hostFrenchHydroStageSnapshot(BaseParticles &part
     return s;
 }
 
+inline void hostLogDoc223PaperTopHydroAudit(const char *tag, BaseParticles &particles, Real rho0, Real c0,
+                                            Real gravity_g, const Vecd &center, Real radius, Real z_bottom,
+                                            Real z_lid, Real dp)
+{
+    const Real band = Real(2) * dp;
+    const FrenchHydroStageSnapshot st =
+        hostFrenchHydroStageSnapshot(particles, rho0, c0, gravity_g, center, radius, z_bottom, z_lid, band,
+                                     Real(4) * dp);
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    syncVariableToHost<Real>(particles, "Mass");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    size_t n_above = 0;
+    size_t n_lid_band = 0;
+    Real z_max = -Real(1e30);
+    Real gap_mean = Real(0);
+    Real un_rms = Real(0);
+    Real un_abs_max = Real(0);
+    Real overshoot_max = Real(0);
+    Real mass_tot = Real(0);
+    Real mass_above = Real(0);
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real z = pos[i][2];
+        const Real m = mass[i];
+        mass_tot += m;
+        z_max = SMAX(z_max, z);
+        if (z > z_lid)
+        {
+            ++n_above;
+            mass_above += m;
+            overshoot_max = SMAX(overshoot_max, z - z_lid);
+        }
+        if (z > z_lid - band)
+        {
+            ++n_lid_band;
+            const Real un = vel[i][2];
+            un_rms += un * un;
+            un_abs_max = SMAX(un_abs_max, std::abs(un));
+            gap_mean += z_lid - z;
+        }
+    }
+    if (n_lid_band > 0)
+    {
+        un_rms = std::sqrt(un_rms / static_cast<Real>(n_lid_band));
+        gap_mean /= static_cast<Real>(n_lid_band);
+    }
+    const Real f_over = (mass_tot > TinyReal) ? (mass_above / mass_tot) : Real(0);
+    const Real overshoot_dp = (dp > TinyReal) ? (overshoot_max / dp) : Real(0);
+    std::cout << "[ophelie][doc223][E1][" << tag << "]"
+              << " n_int=" << st.interior.n << " n_surf=" << st.surface.n
+              << " n_side=" << st.wall_side.n << " n_bot=" << st.wall_bottom.n
+              << " u_int=" << st.interior.u_rms << " u_surf=" << st.surface.u_rms
+              << " u_side=" << st.wall_side.u_rms << " u_bot=" << st.wall_bottom.u_rms
+              << " u_side_inc=" << st.wall_side_incomplete.u_rms
+              << " u_side_comp=" << st.wall_side_complete.u_rms
+              << " a_f_side=" << st.wall_side.a_force_z_rms
+              << " a_f_r_side=" << st.wall_side.a_force_r_rms
+              << " pack_int=" << st.interior.packing_mean << " pack_surf=" << st.surface.packing_mean
+              << " pack_side=" << st.wall_side.packing_mean << " pack_bot=" << st.wall_bottom.packing_mean
+              << " p_eos_int=" << st.interior.p_eos_rms << " p_eos_surf=" << st.surface.p_eos_rms
+              << " a_net_int=" << st.interior.a_net_z_rms << " a_net_surf=" << st.surface.a_net_z_rms
+              << " a_f_int=" << st.interior.a_force_z_rms << " a_f_surf=" << st.surface.a_force_z_rms
+              << " n_inc_surf=" << st.surface.n_incomplete << " n_inc_side=" << st.wall_side.n_incomplete
+              << " z_max=" << z_max << " z_lid=" << z_lid << " n_above_lid=" << n_above
+              << " f_over=" << f_over << " overshoot_max=" << overshoot_max
+              << " overshoot_dp=" << overshoot_dp
+              << " n_lid_band=" << n_lid_band << " gap_mean=" << gap_mean << " un_rms=" << un_rms
+              << " un_abs_max=" << un_abs_max << "\n";
+}
+
 /**
  * Doc105 P2l diagnostic: for DensitySummation < ρ0, set Force = −ForcePrior so a_net=0.
  * Used only to bound how much surface residual is carried by incomplete-support particles.
@@ -974,6 +2916,782 @@ inline size_t hostZeroVelocityBottomBand(BaseParticles &particles, const Vecd &c
     }
     syncVariableToDevice<Vecd>(particles, "Velocity");
     return n_zero;
+}
+
+/**
+ * Doc221 K: subtract mass-weighted mean Uz so ∫ Uz dV ≈ 0 before position update.
+ * Returns the subtracted mean (diagnostic log). Opt-in only.
+ */
+inline Real hostSubtractMassWeightedMeanUz(BaseParticles &particles)
+{
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    syncVariableToHost<Real>(particles, "Mass");
+    Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    Real m_sum = 0;
+    Real muz = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real m = mass[i];
+        m_sum += m;
+        muz += m * vel[i][2];
+    }
+    const Real uz_mean = m_sum > TinyReal ? muz / m_sum : Real(0);
+    for (size_t i = 0; i < n; ++i)
+    {
+        vel[i][2] -= uz_mean;
+    }
+    syncVariableToDevice<Vecd>(particles, "Velocity");
+    return uz_mean;
+}
+
+/**
+ * Doc221 L: kinematic hard lid — in band z > z_lid - band, set Uz = min(Uz, 0).
+ * Returns number of particles with upward velocity killed. Opt-in only.
+ */
+inline size_t hostKillUpwardVelocityNearLid(BaseParticles &particles, Real z_lid, Real band)
+{
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    syncVariableToHost<Vecd>(particles, "Position");
+    Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const size_t n = particles.TotalRealParticles();
+    const Real z_lo = z_lid - band;
+    size_t n_kill = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        if (pos[i][2] > z_lo && vel[i][2] > Real(0))
+        {
+            vel[i][2] = Real(0);
+            ++n_kill;
+        }
+    }
+    syncVariableToDevice<Vecd>(particles, "Velocity");
+    return n_kill;
+}
+
+/**
+ * Doc221 N4/N5 / Doc222 B: tip soft physical lid via ForcePrior (no host Uz edit, no z clamp).
+ * In tip cylinder + surface band: a_z = -k*max(z-z_lid,0) - c*max(Uz,0).
+ * Doc222 default: ForcePriorCK-style channel
+ *   TipSoftForce = m*a_tip; ForcePrior += TipSoftForce - PreviousTipSoftForce; Previous=TipSoftForce.
+ * All particles updated (outside tip / Uz<=0 write zero and revoke). No extra *dt.
+ * legacy_accumulate=true restores Doc221 direct ForcePrior += m*a (B0 repro only).
+ * If fs_incomplete_only: also require DensitySummation < rho0 (N5 FS-path bind).
+ * Returns number of particles with non-zero tip acceleration this call.
+ */
+inline size_t hostApplyTipSoftForcePrior(BaseParticles &particles, Real z_lid, Real band, Real tip_r,
+                                          Real k_spring, Real c_damp, bool fs_incomplete_only = false,
+                                          Real rho0 = Real(0), bool legacy_accumulate = false)
+{
+    syncVariableToHost<Vecd>(particles, "ForcePrior");
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Real>(particles, "Mass");
+    syncVariableToHost<Vecd>(particles, "TipSoftForce");
+    syncVariableToHost<Vecd>(particles, "PreviousTipSoftForce");
+    const Real *rho_sum = nullptr;
+    if (fs_incomplete_only)
+    {
+        syncVariableToHost<Real>(particles, "DensitySummation");
+        rho_sum = particles.getVariableDataByName<Real>("DensitySummation");
+    }
+    Vecd *fp = particles.getVariableDataByName<Vecd>("ForcePrior");
+    Vecd *tip_cur = particles.getVariableDataByName<Vecd>("TipSoftForce");
+    Vecd *tip_prev = particles.getVariableDataByName<Vecd>("PreviousTipSoftForce");
+    const Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    const Real z_lo = z_lid - band;
+    const Real tip_r2 = tip_r * tip_r;
+    size_t n_touch = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        Real a_z = Real(0);
+        const bool in_band = pos[i][2] > z_lo;
+        const Real r2 = pos[i][0] * pos[i][0] + pos[i][1] * pos[i][1];
+        const bool in_tip = in_band && r2 < tip_r2;
+        const bool fs_ok =
+            !fs_incomplete_only || rho_sum == nullptr || (rho_sum[i] + TinyReal < rho0);
+        if (in_tip && fs_ok)
+        {
+            const Real pen = pos[i][2] - z_lid;
+            const Real uz_up = vel[i][2] > Real(0) ? vel[i][2] : Real(0);
+            a_z = -k_spring * (pen > Real(0) ? pen : Real(0)) - c_damp * uz_up;
+        }
+        Vecd f_new = Vecd::Zero();
+        f_new[2] = mass[i] * a_z;
+        if (std::abs(a_z) > TinyReal)
+            ++n_touch;
+        if (legacy_accumulate)
+        {
+            // Doc221 bug path: only add when nonzero; never revoke previous contribution.
+            if (std::abs(a_z) > TinyReal)
+                fp[i][2] += f_new[2];
+            tip_cur[i] = f_new;
+            // leave tip_prev untouched in legacy (not a real channel)
+        }
+        else
+        {
+            fp[i] += f_new - tip_prev[i];
+            tip_prev[i] = f_new;
+            tip_cur[i] = f_new;
+        }
+    }
+    syncVariableToDevice<Vecd>(particles, "ForcePrior");
+    syncVariableToDevice<Vecd>(particles, "TipSoftForce");
+    syncVariableToDevice<Vecd>(particles, "PreviousTipSoftForce");
+    return n_touch;
+}
+
+/** Doc222 B: read-only tip touch count — never mutates ForcePrior / tip channels. */
+inline size_t hostCountTipSoftForceTouches(BaseParticles &particles, Real z_lid, Real band, Real tip_r,
+                                            Real k_spring, Real c_damp, bool fs_incomplete_only = false,
+                                            Real rho0 = Real(0))
+{
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    syncVariableToHost<Vecd>(particles, "Position");
+    const Real *rho_sum = nullptr;
+    if (fs_incomplete_only)
+    {
+        syncVariableToHost<Real>(particles, "DensitySummation");
+        rho_sum = particles.getVariableDataByName<Real>("DensitySummation");
+    }
+    const Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const size_t n = particles.TotalRealParticles();
+    const Real z_lo = z_lid - band;
+    const Real tip_r2 = tip_r * tip_r;
+    size_t n_touch = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        if (pos[i][2] <= z_lo)
+            continue;
+        const Real r2 = pos[i][0] * pos[i][0] + pos[i][1] * pos[i][1];
+        if (r2 >= tip_r2)
+            continue;
+        if (fs_incomplete_only && rho_sum != nullptr && rho_sum[i] + TinyReal >= rho0)
+            continue;
+        const Real pen = pos[i][2] - z_lid;
+        const Real uz_up = vel[i][2] > Real(0) ? vel[i][2] : Real(0);
+        const Real a_z = -k_spring * (pen > Real(0) ? pen : Real(0)) - c_damp * uz_up;
+        if (std::abs(a_z) > TinyReal)
+            ++n_touch;
+    }
+    return n_touch;
+}
+
+/** Doc222 B: revoke tip channel from ForcePrior and zero tip fields (disable / selftest reset). */
+inline void hostClearTipSoftForcePriorContribution(BaseParticles &particles)
+{
+    syncVariableToHost<Vecd>(particles, "ForcePrior");
+    syncVariableToHost<Vecd>(particles, "TipSoftForce");
+    syncVariableToHost<Vecd>(particles, "PreviousTipSoftForce");
+    Vecd *fp = particles.getVariableDataByName<Vecd>("ForcePrior");
+    Vecd *tip_cur = particles.getVariableDataByName<Vecd>("TipSoftForce");
+    Vecd *tip_prev = particles.getVariableDataByName<Vecd>("PreviousTipSoftForce");
+    const size_t n = particles.TotalRealParticles();
+    for (size_t i = 0; i < n; ++i)
+    {
+        fp[i] -= tip_prev[i];
+        tip_prev[i] = Vecd::Zero();
+        tip_cur[i] = Vecd::Zero();
+    }
+    syncVariableToDevice<Vecd>(particles, "ForcePrior");
+    syncVariableToDevice<Vecd>(particles, "TipSoftForce");
+    syncVariableToDevice<Vecd>(particles, "PreviousTipSoftForce");
+}
+
+struct Doc222TipForceSelftestResult
+{
+    bool pass = false;
+    bool repeat10_ok = false;
+    bool exit_zone_ok = false;
+    bool uz_down_ok = false;
+    bool clear_ok = false;
+    bool count_no_side_effect = false;
+    bool legacy_grows = false;
+    Real fp_z_after_1 = 0;
+    Real fp_z_after_10 = 0;
+    Real fp_z_after_exit = 0;
+    Real fp_z_after_clear = 0;
+    Real fp_z_legacy_10 = 0;
+    size_t n_touch_1 = 0;
+    std::string message;
+};
+
+inline Real hostSumForcePriorZ(BaseParticles &particles)
+{
+    syncVariableToHost<Vecd>(particles, "ForcePrior");
+    const Vecd *fp = particles.getVariableDataByName<Vecd>("ForcePrior");
+    const size_t n = particles.TotalRealParticles();
+    Real s = 0;
+    for (size_t i = 0; i < n; ++i)
+        s += fp[i][2];
+    return s;
+}
+
+/**
+ * Doc222 B: fixed-state tip ForcePrior lifecycle checks (host). Mutates a few tip particles then restores.
+ */
+inline Doc222TipForceSelftestResult hostDoc222TipForceLifecycleSelftest(BaseParticles &particles, Real z_lid,
+                                                                        Real band, Real tip_r, Real c_damp)
+{
+    Doc222TipForceSelftestResult r;
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    syncVariableToHost<Vecd>(particles, "ForcePrior");
+    Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    Vecd *fp = particles.getVariableDataByName<Vecd>("ForcePrior");
+    const size_t n = particles.TotalRealParticles();
+    if (n == 0)
+    {
+        r.message = "no_particles";
+        return r;
+    }
+
+    // Pick / synthesize one tip-surface particle with Uz>0.
+    size_t i_tip = n;
+    const Real tip_r2 = tip_r * tip_r;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real r2 = pos[i][0] * pos[i][0] + pos[i][1] * pos[i][1];
+        if (r2 < tip_r2 && pos[i][2] > z_lid - band)
+        {
+            i_tip = i;
+            break;
+        }
+    }
+    if (i_tip >= n)
+        i_tip = 0;
+
+    const Vecd pos0 = pos[i_tip];
+    const Vecd vel0 = vel[i_tip];
+    std::vector<Vecd> fp0(n);
+    for (size_t i = 0; i < n; ++i)
+        fp0[i] = fp[i];
+
+    pos[i_tip] = Vecd(Real(0), Real(0), z_lid + Real(0.25) * band);
+    vel[i_tip] = Vecd(Real(0), Real(0), Real(0.02));
+    syncVariableToDevice<Vecd>(particles, "Position");
+    syncVariableToDevice<Vecd>(particles, "Velocity");
+
+    hostClearTipSoftForcePriorContribution(particles);
+    // Baseline ForcePrior after clear (tip channel zero).
+    const Real fp_base = hostSumForcePriorZ(particles);
+
+    r.n_touch_1 = hostApplyTipSoftForcePrior(particles, z_lid, band, tip_r, Real(0), c_damp, false, Real(0),
+                                             false);
+    r.fp_z_after_1 = hostSumForcePriorZ(particles) - fp_base;
+    for (int k = 0; k < 9; ++k)
+        hostApplyTipSoftForcePrior(particles, z_lid, band, tip_r, Real(0), c_damp, false, Real(0), false);
+    r.fp_z_after_10 = hostSumForcePriorZ(particles) - fp_base;
+    const Real tol = Real(1.0e-9) * (std::abs(r.fp_z_after_1) + Real(1));
+    r.repeat10_ok = std::abs(r.fp_z_after_10 - r.fp_z_after_1) <= tol && std::abs(r.fp_z_after_1) > TinyReal;
+
+    // Count must not change ForcePrior.
+    const Real before_count = hostSumForcePriorZ(particles);
+    const size_t n_cnt =
+        hostCountTipSoftForceTouches(particles, z_lid, band, tip_r, Real(0), c_damp, false, Real(0));
+    const Real after_count = hostSumForcePriorZ(particles);
+    r.count_no_side_effect =
+        (n_cnt == r.n_touch_1) && (std::abs(after_count - before_count) <= Real(1.0e-12) * (std::abs(before_count) + Real(1)));
+
+    // Exit tip cylinder → revoke.
+    pos[i_tip][0] = tip_r + band + Real(0.05);
+    syncVariableToDevice<Vecd>(particles, "Position");
+    hostApplyTipSoftForcePrior(particles, z_lid, band, tip_r, Real(0), c_damp, false, Real(0), false);
+    r.fp_z_after_exit = hostSumForcePriorZ(particles) - fp_base;
+    r.exit_zone_ok = std::abs(r.fp_z_after_exit) <= tol;
+
+    // Restore tip, set Uz downward → contribution zero.
+    pos[i_tip] = Vecd(Real(0), Real(0), z_lid + Real(0.25) * band);
+    vel[i_tip] = Vecd(Real(0), Real(0), Real(-0.02));
+    syncVariableToDevice<Vecd>(particles, "Position");
+    syncVariableToDevice<Vecd>(particles, "Velocity");
+    hostApplyTipSoftForcePrior(particles, z_lid, band, tip_r, Real(0), c_damp, false, Real(0), false);
+    const Real fp_down = hostSumForcePriorZ(particles) - fp_base;
+    r.uz_down_ok = std::abs(fp_down) <= tol;
+
+    hostClearTipSoftForcePriorContribution(particles);
+    r.fp_z_after_clear = hostSumForcePriorZ(particles) - fp_base;
+    r.clear_ok = std::abs(r.fp_z_after_clear) <= tol;
+
+    // Legacy accumulate grows ~10x on fixed state (bug repro).
+    hostClearTipSoftForcePriorContribution(particles);
+    for (size_t i = 0; i < n; ++i)
+        fp[i] = fp0[i];
+    syncVariableToDevice<Vecd>(particles, "ForcePrior");
+    pos[i_tip] = Vecd(Real(0), Real(0), z_lid + Real(0.25) * band);
+    vel[i_tip] = Vecd(Real(0), Real(0), Real(0.02));
+    syncVariableToDevice<Vecd>(particles, "Position");
+    syncVariableToDevice<Vecd>(particles, "Velocity");
+    const Real fp_leg_base = hostSumForcePriorZ(particles);
+    hostApplyTipSoftForcePrior(particles, z_lid, band, tip_r, Real(0), c_damp, false, Real(0), true);
+    const Real fp_leg_1 = hostSumForcePriorZ(particles) - fp_leg_base;
+    for (int k = 0; k < 9; ++k)
+        hostApplyTipSoftForcePrior(particles, z_lid, band, tip_r, Real(0), c_damp, false, Real(0), true);
+    r.fp_z_legacy_10 = hostSumForcePriorZ(particles) - fp_leg_base;
+    r.legacy_grows = std::abs(r.fp_z_legacy_10) > Real(5) * std::abs(fp_leg_1) && std::abs(fp_leg_1) > TinyReal;
+
+    // Restore particle state and zero tip channel.
+    pos[i_tip] = pos0;
+    vel[i_tip] = vel0;
+    for (size_t i = 0; i < n; ++i)
+        fp[i] = fp0[i];
+    syncVariableToDevice<Vecd>(particles, "Position");
+    syncVariableToDevice<Vecd>(particles, "Velocity");
+    syncVariableToDevice<Vecd>(particles, "ForcePrior");
+    hostClearTipSoftForcePriorContribution(particles);
+
+    r.pass = r.repeat10_ok && r.exit_zone_ok && r.uz_down_ok && r.clear_ok && r.count_no_side_effect &&
+             r.legacy_grows;
+    std::ostringstream oss;
+    oss << "repeat10=" << (r.repeat10_ok ? 1 : 0) << " exit=" << (r.exit_zone_ok ? 1 : 0)
+        << " uz_down=" << (r.uz_down_ok ? 1 : 0) << " clear=" << (r.clear_ok ? 1 : 0)
+        << " count_safe=" << (r.count_no_side_effect ? 1 : 0) << " legacy_grows=" << (r.legacy_grows ? 1 : 0)
+        << " fp1=" << r.fp_z_after_1 << " fp10=" << r.fp_z_after_10 << " leg10=" << r.fp_z_legacy_10
+        << " n_touch=" << r.n_touch_1;
+    r.message = oss.str();
+    return r;
+}
+
+/** Doc222 D2: η(r)=eps*[1-2(r/R)^2]; ∫_0^R 2π r η dr = 0. */
+inline Real doc222FsEtaOfR(Real r, Real R, Real eps)
+{
+    if (R <= TinyReal)
+        return Real(0);
+    const Real rr = r / R;
+    return eps * (Real(1) - Real(2) * rr * rr);
+}
+
+struct Doc222FsDeformReport
+{
+    size_t n = 0;
+    Real eps = 0;
+    Real eps_over_dp = 0;
+    Real eps_over_H = 0;
+    Real vol_sum_before = 0;
+    Real vol_sum_after = 0;
+    Real mass_over_rho_before = 0;
+    Real mass_over_rho_after = 0;
+    Real z_max_before = 0;
+    Real z_max_after = 0;
+    Real eta_center = 0;
+    Real eta_rim = 0;
+};
+
+inline Real hostSumParticleVolumeFrench(BaseParticles &particles)
+{
+    syncVariableToHost<Real>(particles, "VolumetricMeasure");
+    const Real *Vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+    const size_t n = particles.TotalRealParticles();
+    Real s = 0;
+    for (size_t i = 0; i < n; ++i)
+        s += Vol[i];
+    return s;
+}
+
+inline Real hostSumMassOverDensityFrench(BaseParticles &particles)
+{
+    syncVariableToHost<Real>(particles, "Mass");
+    syncVariableToHost<Real>(particles, "Density");
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const Real *rho = particles.getVariableDataByName<Real>("Density");
+    const size_t n = particles.TotalRealParticles();
+    Real s = 0;
+    for (size_t i = 0; i < n; ++i)
+        s += mass[i] / (rho[i] + TinyReal);
+    return s;
+}
+
+/**
+ * Doc222 D2: column-stretch free-surface deformation about fixed (R,H) cylinder.
+ * z' = z_bot + (z-z_bot)/H * (H+η(r)), η=eps*[1-2(r/R)^2]. Keeps particle mass; caller
+ * must re-init density/pressure and rebuild neighbor lists.
+ */
+inline Doc222FsDeformReport hostApplyDoc222AxisymmetricFsDeform(BaseParticles &particles, const Vecd &center,
+                                                                Real R, Real z_bot, Real z_free, Real eps)
+{
+    Doc222FsDeformReport rep;
+    rep.eps = eps;
+    rep.eta_center = doc222FsEtaOfR(Real(0), R, eps);
+    rep.eta_rim = doc222FsEtaOfR(R, R, eps);
+    const Real H = z_free - z_bot;
+    rep.eps_over_H = (H > TinyReal) ? eps / H : Real(0);
+    syncVariableToHost<Vecd>(particles, "Position");
+    Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    rep.n = particles.TotalRealParticles();
+    rep.vol_sum_before = hostSumParticleVolumeFrench(particles);
+    rep.mass_over_rho_before = hostSumMassOverDensityFrench(particles);
+    rep.z_max_before = -Real(1.0e30);
+    for (size_t i = 0; i < rep.n; ++i)
+        rep.z_max_before = std::max(rep.z_max_before, pos[i][2]);
+    if (H <= TinyReal || std::abs(eps) <= TinyReal)
+        return rep;
+    for (size_t i = 0; i < rep.n; ++i)
+    {
+        const Real dx = pos[i][0] - center[0];
+        const Real dy = pos[i][1] - center[1];
+        const Real r = std::sqrt(dx * dx + dy * dy);
+        const Real eta = doc222FsEtaOfR(std::min(r, R), R, eps);
+        Real Hloc = H + eta;
+        if (Hloc < Real(0.25) * H)
+            Hloc = Real(0.25) * H;
+        Real z_rel = (pos[i][2] - z_bot) / H;
+        if (z_rel < Real(0))
+            z_rel = Real(0);
+        pos[i][2] = z_bot + z_rel * Hloc;
+    }
+    syncVariableToDevice<Vecd>(particles, "Position");
+    syncVariableToHost<Vecd>(particles, "Position");
+    pos = particles.getVariableDataByName<Vecd>("Position");
+    rep.z_max_after = -Real(1.0e30);
+    for (size_t i = 0; i < rep.n; ++i)
+        rep.z_max_after = std::max(rep.z_max_after, pos[i][2]);
+    rep.vol_sum_after = hostSumParticleVolumeFrench(particles);
+    rep.mass_over_rho_after = hostSumMassOverDensityFrench(particles);
+    return rep;
+}
+
+struct Doc222FsSurfaceStats
+{
+    Real mode_amp = 0;     // projection onto φ=1-2(r/R)^2
+    Real z_max = 0;
+    Real z_p10 = 0;
+    Real z_p50 = 0;
+    Real z_p90 = 0;
+    Real z_mean_bins = 0;
+    Real ke = 0;
+    Real u_rms = 0;
+    Real mass_over_rho = 0;
+    int n_bins = 0;
+    int n_bins_valid = 0;
+};
+
+inline Doc222FsSurfaceStats hostMeasureDoc222FsSurfaceStats(BaseParticles &particles, const Vecd &center, Real R,
+                                                            Real z_ref, int n_bins = 12)
+{
+    Doc222FsSurfaceStats st;
+    st.n_bins = n_bins;
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    syncVariableToHost<Real>(particles, "Mass");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    std::vector<Real> bin_zmax(static_cast<size_t>(n_bins), -Real(1.0e30));
+    std::vector<int> bin_count(static_cast<size_t>(n_bins), 0);
+    Real ke = 0, msum = 0;
+    Real u2 = 0;
+    st.z_max = -Real(1.0e30);
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real dx = pos[i][0] - center[0];
+        const Real dy = pos[i][1] - center[1];
+        const Real r = std::sqrt(dx * dx + dy * dy);
+        st.z_max = std::max(st.z_max, pos[i][2]);
+        ke += Real(0.5) * mass[i] * vel[i].squaredNorm();
+        msum += mass[i];
+        u2 += mass[i] * vel[i].squaredNorm();
+        if (r >= R || n_bins <= 0)
+            continue;
+        int b = static_cast<int>(std::floor(r / R * Real(n_bins)));
+        if (b < 0)
+            b = 0;
+        if (b >= n_bins)
+            b = n_bins - 1;
+        bin_zmax[static_cast<size_t>(b)] = std::max(bin_zmax[static_cast<size_t>(b)], pos[i][2]);
+        bin_count[static_cast<size_t>(b)]++;
+    }
+    st.ke = ke;
+    st.u_rms = (msum > TinyReal) ? std::sqrt(u2 / msum) : Real(0);
+    st.mass_over_rho = hostSumMassOverDensityFrench(particles);
+
+    Real num = 0, den = 0, zsum = 0;
+    std::vector<Real> valid_z;
+    valid_z.reserve(static_cast<size_t>(n_bins));
+    for (int b = 0; b < n_bins; ++b)
+    {
+        if (bin_count[static_cast<size_t>(b)] <= 0 || bin_zmax[static_cast<size_t>(b)] < -Real(1.0e20))
+            continue;
+        const Real r0 = (Real(b) + Real(0.5)) / Real(n_bins) * R;
+        const Real phi = Real(1) - Real(2) * (r0 / R) * (r0 / R);
+        const Real w = r0; // ∝ annulus weight (dr const)
+        const Real eta = bin_zmax[static_cast<size_t>(b)] - z_ref;
+        num += w * eta * phi;
+        den += w * phi * phi;
+        zsum += bin_zmax[static_cast<size_t>(b)];
+        valid_z.push_back(bin_zmax[static_cast<size_t>(b)]);
+        st.n_bins_valid++;
+    }
+    st.mode_amp = (den > TinyReal) ? (num / den) : Real(0);
+    st.z_mean_bins = (st.n_bins_valid > 0) ? (zsum / Real(st.n_bins_valid)) : Real(0);
+    if (!valid_z.empty())
+    {
+        std::sort(valid_z.begin(), valid_z.end());
+        auto pct = [&](Real p) {
+            const Real idx = p * Real(valid_z.size() - 1);
+            const size_t i0 = static_cast<size_t>(std::floor(idx));
+            const size_t i1 = std::min(i0 + 1, valid_z.size() - 1);
+            const Real a = idx - Real(i0);
+            return (Real(1) - a) * valid_z[i0] + a * valid_z[i1];
+        };
+        st.z_p10 = pct(Real(0.10));
+        st.z_p50 = pct(Real(0.50));
+        st.z_p90 = pct(Real(0.90));
+    }
+    return st;
+}
+
+inline void hostDoc222AppendFsSurfaceCsv(const std::string &path, Real t, int adv, const Doc222FsSurfaceStats &st,
+                                         bool write_header)
+{
+    std::ofstream out(path, write_header ? std::ios::out : std::ios::app);
+    if (!out.good())
+        return;
+    if (write_header)
+    {
+        out << "time_s,adv_step,mode_amp,z_max,z_p10,z_p50,z_p90,z_mean_bins,U_rms,KE,mass_over_rho,"
+               "n_bins_valid\n";
+    }
+    out << t << "," << adv << "," << st.mode_amp << "," << st.z_max << "," << st.z_p10 << "," << st.z_p50 << ","
+        << st.z_p90 << "," << st.z_mean_bins << "," << st.u_rms << "," << st.ke << "," << st.mass_over_rho << ","
+        << st.n_bins_valid << "\n";
+}
+
+/** Doc222 C3: pressure/acceleration budget on fixed deformed geometry (one acoustic-1st snapshot). */
+struct Doc222C3PhProbeStats
+{
+    bool signed_depth = false;
+    size_t n_all = 0;
+    size_t n_above = 0; // z > z_free
+    size_t n_surface = 0;
+    Real p_bg_mean_all = 0;
+    Real p_bg_mean_above = 0;
+    Real p_bg_mean_below = 0;
+    Real p_bg_min_above = 0;
+    Real p_bg_max_above = 0;
+    Real p_eos_mean_above = 0;
+    Real p_mom_mean_above = 0; // Pressure - BackgroundPressure (α=1)
+    Real a_force_z_mean_all = 0;
+    Real a_force_z_mean_above = 0;
+    Real a_force_z_rms_all = 0;
+    Real a_force_z_rms_above = 0;
+    Real a_prior_z_mean_all = 0;
+    Real a_net_z_mean_all = 0;
+    Real a_net_z_mean_above = 0;
+    Real a_net_z_rms_above = 0;
+    Real z_max = 0;
+};
+
+inline Doc222C3PhProbeStats hostMeasureDoc222C3PhProbe(BaseParticles &particles, Real rho0, Real c0, Real z_free,
+                                                       const Vecd &center, Real radius, Real z_bottom, Real band,
+                                                       bool signed_depth_flag)
+{
+    Doc222C3PhProbeStats st;
+    st.signed_depth = signed_depth_flag;
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Vecd>(particles, "Force");
+    syncVariableToHost<Vecd>(particles, "ForcePrior");
+    syncVariableToHost<Real>(particles, "Mass");
+    syncVariableToHost<Real>(particles, "Density");
+    syncVariableToHost<Real>(particles, "Pressure");
+    syncVariableToHost<Real>(particles, "BackgroundPressure");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Vecd *f = particles.getVariableDataByName<Vecd>("Force");
+    const Vecd *fp = particles.getVariableDataByName<Vecd>("ForcePrior");
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const Real *rho = particles.getVariableDataByName<Real>("Density");
+    const Real *p = particles.getVariableDataByName<Real>("Pressure");
+    const Real *p_bg = particles.getVariableDataByName<Real>("BackgroundPressure");
+    const size_t n = particles.TotalRealParticles();
+    st.n_all = n;
+    st.p_bg_min_above = Real(1.0e30);
+    st.p_bg_max_above = -Real(1.0e30);
+    st.z_max = -Real(1.0e30);
+    Real s_pbg = 0, s_pbg_a = 0, s_pbg_b = 0, s_peos_a = 0, s_pmom_a = 0;
+    Real s_afz = 0, s_afz_a = 0, s_afz2 = 0, s_afz2_a = 0;
+    Real s_ap = 0, s_an = 0, s_an_a = 0, s_an2_a = 0;
+    size_t n_below = 0;
+    const Real c2 = c0 * c0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real m = mass[i] + TinyReal;
+        const Real afz = f[i][2] / m;
+        const Real apz = fp[i][2] / m;
+        const Real anz = apz + afz;
+        const Real p_eos = c2 * (rho[i] - rho0);
+        // Prefer stored Pressure if present; else EOS proxy.
+        const Real p_use = p[i];
+        const Real p_mom = p_use - p_bg[i];
+        st.z_max = std::max(st.z_max, pos[i][2]);
+        s_pbg += p_bg[i];
+        s_afz += afz;
+        s_afz2 += afz * afz;
+        s_ap += apz;
+        s_an += anz;
+        const bool above = pos[i][2] > z_free + TinyReal;
+        const FrenchHydroZone zone =
+            hostClassifyFrenchHydroZone(pos[i], center, radius, z_bottom, z_free, band);
+        if (zone == FrenchHydroZone::Surface || zone == FrenchHydroZone::WallSurface)
+            ++st.n_surface;
+        if (above)
+        {
+            ++st.n_above;
+            s_pbg_a += p_bg[i];
+            s_peos_a += p_eos;
+            s_pmom_a += p_mom;
+            s_afz_a += afz;
+            s_afz2_a += afz * afz;
+            s_an_a += anz;
+            s_an2_a += anz * anz;
+            st.p_bg_min_above = std::min(st.p_bg_min_above, p_bg[i]);
+            st.p_bg_max_above = std::max(st.p_bg_max_above, p_bg[i]);
+        }
+        else
+        {
+            ++n_below;
+            s_pbg_b += p_bg[i];
+        }
+    }
+    const Real inv = n > 0 ? Real(1) / Real(n) : Real(0);
+    const Real inv_a = st.n_above > 0 ? Real(1) / Real(st.n_above) : Real(0);
+    const Real inv_b = n_below > 0 ? Real(1) / Real(n_below) : Real(0);
+    st.p_bg_mean_all = s_pbg * inv;
+    st.p_bg_mean_above = s_pbg_a * inv_a;
+    st.p_bg_mean_below = s_pbg_b * inv_b;
+    st.p_eos_mean_above = s_peos_a * inv_a;
+    st.p_mom_mean_above = s_pmom_a * inv_a;
+    st.a_force_z_mean_all = s_afz * inv;
+    st.a_force_z_mean_above = s_afz_a * inv_a;
+    st.a_force_z_rms_all = std::sqrt(s_afz2 * inv);
+    st.a_force_z_rms_above = std::sqrt(s_afz2_a * inv_a);
+    st.a_prior_z_mean_all = s_ap * inv;
+    st.a_net_z_mean_all = s_an * inv;
+    st.a_net_z_mean_above = s_an_a * inv_a;
+    st.a_net_z_rms_above = std::sqrt(s_an2_a * inv_a);
+    if (st.n_above == 0)
+    {
+        st.p_bg_min_above = 0;
+        st.p_bg_max_above = 0;
+    }
+    return st;
+}
+
+inline void hostDoc222WriteC3PhCompareJson(const std::string &path, const Doc222C3PhProbeStats &signed_st,
+                                           const Doc222C3PhProbeStats &clamp_st, Real eps, Real z_free)
+{
+    auto dump = [&](std::ostream &js, const char *key, const Doc222C3PhProbeStats &s) {
+        js << "  \"" << key << "\": {\n"
+           << "    \"signed_depth\": " << (s.signed_depth ? 1 : 0) << ",\n"
+           << "    \"n_all\": " << s.n_all << ",\n"
+           << "    \"n_above\": " << s.n_above << ",\n"
+           << "    \"n_surface\": " << s.n_surface << ",\n"
+           << "    \"z_max\": " << s.z_max << ",\n"
+           << "    \"p_bg_mean_all\": " << s.p_bg_mean_all << ",\n"
+           << "    \"p_bg_mean_above\": " << s.p_bg_mean_above << ",\n"
+           << "    \"p_bg_mean_below\": " << s.p_bg_mean_below << ",\n"
+           << "    \"p_bg_min_above\": " << s.p_bg_min_above << ",\n"
+           << "    \"p_bg_max_above\": " << s.p_bg_max_above << ",\n"
+           << "    \"p_eos_mean_above\": " << s.p_eos_mean_above << ",\n"
+           << "    \"p_mom_mean_above\": " << s.p_mom_mean_above << ",\n"
+           << "    \"a_force_z_mean_all\": " << s.a_force_z_mean_all << ",\n"
+           << "    \"a_force_z_mean_above\": " << s.a_force_z_mean_above << ",\n"
+           << "    \"a_force_z_rms_all\": " << s.a_force_z_rms_all << ",\n"
+           << "    \"a_force_z_rms_above\": " << s.a_force_z_rms_above << ",\n"
+           << "    \"a_prior_z_mean_all\": " << s.a_prior_z_mean_all << ",\n"
+           << "    \"a_net_z_mean_all\": " << s.a_net_z_mean_all << ",\n"
+           << "    \"a_net_z_mean_above\": " << s.a_net_z_mean_above << ",\n"
+           << "    \"a_net_z_rms_above\": " << s.a_net_z_rms_above << "\n"
+           << "  }";
+    };
+    std::ofstream js(path);
+    js << "{\n"
+       << "  \"case\": \"doc222_c3_ph_compare\",\n"
+       << "  \"eps\": " << eps << ",\n"
+       << "  \"z_free\": " << z_free << ",\n";
+    dump(js, "signed", signed_st);
+    js << ",\n";
+    dump(js, "clamp", clamp_st);
+    js << ",\n"
+       << "  \"delta_signed_minus_clamp\": {\n"
+       << "    \"p_bg_mean_above\": " << (signed_st.p_bg_mean_above - clamp_st.p_bg_mean_above) << ",\n"
+       << "    \"p_mom_mean_above\": " << (signed_st.p_mom_mean_above - clamp_st.p_mom_mean_above) << ",\n"
+       << "    \"a_force_z_mean_above\": " << (signed_st.a_force_z_mean_above - clamp_st.a_force_z_mean_above)
+       << ",\n"
+       << "    \"a_net_z_mean_above\": " << (signed_st.a_net_z_mean_above - clamp_st.a_net_z_mean_above) << ",\n"
+       << "    \"a_force_z_rms_above\": " << (signed_st.a_force_z_rms_above - clamp_st.a_force_z_rms_above) << "\n"
+       << "  }\n"
+       << "}\n";
+}
+
+/**
+ * Doc221 N2/N3: tip-local soft seal — for r < tip_r in surface band, scale upward Uz
+ * (uz_scale=0 → kill/N2; 0<scale<1 → dampen/N3; 1 → no-op). No z clamp. Opt-in only.
+ */
+inline size_t hostScaleUpwardVelocityNearTip(BaseParticles &particles, Real z_lid, Real band,
+                                              Real tip_r, Real uz_scale)
+{
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    syncVariableToHost<Vecd>(particles, "Position");
+    Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const size_t n = particles.TotalRealParticles();
+    const Real z_lo = z_lid - band;
+    const Real tip_r2 = tip_r * tip_r;
+    const Real scale = uz_scale < Real(0) ? Real(0) : (uz_scale > Real(1) ? Real(1) : uz_scale);
+    size_t n_touch = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        if (pos[i][2] <= z_lo || vel[i][2] <= Real(0))
+            continue;
+        const Real r2 = pos[i][0] * pos[i][0] + pos[i][1] * pos[i][1];
+        if (r2 < tip_r2)
+        {
+            vel[i][2] *= scale;
+            ++n_touch;
+        }
+    }
+    syncVariableToDevice<Vecd>(particles, "Velocity");
+    return n_touch;
+}
+
+/**
+ * Doc221 L: clamp fluid z <= z_lid after position update (hard lid).
+ * Returns number of particles clamped.
+ */
+inline size_t hostClampZToLid(BaseParticles &particles, Real z_lid)
+{
+    syncVariableToHost<Vecd>(particles, "Position");
+    Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const size_t n = particles.TotalRealParticles();
+    size_t n_clamp = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        if (pos[i][2] > z_lid)
+        {
+            pos[i][2] = z_lid;
+            ++n_clamp;
+        }
+    }
+    syncVariableToDevice<Vecd>(particles, "Position");
+    return n_clamp;
+}
+
+/**
+ * Doc221 M: one-shot post-settle hard-lid reset — clamp z<=z_lid then zero all velocity.
+ * Avoids keep-start polarity inversion from slamming a raised free surface into the lid.
+ */
+inline size_t hostResetHardLidGeometry(BaseParticles &particles, Real z_lid)
+{
+    const size_t n_clamp = hostClampZToLid(particles, z_lid);
+    hostZeroVelocity(particles);
+    return n_clamp;
 }
 
 /** Doc105 P2m: zero Velocity on incomplete-support particles (diagnostic). */
@@ -1207,6 +3925,240 @@ inline size_t hostCapOverpackDensityToRho0(BaseParticles &particles, Real rho0)
     return n_capped;
 }
 
+/** Doc220 H0: per-particle hydrostatic fields keyed by OriginalID (same-state stages). */
+inline void hostDoc220DumpHydroParticleCsv(BaseParticles &particles, const std::string &path, Real rho0, Real c0,
+                                          Real gravity_g, Real z_free, const Vecd &center, Real radius,
+                                          Real z_bottom, Real band, bool has_B)
+{
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    syncVariableToHost<Vecd>(particles, "Force");
+    syncVariableToHost<Vecd>(particles, "ForcePrior");
+    syncVariableToHost<Real>(particles, "Mass");
+    syncVariableToHost<Real>(particles, "Density");
+    syncVariableToHost<Real>(particles, "DensitySummation");
+    syncVariableToHost<Real>(particles, "BackgroundPressure");
+    syncVariableToHost<Real>(particles, "DensityChangeRate");
+    syncVariableToHost<UnsignedInt>(particles, "OriginalID");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const Vecd *f = particles.getVariableDataByName<Vecd>("Force");
+    const Vecd *fp = particles.getVariableDataByName<Vecd>("ForcePrior");
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const Real *rho = particles.getVariableDataByName<Real>("Density");
+    const Real *rho_sum = particles.getVariableDataByName<Real>("DensitySummation");
+    const Real *p_bg = particles.getVariableDataByName<Real>("BackgroundPressure");
+    const Real *drho = particles.getVariableDataByName<Real>("DensityChangeRate");
+    const UnsignedInt *oid = particles.getVariableDataByName<UnsignedInt>("OriginalID");
+    const Matd *B = nullptr;
+    if (has_B)
+    {
+        syncVariableToHost<Matd>(particles, "LinearCorrectionMatrix");
+        B = particles.getVariableDataByName<Matd>("LinearCorrectionMatrix");
+    }
+    const size_t n = particles.TotalRealParticles();
+    const Real c2 = c0 * c0;
+    std::ofstream out(path);
+    out << "OriginalID,x,y,z,depth,r,zone,rho,rho_sum,packing,p_eos,p_bg,p_total,p_h_ref,dp_h,"
+           "mass,Fx,Fy,Fz,FPx,FPy,FPz,ax_net,ay_net,az_net,ux,uy,uz,drho_dt,B00,B11,B22,incomplete\n";
+    out.setf(std::ios::scientific);
+    out.precision(17);
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real m = mass[i] + TinyReal;
+        const Real depth = SMAX(z_free - pos[i][2], Real(0));
+        const Real dx = pos[i][0] - center[0];
+        const Real dy = pos[i][1] - center[1];
+        const Real r = std::sqrt(dx * dx + dy * dy);
+        const Real p_eos = c2 * (rho[i] - rho0);
+        const Real p_tot = p_eos + p_bg[i];
+        const Real p_h = rho0 * gravity_g * depth;
+        const Real packing = rho_sum[i] / (rho0 + TinyReal);
+        const bool incomplete = rho_sum[i] + TinyReal < rho0;
+        const FrenchHydroZone zone =
+            hostClassifyFrenchHydroZone(pos[i], center, radius, z_bottom, z_free, band);
+        const char *zone_name = "Interior";
+        if (zone == FrenchHydroZone::Surface)
+            zone_name = "Surface";
+        else if (zone == FrenchHydroZone::WallSide)
+            zone_name = "WallSide";
+        else if (zone == FrenchHydroZone::WallBottom)
+            zone_name = "WallBottom";
+        else if (zone == FrenchHydroZone::WallCorner)
+            zone_name = "WallCorner";
+        else if (zone == FrenchHydroZone::WallSurface)
+            zone_name = "WallSurface";
+        const Real B00 = B ? B[i](0, 0) : Real(1);
+        const Real B11 = B ? B[i](1, 1) : Real(1);
+        const Real B22 = B ? B[i](2, 2) : Real(1);
+        out << oid[i] << "," << pos[i][0] << "," << pos[i][1] << "," << pos[i][2] << "," << depth << "," << r
+            << "," << zone_name << "," << rho[i] << "," << rho_sum[i] << "," << packing << "," << p_eos << ","
+            << p_bg[i] << "," << p_tot << "," << p_h << "," << (p_tot - p_h) << "," << mass[i] << "," << f[i][0]
+            << "," << f[i][1] << "," << f[i][2] << "," << fp[i][0] << "," << fp[i][1] << "," << fp[i][2] << ","
+            << (f[i][0] + fp[i][0]) / m << "," << (f[i][1] + fp[i][1]) / m << "," << (f[i][2] + fp[i][2]) / m
+            << "," << vel[i][0] << "," << vel[i][1] << "," << vel[i][2] << "," << drho[i] << "," << B00 << ","
+            << B11 << "," << B22 << "," << (incomplete ? 1 : 0) << "\n";
+    }
+}
+
+/** Doc220 S0: dump particle state keyed for OriginalID join. */
+inline void hostDoc220DumpSortAuditCsv(BaseParticles &particles, const std::string &path, Real t0)
+{
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Real>(particles, kOphelieTemperatureField);
+    syncVariableToHost<Real>(particles, kOphelieThermalDeltaTField);
+    syncVariableToHost<Real>(particles, "Mass");
+    syncVariableToHost<Real>(particles, "Density");
+    syncVariableToHost<UnsignedInt>(particles, "OriginalID");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Real *T = particles.getVariableDataByName<Real>(kOphelieTemperatureField);
+    const Real *dT = particles.getVariableDataByName<Real>(kOphelieThermalDeltaTField);
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const Real *rho = particles.getVariableDataByName<Real>("Density");
+    const UnsignedInt *oid = particles.getVariableDataByName<UnsignedInt>("OriginalID");
+    const size_t n = particles.TotalRealParticles();
+    std::ofstream out(path);
+    out << "index,OriginalID,x,y,z,T,dT,T_minus_T0_dT,Mass,Density\n";
+    out.setf(std::ios::scientific);
+    out.precision(17);
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real id_err = T[i] - (t0 + dT[i]);
+        out << i << "," << oid[i] << "," << pos[i][0] << "," << pos[i][1] << "," << pos[i][2] << "," << T[i] << ","
+            << dT[i] << "," << id_err << "," << mass[i] << "," << rho[i] << "\n";
+    }
+}
+
+struct Doc220SortAuditCompare
+{
+    size_t n = 0;
+    size_t n_matched = 0;
+    size_t n_pos_mismatch = 0;
+    size_t n_T_mismatch = 0;
+    size_t n_dT_mismatch = 0;
+    size_t n_TdT_identity_fail = 0;
+    size_t n_mass_mismatch = 0;
+    Real max_abs_dT = 0;
+    Real max_abs_dPos = 0;
+    Real T_mean_before = 0;
+    Real T_mean_after = 0;
+    Real T_min_before = 0;
+    Real T_max_before = 0;
+    Real T_min_after = 0;
+    Real T_max_after = 0;
+    bool temperature_in_evolving = false;
+    bool delta_t_in_evolving = false;
+    bool passed = false;
+};
+
+inline bool hostDiscreteVarInEvolving(BaseParticles &particles, const std::string &name)
+{
+    auto &evolving = particles.EvolvingVariables();
+    constexpr int type_index = DataTypeIndex<Real>::value;
+    auto &keepers = std::get<type_index>(evolving);
+    for (auto *dv : keepers)
+    {
+        if (dv != nullptr && dv->Name() == name)
+            return true;
+    }
+    return false;
+}
+
+inline Doc220SortAuditCompare hostDoc220CompareSortAuditCsv(const std::string &before_path,
+                                                            const std::string &after_path, BaseParticles &particles,
+                                                            Real t0)
+{
+    Doc220SortAuditCompare c;
+    c.temperature_in_evolving = hostDiscreteVarInEvolving(particles, kOphelieTemperatureField);
+    c.delta_t_in_evolving = hostDiscreteVarInEvolving(particles, kOphelieThermalDeltaTField);
+
+    struct Row
+    {
+        Vecd pos{};
+        Real T = 0;
+        Real dT = 0;
+        Real mass = 0;
+        Real rho = 0;
+    };
+    auto load = [](const std::string &path, std::unordered_map<UnsignedInt, Row> &by_id, Real &tmin, Real &tmax,
+                   Real &tmean) {
+        std::ifstream in(path);
+        std::string line;
+        std::getline(in, line); // header
+        size_t n = 0;
+        double tsum = 0;
+        tmin = std::numeric_limits<Real>::max();
+        tmax = -std::numeric_limits<Real>::max();
+        while (std::getline(in, line))
+        {
+            if (line.empty())
+                continue;
+            std::stringstream ss(line);
+            std::string cell;
+            UnsignedInt oid = 0;
+            Row r;
+            std::getline(ss, cell, ','); // index
+            std::getline(ss, cell, ',');
+            oid = static_cast<UnsignedInt>(std::stoull(cell));
+            std::getline(ss, cell, ',');
+            r.pos[0] = static_cast<Real>(std::stod(cell));
+            std::getline(ss, cell, ',');
+            r.pos[1] = static_cast<Real>(std::stod(cell));
+            std::getline(ss, cell, ',');
+            r.pos[2] = static_cast<Real>(std::stod(cell));
+            std::getline(ss, cell, ',');
+            r.T = static_cast<Real>(std::stod(cell));
+            std::getline(ss, cell, ',');
+            r.dT = static_cast<Real>(std::stod(cell));
+            std::getline(ss, cell, ','); // identity err
+            std::getline(ss, cell, ',');
+            r.mass = static_cast<Real>(std::stod(cell));
+            std::getline(ss, cell, ',');
+            r.rho = static_cast<Real>(std::stod(cell));
+            by_id[oid] = r;
+            tsum += r.T;
+            tmin = std::min(tmin, r.T);
+            tmax = std::max(tmax, r.T);
+            ++n;
+        }
+        tmean = n ? static_cast<Real>(tsum / static_cast<double>(n)) : Real(0);
+        return n;
+    };
+
+    std::unordered_map<UnsignedInt, Row> before, after;
+    c.n = load(before_path, before, c.T_min_before, c.T_max_before, c.T_mean_before);
+    const size_t n_after = load(after_path, after, c.T_min_after, c.T_max_after, c.T_mean_after);
+    (void)n_after;
+    const Real pos_tol = Real(0); // pure permute: expect bit-identical after ID join
+    const Real t_tol = Real(0);
+    for (const auto &kv : before)
+    {
+        auto it = after.find(kv.first);
+        if (it == after.end())
+            continue;
+        ++c.n_matched;
+        const Row &a = kv.second;
+        const Row &b = it->second;
+        const Real dpos = (a.pos - b.pos).norm();
+        c.max_abs_dPos = std::max(c.max_abs_dPos, dpos);
+        if (dpos > pos_tol)
+            ++c.n_pos_mismatch;
+        const Real dT = std::abs(a.T - b.T);
+        c.max_abs_dT = std::max(c.max_abs_dT, dT);
+        if (dT > t_tol)
+            ++c.n_T_mismatch;
+        if (std::abs(a.dT - b.dT) > t_tol)
+            ++c.n_dT_mismatch;
+        if (std::abs(b.T - (t0 + b.dT)) > Real(1.0e-6) * (std::abs(t0) + Real(1)))
+            ++c.n_TdT_identity_fail;
+        if (std::abs(a.mass - b.mass) > t_tol)
+            ++c.n_mass_mismatch;
+    }
+    c.passed = c.temperature_in_evolving && c.delta_t_in_evolving && c.n_matched == c.n && c.n_pos_mismatch == 0 &&
+               c.n_T_mismatch == 0 && c.n_dT_mismatch == 0 && c.n_TdT_identity_fail == 0 && c.n_mass_mismatch == 0;
+    return c;
+}
+
 /** Doc105 dens-write audit: Δρ and inferred Δp=c0²Δρ when extra normalize overwrites Density. */
 struct FrenchDensWriteAudit
 {
@@ -1390,6 +4342,56 @@ inline void hostSampleEulerQOntoParticles(BaseParticles &particles, const rh200:
         q[i] = grid.sampleHost(pos[i]);
     }
     syncVariableToDevice<Real>(particles, "JouleHeat");
+}
+
+/** Doc219 E: re-sample spatial Q; optionally renormalize ΣViQ to target (diagnostic protocol). */
+inline Real hostSampleSpatialFrozenQ(BaseParticles &particles, const rh200::Rh200ScalarEulerianGrid &grid,
+                                     Real target_power_w, bool renormalize, size_t &n_uncovered,
+                                     bool verbose = true)
+{
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Real>(particles, "VolumetricMeasure");
+    syncVariableToHost<Real>(particles, "JouleHeat");
+    Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    Real *Vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+    Real *q = particles.getVariableDataByName<Real>("JouleHeat");
+    const size_t n = particles.TotalRealParticles();
+    n_uncovered = 0;
+    Real p = Real(0);
+    const Vecd lo = grid.spec_.lower_bound_;
+    const Vecd hi = grid.spec_.lower_bound_ +
+                    Vecd(static_cast<Real>(grid.spec_.nx_ - 1), static_cast<Real>(grid.spec_.ny_ - 1),
+                         static_cast<Real>(grid.spec_.nz_ - 1)) *
+                        grid.spec_.spacing_;
+    for (size_t i = 0; i < n; ++i)
+    {
+        Vecd x = pos[i];
+        if (!grid.inside(x))
+        {
+            ++n_uncovered;
+            // Clamp to grid box and sample edge value — never silent Q=0 for free-surface overshoot.
+            for (int d = 0; d < 3; ++d)
+                x[d] = std::min(hi[d], std::max(lo[d], x[d]));
+        }
+        q[i] = grid.sampleHost(x);
+        p += q[i] * Vol[i];
+    }
+    Real scale = Real(1);
+    if (renormalize && p > TinyReal && target_power_w > TinyReal)
+    {
+        scale = target_power_w / p;
+        for (size_t i = 0; i < n; ++i)
+            q[i] *= scale;
+        p = target_power_w;
+    }
+    syncVariableToDevice<Real>(particles, "JouleHeat");
+    if (verbose)
+    {
+        std::cout << "[ophelie][doc219][spatial-q] P_sample=" << p << " remap_scale=" << scale
+                  << " n_uncovered=" << n_uncovered << "/" << n
+                  << " renormalize=" << (renormalize ? 1 : 0) << std::endl;
+    }
+    return p;
 }
 
 inline Real hostThermalEnergy(BaseParticles &particles, Real rho, Real cp, Real t_ref)
@@ -1620,8 +4622,13 @@ inline void hostApplyLayoutJitter(BaseParticles &particles, Real amplitude, unsi
               << " n=" << n << std::endl;
 }
 
-/** Free-surface melt: p_h = ρ0 g (z_free − z), clamped at free surface. */
-inline void hostApplyFrenchBackgroundHydroPressure(BaseParticles &particles, Real rho0, Real g, Real z_free)
+/**
+ * Free-surface melt: p_h = ρ0 g (z_free − z).
+ * Doc222 E1: signed_depth=true (default) keeps ∇p_h above the reference plane for restoring.
+ * signed_depth=false restores legacy max(0,·) clamp (D2 FAIL path).
+ */
+inline void hostApplyFrenchBackgroundHydroPressure(BaseParticles &particles, Real rho0, Real g, Real z_free,
+                                                   bool signed_depth = true)
 {
     syncVariableToHost<Vecd>(particles, "Position");
     syncVariableToHost<Real>(particles, "BackgroundPressure");
@@ -1630,10 +4637,121 @@ inline void hostApplyFrenchBackgroundHydroPressure(BaseParticles &particles, Rea
     const size_t n = particles.TotalRealParticles();
     for (size_t i = 0; i < n; ++i)
     {
-        const Real depth = std::max(Real(0), z_free - pos[i][2]);
+        const Real raw = z_free - pos[i][2];
+        const Real depth = signed_depth ? raw : std::max(Real(0), raw);
         p_bg[i] = rho0 * g * depth;
     }
     syncVariableToDevice<Real>(particles, "BackgroundPressure");
+}
+
+/** Doc222 E2b diagnostics for local-η BackgroundPressure write. */
+struct Doc222LocalEtaPhReport
+{
+    int n_bins = 0;
+    int n_bins_valid = 0;
+    Real eta_min = 0;
+    Real eta_max = 0;
+    Real eta_mean = 0;
+    Real eta_spread = 0; // eta_max - eta_min
+};
+
+/**
+ * Doc222 E2b: p_h = ρ0 g (η(r)−z) with η = radial-bin free-surface z_max.
+ * Empty bins inherit nearest valid η (else z_free_fallback). Gives ∂_r p_h ∝ ∂_r η
+ * so free-surface slopes can restore under omit-GravityForceCK.
+ */
+inline Doc222LocalEtaPhReport hostApplyFrenchBackgroundHydroPressureLocalEta(
+    BaseParticles &particles, Real rho0, Real g, Real z_free_fallback, const Vecd &center, Real R,
+    int n_bins, bool signed_depth)
+{
+    Doc222LocalEtaPhReport rep;
+    if (n_bins < 4)
+        n_bins = 4;
+    rep.n_bins = n_bins;
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Real>(particles, "BackgroundPressure");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    Real *p_bg = particles.getVariableDataByName<Real>("BackgroundPressure");
+    const size_t n = particles.TotalRealParticles();
+    std::vector<Real> bin_eta(static_cast<size_t>(n_bins), -Real(1.0e30));
+    std::vector<int> bin_count(static_cast<size_t>(n_bins), 0);
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real dx = pos[i][0] - center[0];
+        const Real dy = pos[i][1] - center[1];
+        const Real r = std::sqrt(dx * dx + dy * dy);
+        if (r >= R || R <= TinyReal)
+            continue;
+        int b = static_cast<int>(std::floor(r / R * Real(n_bins)));
+        if (b < 0)
+            b = 0;
+        if (b >= n_bins)
+            b = n_bins - 1;
+        bin_eta[static_cast<size_t>(b)] = std::max(bin_eta[static_cast<size_t>(b)], pos[i][2]);
+        bin_count[static_cast<size_t>(b)]++;
+    }
+    // Fill empty bins from nearest valid neighbor; else fall back to fixed z_free.
+    for (int b = 0; b < n_bins; ++b)
+    {
+        if (bin_count[static_cast<size_t>(b)] > 0 && bin_eta[static_cast<size_t>(b)] > -Real(1.0e20))
+        {
+            rep.n_bins_valid++;
+            continue;
+        }
+        Real best = z_free_fallback;
+        int best_dist = n_bins + 1;
+        for (int j = 0; j < n_bins; ++j)
+        {
+            if (bin_count[static_cast<size_t>(j)] <= 0 || bin_eta[static_cast<size_t>(j)] < -Real(1.0e20))
+                continue;
+            const int d = std::abs(j - b);
+            if (d < best_dist)
+            {
+                best_dist = d;
+                best = bin_eta[static_cast<size_t>(j)];
+            }
+        }
+        bin_eta[static_cast<size_t>(b)] = best;
+    }
+    Real eta_sum = 0;
+    rep.eta_min = Real(1.0e30);
+    rep.eta_max = -Real(1.0e30);
+    for (int b = 0; b < n_bins; ++b)
+    {
+        const Real e = bin_eta[static_cast<size_t>(b)];
+        eta_sum += e;
+        rep.eta_min = std::min(rep.eta_min, e);
+        rep.eta_max = std::max(rep.eta_max, e);
+    }
+    rep.eta_mean = eta_sum / Real(n_bins);
+    rep.eta_spread = rep.eta_max - rep.eta_min;
+
+    auto eta_at_r = [&](Real r) -> Real {
+        if (R <= TinyReal || n_bins <= 0)
+            return z_free_fallback;
+        Real rr = std::min(std::max(r, Real(0)), R * (Real(1) - Real(1.0e-6)));
+        const Real fb = rr / R * Real(n_bins) - Real(0.5);
+        int b0 = static_cast<int>(std::floor(fb));
+        if (b0 < 0)
+            b0 = 0;
+        if (b0 >= n_bins - 1)
+            return bin_eta[static_cast<size_t>(n_bins - 1)];
+        const Real a = fb - Real(b0);
+        return (Real(1) - a) * bin_eta[static_cast<size_t>(b0)] + a * bin_eta[static_cast<size_t>(b0 + 1)];
+    };
+
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real dx = pos[i][0] - center[0];
+        const Real dy = pos[i][1] - center[1];
+        const Real r = std::sqrt(dx * dx + dy * dy);
+        const Real eta = eta_at_r(r);
+        const Real raw = eta - pos[i][2];
+        const Real depth = signed_depth ? raw : std::max(Real(0), raw);
+        p_bg[i] = rho0 * g * depth;
+    }
+    syncVariableToDevice<Real>(particles, "BackgroundPressure");
+    return rep;
 }
 
 inline bool depositEmQAndRecord(BaseParticles &em_particles, const OphelieGlassFieldNames &names,
@@ -1720,7 +4838,318 @@ int main(int ac, char *av[])
     params.frequency_ = 282000.0;
     params.sigma_glass_ = 16.0;
 
-    applyLocalCli(ac, av, french, local_cli);
+    if (const int cli_rc = applyLocalCli(ac, av, french, local_cli))
+        return cli_rc;
+    if (local_cli.doc227_schedule_selftest)
+    {
+        std::string reason;
+        const bool ok = hostDoc227ScheduleSelftest(reason);
+        std::cout << "[ophelie][doc227][B5] schedule_selftest PASS=" << (ok ? 1 : 0)
+                  << " reason=" << reason << std::endl;
+        if (!local_cli.summary_json.empty())
+        {
+            std::ofstream js(local_cli.summary_json);
+            js << "{\n  \"case\": \"doc227_schedule_selftest\",\n  \"passed\": " << (ok ? 1 : 0)
+               << ",\n  \"reason\": \"" << reason << "\"\n}\n";
+        }
+        return ok ? 0 : 1;
+    }
+    std::cout << "[ophelie][cli] doc223_paper_flat_slip_top=" << (local_cli.doc223_paper_flat_slip_top ? 1 : 0)
+              << " diag_wall_flat_lid=" << (local_cli.diag_wall_flat_lid ? 1 : 0)
+              << " pprime=" << (local_cli.doc220_pprime_hydro ? 1 : 0)
+              << " omit_g=" << (local_cli.omit_gravity_force ? 1 : 0)
+              << " doc227_actual_timestep=" << (local_cli.doc227_actual_timestep ? 1 : 0) << "\n";
+    // Doc219 D/F: cavity-validated B + thermal-after-update; TVF stays opt-in on French FS.
+    // E N0/N1@1s with default TVF gave U_rms≈0.15 ≫ U_buoy≈0.012; Doc105 quiet floor was ~5e-3 without TVF.
+    if (local_cli.doc219_hydro_profile)
+    {
+        if (!local_cli.kernel_correction_user_set)
+            local_cli.kernel_correction = true;
+        if (!local_cli.enable_tvf_user_set)
+            local_cli.enable_tvf = false;
+    }
+    // Doc220 E: with p_h in BackgroundPressure and GravityForceCK still on (total-p momentum),
+    // wall dens DissipativeUJump must use p' + a_ref=−g (AcousticDensMode=1). Mode 0 keeps
+    // injecting −C_ext dens at walls even when hydrostatic pressure is already consistent.
+    // Doc220 E2 p' package already sets dens_mode=1 with a_ref=0 (g not in ForcePrior).
+    if (local_cli.background_hydro_p && !local_cli.acoustic_dens_mode_user_set &&
+        !local_cli.omit_gravity_force)
+    {
+        local_cli.acoustic_dens_mode = 1;
+        std::cout << "[ophelie][doc220][e] background_hydro_p => acoustic_dens_mode=1 "
+                     "(wall dens on p', ReferenceBodyAcceleration=-g)\n";
+    }
+    if (local_cli.doc220_pprime_hydro)
+    {
+        std::cout << "[ophelie][doc220][e2] pprime_hydro=1 BackgroundPressure=p_h "
+                     "PerturbationMomentum=1 omit_GravityForceCK=1 acoustic_dens_mode=1 a_ref=0 "
+                     "(French free-surface; not closed-box P2b copy)\n";
+    }
+    if (local_cli.doc223_paper_flat_slip_top)
+    {
+        std::cout << "[ophelie][doc223][D] hydro_model=paper_flat_slip_top "
+                     "pressure_model=perturbation_fixed_top dens=Internal "
+                     "dens_sum_normalize=" << (local_cli.dens_sum_normalize ? 1 : 0)
+                  << " settle_dens_sum_normalize="
+                  << (local_cli.settle_dens_sum_normalize ? 1 : 0)
+                  << " keep_dens_reinit=0"
+                  << " kernel_correction=" << (local_cli.kernel_correction ? 1 : 0)
+                  << (local_cli.doc223_ablate_no_free_slip
+                          ? " lid=ClosedCrucible_noslip_ABLATION"
+                          : (local_cli.doc224_ablate_acoustic_freeslip
+                                 ? " ClosedCrucible_acoustic+OpenCup_viscous_O3"
+                                 : " ClosedCrucible+P2_AcousticWallFreeSlip+OpenCup_viscous"))
+                  << " acoustic_fs=" << (local_cli.doc224_ablate_acoustic_freeslip ? 0 : 1)
+                  << " keep_dens_jump=" << (local_cli.doc224_lid_keep_dens_jump ? 1 : 0)
+                  << " NO tip/zero-net/z-clamp/ContSilent (paper 2.1 slip top engineering model)\n";
+        if (local_cli.doc223_ablate_no_free_slip)
+        {
+            std::cout << "[ophelie][doc223][E1] ablate_no_free_slip=1 (AcousticWallFreeSlip OFF; "
+                         "not paper slip; isolates free-slip noise)\n";
+        }
+        else if (local_cli.doc224_ablate_acoustic_freeslip)
+        {
+            std::cout << "[ophelie][doc224][C3d] paper-top default: acoustic no-slip + OpenCup "
+                         "viscous (impermeable slip; AcousticWallFreeSlip OFF)\n";
+        }
+        else if (local_cli.doc224_lid_keep_dens_jump)
+        {
+            std::cout << "[ophelie][doc224][C3] lid_keep_dens_jump=1 "
+                         "(legacy acoustic free-slip mom∥n; DissipativeUJump dens ON)\n";
+        }
+    }
+    if (local_cli.background_hydro_p && !local_cli.doc220_pprime_hydro && !local_cli.omit_gravity_force &&
+        local_cli.perturbation_momentum == 0)
+    {
+        std::cout << "[ophelie][doc222][E2] totalp_bgp_hydro=1 BackgroundPressure=p_h "
+                     "PerturbationMomentum=0 GravityForceCK=1 acoustic_dens_mode=1 a_ref=-g "
+                     "(flat: ∇p_h↔g; deform restoring needs local_eta)\n";
+    }
+    if (local_cli.background_hydro_p || local_cli.doc220_pprime_hydro)
+    {
+        std::cout << "[ophelie][doc222][E1] BackgroundPressure p_h signed_depth="
+                  << (local_cli.doc222_ph_signed ? 1 : 0)
+                  << (local_cli.doc222_ph_signed
+                          ? " (ρ0*g*(z_ref-z); restoring above ref plane)"
+                          : " (LEGACY max(0,z_ref-z); D2 FAIL path)")
+                  << "\n";
+        if (local_cli.doc222_ph_local_eta)
+        {
+            std::cout << "[ophelie][doc222][E2b] BackgroundPressure local_eta=1 bins="
+                      << local_cli.doc222_ph_local_eta_bins
+                      << " (p_h=ρ0*g*(η(r)-z); η=radial bin z_max; fixed-z_free path OFF)\n";
+        }
+    }
+    if (local_cli.diag_zero_net_uz)
+    {
+        std::cout << "[ophelie][doc221][K] diag_zero_net_uz=1 (mass-weighted mean Uz removed each "
+                     "advection; volume-closure DIAGNOSTIC only — NOT literature open free-surface)\n";
+    }
+    if (local_cli.diag_hard_lid)
+    {
+        std::cout << "[ophelie][doc221][L] diag_hard_lid=1 (kinematic impermeable lid at z_free; "
+                     "DIAGNOSTIC only — NOT literature open free-surface)\n";
+    }
+    if (local_cli.diag_soft_lid)
+    {
+        local_cli.diag_soft_lid_tip = false;
+        local_cli.diag_tip_soft_force = false;
+        std::cout << "[ophelie][doc221][N] diag_soft_lid=1 (zero-net-Uz + thin-band kill-up, NO z "
+                     "clamp; DIAGNOSTIC only — NOT literature open free-surface)\n";
+    }
+    if (local_cli.diag_soft_lid_tip)
+    {
+        local_cli.diag_soft_lid = false;
+        local_cli.diag_tip_soft_force = false;
+        local_cli.diag_zero_net_uz = true;
+        local_cli.diag_hard_lid = false;
+        if (local_cli.diag_soft_lid_tip_r <= TinyReal)
+            local_cli.diag_soft_lid_tip_r = Real(0.10);
+        if (local_cli.diag_soft_lid_tip_uz_scale < Real(0))
+            local_cli.diag_soft_lid_tip_uz_scale = Real(0);
+        if (local_cli.diag_soft_lid_tip_uz_scale > Real(1))
+            local_cli.diag_soft_lid_tip_uz_scale = Real(1);
+        const bool dampen = local_cli.diag_soft_lid_tip_uz_scale > TinyReal;
+        std::cout << "[ophelie][doc221][" << (dampen ? "N3" : "N2")
+                  << "] diag_soft_lid_tip=1 (zero-net-Uz + tip-local "
+                  << (dampen ? "dampen" : "kill-up") << " r<" << local_cli.diag_soft_lid_tip_r
+                  << " m uz_scale=" << local_cli.diag_soft_lid_tip_uz_scale
+                  << "; NO full-lid kill-up; NO z clamp; DIAGNOSTIC — NOT literature open "
+                     "free-surface)\n";
+    }
+    if (local_cli.diag_tip_soft_force)
+    {
+        local_cli.diag_tip_fs_dashpot = false;
+        local_cli.diag_soft_lid = false;
+        local_cli.diag_soft_lid_tip = false;
+        local_cli.diag_zero_net_uz = true;
+        local_cli.diag_hard_lid = false;
+        local_cli.diag_wall_flat_lid = false;
+        local_cli.diag_lid_free_slip = false;
+        local_cli.diag_lid_free_slip_post_settle = false;
+        if (local_cli.diag_tip_soft_force_r <= TinyReal)
+            local_cli.diag_tip_soft_force_r = Real(0.05);
+        if (local_cli.diag_tip_soft_force_k < Real(0))
+            local_cli.diag_tip_soft_force_k = Real(0);
+        if (local_cli.diag_tip_soft_force_c < Real(0))
+            local_cli.diag_tip_soft_force_c = Real(0);
+        std::cout << "[ophelie][doc221][N4] diag_tip_soft_force=1 (zero-net-Uz + tip ForcePrior "
+                     "dashpot"
+                  << (local_cli.diag_tip_soft_force_k > TinyReal ? "+spring" : "") << " r<"
+                  << local_cli.diag_tip_soft_force_r << " m k=" << local_cli.diag_tip_soft_force_k
+                  << " c=" << local_cli.diag_tip_soft_force_c
+                  << "; NO host Uz kill; NO z clamp; DIAGNOSTIC — NOT literature open "
+                     "free-surface)\n";
+    }
+    if (local_cli.diag_tip_fs_dashpot)
+    {
+        local_cli.diag_tip_soft_force = false;
+        local_cli.diag_soft_lid = false;
+        local_cli.diag_soft_lid_tip = false;
+        local_cli.diag_zero_net_uz = true;
+        local_cli.diag_hard_lid = false;
+        local_cli.diag_wall_flat_lid = false;
+        local_cli.diag_lid_free_slip = false;
+        local_cli.diag_lid_free_slip_post_settle = false;
+        local_cli.diag_tip_soft_force_k = Real(0);
+        if (local_cli.diag_tip_soft_force_r <= TinyReal)
+            local_cli.diag_tip_soft_force_r = Real(0.05);
+        if (local_cli.diag_tip_soft_force_c < Real(0))
+            local_cli.diag_tip_soft_force_c = Real(0);
+        std::cout << "[ophelie][doc221][N5] diag_tip_fs_dashpot=1 (zero-net-Uz + tip ForcePrior "
+                     "dashpot ONLY on DensitySummation<rho0 in tip r<"
+                  << local_cli.diag_tip_soft_force_r << " m c=" << local_cli.diag_tip_soft_force_c
+                  << "; NO spring; NO host Uz kill; NO z clamp; DIAGNOSTIC — NOT literature open "
+                     "free-surface)\n";
+    }
+    if (local_cli.diag_lid_dens_silence)
+    {
+        local_cli.diag_lid_cont_silent = false;
+        local_cli.diag_lid_cont_silent_only = false;
+        local_cli.diag_lid_omit_pjump_only = false;
+        local_cli.diag_wall_lid_viscous_omit = true;
+        local_cli.diag_lid_free_slip = false;
+        local_cli.diag_lid_free_slip_post_settle = false;
+        local_cli.diag_wall_flat_lid = true;
+        local_cli.diag_hard_lid = false;
+        local_cli.diag_soft_lid = false;
+        local_cli.diag_soft_lid_tip = false;
+        local_cli.acoustic_dens_mode = 3;
+        local_cli.acoustic_dens_mode_user_set = true;
+        std::cout << "[ophelie][doc221][O4] diag_lid_dens_silence=1 (O3 skeleton + dens_mode=3 + "
+                     "lid ContSilent/OmitPJump; NO AcousticWallFreeSlip; DIAGNOSTIC — NOT "
+                     "literature open free-surface)\n";
+    }
+    if (local_cli.diag_lid_cont_silent)
+    {
+        local_cli.diag_lid_dens_silence = false;
+        local_cli.diag_lid_cont_silent_only = false;
+        local_cli.diag_lid_omit_pjump_only = false;
+        local_cli.diag_wall_lid_viscous_omit = true;
+        local_cli.diag_lid_free_slip = false;
+        local_cli.diag_lid_free_slip_post_settle = false;
+        local_cli.diag_wall_flat_lid = true;
+        local_cli.diag_hard_lid = false;
+        local_cli.diag_soft_lid = false;
+        local_cli.diag_soft_lid_tip = false;
+        // Keep dens_mode=1 (do not override to 3).
+        std::cout << "[ophelie][doc221][O5] diag_lid_cont_silent=1 (O3 skeleton + lid "
+                     "ContSilent/OmitPJump ONLY; dens_mode stays 1; NO AcousticWallFreeSlip; "
+                     "DIAGNOSTIC — NOT literature open free-surface)\n";
+    }
+    if (local_cli.diag_lid_cont_silent_only)
+    {
+        local_cli.diag_lid_dens_silence = false;
+        local_cli.diag_lid_cont_silent = false;
+        local_cli.diag_lid_omit_pjump_only = false;
+        local_cli.diag_wall_lid_viscous_omit = true;
+        local_cli.diag_lid_free_slip = false;
+        local_cli.diag_lid_free_slip_post_settle = false;
+        local_cli.diag_wall_flat_lid = true;
+        local_cli.diag_hard_lid = false;
+        local_cli.diag_soft_lid = false;
+        local_cli.diag_soft_lid_tip = false;
+        std::cout << "[ophelie][doc221][O6a] diag_lid_cont_silent_only=1 (O3 + ContSilent ONLY; "
+                     "OmitPJump=0 dens_mode=1; NO AcousticWallFreeSlip; DIAGNOSTIC — NOT "
+                     "literature open free-surface)\n";
+    }
+    if (local_cli.diag_lid_omit_pjump_only)
+    {
+        local_cli.diag_lid_dens_silence = false;
+        local_cli.diag_lid_cont_silent = false;
+        local_cli.diag_lid_cont_silent_only = false;
+        local_cli.diag_wall_lid_viscous_omit = true;
+        local_cli.diag_lid_free_slip = false;
+        local_cli.diag_lid_free_slip_post_settle = false;
+        local_cli.diag_wall_flat_lid = true;
+        local_cli.diag_hard_lid = false;
+        local_cli.diag_soft_lid = false;
+        local_cli.diag_soft_lid_tip = false;
+        std::cout << "[ophelie][doc221][O6b] diag_lid_omit_pjump_only=1 (O3 + OmitPJump ONLY; "
+                     "ContSilent=0 dens_mode=1; NO AcousticWallFreeSlip; DIAGNOSTIC — NOT "
+                     "literature open free-surface)\n";
+    }
+    if (local_cli.diag_wall_lid_viscous_omit)
+    {
+        // O3 ablation must not combine with P acoustic free-slip.
+        local_cli.diag_lid_free_slip = false;
+        local_cli.diag_lid_free_slip_post_settle = false;
+        local_cli.diag_wall_flat_lid = true;
+        local_cli.diag_hard_lid = false;
+        local_cli.diag_soft_lid = false;
+        local_cli.diag_soft_lid_tip = false;
+        local_cli.diag_tip_soft_force = false;
+        local_cli.diag_tip_fs_dashpot = false;
+        std::cout << "[ophelie][doc221][O3] diag_wall_lid_viscous_omit=1 (ClosedCrucible acoustic "
+                     "NO AcousticWallFreeSlip; viscous OpenCup omit lid; DIAGNOSTIC — NOT "
+                     "literature open free-surface)\n";
+    }
+    if (local_cli.diag_lid_free_slip_post_settle)
+    {
+        local_cli.diag_lid_free_slip = true;
+        local_cli.diag_wall_flat_lid = true;
+        local_cli.diag_hard_lid = false;
+        local_cli.diag_soft_lid = false;
+        local_cli.diag_soft_lid_tip = false;
+        local_cli.diag_tip_soft_force = false;
+        local_cli.diag_tip_fs_dashpot = false;
+        std::cout << "[ophelie][doc221][P2] diag_lid_free_slip_post_settle=1 (settle=O no-slip lid; "
+                     "after settle zero-U + arm AcousticWallFreeSlip + viscous OpenCup; "
+                     "DIAGNOSTIC — NOT literature open free-surface)\n";
+    }
+    if (local_cli.diag_lid_free_slip)
+    {
+        local_cli.diag_wall_flat_lid = true;
+        local_cli.diag_hard_lid = false;
+        local_cli.diag_soft_lid = false;
+        local_cli.diag_soft_lid_tip = false;
+        local_cli.diag_tip_soft_force = false;
+        local_cli.diag_tip_fs_dashpot = false;
+        std::cout << "[ophelie][doc221][P] diag_lid_free_slip=1 (ClosedCrucible acoustic + "
+                     "AcousticWallFreeSlip lid; viscous open-cup omit lid"
+                  << (local_cli.diag_lid_free_slip_post_settle ? "; arm AFTER settle" : "; arm from t=0")
+                  << "; DIAGNOSTIC — NOT literature open free-surface)\n";
+    }
+    if (local_cli.diag_wall_flat_lid)
+    {
+        // Physical lid supersedes kinematic soft/hard lids.
+        local_cli.diag_hard_lid = false;
+        local_cli.diag_soft_lid = false;
+        local_cli.diag_soft_lid_tip = false;
+        local_cli.diag_tip_soft_force = false;
+        local_cli.diag_tip_fs_dashpot = false;
+        std::cout << "[ophelie][doc221][O] diag_wall_flat_lid=1 (ClosedCrucible wall incl. flat lid; "
+                     "no kinematic clamp/kill-up; DIAGNOSTIC — NOT literature open free-surface)\n";
+    }
+    std::cout << "[ophelie][doc219][hydro] profile=" << (local_cli.doc219_hydro_profile ? 1 : 0)
+              << " kernel_correction=" << (local_cli.kernel_correction ? 1 : 0)
+              << " tvf=" << (local_cli.enable_tvf ? 1 : 0)
+              << " (French: Riemann+B+thermal-after-pos; TVF opt-in only — cavity closed-box TVF not default on FS)"
+              << std::endl;
+    std::cout << "[ophelie][doc219][spatial-q] enabled=" << (local_cli.spatial_frozen_q ? 1 : 0)
+              << " doc217_d2=" << (local_cli.doc217_d2_local_poly ? 1 : 0)
+              << " self_induction=" << (local_cli.enable_self_induction ? 1 : 0)
+              << " (Q_ref(x) Euler resample each thermal; not particle-ID advection)" << std::endl;
     if (local_cli.literature.coupling == ThermoEMCouplingMode::Periodic)
     {
         local_cli.enable_self_induction = local_cli.literature.enable_aind;
@@ -1750,6 +5179,18 @@ int main(int ac, char *av[])
     cli_options.ophelie_current_form_user_set = true;
     finalizeOphelieCurrentFormConfiguration(params, cli_options);
     params.enable_self_induction_ = local_cli.enable_self_induction;
+    if (local_cli.doc217_d2_local_poly)
+    {
+        params.doc217_d2_local_poly_ = true;
+        params.doc216_e5_p1_projection_ = false;
+        params.doc217_d2_radius_ = french.glass_radius;
+        params.doc217_d2_half_height_ = french.glass_half_height;
+        params.doc217_d2_center_ = french.glass_center;
+        params.doc217_d2_dp_ = french.dp;
+        std::cout << "[ophelie][doc217][d2] frozen_q enable local quadratic Neumann "
+                     "(host SparseLU; opt-in)"
+                  << std::endl;
+    }
     if (local_cli.enable_target_power)
     {
         params.target_joule_power_ = local_cli.target_power_w;
@@ -1848,7 +5289,9 @@ int main(int ac, char *av[])
                   << " reconstructed_glass_power=" << p_joule
                   << " coil_current=" << coupling_state.coil_current_per_loop << std::endl;
 
-        if (periodic_coupling)
+        // Doc219 E: always deposit frozen Q to Euler grid when spatial_frozen_q (default).
+        const bool build_spatial_q = local_cli.spatial_frozen_q || periodic_coupling;
+        if (build_spatial_q)
         {
             const Vecd &gc_em = french.glass_center;
             const FrenchCylindricalFrame frame = makeFrenchCylinderFrameFromGlass(
@@ -1858,31 +5301,40 @@ int main(int ac, char *av[])
                      gc_em[2] - french.glass_half_height),
                 Vecd(gc_em[0] + french.glass_radius, gc_em[1] + french.glass_radius,
                      gc_em[2] + french.glass_half_height));
-            q_grid.spec_ = rh200::makeRh200JouleHeatGridSpecFromBounds(melt_bounds, french.dp, Real(2));
+            // Free-surface particles can leave the geometric melt AABB; keep a wide Euler pad
+            // and clamp-sample (below) so Doc219 E never silently writes Q=0 on coverage miss.
+            q_grid.spec_ = rh200::makeRh200JouleHeatGridSpecFromBounds(melt_bounds, french.dp, Real(8));
             coupling_state.sigma_rz.frame = frame;
             coupling_state.q_rz.frame = frame;
-            depositEmQAndRecord(particles, glass_em_names, params, frame, local_cli.literature, q_grid, coupling_state,
-                                p_joule);
-            syncVariableToHost<Real>(particles, glass_em_names.sigma);
-            const Real *sigma0 = particles.getVariableDataByName<Real>(glass_em_names.sigma);
-            const Vecd *pos0 = particles.getVariableDataByName<Vecd>("Position");
-            const Real *vol0 = particles.getVariableDataByName<Real>("VolumetricMeasure");
-            azimuthalDeposit(coupling_state.sigma_rz, pos0, sigma0, vol0, n);
-            fillEmptyAxisymmetricBins(coupling_state.sigma_rz, params.sigma_glass_);
-            coupling_state.sigma_em.assign(sigma0, sigma0 + n);
-            sigmaFieldStats(coupling_state.sigma_em, vol0, n, coupling_state.last_sigma_min,
-                            coupling_state.last_sigma_max, coupling_state.last_sigma_mean);
-            coupling_state.last_update_time = 0.0;
-            armFrenchPeriodicRefreshSchedule(coupling_state, local_cli.literature.em_update_interval_s);
-            coupling_state.update_count = 1;
-            writeAxisymmetricCsv("output/french_sigma_rz.csv", coupling_state.sigma_rz, "sigma_Sm");
+            // Fixed-shape / fixed-total-power diagnostic remap (not live EM feedback).
+            FrenchLiteratureParameters lit_q = local_cli.literature;
+            lit_q.q_conservative_remap = true;
+            depositEmQAndRecord(particles, glass_em_names, params, frame, lit_q, q_grid, coupling_state, p_joule);
+            if (periodic_coupling)
+            {
+                syncVariableToHost<Real>(particles, glass_em_names.sigma);
+                const Real *sigma0 = particles.getVariableDataByName<Real>(glass_em_names.sigma);
+                const Vecd *pos0 = particles.getVariableDataByName<Vecd>("Position");
+                const Real *vol0 = particles.getVariableDataByName<Real>("VolumetricMeasure");
+                azimuthalDeposit(coupling_state.sigma_rz, pos0, sigma0, vol0, n);
+                fillEmptyAxisymmetricBins(coupling_state.sigma_rz, params.sigma_glass_);
+                coupling_state.sigma_em.assign(sigma0, sigma0 + n);
+                sigmaFieldStats(coupling_state.sigma_em, vol0, n, coupling_state.last_sigma_min,
+                                coupling_state.last_sigma_max, coupling_state.last_sigma_mean);
+                coupling_state.last_update_time = 0.0;
+                armFrenchPeriodicRefreshSchedule(coupling_state, local_cli.literature.em_update_interval_s);
+                coupling_state.update_count = 1;
+                writeAxisymmetricCsv("output/french_sigma_rz.csv", coupling_state.sigma_rz, "sigma_Sm");
+            }
             writeAxisymmetricCsv("output/french_q_rz.csv", coupling_state.q_rz, "Q_Wpm3");
             writeThermoEMCouplingCsvHeader("output/french_thermo_em_coupling.csv");
             appendThermoEMCouplingCsv("output/french_thermo_em_coupling.csv", coupling_state, Real(0),
                                       local_cli.literature.em_control);
             writeFrenchEnergyBudgetCsvHeader("output/french_energy_budget.csv");
-            std::cout << "[ophelie][thermo-em] initial coupling book written; mode="
-                      << emControlModeName(local_cli.literature.em_control) << std::endl;
+            std::cout << "[ophelie][doc219][spatial-q] euler_q_grid built; periodic="
+                      << (periodic_coupling ? 1 : 0) << " spatial_frozen_q="
+                      << (local_cli.spatial_frozen_q ? 1 : 0)
+                      << " mode=" << emControlModeName(local_cli.literature.em_control) << std::endl;
         }
     }
 
@@ -1916,7 +5368,8 @@ int main(int ac, char *av[])
         }
         // Contact path is wired below; no Level-1 melt Robin bridge.
     }
-    const Real rim_height = local_cli.wall_rim_height;
+    // Doc221 O: closed flat-lid wall seals at melt top — tall splash rim unused for geometry.
+    const Real rim_height = local_cli.diag_wall_flat_lid ? Real(0) : local_cli.wall_rim_height;
     const Real flow_margin = Real(4.0) * french.dp + wall_thickness;
     const Vecd &gc = french.glass_center;
     const Real flow_r = french.glass_radius + wall_thickness + flow_margin;
@@ -1942,23 +5395,81 @@ int main(int ac, char *av[])
                                     "GlassBody", french.glass_center, french.glass_radius, french.glass_half_height));
     glass.defineAdaptation<SPHAdaptation>(1.15, 1.0);
     glass.defineMatterMaterial<WeaklyCompressibleFluid>(rho0, local_cli.c0);
-    glass.addMaterialProperty<Viscosity>(mu);
+    const bool use_particle_mu = local_cli.doc226_local_particle_viscosity;
+    if (use_particle_mu)
+        glass.addMaterialProperty<ParticleViscosity>(mu);
+    else
+        glass.addMaterialProperty<Viscosity>(mu);
     glass.generateParticles<BaseParticles, Reload>(glass.Name());
     Viscosity &glass_viscosity = glass.getMaterialProperty<Viscosity>();
+    ParticleViscosity *glass_particle_viscosity =
+        use_particle_mu ? &glass.getMaterialProperty<ParticleViscosity>() : nullptr;
 
     // SPHinXsys cylinder wall path: TriangleMeshShapeCylinder + LevelSet + NormalFromBodyShapeCK
     // (same pattern as taylor_bar_sycl / french_natural_glass_relax).
+    // Doc221 O: optional ClosedCrucible (side+bottom+flat lid) instead of open cup + rim.
+    // Doc221 P: + open-cup viscous partner (rim=0) so lid has free-slip (no viscous contact).
     const int wall_mesh_resolution =
         french.glass_mesh_resolution > 0 ? french.glass_mesh_resolution : 20;
-    SolidBody wall(sph_system, makeShared<OphelieFrenchNaturalCrucibleWallShape>(
-                                   "WallBoundary", french, wall_thickness, wall_mesh_resolution, rim_height));
+    SharedPtr<Shape> wall_shape;
+    if (local_cli.diag_wall_flat_lid)
+    {
+        wall_shape = makeShared<OphelieFrenchClosedCrucibleWallShape>("WallBoundary", french, wall_thickness,
+                                                                     wall_mesh_resolution);
+    }
+    else
+    {
+        wall_shape = makeShared<OphelieFrenchNaturalCrucibleWallShape>(
+            "WallBoundary", french, wall_thickness, wall_mesh_resolution, rim_height);
+    }
+    SolidBody wall(sph_system, wall_shape);
     wall.defineAdaptationRatios(1.3, 1.0);
     wall.defineMatterMaterial<Solid>();
     (void)wall.defineBodyLevelSetShape(par_ck).correctLevelSetSign().cleanLevelSet();
     wall.generateParticles<BaseParticles, Lattice>();
+    if (local_cli.diag_wall_flat_lid)
+    {
+        std::cout << "[ophelie][doc221][O] wall=ClosedCrucible n_wall="
+                  << wall.getBaseParticles().TotalRealParticles() << " wall_thickness=" << wall_thickness
+                  << " (flat lid at melt top)\n";
+    }
+
+    // Doc221 P/O3: viscous open-cup (side+bottom only). Lifetime must cover the whole run.
+    const bool need_wall_noslip =
+        local_cli.diag_lid_free_slip || local_cli.diag_wall_lid_viscous_omit;
+    UniquePtr<SolidBody> wall_noslip_body;
+    if (need_wall_noslip)
+    {
+        wall_noslip_body = makeUnique<SolidBody>(
+            sph_system, makeShared<OphelieFrenchNaturalCrucibleWallShape>(
+                            "WallNoSlip", french, wall_thickness, wall_mesh_resolution, Real(0)));
+        wall_noslip_body->defineAdaptationRatios(1.3, 1.0);
+        wall_noslip_body->defineMatterMaterial<Solid>();
+        (void)wall_noslip_body->defineBodyLevelSetShape(par_ck).correctLevelSetSign().cleanLevelSet();
+        wall_noslip_body->generateParticles<BaseParticles, Lattice>();
+        std::cout << "[ophelie][doc221][" << (local_cli.diag_wall_lid_viscous_omit ? "O3" : "P")
+                  << "] wall_noslip=OpenCup n_wall="
+                  << wall_noslip_body->getBaseParticles().TotalRealParticles()
+                  << " (viscous; lid omitted → free-slip top)\n";
+    }
 
     Inner<> glass_inner(glass);
     Contact<> glass_wall_contact(glass, {&wall});
+    UniquePtr<Contact<>> glass_wall_noslip_contact;
+    if (need_wall_noslip)
+    {
+        // Brace-init {ptr} does not forward through makeUnique; use an explicit StdVec.
+        StdVec<RealBody *> noslip_targets{wall_noslip_body.get()};
+        glass_wall_noslip_contact = makeUnique<Contact<>>(glass, noslip_targets);
+    }
+    // Acoustic/dens always on closed (or open) wall.
+    // P1 / O3: viscous OpenCup from t=0.
+    // P2 (post-settle): viscous ClosedCrucible during settle; OpenCup after arming.
+    const bool viscous_open_cup_from_t0 =
+        local_cli.diag_wall_lid_viscous_omit ||
+        (local_cli.diag_lid_free_slip && !local_cli.diag_lid_free_slip_post_settle);
+    Contact<> &viscous_wall_contact =
+        viscous_open_cup_from_t0 ? *glass_wall_noslip_contact : glass_wall_contact;
     Inner<> wall_inner(wall);
     Contact<> wall_glass_contact(wall, {&glass});
 
@@ -1966,10 +5477,24 @@ int main(int ac, char *av[])
     registerOphelieJouleHeatTemperatureField(glass_particles, t0);
     registerOphelieThermalDiffusionAuxFields(glass_particles, k_th);
     registerOphelieFrenchThermalRheologyFields(glass_particles, mu, cp, k_th);
+    // Doc226: μ/cp must follow ParticleSortCK with positions when local viscosity is on.
+    glass_particles.addEvolvingVariable<Real>(kOphelieDynamicViscosityField);
+    glass_particles.addEvolvingVariable<Real>(kOphelieHeatCapacityField);
+    if (glass_particle_viscosity)
+    {
+        glass_particle_viscosity->bindParticleViscosityField(glass_particles, kOphelieDynamicViscosityField);
+        std::cout << "[ophelie][doc226] ParticleViscosity bound to " << kOphelieDynamicViscosityField
+                  << " (pairwise/one-side from particle field)\n";
+    }
     glass_particles.registerStateVariable<Real>("DensSumSigma0");
     glass_particles.addEvolvingVariable<Real>("DensSumSigma0");
     glass_particles.registerStateVariable<Real>("DensSumZ0");
     glass_particles.addEvolvingVariable<Real>("DensSumZ0");
+    // Doc222 B: tip ForcePrior channel (ForcePriorCK-style current/previous); sorted with particles.
+    glass_particles.registerStateVariable<Vecd>("TipSoftForce");
+    glass_particles.addEvolvingVariable<Vecd>("TipSoftForce");
+    glass_particles.registerStateVariable<Vecd>("PreviousTipSoftForce");
+    glass_particles.addEvolvingVariable<Vecd>("PreviousTipSoftForce");
     if (local_cli.layout_jitter_dp_frac > TinyReal)
     {
         hostApplyLayoutJitter(glass_particles, local_cli.layout_jitter_dp_frac * french.dp, local_cli.layout_seed);
@@ -2034,13 +5559,64 @@ int main(int ac, char *av[])
             q_host[i] = frozen_q[i];
         }
         syncVariableToDevice<Real>(glass_particles, "JouleHeat");
-        if (periodic_coupling)
+        if (local_cli.spatial_frozen_q || periodic_coupling)
         {
-            hostSampleEulerQOntoParticles(glass_particles, q_grid);
+            // Doc219 E: initial map is Eulerian; self-check vs particle-ID snapshot at same layout.
+            size_t n_uncovered = 0;
+            const Real p_raw =
+                hostSampleSpatialFrozenQ(glass_particles, q_grid, p_joule, /*renormalize=*/false, n_uncovered);
+            syncVariableToHost<Real>(glass_particles, "JouleHeat");
+            syncVariableToHost<Real>(glass_particles, "VolumetricMeasure");
+            const Real *q_s = glass_particles.getVariableDataByName<Real>("JouleHeat");
+            const Real *vol_s = glass_particles.getVariableDataByName<Real>("VolumetricMeasure");
+            Real num = Real(0), den = Real(0), p_id = Real(0);
+            for (size_t i = 0; i < n; ++i)
+            {
+                const Real dq = q_s[i] - frozen_q[i];
+                num += dq * dq * vol_s[i];
+                den += frozen_q[i] * frozen_q[i] * vol_s[i];
+                p_id += frozen_q[i] * vol_s[i];
+            }
+            const Real q_rel = (den > TinyReal) ? std::sqrt(num / den) : Real(0);
+            const Real p_raw_rel =
+                (std::abs(p_joule) > TinyReal) ? std::abs(p_raw - p_joule) / std::abs(p_joule) : Real(0);
+            const Real p_id_rel =
+                (std::abs(p_joule) > TinyReal) ? std::abs(p_id - p_joule) / std::abs(p_joule) : Real(0);
+            // Hard gates: coverage + power after optional diagnostic renormalize.
+            const Real p_final =
+                hostSampleSpatialFrozenQ(glass_particles, q_grid, p_joule, /*renormalize=*/true, n_uncovered);
+            const Real p_final_rel =
+                (std::abs(p_joule) > TinyReal) ? std::abs(p_final - p_joule) / std::abs(p_joule) : Real(0);
+            const bool q_ok = q_rel <= Real(0.01);
+            const bool p_ok = p_final_rel <= Real(0.01) && n_uncovered == 0;
+            std::cout << "[ophelie][doc219][spatial-q] self_check q_L2_rel=" << q_rel
+                      << " P_raw_rel=" << p_raw_rel << " P_final_rel=" << p_final_rel
+                      << " P_particleID_rel=" << p_id_rel << " n_uncovered=" << n_uncovered << "/" << n
+                      << " gate_q<=0.01 gate_P<=0.01"
+                      << " passed=" << ((q_ok && p_ok) ? 1 : 0) << std::endl;
+            if (n_uncovered > 0)
+            {
+                std::cerr << "[ophelie][doc219][spatial-q] abort: uncovered particles get silent Q=0\n";
+                return 1;
+            }
+            if (!p_ok)
+            {
+                std::cerr << "[ophelie][doc219][spatial-q] abort: power after remap exceeds 1% gate\n";
+                return 1;
+            }
+            if (!q_ok)
+            {
+                // Deposit/sample smoothing can exceed 1% vs particle-ID; keep going but flag.
+                std::cout << "[ophelie][doc219][spatial-q] WARNING q_L2_rel>" << Real(0.01)
+                          << " (Euler deposit/sample vs particle-ID; power gate still held)\n";
+            }
             recordFrenchFluidHeatPower(coupling_state, glass_particles);
-            writeThermoEMCouplingCsvHeader("output/french_thermo_em_coupling.csv");
-            appendThermoEMCouplingCsv("output/french_thermo_em_coupling.csv", coupling_state, Real(0),
-                                      local_cli.literature.em_control);
+            if (periodic_coupling)
+            {
+                writeThermoEMCouplingCsvHeader("output/french_thermo_em_coupling.csv");
+                appendThermoEMCouplingCsv("output/french_thermo_em_coupling.csv", coupling_state, Real(0),
+                                          local_cli.literature.em_control);
+            }
         }
         else
         {
@@ -2158,10 +5734,24 @@ int main(int ac, char *av[])
     auto &host_methods = sph_solver.addParticleMethodContainer(par_host);
 
     host_methods.addStateDynamics<NormalFromBodyShapeCK>(wall).exec();
+    if (need_wall_noslip)
+        host_methods.addStateDynamics<NormalFromBodyShapeCK>(*wall_noslip_body).exec();
 
     auto &update_glass_cell_linked_list = main_methods.addCellLinkedListDynamics(glass);
-    auto &update_wall_cell_linked_list = main_methods.addCellLinkedListDynamics(wall);
-    auto &update_glass_relations = main_methods.addRelationDynamics(glass_inner, glass_wall_contact);
+    auto &update_wall_cell_linked_list = main_methods.addParticleDynamicsGroup();
+    update_wall_cell_linked_list.add(&main_methods.addCellLinkedListDynamics(wall));
+    if (need_wall_noslip)
+        update_wall_cell_linked_list.add(&main_methods.addCellLinkedListDynamics(*wall_noslip_body));
+    auto &update_glass_relations = main_methods.addParticleDynamicsGroup();
+    if (need_wall_noslip)
+    {
+        update_glass_relations.add(
+            &main_methods.addRelationDynamics(glass_inner, glass_wall_contact, *glass_wall_noslip_contact));
+    }
+    else
+    {
+        update_glass_relations.add(&main_methods.addRelationDynamics(glass_inner, glass_wall_contact));
+    }
     auto &update_wall_relations = main_methods.addRelationDynamics(wall_inner, wall_glass_contact);
     auto &fluid_particle_sorting = main_methods.addSortDynamics(glass);
 
@@ -2186,6 +5776,10 @@ int main(int ac, char *av[])
     acoustic_step_2nd_half.addPostContactInteraction(acoustic_step_2nd_half_wall);
     InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrixComplex>
         fluid_linear_correction_matrix(DynamicsArgs(glass_inner, 0.5), glass_wall_contact);
+    InteractionDynamicsCK<MainExecutionPolicy, KernelGradientIntegralCorrectedComplex>
+        kernel_grad_integral(glass_inner, glass_wall_contact);
+    StateDynamics<MainExecutionPolicy, fluid_dynamics::TransportVelocityCorrectionCK<SPHBody, TruncatedLinear>>
+        transport_correction(glass); // Doc210/219 coefficient 0.2
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep1stHalfWithWallRiemannCorrectionCK>
         acoustic_1st_corr(glass_inner, glass_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, fluid_dynamics::AcousticStep2ndHalfWithWallRiemannCorrectionCK>
@@ -2206,23 +5800,196 @@ int main(int ac, char *av[])
                           fluid_dynamics::AcousticStep1stHalf<
                               Contact<Wall, AcousticRiemannSolverCK, LinearCorrectionCK>>>
         acoustic_1st_wall_corr_only(glass_wall_contact);
-    auto &density_regularization =
-        main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(glass_inner)
-            .addPostContactInteraction(glass_wall_contact)
-            .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(glass);
+    struct Doc223DensExec
+    {
+        std::function<void()> fn;
+        void exec() { fn(); }
+    } density_regularization;
+    if (local_cli.doc223_paper_flat_slip_top)
+    {
+        auto &dr =
+            main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(glass_inner)
+                .addPostContactInteraction(glass_wall_contact)
+                .addPostStateDynamics<fluid_dynamics::DensityRegularization, Internal>(glass);
+        density_regularization.fn = [&dr]() { dr.exec(); };
+    }
+    else
+    {
+        auto &dr =
+            main_methods.addInteractionDynamics<fluid_dynamics::DensitySummationCK>(glass_inner)
+                .addPostContactInteraction(glass_wall_contact)
+                .addPostStateDynamics<fluid_dynamics::DensityRegularization, FreeSurface>(glass);
+        density_regularization.fn = [&dr]() { dr.exec(); };
+    }
 
-    auto &fluid_viscous_force =
-        main_methods.addInteractionDynamicsWithUpdate<fluid_dynamics::ViscousForceCK, Viscosity, NoKernelCorrectionCK>(
-            glass_inner);
-    auto &fluid_viscous_force_from_wall =
-        main_methods.addInteractionDynamics<fluid_dynamics::ViscousForceCK, Wall, Viscosity, NoKernelCorrectionCK>(
-            glass_wall_contact);
-    fluid_viscous_force.addPostContactInteraction(fluid_viscous_force_from_wall);
+    // Doc221 P: viscous wall = open-cup (omit lid) when free-slip; else same as acoustic wall.
+    // Doc221 P2: closed during settle, OpenCup after arming (no post-contact chain).
+    // Doc226: optional ParticleViscosity path (pairwise field); default Viscosity unchanged.
+    using ViscousForceLocalInnerCK =
+        fluid_dynamics::ViscousForceCK<Inner<WithUpdate, ParticleViscosity, NoKernelCorrectionCK>>;
+    using ViscousForceLocalWallCK =
+        fluid_dynamics::ViscousForceCK<Contact<Wall, ParticleViscosity, NoKernelCorrectionCK>>;
+    UniquePtr<InteractionDynamicsCK<MainExecutionPolicy, ViscousForceLocalInnerCK>> fluid_viscous_force_local;
+    UniquePtr<InteractionDynamicsCK<MainExecutionPolicy, ViscousForceLocalWallCK>>
+        fluid_viscous_force_wall_closed_local;
+    UniquePtr<InteractionDynamicsCK<MainExecutionPolicy, ViscousForceLocalWallCK>>
+        fluid_viscous_force_wall_opencup_local;
+
+    bool lid_free_slip_armed =
+        local_cli.diag_lid_free_slip && !local_cli.diag_lid_free_slip_post_settle;
+    std::function<void()> exec_viscous;
+    std::function<void()> exec_viscous_wall_closed;
+    std::function<void()> exec_viscous_wall_opencup;
+
+    UniquePtr<OphelieCallFnDynamicsCK> viscous_wall_post;
+    if (use_particle_mu)
+    {
+        // Couette isomorphism: wall must be post-contact so ForcePriorCK update sees wall shear.
+        // Prior F1 path ran wall AFTER Inner WithUpdate → wall never entered ForcePrior.
+        fluid_viscous_force_local =
+            makeUnique<InteractionDynamicsCK<MainExecutionPolicy, ViscousForceLocalInnerCK>>(glass_inner);
+        fluid_viscous_force_wall_closed_local =
+            makeUnique<InteractionDynamicsCK<MainExecutionPolicy, ViscousForceLocalWallCK>>(
+                viscous_wall_contact);
+        exec_viscous_wall_closed = [&]() { fluid_viscous_force_wall_closed_local->exec(); };
+        if (local_cli.diag_lid_free_slip_post_settle)
+        {
+            fluid_viscous_force_wall_opencup_local =
+                makeUnique<InteractionDynamicsCK<MainExecutionPolicy, ViscousForceLocalWallCK>>(
+                    *glass_wall_noslip_contact);
+            exec_viscous_wall_opencup = [&]() { fluid_viscous_force_wall_opencup_local->exec(); };
+            viscous_wall_post = makeUnique<OphelieCallFnDynamicsCK>([&]() {
+                if (lid_free_slip_armed)
+                    fluid_viscous_force_wall_opencup_local->exec();
+                else
+                    fluid_viscous_force_wall_closed_local->exec();
+            });
+            fluid_viscous_force_local->addPostContactInteraction(*viscous_wall_post);
+            exec_viscous = [&]() { fluid_viscous_force_local->exec(); };
+        }
+        else
+        {
+            fluid_viscous_force_local->addPostContactInteraction(*fluid_viscous_force_wall_closed_local);
+            exec_viscous = [&]() { fluid_viscous_force_local->exec(); };
+            if (local_cli.diag_lid_free_slip || local_cli.diag_wall_lid_viscous_omit)
+                exec_viscous_wall_opencup = exec_viscous_wall_closed;
+        }
+        std::cout << "[ophelie][doc226] ViscousForceCK templated on ParticleViscosity "
+                     "(post-contact wall → ForcePrior)\n";
+    }
+    else
+    {
+        // Capture raw pointers into main_methods-owned dynamics (local refs would dangle).
+        auto *fluid_viscous_force = &main_methods.addInteractionDynamicsWithUpdate<
+            fluid_dynamics::ViscousForceCK, Viscosity, NoKernelCorrectionCK>(glass_inner);
+        auto *fluid_viscous_force_from_wall = &main_methods.addInteractionDynamics<
+            fluid_dynamics::ViscousForceCK, Wall, Viscosity, NoKernelCorrectionCK>(viscous_wall_contact);
+        exec_viscous_wall_closed = [fluid_viscous_force_from_wall]() {
+            fluid_viscous_force_from_wall->exec();
+        };
+        if (local_cli.diag_lid_free_slip_post_settle)
+        {
+            // Doc227 C2: same post-contact wall → ForcePrior as ParticleViscosity path.
+            // Prior paper-top Viscosity path ran wall AFTER Inner WithUpdate → wall shear
+            // never entered ForcePrior; C2a/C2b then diverged ~25% despite C1 force match.
+            auto *noslip_visc = &main_methods.addInteractionDynamics<
+                fluid_dynamics::ViscousForceCK, Wall, Viscosity, NoKernelCorrectionCK>(
+                *glass_wall_noslip_contact);
+            exec_viscous_wall_opencup = [noslip_visc]() { noslip_visc->exec(); };
+            viscous_wall_post = makeUnique<OphelieCallFnDynamicsCK>(
+                [noslip_visc, fluid_viscous_force_from_wall, &lid_free_slip_armed]() {
+                    if (lid_free_slip_armed)
+                        noslip_visc->exec();
+                    else
+                        fluid_viscous_force_from_wall->exec();
+                });
+            fluid_viscous_force->addPostContactInteraction(*viscous_wall_post);
+            exec_viscous = [fluid_viscous_force]() { fluid_viscous_force->exec(); };
+            std::cout << "[ophelie][doc227][C2] Viscosity wall post-contact → ForcePrior "
+                         "(aligned with ParticleViscosity)\n";
+        }
+        else
+        {
+            fluid_viscous_force->addPostContactInteraction(*fluid_viscous_force_from_wall);
+            exec_viscous = [fluid_viscous_force]() { fluid_viscous_force->exec(); };
+            if (local_cli.diag_lid_free_slip || local_cli.diag_wall_lid_viscous_omit)
+                exec_viscous_wall_opencup = exec_viscous_wall_closed;
+        }
+    }
+
+    // Doc221 P1: tag lid AFTER AcousticStep Contact registers AcousticWallFreeSlip (from t=0).
+    // Doc221 P2: defer tagging until after settle + zero-U.
+    if (local_cli.diag_lid_free_slip && !local_cli.diag_lid_free_slip_post_settle)
+    {
+        const Real z_lid = french.glass_center[2] + french.glass_half_height;
+        const size_t n_lid = hostArmDoc224FreeSlipLid(wall.getBaseParticles(), z_lid, wall_thickness,
+                                                      local_cli.doc224_lid_keep_dens_jump);
+        std::cout << "[ophelie][doc221][P] AcousticWallFreeSlip lid tags=" << n_lid
+                  << " / wall_closed_n=" << wall.getBaseParticles().TotalRealParticles()
+                  << " z_lid=" << z_lid << " (armed from t=0)"
+                  << " keep_dens_jump=" << (local_cli.doc224_lid_keep_dens_jump ? 1 : 0) << "\n";
+    }
+    else if (local_cli.diag_lid_free_slip_post_settle)
+    {
+        std::cout << "[ophelie][doc221][P2] AcousticWallFreeSlip deferred until post-settle arming\n";
+    }
+    else if (local_cli.diag_wall_lid_viscous_omit)
+    {
+        std::cout << "[ophelie][doc221][O3] AcousticWallFreeSlip=0 (viscous OpenCup only; acoustic "
+                     "ClosedCrucible stays no-slip dens/mom)\n";
+    }
+    if (local_cli.diag_lid_dens_silence || local_cli.diag_lid_cont_silent ||
+        local_cli.diag_lid_cont_silent_only || local_cli.diag_lid_omit_pjump_only)
+    {
+        const Real z_lid = french.glass_center[2] + french.glass_half_height;
+        size_t n_silent = 0;
+        size_t n_omit_pj = 0;
+        if (local_cli.diag_lid_dens_silence || local_cli.diag_lid_cont_silent ||
+            local_cli.diag_lid_cont_silent_only)
+        {
+            n_silent =
+                hostTagAcousticWallContSilentLid(wall.getBaseParticles(), z_lid, wall_thickness);
+        }
+        if (local_cli.diag_lid_dens_silence || local_cli.diag_lid_cont_silent ||
+            local_cli.diag_lid_omit_pjump_only)
+        {
+            n_omit_pj =
+                hostTagAcousticWallOmitPJumpLid(wall.getBaseParticles(), z_lid, wall_thickness);
+        }
+        if (local_cli.diag_lid_dens_silence)
+        {
+            std::cout << "[ophelie][doc221][O4] lid dens silence tags: ContSilent=" << n_silent
+                      << " OmitPJump=" << n_omit_pj
+                      << " dens_mode=3 AcousticWallFreeSlip=0 z_lid=" << z_lid << "\n";
+        }
+        else if (local_cli.diag_lid_cont_silent)
+        {
+            std::cout << "[ophelie][doc221][O5] lid ContSilent/OmitPJump tags: ContSilent="
+                      << n_silent << " OmitPJump=" << n_omit_pj
+                      << " dens_mode=" << local_cli.acoustic_dens_mode
+                      << " AcousticWallFreeSlip=0 z_lid=" << z_lid << "\n";
+        }
+        else if (local_cli.diag_lid_cont_silent_only)
+        {
+            std::cout << "[ophelie][doc221][O6a] ContSilent-only tags: ContSilent=" << n_silent
+                      << " OmitPJump=0 dens_mode=" << local_cli.acoustic_dens_mode
+                      << " AcousticWallFreeSlip=0 z_lid=" << z_lid << "\n";
+        }
+        else
+        {
+            std::cout << "[ophelie][doc221][O6b] OmitPJump-only tags: ContSilent=0 OmitPJump="
+                      << n_omit_pj << " dens_mode=" << local_cli.acoustic_dens_mode
+                      << " AcousticWallFreeSlip=0 z_lid=" << z_lid << "\n";
+        }
+    }
 
     const Real acoustic_cfl_eff = local_cli.acoustic_cfl * local_cli.dt_scale;
     const Real advection_cfl_eff = local_cli.advection_cfl * local_cli.dt_scale;
     auto &advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(
         glass, local_cli.u_ref, advection_cfl_eff);
+    auto &advection_viscous_time_step =
+        main_methods.addReduceDynamics<fluid_dynamics::AdvectionViscousTimeStepCK>(glass, local_cli.u_ref,
+                                                                                    advection_cfl_eff);
     auto &acoustic_time_step =
         main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(glass, acoustic_cfl_eff);
     auto &u_max_reduce = main_methods.addReduceDynamics<OphelieVelocityMaxReduceCK>(glass);
@@ -2292,15 +6059,71 @@ int main(int ac, char *av[])
     const FrenchCylindricalFrame cyl_frame = makeFrenchCylinderFrameFromGlass(
         french.glass_center, french.glass_radius, french.glass_half_height, local_cli.literature.vertical_axis);
     OphelieThermalRheologyStats rheology_stats;
-    const Real mu_init = hostUpdateFrenchThermalRheologyFromTemperature(
-        glass_particles, laws, local_cli.literature.constant_thermal_rheology, t0, rheology_stats);
-    glass_viscosity.setReferenceViscosity(mu_init);
-    invalidateViscosityDependentCkKernels(glass_inner, glass_wall_contact);
-    if (!local_cli.literature.constant_thermal_rheology)
-    {
-        std::cout << "[ophelie][stage4.1] viscosity_mode=mean_mu_T_volume_average mu_ref=" << mu_init
-                  << std::endl;
-    }
+    const bool refresh_mu_from_T =
+        local_cli.doc226_mu_T_only || !local_cli.literature.constant_thermal_rheology;
+    // Doc226 F: keep μ(T) (+ optional cp/k lock) + ReferenceViscosity CFL in one place.
+    // Must re-run after Fig8 prescribe — init below still sees near-T0 isothermal field.
+    auto sync_mu_from_temperature = [&](const char *tag, bool log_particle) -> Real {
+        const Real mu_now = hostUpdateFrenchThermalRheologyFromTemperature(
+            glass_particles, laws,
+            /*constant_properties=*/!refresh_mu_from_T, t0, rheology_stats);
+        if (local_cli.doc226_mu_T_only)
+        {
+            // Isolate viscosity: restore cp/k particle fields to T0 diagnostic constants.
+            syncVariableToHost<Real>(glass_particles, kOphelieHeatCapacityField);
+            syncVariableToHost<Real>(glass_particles, "OphelieThermalConductivity");
+            Real *cp_f = glass_particles.getVariableDataByName<Real>(kOphelieHeatCapacityField);
+            Real *k_f = glass_particles.getVariableDataByName<Real>("OphelieThermalConductivity");
+            const size_t n_th = glass_particles.TotalRealParticles();
+            for (size_t i = 0; i < n_th; ++i)
+            {
+                cp_f[i] = cp;
+                k_f[i] = k_th;
+            }
+            syncVariableToDevice<Real>(glass_particles, kOphelieHeatCapacityField);
+            syncVariableToDevice<Real>(glass_particles, "OphelieThermalConductivity");
+            rheology_stats.cp_min = rheology_stats.cp_max = rheology_stats.cp_mean = cp;
+            rheology_stats.k_min = rheology_stats.k_max = rheology_stats.k_mean = k_th;
+        }
+        if (local_cli.doc226_mu_cap > TinyReal)
+            hostClampParticleViscosityCap(glass_particles, local_cli.doc226_mu_cap, rheology_stats);
+        else
+        {
+            rheology_stats.mu_used_min = rheology_stats.mu_raw_min;
+            rheology_stats.mu_used_max = rheology_stats.mu_raw_max;
+            rheology_stats.mu_used_mean = rheology_stats.mu_raw_mean;
+        }
+        const Real mu_ref = use_particle_mu
+                                ? (rheology_stats.mu_used_max > TinyReal ? rheology_stats.mu_used_max
+                                                                       : (rheology_stats.mu_raw_max > TinyReal
+                                                                              ? rheology_stats.mu_raw_max
+                                                                              : mu_now))
+                                : (rheology_stats.mu_used_mean > TinyReal ? rheology_stats.mu_used_mean : mu_now);
+        glass_viscosity.setReferenceViscosity(mu_ref);
+        invalidateViscosityDependentCkKernels(glass_inner, viscous_wall_contact);
+        // AdvectionViscousTimeStepCK baked μ into speed_ref_ at construction; refresh live.
+        advection_viscous_time_step.refreshViscousSpeedReference();
+        if (log_particle && use_particle_mu)
+        {
+            std::cout << "[ophelie][doc226] viscosity_mode=particle_pairwise tag=" << tag
+                      << " mu_T_only=" << (local_cli.doc226_mu_T_only ? 1 : 0)
+                      << " mu_used_mean=" << rheology_stats.mu_used_mean
+                      << " mu_used_max=" << rheology_stats.mu_used_max
+                      << " mu_cap=" << local_cli.doc226_mu_cap
+                      << " n_capped=" << rheology_stats.n_mu_capped
+                      << " mu_ref_cfl=" << mu_ref << std::endl;
+        }
+        else if (log_particle && !local_cli.literature.constant_thermal_rheology)
+        {
+            std::cout << "[ophelie][stage4.1] viscosity_mode=mean_mu_T_volume_average tag=" << tag
+                      << " mu_ref=" << mu_ref << std::endl;
+        }
+        return mu_ref;
+    };
+    const Real mu_init = sync_mu_from_temperature("pre_settle_T0", /*log_particle=*/true);
+    (void)mu_init;
+    // Doc220 C: provisional H0 at current T (usually isothermal). If prescribe-T runs later,
+    // H0/prev_energy/ledger accumulators are rebuilt AFTER the final IC (see flow-start block).
     Real prev_energy = local_cli.literature.constant_thermal_rheology
                            ? hostThermalEnergy(glass_particles, rho0, cp, t0)
                            : hostThermalEnthalpyEnergy(glass_particles, rho0, laws.cp, t0);
@@ -2328,9 +6151,70 @@ int main(int ac, char *av[])
     const Real z_bottom = gc[2] - french.glass_half_height;
     const Real z_free = gc[2] + french.glass_half_height;
     const Real z_rim = z_free + rim_height;
-    hostApplyHydrostaticDensity(glass_particles, rho0, local_cli.c0, local_cli.gravity_g, z_free);
+    Doc222LocalEtaPhReport doc222_local_eta_ph_last{};
+    auto apply_french_background_ph = [&]() {
+        if (local_cli.doc222_ph_local_eta)
+        {
+            doc222_local_eta_ph_last = hostApplyFrenchBackgroundHydroPressureLocalEta(
+                glass_particles, rho0, local_cli.gravity_g, z_free, gc, french.glass_radius,
+                local_cli.doc222_ph_local_eta_bins, local_cli.doc222_ph_signed);
+        }
+        else
+        {
+            hostApplyFrenchBackgroundHydroPressure(glass_particles, rho0, local_cli.gravity_g, z_free,
+                                                   local_cli.doc222_ph_signed);
+        }
+    };
+    if (local_cli.doc220_pprime_hydro || local_cli.background_hydro_p)
+    {
+        // p_h path (p' or total-p+g): Density=ρ0 so EOS≈0; hydro lives in BackgroundPressure.
+        hostFreezeDensityToRho0(glass_particles, rho0);
+        apply_french_background_ph();
+    }
+    else
+    {
+        hostApplyHydrostaticDensity(glass_particles, rho0, local_cli.c0, local_cli.gravity_g, z_free);
+    }
     fluid_advection_step_setup.exec();
-    constant_gravity.exec();
+    if (!local_cli.omit_gravity_force)
+        constant_gravity.exec();
+    else
+    {
+        // Doc221 B: one-time init — zero gravity channel only. Do not wipe shared ForcePrior.
+        hostZeroVecFieldFrench(glass_particles, "GravityForceCK");
+        hostZeroVecFieldFrench(glass_particles, "PreviousGravityForceCK");
+    }
+
+    if (local_cli.doc222_tip_force_selftest)
+    {
+        const Real tip_r = local_cli.diag_tip_soft_force_r > TinyReal ? local_cli.diag_tip_soft_force_r : Real(0.05);
+        const Real c_damp = local_cli.diag_tip_soft_force_c > TinyReal ? local_cli.diag_tip_soft_force_c : Real(100);
+        const auto tip_st =
+            hostDoc222TipForceLifecycleSelftest(glass_particles, z_free, Real(0.5) * french.dp, tip_r, c_damp);
+        std::cout << "[ophelie][doc222][B] tip_force_selftest pass=" << (tip_st.pass ? 1 : 0) << " " << tip_st.message
+                  << "\n";
+        if (!local_cli.summary_json.empty())
+        {
+            std::ofstream js(local_cli.summary_json);
+            js << "{\n"
+               << "  \"case\": \"doc222_tip_force_selftest\",\n"
+               << "  \"pass\": " << (tip_st.pass ? 1 : 0) << ",\n"
+               << "  \"repeat10_ok\": " << (tip_st.repeat10_ok ? 1 : 0) << ",\n"
+               << "  \"exit_zone_ok\": " << (tip_st.exit_zone_ok ? 1 : 0) << ",\n"
+               << "  \"uz_down_ok\": " << (tip_st.uz_down_ok ? 1 : 0) << ",\n"
+               << "  \"clear_ok\": " << (tip_st.clear_ok ? 1 : 0) << ",\n"
+               << "  \"count_no_side_effect\": " << (tip_st.count_no_side_effect ? 1 : 0) << ",\n"
+               << "  \"legacy_grows\": " << (tip_st.legacy_grows ? 1 : 0) << ",\n"
+               << "  \"fp_z_after_1\": " << tip_st.fp_z_after_1 << ",\n"
+               << "  \"fp_z_after_10\": " << tip_st.fp_z_after_10 << ",\n"
+               << "  \"fp_z_after_exit\": " << tip_st.fp_z_after_exit << ",\n"
+               << "  \"fp_z_legacy_10\": " << tip_st.fp_z_legacy_10 << ",\n"
+               << "  \"n_touch_1\": " << tip_st.n_touch_1 << ",\n"
+               << "  \"message\": \"" << tip_st.message << "\"\n"
+               << "}\n";
+        }
+        return tip_st.pass ? 0 : 2;
+    }
 
     double dens_sigma0_mean = 0.0;
     bool dens_sigma0_ready = false;
@@ -2345,6 +6229,7 @@ int main(int ac, char *av[])
     size_t dens_fs_cap_n_last = 0;
     size_t advection_steps = 0;
     bool in_hydro_settle = true;
+    bool doc223_logged_keep_dens_skip = false;
     auto apply_quiet_hydro_after_dens = [&]() {
         const bool do_dens_norm =
             local_cli.dens_sum_normalize || (in_hydro_settle && local_cli.settle_dens_sum_normalize);
@@ -2388,19 +6273,40 @@ int main(int ac, char *av[])
             dens_sum_n_written_last = dens_write_last.n_written;
         }
         // Doc105 P2i: cap overpack only when FreeSurface path is active (no extra normalize write).
+        // Never during hydro settle — fighting packing collapses acoustic dt / hangs settle.
         dens_fs_cap_n_last = 0;
-        if (local_cli.dens_fs_cap_overpack && !do_dens_norm)
+        if (local_cli.dens_fs_cap_overpack && !do_dens_norm && !in_hydro_settle)
         {
             dens_fs_cap_n_last = hostCapOverpackDensityToRho0(glass_particles, rho0);
         }
+        // Doc222 E2 total-p+bgp: keep ρ=ρ0 after dens so p_mom≈p_h (∇p_h↔g). Not during settle.
+        if (local_cli.background_hydro_p && !local_cli.doc220_pprime_hydro && !in_hydro_settle)
+            hostFreezeDensityToRho0(glass_particles, rho0);
         if (local_cli.background_hydro_p)
-            hostApplyFrenchBackgroundHydroPressure(glass_particles, rho0, local_cli.gravity_g, z_free);
+            apply_french_background_ph();
         // Doc105 P2b: after p_h write, restore atm condition on incomplete-support particles.
         if (local_cli.dens_fs_atm_consistent)
             fs_atm_last = hostApplyFrenchFsAtmConsistentDensity(glass_particles, rho0, local_cli.c0, z_free,
                                                                 dens_audit_surface_depth);
         // Note: hydro_rho_freeze_rho0 is applied only in stage/keep probes (not settle),
         // so layout matches the unfrozen baseline.
+    };
+    auto run_density_update = [&]() {
+        // Doc223 E1: paper-top keep skips dens reinit (continuity only). Settle/flush still dens.
+        if (local_cli.doc223_paper_flat_slip_top && !in_hydro_settle)
+        {
+            if (!doc223_logged_keep_dens_skip)
+            {
+                std::cout << "[ophelie][doc223][E1] keep dens reinit OFF "
+                             "(acoustic continuity only; settle/flush dens absorbed packing)\n";
+                doc223_logged_keep_dens_skip = true;
+            }
+            if (local_cli.background_hydro_p)
+                apply_french_background_ph();
+            return;
+        }
+        density_regularization.exec();
+        apply_quiet_hydro_after_dens();
     };
     auto maybe_dens_sum_audit = [&](Real t_now, size_t adv_step) {
         if (!(local_cli.dens_sum_audit && local_cli.dens_sum_normalize && dens_sigma0_ready))
@@ -2442,27 +6348,74 @@ int main(int ac, char *av[])
             acoustic_step_2nd_half.exec(dt_ac);
         }
     };
-    if (local_cli.kernel_correction)
+    if (local_cli.kernel_correction || local_cli.enable_tvf)
         fluid_linear_correction_matrix.exec();
     if (local_cli.background_hydro_p)
-        hostApplyFrenchBackgroundHydroPressure(glass_particles, rho0, local_cli.gravity_g, z_free);
+        apply_french_background_ph();
 
-    // Doc105 P2d: French wall dens mode. Momentum stays total-p (PerturbationMomentum default 0).
-    // mode 1 ⇒ a_ref = −gẑ because GravityForceCK keeps g in ForcePrior (≠ closed-box P2b).
+    // Doc105 P2d / Doc220 E2: wall dens + momentum pressure convention.
+    // total-p + GravityForceCK: dens_mode 1 ⇒ a_ref=−g (g in ForcePrior).
+    // p' + omit GravityForceCK: dens_mode 1 ⇒ a_ref=0 (g absorbed in BackgroundPressure).
     {
         hostSetAcousticDensModeFrench(glass_particles, static_cast<Real>(local_cli.acoustic_dens_mode));
-        const Vecd a_ref = (local_cli.acoustic_dens_mode == 1) ? Vecd(0.0, 0.0, -local_cli.gravity_g) : Vecd::Zero();
+        hostSetPerturbationMomentumFrench(glass_particles, static_cast<Real>(local_cli.perturbation_momentum));
+        const bool dens1_needs_g_ref =
+            local_cli.acoustic_dens_mode == 1 && !local_cli.omit_gravity_force;
+        const Vecd a_ref = dens1_needs_g_ref ? Vecd(0.0, 0.0, -local_cli.gravity_g) : Vecd::Zero();
         hostSetReferenceBodyAccelerationFrench(glass_particles, a_ref);
+        const char *path =
+            local_cli.doc220_pprime_hydro
+                ? "p_prime_plus_BackgroundPressure_no_GravityForceCK"
+                : (local_cli.background_hydro_p ? "total_p_plus_BackgroundPressure_plus_GravityForceCK"
+                                                : "total_p_plus_GravityForceCK");
         std::cout << "[ophelie][doc105-p2d] acoustic_dens_mode=" << local_cli.acoustic_dens_mode
                   << " reference_body_acc_z=" << a_ref[2]
-                  << " perturbation_momentum=0 french_pressure_path=total_p_plus_GravityForceCK"
-                  << " closed_box_p2b_copied=0\n";
+                  << " perturbation_momentum=" << local_cli.perturbation_momentum
+                  << " omit_gravity_force=" << (local_cli.omit_gravity_force ? 1 : 0)
+                  << " french_pressure_path=" << path << " closed_box_p2b_copied=0\n";
     }
+    auto apply_gravity_force_prior = [&]() {
+        if (local_cli.omit_gravity_force)
+        {
+            // Doc221 B: g lives in BackgroundPressure; GravityForceCK was never advanced.
+            // Do not touch ForcePrior / other force histories each advection step.
+            // Doc221 A evidence-only: optional legacy wipe reproduces the Doc220 bug.
+            if (local_cli.doc221_legacy_omit_clears_forceprior)
+            {
+                hostZeroVecFieldFrench(glass_particles, "GravityForceCK");
+                hostZeroVecFieldFrench(glass_particles, "PreviousGravityForceCK");
+                hostZeroVecFieldFrench(glass_particles, "ForcePrior");
+            }
+        }
+        else
+        {
+            constant_gravity.exec();
+        }
+    };
+    auto doc223_reinit_force_priors = [&]() {
+        hostDoc223ZeroAllForcePriorChannels(glass_particles);
+        apply_gravity_force_prior();
+        if (local_cli.literature.enable_boussinesq)
+            boussinesq_force.exec();
+        exec_viscous();
+    };
 
     TimeStepper &time_stepper = sph_solver.getTimeStepper();
-    auto &advection_step = time_stepper.addTriggerByInterval(advection_time_step.exec());
+    // Doc219 D / Doc226 F: min(inertial, viscous) when hydro profile or local-μ path is on.
+    const bool use_viscous_adv_cfl =
+        local_cli.doc219_hydro_profile || use_particle_mu || refresh_mu_from_T;
+    const Real dt_adv_inertial0 = advection_time_step.exec();
+    const Real dt_adv_viscous0 = advection_viscous_time_step.exec();
+    const Real dt_adv0 =
+        use_viscous_adv_cfl ? std::min(dt_adv_inertial0, dt_adv_viscous0) : dt_adv_inertial0;
+    auto &advection_step = time_stepper.addTriggerByInterval(dt_adv0);
     auto &state_recording =
         time_stepper.addTriggerByInterval(std::max(local_cli.state_record_interval, Real(1.0e-6)));
+    std::cout << "[ophelie][doc219][hydro] dt_adv0=" << dt_adv0 << " inertial=" << dt_adv_inertial0
+              << " viscous=" << dt_adv_viscous0
+              << " viscous_active="
+              << (use_viscous_adv_cfl && dt_adv_viscous0 + TinyReal < dt_adv_inertial0 ? 1 : 0)
+              << std::endl;
 
     const Real glass_h = frenchReducedGlassHeight(french);
     const Real alpha_th = k_th / (rho0 * cp + TinyReal);
@@ -2489,13 +6442,20 @@ int main(int ac, char *av[])
               << " u_visc_ref=" << u_visc_ref << " dt_acoustic_est=" << dt_ac_est
               << " dt_adv_inertial=" << dt_adv_inertial << " dt_adv_with_viscous_ref=" << dt_adv_viscous
               << " viscous_tightens_advection=" << (u_visc_ref > local_cli.u_ref + TinyReal ? 1 : 0)
-              << " (French still uses AdvectionTimeStepCK; AdvectionViscousTimeStepCK not enabled)\n";
+              << " doc219_viscous_dt=" << (local_cli.doc219_hydro_profile ? 1 : 0) << "\n";
 
     std::ofstream monitor("output/french_natural_convection_monitor.csv");
     monitor << "advection_step,physical_time_s,U_max,T_min,T_mean,T_max,dT,U_buoy,escaped,escaped_frac,"
                "P_joule,dE_dt,energy_residual,energy_residual_rel,total_heat_loss,em_updates,"
                "U_rms,U_theta_rms,U_z_rms,T_std,T_outer,T_center,T_bottom,T_top\n";
     writeFrenchSpatialStatsCsvHeader("output/french_spatial_stats.csv");
+
+    if (local_cli.doc223_paper_flat_slip_top)
+    {
+        run_density_update();
+        hostLogDoc223PaperTopHydroAudit("pre_settle", glass_particles, rho0, local_cli.c0, local_cli.gravity_g,
+                                        gc, french.glass_radius, z_bottom, z_free, french.dp);
+    }
 
     while (time_stepper.getPhysicalTime() + TinyReal < local_cli.hydro_settle_time)
     {
@@ -2511,14 +6471,19 @@ int main(int ac, char *av[])
             }
             update_glass_cell_linked_list.exec();
             update_glass_relations.exec();
-            density_regularization.exec();
-            apply_quiet_hydro_after_dens();
+            run_density_update();
             maybe_dens_sum_audit(time_stepper.getPhysicalTime(), advection_steps);
             fluid_advection_step_setup.exec();
-            if (local_cli.kernel_correction)
+            exec_viscous();
+            apply_gravity_force_prior();
+            // Doc219: B (+ TVF) after ForcePrior, before next acoustic accumulation.
+            if (local_cli.kernel_correction || local_cli.enable_tvf)
                 fluid_linear_correction_matrix.exec();
-            fluid_viscous_force.exec();
-            constant_gravity.exec();
+            if (local_cli.enable_tvf)
+            {
+                kernel_grad_integral.exec();
+                transport_correction.exec();
+            }
         }
     }
     if (local_cli.hydro_settle_time > TinyReal)
@@ -2530,7 +6495,86 @@ int main(int ac, char *av[])
                   << " U_max=" << u_settle << " escaped=" << settle_escape.escaped << "/" << settle_escape.total
                   << " r_max=" << settle_escape.r_max << " z=[" << settle_escape.z_min << "," << settle_escape.z_max
                   << "]" << std::endl;
+        if (local_cli.doc223_paper_flat_slip_top)
+        {
+            hostLogDoc223PaperTopHydroAudit("post_settle", glass_particles, rho0, local_cli.c0,
+                                            local_cli.gravity_g, gc, french.glass_radius, z_bottom, z_free,
+                                            french.dp);
+        }
         hostZeroVelocity(glass_particles);
+        if (local_cli.doc223_paper_flat_slip_top)
+        {
+            // Doc223 B3/E1: settle zero-U alone left DensityChangeRate/Force/Displacement
+            // from the last acoustic cycle; keep then integrated those residuals → slow
+            // exponential U growth even with dens_sum_normalize (noslip ablation).
+            hostZeroRealFieldFrench(glass_particles, "DensityChangeRate");
+            hostZeroVecFieldFrench(glass_particles, "Force");
+            hostZeroVecFieldFrench(glass_particles, "Displacement");
+            run_density_update();
+            fluid_advection_step_setup.exec();
+            if (local_cli.kernel_correction || local_cli.enable_tvf)
+                fluid_linear_correction_matrix.exec();
+            hostLogDoc223PaperTopHydroAudit("post_settle_flush", glass_particles, rho0, local_cli.c0,
+                                            local_cli.gravity_g, gc, french.glass_radius, z_bottom, z_free,
+                                            french.dp);
+            std::cout << "[ophelie][doc223][E1] post-settle flush: zeroed DensityChangeRate/"
+                         "Force/Displacement + dens/normalize/adv_setup\n";
+        }
+        if (local_cli.diag_lid_free_slip_post_settle)
+        {
+            // Doc221 P2: arm free-slip only after settle packing + zero-U (O-quiet settle).
+            const Real z_lid = french.glass_center[2] + french.glass_half_height;
+            size_t n_lid = 0;
+            if (!local_cli.doc224_ablate_acoustic_freeslip)
+            {
+                n_lid = hostArmDoc224FreeSlipLid(wall.getBaseParticles(), z_lid, wall_thickness,
+                                                 local_cli.doc224_lid_keep_dens_jump);
+            }
+            // Doc224 C3c: acoustic free-slip can arm without OpenCup.
+            // Doc224 C3d: OpenCup without AcousticWallFreeSlip tags.
+            if (!local_cli.doc224_ablate_opencup)
+            {
+                lid_free_slip_armed = true;
+                invalidateViscosityDependentCkKernels(glass_inner, *glass_wall_noslip_contact);
+            }
+            std::cout << "[ophelie][doc221][P2] armed free-slip after settle: AcousticWallFreeSlip lid tags="
+                      << n_lid << " / wall_closed_n=" << wall.getBaseParticles().TotalRealParticles()
+                      << " z_lid=" << z_lid << " U_cleared=1"
+                      << " acoustic_fs=" << (local_cli.doc224_ablate_acoustic_freeslip ? 0 : 1)
+                      << " viscous=" << (local_cli.doc224_ablate_opencup ? "ClosedCrucible_ABLATION" : "OpenCup")
+                      << " keep_dens_jump=" << (local_cli.doc224_lid_keep_dens_jump ? 1 : 0) << "\n";
+            if (local_cli.doc224_ablate_opencup)
+            {
+                std::cout << "[ophelie][doc224][C3c] ablate_opencup=1 "
+                             "(acoustic free-slip ON; wall viscous stays ClosedCrucible)\n";
+            }
+            if (local_cli.doc224_ablate_acoustic_freeslip)
+            {
+                std::cout << "[ophelie][doc224][C3d] ablate_acoustic_freeslip=1 "
+                             "(AcousticWallFreeSlip OFF; viscous OpenCup — O3-style impermeable slip)\n";
+            }
+        }
+        if (local_cli.diag_hard_lid)
+        {
+            // Doc221 M: settle often leaves tip above z_free under p'; hard-lid keep must
+            // start from a flushed geometry or the first clamps invert meridional polarity.
+            const size_t n_reset = hostResetHardLidGeometry(glass_particles, z_free);
+            update_glass_cell_linked_list.exec();
+            update_wall_cell_linked_list.exec();
+            update_glass_relations.exec();
+            update_wall_relations.exec();
+            density_regularization.exec();
+            if (local_cli.doc220_pprime_hydro || local_cli.background_hydro_p)
+            {
+                hostFreezeDensityToRho0(glass_particles, rho0);
+                apply_french_background_ph();
+            }
+            const GlassEscapeCensus after_reset = hostCountEscapedGlassParticles(
+                glass_particles, gc, french.glass_radius, z_bottom, z_rim, french.dp);
+            std::cout << "[ophelie][doc221][M] hard-lid post-settle reset n_clamp=" << n_reset
+                      << " z_lid=" << z_free << " z_max_after=" << after_reset.z_max
+                      << " (vel zeroed; NOT literature open FS)\n";
+        }
         time_stepper.setPhysicalTime(0.0);
         advection_steps = 0;
         // Doc105 P2h: settle-only normalize ends here; measurement uses FreeSurface path.
@@ -2549,6 +6593,880 @@ int main(int ac, char *av[])
     else
     {
         in_hydro_settle = false;
+        if (local_cli.diag_lid_free_slip_post_settle && !lid_free_slip_armed)
+        {
+            hostZeroVelocity(glass_particles);
+            const Real z_lid = french.glass_center[2] + french.glass_half_height;
+            size_t n_lid = 0;
+            if (!local_cli.doc224_ablate_acoustic_freeslip)
+            {
+                n_lid = hostArmDoc224FreeSlipLid(wall.getBaseParticles(), z_lid, wall_thickness,
+                                                 local_cli.doc224_lid_keep_dens_jump);
+            }
+            if (!local_cli.doc224_ablate_opencup)
+            {
+                lid_free_slip_armed = true;
+                invalidateViscosityDependentCkKernels(glass_inner, *glass_wall_noslip_contact);
+            }
+            std::cout << "[ophelie][doc221][P2] armed free-slip (no settle): tags=" << n_lid
+                      << " z_lid=" << z_lid
+                      << " acoustic_fs=" << (local_cli.doc224_ablate_acoustic_freeslip ? 0 : 1)
+                      << " viscous=" << (local_cli.doc224_ablate_opencup ? "ClosedCrucible_ABLATION" : "OpenCup")
+                      << " keep_dens_jump=" << (local_cli.doc224_lid_keep_dens_jump ? 1 : 0) << "\n";
+        }
+    }
+
+    // Doc223 B: ForcePrior reset probe (settle → legacy zero-FP+g.exec → full channel reinit).
+    if (local_cli.doc223_force_reset_probe)
+    {
+        if (local_cli.omit_gravity_force)
+        {
+            std::cerr << "[ophelie][doc223][B] --doc223-force-reset-probe needs GravityForceCK "
+                         "(do not use --doc220-pprime-hydro)\n";
+            return 2;
+        }
+        auto dump_stage = [&](const char *tag) {
+            hostDoc223LogForceStage(tag, glass_particles, local_cli.gravity_g);
+            return hostDoc223ForceFieldMoments(glass_particles, "ForcePrior");
+        };
+        const auto st_settle = dump_stage("01_post_settle");
+        const auto grav_settle = hostDoc223ForceFieldMoments(glass_particles, "GravityForceCK");
+        const auto prev_settle = hostDoc223ForceFieldMoments(glass_particles, "PreviousGravityForceCK");
+        hostZeroVecFieldFrench(glass_particles, "ForcePrior");
+        const auto st_zero_fp = dump_stage("02_legacy_zero_ForcePrior_only");
+        constant_gravity.exec();
+        const auto st_legacy_g = dump_stage("03_legacy_gravity_exec");
+        const auto grav_legacy = hostDoc223ForceFieldMoments(glass_particles, "GravityForceCK");
+        const auto prev_legacy = hostDoc223ForceFieldMoments(glass_particles, "PreviousGravityForceCK");
+        doc223_reinit_force_priors();
+        const auto st_reinit = dump_stage("04_full_channel_reinit");
+        const auto grav_reinit = hostDoc223ForceFieldMoments(glass_particles, "GravityForceCK");
+        const auto prev_reinit = hostDoc223ForceFieldMoments(glass_particles, "PreviousGravityForceCK");
+        const Real g = local_cli.gravity_g;
+        const bool lost = std::abs(st_legacy_g.a_z_mean) < Real(0.1) * g &&
+                          std::abs(grav_legacy.a_z_mean + g) < Real(0.1) * g;
+        const bool restored = std::abs(st_reinit.a_z_mean + g) < Real(0.05) * g;
+        std::cout << "[ophelie][doc223][B] verdict gravity_lost_legacy=" << (lost ? 1 : 0)
+                  << " gravity_restored_reinit=" << (restored ? 1 : 0)
+                  << " a_fp_z settle=" << st_settle.a_z_mean << " legacy=" << st_legacy_g.a_z_mean
+                  << " reinit=" << st_reinit.a_z_mean << "\n";
+        if (!local_cli.summary_json.empty())
+        {
+            std::ofstream js(local_cli.summary_json);
+            js << "{\n"
+               << "  \"case\": \"doc223_force_reset_probe\",\n"
+               << "  \"gravity_g\": " << g << ",\n"
+               << "  \"post_settle_a_fp_z\": " << st_settle.a_z_mean << ",\n"
+               << "  \"post_settle_grav_a_z\": " << grav_settle.a_z_mean << ",\n"
+               << "  \"post_settle_prevG_a_z\": " << prev_settle.a_z_mean << ",\n"
+               << "  \"legacy_zero_fp_a_fp_z\": " << st_zero_fp.a_z_mean << ",\n"
+               << "  \"legacy_after_g_a_fp_z\": " << st_legacy_g.a_z_mean << ",\n"
+               << "  \"legacy_after_g_grav_a_z\": " << grav_legacy.a_z_mean << ",\n"
+               << "  \"legacy_after_g_prevG_a_z\": " << prev_legacy.a_z_mean << ",\n"
+               << "  \"reinit_a_fp_z\": " << st_reinit.a_z_mean << ",\n"
+               << "  \"reinit_grav_a_z\": " << grav_reinit.a_z_mean << ",\n"
+               << "  \"reinit_prevG_a_z\": " << prev_reinit.a_z_mean << ",\n"
+               << "  \"gravity_lost_legacy\": " << (lost ? 1 : 0) << ",\n"
+               << "  \"gravity_restored_reinit\": " << (restored ? 1 : 0) << ",\n"
+               << "  \"pass\": " << (lost && restored ? 1 : 0) << "\n"
+               << "}\n";
+            std::cout << "[ophelie] summary_json=" << local_cli.summary_json << "\n";
+        }
+        return (lost && restored) ? 0 : 1;
+    }
+
+    // Doc223 E2: lid tangential slip operator (wall viscous only; snapshot/restore).
+    if (local_cli.doc223_e2_lid_slip_probe)
+    {
+        if (!lid_free_slip_armed || !exec_viscous_wall_opencup)
+        {
+            std::cerr << "[ophelie][doc223][E2] need post-settle free-slip armed + OpenCup viscous\n";
+            return 2;
+        }
+        const Real u_tx = Real(0.01);
+        const Real z_lid = french.glass_center[2] + french.glass_half_height;
+        std::vector<Vecd> snap_vel, snap_visc, snap_prev_visc, snap_fp;
+        hostDoc223SnapshotVecField(glass_particles, "Velocity", snap_vel);
+        hostDoc223SnapshotVecField(glass_particles, "ViscousForce", snap_visc);
+        hostDoc223SnapshotVecField(glass_particles, "PreviousViscousForce", snap_prev_visc);
+        hostDoc223SnapshotVecField(glass_particles, "ForcePrior", snap_fp);
+
+        hostDoc223SetUniformTangentialVelocity(glass_particles, u_tx);
+
+        hostZeroVecFieldFrench(glass_particles, "ViscousForce");
+        exec_viscous_wall_opencup();
+        const auto slip_lid =
+            hostDoc223E2ViscBand(glass_particles, gc, french.glass_radius, z_bottom, z_lid, french.dp,
+                                 "lid_core");
+        const auto slip_side =
+            hostDoc223E2ViscBand(glass_particles, gc, french.glass_radius, z_bottom, z_lid, french.dp, "side");
+        const auto slip_bot =
+            hostDoc223E2ViscBand(glass_particles, gc, french.glass_radius, z_bottom, z_lid, french.dp, "bot");
+
+        hostZeroVecFieldFrench(glass_particles, "ViscousForce");
+        exec_viscous_wall_closed();
+        const auto closed_lid =
+            hostDoc223E2ViscBand(glass_particles, gc, french.glass_radius, z_bottom, z_lid, french.dp,
+                                 "lid_core");
+        const auto closed_side =
+            hostDoc223E2ViscBand(glass_particles, gc, french.glass_radius, z_bottom, z_lid, french.dp, "side");
+        const auto closed_bot =
+            hostDoc223E2ViscBand(glass_particles, gc, french.glass_radius, z_bottom, z_lid, french.dp, "bot");
+
+        hostDoc223RestoreVecField(glass_particles, "Velocity", snap_vel);
+        hostDoc223RestoreVecField(glass_particles, "ViscousForce", snap_visc);
+        hostDoc223RestoreVecField(glass_particles, "PreviousViscousForce", snap_prev_visc);
+        hostDoc223RestoreVecField(glass_particles, "ForcePrior", snap_fp);
+
+        const Real lid_ratio =
+            (closed_lid.a_tx_rms > TinyReal) ? (slip_lid.a_tx_rms / closed_lid.a_tx_rms) : Real(1e30);
+        const Real slip_lid_vs_side =
+            (slip_side.a_tx_rms > TinyReal) ? (slip_lid.a_tx_rms / slip_side.a_tx_rms) : Real(0);
+        // OpenCup lid traction ~0 vs Closed no-slip lid; side still no-slip under both.
+        const bool pass_lid = (slip_lid.n >= 10) && (closed_lid.n >= 10) && (lid_ratio < Real(0.05)) &&
+                              (closed_lid.a_tx_rms > Real(1e-3));
+        const bool pass_side_alive = (slip_side.n >= 10) && (slip_side.a_tx_rms > Real(1e-3));
+        const bool pass_lid_vs_side = slip_lid_vs_side < Real(0.1);
+        const bool pass = pass_lid && pass_side_alive && pass_lid_vs_side;
+        std::cout << "[ophelie][doc223][E2] u_tx=" << u_tx
+                  << " slip_lid n=" << slip_lid.n << " a_tx=" << slip_lid.a_tx_rms
+                  << " a_tz=" << slip_lid.a_tz_rms
+                  << " closed_lid n=" << closed_lid.n << " a_tx=" << closed_lid.a_tx_rms
+                  << " lid_ratio=" << lid_ratio
+                  << " slip_side a_tx=" << slip_side.a_tx_rms
+                  << " closed_side a_tx=" << closed_side.a_tx_rms
+                  << " slip_bot a_tx=" << slip_bot.a_tx_rms
+                  << " closed_bot a_tx=" << closed_bot.a_tx_rms
+                  << " slip_lid/side=" << slip_lid_vs_side
+                  << " pass_lid=" << (pass_lid ? 1 : 0)
+                  << " pass_side=" << (pass_side_alive ? 1 : 0)
+                  << " pass_lid_vs_side=" << (pass_lid_vs_side ? 1 : 0)
+                  << " pass=" << (pass ? 1 : 0) << "\n";
+        if (!local_cli.summary_json.empty())
+        {
+            std::ofstream js(local_cli.summary_json);
+            js << "{\n"
+               << "  \"case\": \"doc223_e2_lid_slip_probe\",\n"
+               << "  \"u_tx\": " << u_tx << ",\n"
+               << "  \"slip_lid_n\": " << slip_lid.n << ",\n"
+               << "  \"slip_lid_a_tx_rms\": " << slip_lid.a_tx_rms << ",\n"
+               << "  \"slip_lid_a_tz_rms\": " << slip_lid.a_tz_rms << ",\n"
+               << "  \"closed_lid_n\": " << closed_lid.n << ",\n"
+               << "  \"closed_lid_a_tx_rms\": " << closed_lid.a_tx_rms << ",\n"
+               << "  \"lid_ratio_slip_over_closed\": " << lid_ratio << ",\n"
+               << "  \"slip_side_a_tx_rms\": " << slip_side.a_tx_rms << ",\n"
+               << "  \"closed_side_a_tx_rms\": " << closed_side.a_tx_rms << ",\n"
+               << "  \"slip_bot_a_tx_rms\": " << slip_bot.a_tx_rms << ",\n"
+               << "  \"closed_bot_a_tx_rms\": " << closed_bot.a_tx_rms << ",\n"
+               << "  \"slip_lid_over_side\": " << slip_lid_vs_side << ",\n"
+               << "  \"pass_lid\": " << (pass_lid ? 1 : 0) << ",\n"
+               << "  \"pass_side_alive\": " << (pass_side_alive ? 1 : 0) << ",\n"
+               << "  \"pass_lid_vs_side\": " << (pass_lid_vs_side ? 1 : 0) << ",\n"
+               << "  \"pass\": " << (pass ? 1 : 0) << "\n"
+               << "}\n";
+            std::cout << "[ophelie] summary_json=" << local_cli.summary_json << "\n";
+        }
+        return pass ? 0 : 1;
+    }
+
+    // Doc226 B: top total operator fixed-state probe (acoustic + continuity + viscous).
+    if (local_cli.doc226_top_operator_probe)
+    {
+        if (!lid_free_slip_armed || !exec_viscous_wall_opencup)
+        {
+            std::cerr << "[ophelie][doc226][B] need post-settle OpenCup viscous armed\n";
+            return 2;
+        }
+        const Real u_tx = Real(0.01);
+        const Real z_lid = french.glass_center[2] + french.glass_half_height;
+        const Real h_sm = glass.getSPHAdaptation().ReferenceSmoothingLength();
+        const Real rho0_b = rho0;
+        const Real dt_probe = Real(1.0e-6); // Interact only; Update not required for force dump
+        FrenchHydroFieldSnapshot snap_hydro;
+        hostCaptureFrenchHydroFields(glass_particles, snap_hydro);
+        std::vector<Vecd> snap_visc, snap_prev_visc;
+        hostDoc223SnapshotVecField(glass_particles, "ViscousForce", snap_visc);
+        hostDoc223SnapshotVecField(glass_particles, "PreviousViscousForce", snap_prev_visc);
+
+        auto run_state = [&](Real u_set, const char *tag, Doc226TopOpBand &ac1, Doc226TopOpBand &ac2,
+                             Doc226TopOpBand &visc_open, Doc226TopOpBand &visc_closed) {
+            hostRestoreFrenchHydroFields(glass_particles, snap_hydro);
+            hostDoc223SetUniformTangentialVelocity(glass_particles, u_set);
+
+            hostZeroVecFieldFrench(glass_particles, "Force");
+            hostZeroRealFieldFrench(glass_particles, "DensityChangeRate");
+            if (local_cli.kernel_correction)
+                acoustic_1st_wall_corr_only.exec(dt_probe);
+            else
+                acoustic_1st_wall_only.exec(dt_probe);
+            ac1 = hostDoc226LidCoreForceBand(glass_particles, gc, french.glass_radius, z_bottom, z_lid,
+                                             french.dp, "Force", u_set);
+            std::cout << "[ophelie][doc226][B] " << tag << " ac1st_wall lid n=" << ac1.n
+                      << " a_t=" << ac1.a_t_rms << " a_tx=" << ac1.a_tx_rms << " a_tz=" << ac1.a_tz_rms
+                      << " drho=" << ac1.drho_dt_rms << " work_tx=" << ac1.work_tx << "\n";
+
+            hostZeroVecFieldFrench(glass_particles, "Force");
+            hostZeroRealFieldFrench(glass_particles, "DensityChangeRate");
+            acoustic_step_2nd_half_wall.exec(dt_probe);
+            ac2 = hostDoc226LidCoreForceBand(glass_particles, gc, french.glass_radius, z_bottom, z_lid,
+                                             french.dp, "Force", u_set);
+            std::cout << "[ophelie][doc226][B] " << tag << " ac2nd_wall lid n=" << ac2.n
+                      << " a_t=" << ac2.a_t_rms << " a_tx=" << ac2.a_tx_rms << " a_tz=" << ac2.a_tz_rms
+                      << " drho=" << ac2.drho_dt_rms << " work_tx=" << ac2.work_tx << "\n";
+
+            hostZeroVecFieldFrench(glass_particles, "ViscousForce");
+            exec_viscous_wall_opencup();
+            visc_open = hostDoc226LidCoreForceBand(glass_particles, gc, french.glass_radius, z_bottom,
+                                                   z_lid, french.dp, "ViscousForce", u_set);
+            std::cout << "[ophelie][doc226][B] " << tag << " visc_OpenCup lid n=" << visc_open.n
+                      << " a_t=" << visc_open.a_t_rms << " a_tx=" << visc_open.a_tx_rms
+                      << " work_tx=" << visc_open.work_tx << "\n";
+
+            hostZeroVecFieldFrench(glass_particles, "ViscousForce");
+            exec_viscous_wall_closed();
+            visc_closed = hostDoc226LidCoreForceBand(glass_particles, gc, french.glass_radius, z_bottom,
+                                                     z_lid, french.dp, "ViscousForce", u_set);
+            std::cout << "[ophelie][doc226][B] " << tag << " visc_Closed lid n=" << visc_closed.n
+                      << " a_t=" << visc_closed.a_t_rms << " a_tx=" << visc_closed.a_tx_rms
+                      << " work_tx=" << visc_closed.work_tx << "\n";
+        };
+
+        Doc226TopOpBand u0_ac1{}, u0_ac2{}, u0_vo{}, u0_vc{};
+        Doc226TopOpBand ut_ac1{}, ut_ac2{}, ut_vo{}, ut_vc{};
+        run_state(Real(0), "U0", u0_ac1, u0_ac2, u0_vo, u0_vc);
+        run_state(u_tx, "Utx", ut_ac1, ut_ac2, ut_vo, ut_vc);
+
+        // Aggregate tangential accel under slip path (ac1+ac2+OpenCup) vs noslip viscous ref.
+        const Real a_t_slip =
+            std::sqrt(ut_ac1.a_t_rms * ut_ac1.a_t_rms + ut_ac2.a_t_rms * ut_ac2.a_t_rms +
+                      ut_vo.a_t_rms * ut_vo.a_t_rms);
+        const Real a_t_slip_u0 =
+            std::sqrt(u0_ac1.a_t_rms * u0_ac1.a_t_rms + u0_ac2.a_t_rms * u0_ac2.a_t_rms +
+                      u0_vo.a_t_rms * u0_vo.a_t_rms);
+        const Real a_t_delta = std::sqrt(std::max(Real(0), a_t_slip * a_t_slip - a_t_slip_u0 * a_t_slip_u0));
+        const Real a_noslip_ref = std::max(ut_vc.a_t_rms, TinyReal);
+        const Real a_thresh = std::max(Real(1.0e-6), Real(0.01) * a_noslip_ref);
+        const Real a_ratio = a_t_delta / a_noslip_ref;
+        std::string a_gate = "FAIL";
+        if (a_t_delta <= a_thresh)
+            a_gate = "PASS";
+        else if (a_ratio <= Real(0.05))
+            a_gate = "WARN";
+
+        const Real cont_scale = rho0_b * u_tx / std::max(h_sm, TinyReal);
+        const Real cont_delta =
+            std::sqrt(std::max(Real(0), ut_ac2.drho_dt_rms * ut_ac2.drho_dt_rms -
+                                            u0_ac2.drho_dt_rms * u0_ac2.drho_dt_rms));
+        const Real cont_norm = cont_delta / std::max(cont_scale, TinyReal);
+        std::string cont_gate = "FAIL";
+        if (cont_norm <= Real(0.01))
+            cont_gate = "PASS";
+        else if (cont_norm <= Real(0.05))
+            cont_gate = "WARN";
+
+        const Real visc_ratio =
+            (ut_vc.a_t_rms > TinyReal) ? (ut_vo.a_t_rms / ut_vc.a_t_rms) : Real(1e30);
+        const bool visc_pass = (ut_vo.n >= 10) && (ut_vc.n >= 10) && (visc_ratio < Real(0.05)) &&
+                               (ut_vc.a_t_rms > Real(1e-3));
+
+        // B3: small normal-perturb fixed-state — wall ac2 dens from Uz only; restore after.
+        hostRestoreFrenchHydroFields(glass_particles, snap_hydro);
+        {
+            syncVariableToHost<Vecd>(glass_particles, "Position");
+            syncVariableToHost<Vecd>(glass_particles, "Velocity");
+            Vecd *vel = glass_particles.getVariableDataByName<Vecd>("Velocity");
+            const Vecd *pos = glass_particles.getVariableDataByName<Vecd>("Position");
+            const size_t n = glass_particles.TotalRealParticles();
+            const Real amp = Real(1.0e-3);
+            for (size_t i = 0; i < n; ++i)
+            {
+                const Real dz = z_lid - pos[i][2];
+                const Real w = std::exp(-dz * dz / (Real(4) * french.dp * french.dp));
+                vel[i] = Vecd(Real(0), Real(0), amp * w);
+            }
+            syncVariableToDevice<Vecd>(glass_particles, "Velocity");
+        }
+        hostZeroVecFieldFrench(glass_particles, "Force");
+        hostZeroRealFieldFrench(glass_particles, "DensityChangeRate");
+        acoustic_step_2nd_half_wall.exec(dt_probe);
+        const auto npert =
+            hostDoc226LidCoreForceBand(glass_particles, gc, french.glass_radius, z_bottom, z_lid,
+                                       french.dp, "Force", Real(0));
+        std::cout << "[ophelie][doc226][B] Npert ac2nd lid a_tz=" << npert.a_tz_rms
+                  << " a_t=" << npert.a_t_rms << " drho=" << npert.drho_dt_rms << "\n";
+
+        hostRestoreFrenchHydroFields(glass_particles, snap_hydro);
+        hostDoc223RestoreVecField(glass_particles, "ViscousForce", snap_visc);
+        hostDoc223RestoreVecField(glass_particles, "PreviousViscousForce", snap_prev_visc);
+
+        const bool pass = (a_gate == "PASS" || a_gate == "WARN") &&
+                          (cont_gate == "PASS" || cont_gate == "WARN") && visc_pass;
+        // Strict TOP_TOTAL_OPERATOR_CHECKED needs a_gate+cont_gate PASS; WARN still delivers data.
+        const bool checked_pass = (a_gate == "PASS") && (cont_gate == "PASS") && visc_pass;
+
+        std::cout << "[ophelie][doc226][B] SUMMARY acoustic_fs="
+                  << (local_cli.doc224_ablate_acoustic_freeslip ? 0 : 1)
+                  << " h=" << h_sm << " rho0=" << rho0_b
+                  << " a_t_delta=" << a_t_delta << " a_noslip_ref=" << a_noslip_ref
+                  << " a_ratio=" << a_ratio << " a_gate=" << a_gate
+                  << " cont_delta=" << cont_delta << " cont_scale=" << cont_scale
+                  << " cont_norm=" << cont_norm << " cont_gate=" << cont_gate
+                  << " visc_ratio=" << visc_ratio << " visc_pass=" << (visc_pass ? 1 : 0)
+                  << " checked_pass=" << (checked_pass ? 1 : 0) << " pass=" << (pass ? 1 : 0)
+                  << "\n";
+
+        if (!local_cli.summary_json.empty())
+        {
+            std::ofstream js(local_cli.summary_json);
+            js << std::scientific << std::setprecision(8);
+            js << "{\n"
+               << "  \"case\": \"doc226_top_operator_probe\",\n"
+               << "  \"u_tx\": " << u_tx << ",\n"
+               << "  \"h\": " << h_sm << ",\n"
+               << "  \"rho0\": " << rho0_b << ",\n"
+               << "  \"acoustic_freeslip_tags\": "
+               << (local_cli.doc224_ablate_acoustic_freeslip ? 0 : 1) << ",\n"
+               << "  \"U0_ac1_a_t_rms\": " << u0_ac1.a_t_rms << ",\n"
+               << "  \"U0_ac2_a_t_rms\": " << u0_ac2.a_t_rms << ",\n"
+               << "  \"U0_ac2_drho_dt_rms\": " << u0_ac2.drho_dt_rms << ",\n"
+               << "  \"U0_visc_open_a_t_rms\": " << u0_vo.a_t_rms << ",\n"
+               << "  \"Utx_ac1_a_t_rms\": " << ut_ac1.a_t_rms << ",\n"
+               << "  \"Utx_ac1_work_tx\": " << ut_ac1.work_tx << ",\n"
+               << "  \"Utx_ac2_a_t_rms\": " << ut_ac2.a_t_rms << ",\n"
+               << "  \"Utx_ac2_drho_dt_rms\": " << ut_ac2.drho_dt_rms << ",\n"
+               << "  \"Utx_ac2_work_tx\": " << ut_ac2.work_tx << ",\n"
+               << "  \"Utx_visc_open_a_t_rms\": " << ut_vo.a_t_rms << ",\n"
+               << "  \"Utx_visc_closed_a_t_rms\": " << ut_vc.a_t_rms << ",\n"
+               << "  \"Utx_visc_open_work_tx\": " << ut_vo.work_tx << ",\n"
+               << "  \"a_t_delta\": " << a_t_delta << ",\n"
+               << "  \"a_noslip_ref\": " << a_noslip_ref << ",\n"
+               << "  \"a_ratio\": " << a_ratio << ",\n"
+               << "  \"a_gate\": \"" << a_gate << "\",\n"
+               << "  \"cont_delta\": " << cont_delta << ",\n"
+               << "  \"cont_scale_rho0_U_h\": " << cont_scale << ",\n"
+               << "  \"cont_norm\": " << cont_norm << ",\n"
+               << "  \"cont_gate\": \"" << cont_gate << "\",\n"
+               << "  \"visc_ratio_open_over_closed\": " << visc_ratio << ",\n"
+               << "  \"visc_pass\": " << (visc_pass ? 1 : 0) << ",\n"
+               << "  \"npert_a_tz_rms\": " << npert.a_tz_rms << ",\n"
+               << "  \"npert_drho_dt_rms\": " << npert.drho_dt_rms << ",\n"
+               << "  \"TOP_TOTAL_OPERATOR_CHECKED\": \""
+               << (checked_pass ? "PASS" : (pass ? "WARN" : "FAIL")) << "\",\n"
+               << "  \"pass\": " << (pass ? 1 : 0) << "\n"
+               << "}\n";
+            std::cout << "[ophelie] summary_json=" << local_cli.summary_json << "\n";
+        }
+        return pass ? 0 : 1;
+    }
+
+    // Doc226 E1: local-μ read-path probe (uniform + half-domain swap; snapshot/restore).
+    if (local_cli.doc226_e1_local_mu_probe)
+    {
+        if (!use_particle_mu || !exec_viscous)
+        {
+            std::cerr << "[ophelie][doc226][E1] need ParticleViscosity + exec_viscous\n";
+            return 2;
+        }
+        const Real u_tx = Real(0.01);
+        const Real mu_lo = Real(4);
+        const Real mu_hi = Real(40);
+        const Real z_mid = gc[2];
+        FrenchHydroFieldSnapshot snap_hydro;
+        hostCaptureFrenchHydroFields(glass_particles, snap_hydro);
+        std::vector<Vecd> snap_visc, snap_prev_visc, snap_fp;
+        hostDoc223SnapshotVecField(glass_particles, "ViscousForce", snap_visc);
+        hostDoc223SnapshotVecField(glass_particles, "PreviousViscousForce", snap_prev_visc);
+        hostDoc223SnapshotVecField(glass_particles, "ForcePrior", snap_fp);
+        syncVariableToHost<Real>(glass_particles, kOphelieDynamicViscosityField);
+        const Real *mu0p = glass_particles.getVariableDataByName<Real>(kOphelieDynamicViscosityField);
+        std::vector<Real> snap_mu(mu0p, mu0p + glass_particles.TotalRealParticles());
+
+        auto set_mu_all = [&](Real m) {
+            syncVariableToHost<Real>(glass_particles, kOphelieDynamicViscosityField);
+            Real *mu_f = glass_particles.getVariableDataByName<Real>(kOphelieDynamicViscosityField);
+            const size_t n = glass_particles.TotalRealParticles();
+            for (size_t i = 0; i < n; ++i)
+                mu_f[i] = m;
+            syncVariableToDevice<Real>(glass_particles, kOphelieDynamicViscosityField);
+        };
+        auto set_mu_half_z = [&](Real below, Real above) {
+            syncVariableToHost<Real>(glass_particles, kOphelieDynamicViscosityField);
+            syncVariableToHost<Vecd>(glass_particles, "Position");
+            Real *mu_f = glass_particles.getVariableDataByName<Real>(kOphelieDynamicViscosityField);
+            const Vecd *pos = glass_particles.getVariableDataByName<Vecd>("Position");
+            const size_t n = glass_particles.TotalRealParticles();
+            for (size_t i = 0; i < n; ++i)
+                mu_f[i] = (pos[i][2] < z_mid) ? below : above;
+            syncVariableToDevice<Real>(glass_particles, kOphelieDynamicViscosityField);
+        };
+        auto visc_rms = [&]() {
+            syncVariableToHost<Vecd>(glass_particles, "ViscousForce");
+            const Vecd *fv = glass_particles.getVariableDataByName<Vecd>("ViscousForce");
+            const size_t n = glass_particles.TotalRealParticles();
+            Real s2 = 0;
+            for (size_t i = 0; i < n; ++i)
+                s2 += fv[i].squaredNorm();
+            return std::sqrt(s2 / Real(std::max<size_t>(n, 1)));
+        };
+
+        hostDoc223SetUniformTangentialVelocity(glass_particles, u_tx);
+
+        set_mu_all(mu_lo);
+        hostZeroVecFieldFrench(glass_particles, "ViscousForce");
+        exec_viscous();
+        const Real rms_uniform = visc_rms();
+        const auto ev_uniform = hostCollectLocalViscosityForceEvidence(glass_particles);
+
+        set_mu_half_z(mu_lo, mu_hi);
+        hostZeroVecFieldFrench(glass_particles, "ViscousForce");
+        exec_viscous();
+        const Real rms_swap_a = visc_rms();
+        const auto ev_a = hostCollectLocalViscosityForceEvidence(glass_particles);
+
+        set_mu_half_z(mu_hi, mu_lo); // swap blocks; volume-mean μ unchanged if equal volumes
+        hostZeroVecFieldFrench(glass_particles, "ViscousForce");
+        exec_viscous();
+        const Real rms_swap_b = visc_rms();
+        const auto ev_b = hostCollectLocalViscosityForceEvidence(glass_particles);
+
+        // Restore
+        hostRestoreFrenchHydroFields(glass_particles, snap_hydro);
+        hostDoc223RestoreVecField(glass_particles, "ViscousForce", snap_visc);
+        hostDoc223RestoreVecField(glass_particles, "PreviousViscousForce", snap_prev_visc);
+        hostDoc223RestoreVecField(glass_particles, "ForcePrior", snap_fp);
+        syncVariableToHost<Real>(glass_particles, kOphelieDynamicViscosityField);
+        Real *mu_f = glass_particles.getVariableDataByName<Real>(kOphelieDynamicViscosityField);
+        for (size_t i = 0; i < snap_mu.size(); ++i)
+            mu_f[i] = snap_mu[i];
+        syncVariableToDevice<Real>(glass_particles, kOphelieDynamicViscosityField);
+
+        const Real rel_ab =
+            std::abs(rms_swap_a - rms_swap_b) / (std::max(rms_swap_a, rms_swap_b) + TinyReal);
+        const bool force_changes_vs_uniform =
+            std::abs(rms_swap_a - rms_uniform) > Real(1.0e-3) * (rms_uniform + Real(1.0e-12));
+        const bool swap_changes = rel_ab > Real(1.0e-4) ||
+                                  std::abs(ev_a.viscous_force_rms_high_mu - ev_b.viscous_force_rms_high_mu) >
+                                      Real(1.0e-6);
+        const bool harmonic_ok = ev_uniform.harmonic_mean_ok;
+        const bool pass = harmonic_ok && force_changes_vs_uniform && (rms_uniform > TinyReal);
+
+        std::cout << "[ophelie][doc226][E1] u_tx=" << u_tx
+                  << " rms_uniform=" << rms_uniform << " rms_swap_lo_hi=" << rms_swap_a
+                  << " rms_swap_hi_lo=" << rms_swap_b << " rel_ab=" << rel_ab
+                  << " harmonic_ok=" << (harmonic_ok ? 1 : 0)
+                  << " force_vs_uniform=" << (force_changes_vs_uniform ? 1 : 0)
+                  << " swap_changes=" << (swap_changes ? 1 : 0)
+                  << " pass=" << (pass ? 1 : 0) << "\n";
+        if (!local_cli.summary_json.empty())
+        {
+            std::ofstream js(local_cli.summary_json);
+            js << std::scientific << std::setprecision(8);
+            js << "{\n"
+               << "  \"case\": \"doc226_e1_local_mu_probe\",\n"
+               << "  \"rms_uniform_mu4\": " << rms_uniform << ",\n"
+               << "  \"rms_swap_mu4_below_mu40_above\": " << rms_swap_a << ",\n"
+               << "  \"rms_swap_mu40_below_mu4_above\": " << rms_swap_b << ",\n"
+               << "  \"rel_swap_ab\": " << rel_ab << ",\n"
+               << "  \"harmonic_mean_ok\": " << (harmonic_ok ? 1 : 0) << ",\n"
+               << "  \"force_changes_vs_uniform\": " << (force_changes_vs_uniform ? 1 : 0) << ",\n"
+               << "  \"swap_spatially_changes\": " << (swap_changes ? 1 : 0) << ",\n"
+               << "  \"LOCAL_MU_READ_PATH_VERIFIED\": \"" << (pass ? "PASS" : "FAIL") << "\",\n"
+               << "  \"pass\": " << (pass ? 1 : 0) << "\n"
+               << "}\n";
+            std::cout << "[ophelie] summary_json=" << local_cli.summary_json << "\n";
+        }
+        return pass ? 0 : 1;
+    }
+
+    // Doc227 C1: Viscosity (Fixed μ_ref) vs ParticleViscosity (uniform field μ=4) same-state forces.
+    if (local_cli.doc227_c_uniform_mu_probe)
+    {
+        if (!use_particle_mu || !exec_viscous)
+        {
+            std::cerr << "[ophelie][doc227][C] need ParticleViscosity + exec_viscous\n";
+            return 2;
+        }
+        const Real mu_eq = Real(4);
+        const Real u_tx = Real(0.01);
+        FrenchHydroFieldSnapshot snap_hydro;
+        hostCaptureFrenchHydroFields(glass_particles, snap_hydro);
+        std::vector<Vecd> snap_visc, snap_prev_visc, snap_fp;
+        hostDoc223SnapshotVecField(glass_particles, "ViscousForce", snap_visc);
+        hostDoc223SnapshotVecField(glass_particles, "PreviousViscousForce", snap_prev_visc);
+        hostDoc223SnapshotVecField(glass_particles, "ForcePrior", snap_fp);
+        syncVariableToHost<Real>(glass_particles, kOphelieDynamicViscosityField);
+        const Real *mu0p = glass_particles.getVariableDataByName<Real>(kOphelieDynamicViscosityField);
+        std::vector<Real> snap_mu(mu0p, mu0p + glass_particles.TotalRealParticles());
+
+        // Fixed-μ ViscousForceCK (base Viscosity APIs) with same wall post-contact order.
+        using ViscousForceFixedInnerCK =
+            fluid_dynamics::ViscousForceCK<Inner<WithUpdate, Viscosity, NoKernelCorrectionCK>>;
+        using ViscousForceFixedWallCK =
+            fluid_dynamics::ViscousForceCK<Contact<Wall, Viscosity, NoKernelCorrectionCK>>;
+        auto fixed_inner =
+            makeUnique<InteractionDynamicsCK<MainExecutionPolicy, ViscousForceFixedInnerCK>>(glass_inner);
+        Contact<> &wall_for_c =
+            (lid_free_slip_armed && glass_wall_noslip_contact) ? *glass_wall_noslip_contact
+                                                              : viscous_wall_contact;
+        auto fixed_wall =
+            makeUnique<InteractionDynamicsCK<MainExecutionPolicy, ViscousForceFixedWallCK>>(wall_for_c);
+        fixed_inner->addPostContactInteraction(*fixed_wall);
+
+        auto set_mu_all = [&](Real m) {
+            syncVariableToHost<Real>(glass_particles, kOphelieDynamicViscosityField);
+            Real *mu_f = glass_particles.getVariableDataByName<Real>(kOphelieDynamicViscosityField);
+            const size_t n = glass_particles.TotalRealParticles();
+            for (size_t i = 0; i < n; ++i)
+                mu_f[i] = m;
+            syncVariableToDevice<Real>(glass_particles, kOphelieDynamicViscosityField);
+            glass_viscosity.setReferenceViscosity(m);
+            invalidateViscosityDependentCkKernels(glass_inner, wall_for_c);
+        };
+        auto field_rms = [&](const char *name) {
+            syncVariableToHost<Vecd>(glass_particles, name);
+            const Vecd *v = glass_particles.getVariableDataByName<Vecd>(name);
+            Real s2 = 0;
+            const size_t n = glass_particles.TotalRealParticles();
+            for (size_t i = 0; i < n; ++i)
+                s2 += v[i].squaredNorm();
+            return std::sqrt(s2 / Real(std::max<size_t>(n, 1)));
+        };
+
+        hostDoc223SetUniformTangentialVelocity(glass_particles, u_tx);
+        set_mu_all(mu_eq);
+
+        auto run_and_snap = [&](bool particle_path, std::vector<Vecd> &out_visc, std::vector<Vecd> &out_fp) {
+            // Same baseline each path: restore ForcePrior so WithUpdate does not
+            // accumulate particle-path viscous onto the fixed-path second exec.
+            hostDoc223RestoreVecField(glass_particles, "ForcePrior", snap_fp);
+            hostZeroVecFieldFrench(glass_particles, "ViscousForce");
+            hostZeroVecFieldFrench(glass_particles, "PreviousViscousForce");
+            if (particle_path)
+                exec_viscous();
+            else
+                fixed_inner->exec();
+            hostDoc223SnapshotVecField(glass_particles, "ViscousForce", out_visc);
+            hostDoc223SnapshotVecField(glass_particles, "ForcePrior", out_fp);
+        };
+
+        std::vector<Vecd> visc_p, fp_p, visc_f, fp_f;
+        run_and_snap(true, visc_p, fp_p);
+        const Real rms_visc_p = field_rms("ViscousForce");
+        const Real rms_fp_p = field_rms("ForcePrior");
+        run_and_snap(false, visc_f, fp_f);
+        const Real rms_visc_f = field_rms("ViscousForce");
+        const Real rms_fp_f = field_rms("ForcePrior");
+
+        // Restore particle-path result into host arrays already in visc_p; compare Fixed vs Particle snaps.
+        Real max_visc = 0, rms_visc = 0, max_fp = 0, rms_fp = 0;
+        {
+            const size_t n = visc_p.size();
+            Real s_v = 0, s_f = 0;
+            for (size_t i = 0; i < n; ++i)
+            {
+                const Real dv = (visc_p[i] - visc_f[i]).norm();
+                const Real df = (fp_p[i] - fp_f[i]).norm();
+                max_visc = std::max(max_visc, dv);
+                max_fp = std::max(max_fp, df);
+                s_v += dv * dv;
+                s_f += df * df;
+            }
+            rms_visc = std::sqrt(s_v / Real(std::max<size_t>(n, 1)));
+            rms_fp = std::sqrt(s_f / Real(std::max<size_t>(n, 1)));
+        }
+        const Real scale_visc = std::max({rms_visc_p, rms_visc_f, Real(1.0e-12)});
+        const Real scale_fp = std::max({rms_fp_p, rms_fp_f, Real(1.0e-12)});
+        const Real rel_visc = max_visc / scale_visc;
+        const Real rel_fp = max_fp / scale_fp;
+        // Plan: single-precision non-zero force relative ≤1e-5; near-zero use abs+scale.
+        const Real rel_tol = Real(1.0e-5);
+        const Real abs_tol = Real(1.0e-8);
+        const bool visc_ok = (max_visc <= abs_tol) || (rel_visc <= rel_tol);
+        const bool fp_ok = (max_fp <= abs_tol) || (rel_fp <= rel_tol);
+        const bool pass = visc_ok && fp_ok && (rms_visc_p > TinyReal) && (rms_visc_f > TinyReal);
+
+        std::cout << "[ophelie][doc227][C1] uniform_mu=" << mu_eq << " u_tx=" << u_tx
+                  << " rms_visc_particle=" << rms_visc_p << " rms_visc_fixed=" << rms_visc_f
+                  << " max_abs_visc=" << max_visc << " rel_visc=" << rel_visc
+                  << " max_abs_fp=" << max_fp << " rel_fp=" << rel_fp
+                  << " wall=" << (lid_free_slip_armed ? "OpenCup" : "Closed")
+                  << " pass=" << (pass ? 1 : 0) << "\n";
+
+        hostRestoreFrenchHydroFields(glass_particles, snap_hydro);
+        hostDoc223RestoreVecField(glass_particles, "ViscousForce", snap_visc);
+        hostDoc223RestoreVecField(glass_particles, "PreviousViscousForce", snap_prev_visc);
+        hostDoc223RestoreVecField(glass_particles, "ForcePrior", snap_fp);
+        syncVariableToHost<Real>(glass_particles, kOphelieDynamicViscosityField);
+        Real *mu_f = glass_particles.getVariableDataByName<Real>(kOphelieDynamicViscosityField);
+        for (size_t i = 0; i < snap_mu.size(); ++i)
+            mu_f[i] = snap_mu[i];
+        syncVariableToDevice<Real>(glass_particles, kOphelieDynamicViscosityField);
+
+        if (!local_cli.summary_json.empty())
+        {
+            std::ofstream js(local_cli.summary_json);
+            js << std::scientific << std::setprecision(8);
+            js << "{\n"
+               << "  \"case\": \"doc227_c_uniform_mu_probe\",\n"
+               << "  \"mu\": " << mu_eq << ",\n"
+               << "  \"rms_visc_particle\": " << rms_visc_p << ",\n"
+               << "  \"rms_visc_fixed\": " << rms_visc_f << ",\n"
+               << "  \"max_abs_visc_diff\": " << max_visc << ",\n"
+               << "  \"rel_visc_diff\": " << rel_visc << ",\n"
+               << "  \"max_abs_forceprior_diff\": " << max_fp << ",\n"
+               << "  \"rel_forceprior_diff\": " << rel_fp << ",\n"
+               << "  \"CONSTANT_MU_PATH_EQUIVALENT\": \"" << (pass ? "PASS" : "FAIL") << "\",\n"
+               << "  \"pass\": " << (pass ? 1 : 0) << "\n"
+               << "}\n";
+            std::cout << "[ophelie] summary_json=" << local_cli.summary_json << "\n";
+        }
+        return pass ? 0 : 1;
+    }
+
+    // Doc223 E3: near-lid normal velocity IC (mean-zero); integrate in main loop.
+    Doc223E3State doc223_e3_state{};
+    if (local_cli.doc223_e3_normal_perturb)
+    {
+        if (!lid_free_slip_armed)
+        {
+            std::cerr << "[ophelie][doc223][E3] need post-settle free-slip armed\n";
+            return 2;
+        }
+        const Real z_lid = french.glass_center[2] + french.glass_half_height;
+        const Real amp = Real(1.0e-3);
+        doc223_e3_state = hostDoc223ApplyE3NormalPerturb(glass_particles, gc, french.glass_radius, z_lid,
+                                                         french.dp, local_cli.c0, amp);
+        hostDoc223LogE3LidAudit("ic", glass_particles, z_lid, french.dp, doc223_e3_state.ke0,
+                                doc223_e3_state.z_com0);
+        std::cout << "[ophelie][doc223][E3] applied near-lid Uz bump amp=" << amp
+                  << " Ma=" << doc223_e3_state.ma << " U_rms0=" << doc223_e3_state.u_rms0
+                  << " ke0=" << doc223_e3_state.ke0 << " z_com0=" << doc223_e3_state.z_com0
+                  << " (mass-mean removed; no stepwise Uz kill)\n";
+    }
+
+    // Doc222 D2: post-settle free-surface deformation (R0; no tip). Re-init dens/p per path.
+    Doc222FsDeformReport doc222_fs_deform_rep{};
+    Doc222FsSurfaceStats doc222_fs_surf0{};
+    Doc222FsSurfaceStats doc222_fs_surf_last{};
+    bool doc222_fs_deform_on = local_cli.doc222_fs_deform_eps > TinyReal;
+    bool doc222_fs_csv_header = true;
+    const std::string doc222_fs_csv_path = "output/doc222_fs_deform_surface.csv";
+    if (doc222_fs_deform_on)
+    {
+        if (local_cli.diag_tip_soft_force || local_cli.diag_tip_fs_dashpot || local_cli.diag_soft_lid ||
+            local_cli.diag_soft_lid_tip || local_cli.diag_hard_lid || local_cli.diag_zero_net_uz)
+        {
+            std::cout << "[ophelie][doc222][D2] WARNING: tip/lid/zero-net still on — D2 requires R0; "
+                         "continuing but results are not a clean restoring test\n";
+        }
+        doc222_fs_deform_rep = hostApplyDoc222AxisymmetricFsDeform(
+            glass_particles, gc, french.glass_radius, z_bottom, z_free, local_cli.doc222_fs_deform_eps);
+        doc222_fs_deform_rep.eps_over_dp =
+            (french.dp > TinyReal) ? (local_cli.doc222_fs_deform_eps / french.dp) : Real(0);
+        hostZeroVelocity(glass_particles);
+        hostZeroVecFieldFrench(glass_particles, "Force");
+        update_glass_cell_linked_list.exec();
+        update_wall_cell_linked_list.exec();
+        update_glass_relations.exec();
+        update_wall_relations.exec();
+        density_regularization.exec();
+        if (local_cli.doc220_pprime_hydro)
+        {
+            // Doc222 E2a: default keep FreeSurface Density after deform so p' can be nonzero.
+            // Legacy --doc222-deform-rho-freeze restores ρ→ρ0 (p_mom≡0, E1 ineffective).
+            if (!local_cli.doc222_deform_skip_rho_freeze)
+                hostFreezeDensityToRho0(glass_particles, rho0);
+            apply_french_background_ph();
+        }
+        else if (local_cli.background_hydro_p)
+        {
+            // Doc222 E2 total-p+bgp: ρ=ρ0 ⇒ p_mom≈p_h; with local_eta, −∇p_h/ρ+g ⇒ −g∇η.
+            hostFreezeDensityToRho0(glass_particles, rho0);
+            apply_french_background_ph();
+        }
+        else
+        {
+            hostApplyHydrostaticDensity(glass_particles, rho0, local_cli.c0, local_cli.gravity_g, z_free);
+        }
+        fluid_advection_step_setup.exec();
+        doc223_reinit_force_priors();
+        fs::create_directories("output");
+        doc222_fs_surf0 =
+            hostMeasureDoc222FsSurfaceStats(glass_particles, gc, french.glass_radius, z_free, 12);
+        doc222_fs_surf_last = doc222_fs_surf0;
+        hostDoc222AppendFsSurfaceCsv(doc222_fs_csv_path, Real(0), 0, doc222_fs_surf0, true);
+        doc222_fs_csv_header = false;
+        std::cout << "[ophelie][doc222][D2] fs_deform eps=" << local_cli.doc222_fs_deform_eps
+                  << " eps/dp=" << doc222_fs_deform_rep.eps_over_dp
+                  << " eps/H=" << doc222_fs_deform_rep.eps_over_H << " eta_c=" << doc222_fs_deform_rep.eta_center
+                  << " eta_rim=" << doc222_fs_deform_rep.eta_rim
+                  << " z_max " << doc222_fs_deform_rep.z_max_before << "->" << doc222_fs_deform_rep.z_max_after
+                  << " mode_amp0=" << doc222_fs_surf0.mode_amp
+                  << " n_bins_valid=" << doc222_fs_surf0.n_bins_valid
+                  << " path=" << (local_cli.doc220_pprime_hydro ? "pprime" : "total_p")
+                  << " skip_rho_freeze=" << (local_cli.doc222_deform_skip_rho_freeze ? 1 : 0)
+                  << " (column stretch; dens/p reinit; NO tip)\n";
+        if (local_cli.doc220_pprime_hydro)
+        {
+            std::cout << "[ophelie][doc222][E2a] after_deform "
+                      << (local_cli.doc222_deform_skip_rho_freeze
+                              ? "Density=FreeSurface (allow p'); "
+                              : "Density frozen to rho0 (legacy p_mom~0); ")
+                      << "p_h signed=" << (local_cli.doc222_ph_signed ? 1 : 0)
+                      << " local_eta=" << (local_cli.doc222_ph_local_eta ? 1 : 0);
+            if (local_cli.doc222_ph_local_eta)
+            {
+                std::cout << " eta_spread=" << doc222_local_eta_ph_last.eta_spread
+                          << " eta_mean=" << doc222_local_eta_ph_last.eta_mean
+                          << " bins_valid=" << doc222_local_eta_ph_last.n_bins_valid;
+            }
+            std::cout << "\n";
+        }
+    }
+
+    // Doc222 C3: same deformed geometry — clamp vs signed p_h acoustic-1st force compare; then exit.
+    if (local_cli.doc222_c3_ph_compare)
+    {
+        if (!local_cli.doc220_pprime_hydro)
+        {
+            std::cerr << "[ophelie][doc222][C3] requires --doc220-pprime-hydro (or --doc222-c3-ph-compare)\n";
+            return 2;
+        }
+        if (!doc222_fs_deform_on)
+        {
+            std::cerr << "[ophelie][doc222][C3] fs deform did not run (eps<=0)\n";
+            return 2;
+        }
+        const Real zone_band_c3 = Real(2) * french.dp;
+        FrenchHydroFieldSnapshot c3_base;
+        hostCaptureFrenchHydroFields(glass_particles, c3_base);
+        auto run_c3_probe = [&](bool signed_ph) -> Doc222C3PhProbeStats {
+            hostRestoreFrenchHydroFields(glass_particles, c3_base);
+            hostZeroVelocity(glass_particles);
+            hostZeroVecFieldFrench(glass_particles, "Force");
+            hostZeroRealFieldFrench(glass_particles, "DensityChangeRate");
+            density_regularization.exec();
+            // Match E2a deform path: skip ρ→ρ0 unless legacy --doc222-deform-rho-freeze.
+            if (!local_cli.doc222_deform_skip_rho_freeze)
+                hostFreezeDensityToRho0(glass_particles, rho0);
+            hostApplyFrenchBackgroundHydroPressure(glass_particles, rho0, local_cli.gravity_g, z_free, signed_ph);
+            fluid_advection_step_setup.exec();
+            if (local_cli.kernel_correction)
+                fluid_linear_correction_matrix.exec();
+            hostDoc223ZeroAllForcePriorChannels(glass_particles);
+            apply_gravity_force_prior();
+            hostZeroVecFieldFrench(glass_particles, "Force");
+            const Real dt_ac = acoustic_time_step.exec();
+            if (local_cli.kernel_correction)
+                acoustic_1st_corr.exec(dt_ac);
+            else
+                acoustic_step_1st_half.exec(dt_ac);
+            return hostMeasureDoc222C3PhProbe(glass_particles, rho0, local_cli.c0, z_free, gc, french.glass_radius,
+                                              z_bottom, zone_band_c3, signed_ph);
+        };
+        const Doc222C3PhProbeStats st_signed = run_c3_probe(true);
+        const Doc222C3PhProbeStats st_clamp = run_c3_probe(false);
+        hostRestoreFrenchHydroFields(glass_particles, c3_base);
+        fs::create_directories("output");
+        const std::string c3_json =
+            local_cli.summary_json.empty() ? "output/doc222_c3_ph_compare.json" : local_cli.summary_json;
+        hostDoc222WriteC3PhCompareJson(c3_json, st_signed, st_clamp, local_cli.doc222_fs_deform_eps, z_free);
+        const Real d_pbg = st_signed.p_bg_mean_above - st_clamp.p_bg_mean_above;
+        const Real d_af = st_signed.a_force_z_mean_above - st_clamp.a_force_z_mean_above;
+        const Real d_an = st_signed.a_net_z_mean_above - st_clamp.a_net_z_mean_above;
+        std::cout << "[ophelie][doc222][C3] ph_compare n_above=" << st_signed.n_above
+                  << " z_max=" << st_signed.z_max << " z_free=" << z_free << "\n"
+                  << "[ophelie][doc222][C3] signed: p_bg_above=" << st_signed.p_bg_mean_above
+                  << " p_mom_above=" << st_signed.p_mom_mean_above
+                  << " a_force_z_above=" << st_signed.a_force_z_mean_above
+                  << " a_net_z_above=" << st_signed.a_net_z_mean_above << "\n"
+                  << "[ophelie][doc222][C3] clamp:  p_bg_above=" << st_clamp.p_bg_mean_above
+                  << " p_mom_above=" << st_clamp.p_mom_mean_above
+                  << " a_force_z_above=" << st_clamp.a_force_z_mean_above
+                  << " a_net_z_above=" << st_clamp.a_net_z_mean_above << "\n"
+                  << "[ophelie][doc222][C3] delta(signed-clamp): p_bg_above=" << d_pbg
+                  << " a_force_z_above=" << d_af << " a_net_z_above=" << d_an << "\n"
+                  << "[ophelie][doc222][C3] summary_json=" << c3_json << "\n";
+        // p_bg must differ above z_free if signed works; |d_pbg| ~ O(ρ0 g * η)
+        const bool pbg_differs = std::abs(d_pbg) > Real(1.0); // Pa-scale threshold
+        const bool a_differs = std::abs(d_af) > Real(1.0e-4) || std::abs(d_an) > Real(1.0e-4);
+        std::cout << "[ophelie][doc222][C3] verdict p_bg_differs=" << (pbg_differs ? 1 : 0)
+                  << " a_force_differs=" << (a_differs ? 1 : 0)
+                  << (pbg_differs && !a_differs
+                          ? " (p_h reaches field but acoustic Force insensitive — look beyond E1)"
+                          : (pbg_differs && a_differs
+                                 ? " (p_h changes Force; D2 FAIL driven by time-integrated/other terms)"
+                                 : (!pbg_differs ? " (p_bg ABOVE identical — apply/path bug)"
+                                                 : "")))
+                  << "\n";
+        return (st_signed.n_above > 0) ? 0 : 2;
+    }
+
+    // Doc220 S0: zero-physics sort identity audit (exit after compare).
+    if (local_cli.doc220_s0_sort_audit)
+    {
+        fs::create_directories("output");
+        if (local_cli.prescribe_t_radial_dT <= TinyReal)
+            local_cli.prescribe_t_radial_dT = Real(200);
+        hostPrescribeRadialHotCoreTemperature(glass_particles, french.glass_center, french.glass_radius,
+                                              french.glass_half_height, t0, local_cli.prescribe_t_radial_dT,
+                                              local_cli.prescribe_radial_z_taper, kOphelieTemperatureField,
+                                              kOphelieThermalDeltaTField);
+        const std::string before_csv = "output/doc220_s0_before_sort.csv";
+        const std::string after_csv = "output/doc220_s0_after_sort.csv";
+        hostDoc220DumpSortAuditCsv(glass_particles, before_csv, t0);
+        std::cout << "[ophelie][doc220][s0] before_sort written " << before_csv
+                  << " temperature_in_evolving="
+                  << (hostDiscreteVarInEvolving(glass_particles, kOphelieTemperatureField) ? 1 : 0)
+                  << " delta_t_in_evolving="
+                  << (hostDiscreteVarInEvolving(glass_particles, kOphelieThermalDeltaTField) ? 1 : 0) << std::endl;
+        fluid_particle_sorting.exec();
+        update_glass_cell_linked_list.exec();
+        update_glass_relations.exec();
+        hostDoc220DumpSortAuditCsv(glass_particles, after_csv, t0);
+        const Doc220SortAuditCompare cmp =
+            hostDoc220CompareSortAuditCsv(before_csv, after_csv, glass_particles, t0);
+        std::cout << "[ophelie][doc220][s0] after_sort n=" << cmp.n << " matched=" << cmp.n_matched
+                  << " pos_mismatch=" << cmp.n_pos_mismatch << " T_mismatch=" << cmp.n_T_mismatch
+                  << " dT_mismatch=" << cmp.n_dT_mismatch << " TdT_id_fail=" << cmp.n_TdT_identity_fail
+                  << " mass_mismatch=" << cmp.n_mass_mismatch << " max_abs_dT=" << cmp.max_abs_dT
+                  << " max_abs_dPos=" << cmp.max_abs_dPos << " T_mean " << cmp.T_mean_before << "->"
+                  << cmp.T_mean_after << " T_range_before=[" << cmp.T_min_before << "," << cmp.T_max_before
+                  << "] after=[" << cmp.T_min_after << "," << cmp.T_max_after << "] evolving_T="
+                  << (cmp.temperature_in_evolving ? 1 : 0) << " evolving_dT=" << (cmp.delta_t_in_evolving ? 1 : 0)
+                  << " SORT_IDENTITY_PASS=" << (cmp.passed ? 1 : 0) << std::endl;
+        {
+            std::ofstream js("output/doc220_s0_compare.json");
+            js << "{\n"
+               << "  \"case\": \"doc220_s0_sort_audit\",\n"
+               << "  \"n\": " << cmp.n << ",\n"
+               << "  \"n_matched\": " << cmp.n_matched << ",\n"
+               << "  \"n_pos_mismatch\": " << cmp.n_pos_mismatch << ",\n"
+               << "  \"n_T_mismatch\": " << cmp.n_T_mismatch << ",\n"
+               << "  \"n_dT_mismatch\": " << cmp.n_dT_mismatch << ",\n"
+               << "  \"n_TdT_identity_fail\": " << cmp.n_TdT_identity_fail << ",\n"
+               << "  \"n_mass_mismatch\": " << cmp.n_mass_mismatch << ",\n"
+               << "  \"max_abs_dT\": " << cmp.max_abs_dT << ",\n"
+               << "  \"max_abs_dPos\": " << cmp.max_abs_dPos << ",\n"
+               << "  \"temperature_in_evolving\": " << (cmp.temperature_in_evolving ? 1 : 0) << ",\n"
+               << "  \"delta_t_in_evolving\": " << (cmp.delta_t_in_evolving ? 1 : 0) << ",\n"
+               << "  \"SORT_IDENTITY_PASS\": " << (cmp.passed ? 1 : 0) << "\n"
+               << "}\n";
+        }
+        if (!local_cli.summary_json.empty())
+        {
+            std::ofstream js(local_cli.summary_json);
+            js << "{\n"
+               << "  \"case\": \"doc220_s0_sort_audit\",\n"
+               << "  \"SORT_IDENTITY_PASS\": " << (cmp.passed ? 1 : 0) << ",\n"
+               << "  \"temperature_in_evolving\": " << (cmp.temperature_in_evolving ? 1 : 0) << ",\n"
+               << "  \"delta_t_in_evolving\": " << (cmp.delta_t_in_evolving ? 1 : 0) << ",\n"
+               << "  \"n_T_mismatch\": " << cmp.n_T_mismatch << ",\n"
+               << "  \"max_abs_dT\": " << cmp.max_abs_dT << ",\n"
+               << "  \"passed\": " << (cmp.passed ? 1 : 0) << "\n"
+               << "}\n";
+        }
+        return cmp.passed ? 0 : 2;
     }
 
     // Doc105 P2: one hydrostatic stage probe with zone residuals (French free-surface path).
@@ -2587,7 +7505,7 @@ int main(int ac, char *av[])
 
         hostZeroVecFieldFrench(glass_particles, "Velocity");
         hostZeroVecFieldFrench(glass_particles, "Force");
-        hostZeroVecFieldFrench(glass_particles, "ForcePrior");
+        hostDoc223ZeroAllForcePriorChannels(glass_particles);
         hostZeroRealFieldFrench(glass_particles, "DensityChangeRate");
         FrenchHydroStageSnapshot s0 = snap("00_init_zero");
 
@@ -2603,15 +7521,25 @@ int main(int ac, char *av[])
         if (local_cli.kernel_correction)
             fluid_linear_correction_matrix.exec();
         FrenchHydroStageSnapshot s_dens = snap("01_after_dens_bgp");
+        if (local_cli.doc220_h0_hydro_probe)
+        {
+            hostDoc220DumpHydroParticleCsv(glass_particles, "output/doc220_h0_01_after_dens.csv", rho0,
+                                           local_cli.c0, local_cli.gravity_g, z_free, glass_c, french.glass_radius,
+                                           z_bottom, zone_band, local_cli.kernel_correction);
+        }
 
-        hostZeroVecFieldFrench(glass_particles, "ForcePrior");
-        hostZeroVecFieldFrench(glass_particles, "GravityForceCK");
-        hostZeroVecFieldFrench(glass_particles, "PreviousGravityForceCK");
         hostZeroVecFieldFrench(glass_particles, "BoussinesqBuoyancyForceCK");
         hostZeroVecFieldFrench(glass_particles, "PreviousBoussinesqBuoyancyForceCK");
-        constant_gravity.exec();
+        apply_gravity_force_prior();
         // Intentionally no boussinesq here — probe isolates gravity/pressure path.
+        // Doc220 E2 p' path: ForcePrior stays 0 (g in BackgroundPressure).
         FrenchHydroStageSnapshot s_prior = snap("02_after_gravity");
+        if (local_cli.doc220_h0_hydro_probe)
+        {
+            hostDoc220DumpHydroParticleCsv(glass_particles, "output/doc220_h0_02_after_gravity.csv", rho0,
+                                           local_cli.c0, local_cli.gravity_g, z_free, glass_c, french.glass_radius,
+                                           z_bottom, zone_band, local_cli.kernel_correction);
+        }
 
         const Real dt_ac = acoustic_time_step.exec();
 
@@ -2630,6 +7558,12 @@ int main(int ac, char *av[])
         else
             acoustic_1st_inner_only.exec(dt_ac);
         FrenchHydroStageSnapshot s_ff = snap("03a_ff_only");
+        if (local_cli.doc220_h0_hydro_probe)
+        {
+            hostDoc220DumpHydroParticleCsv(glass_particles, "output/doc220_h0_03a_ff_only.csv", rho0, local_cli.c0,
+                                           local_cli.gravity_g, z_free, glass_c, french.glass_radius, z_bottom,
+                                           zone_band, local_cli.kernel_correction);
+        }
 
         // Wall-contact only from the same pre-acoustic snapshot.
         hostRestoreFrenchHydroFields(glass_particles, probe_base);
@@ -2641,6 +7575,12 @@ int main(int ac, char *av[])
         else
             acoustic_1st_wall_only.exec(dt_ac);
         FrenchHydroStageSnapshot s_wc = snap("03b_wall_only");
+        if (local_cli.doc220_h0_hydro_probe)
+        {
+            hostDoc220DumpHydroParticleCsv(glass_particles, "output/doc220_h0_03b_wall_only.csv", rho0, local_cli.c0,
+                                           local_cli.gravity_g, z_free, glass_c, french.glass_radius, z_bottom,
+                                           zone_band, local_cli.kernel_correction);
+        }
 
         // Full acoustic_1st (ff + wall) — canonical residual used for pass/fail.
         hostRestoreFrenchHydroFields(glass_particles, probe_base);
@@ -2652,6 +7592,12 @@ int main(int ac, char *av[])
         else
             acoustic_step_1st_half.exec(dt_ac);
         FrenchHydroStageSnapshot s_ac = snap("03_after_acoustic_1st");
+        if (local_cli.doc220_h0_hydro_probe)
+        {
+            hostDoc220DumpHydroParticleCsv(glass_particles, "output/doc220_h0_03_acoustic_full.csv", rho0,
+                                           local_cli.c0, local_cli.gravity_g, z_free, glass_c, french.glass_radius,
+                                           z_bottom, zone_band, local_cli.kernel_correction);
+        }
         FrenchHydroFieldSnapshot after_ac1;
         hostCaptureFrenchHydroFields(glass_particles, after_ac1);
 
@@ -2712,7 +7658,10 @@ int main(int ac, char *av[])
         {
             std::ofstream js(local_cli.summary_json);
             js << "{\n"
-               << "  \"case\": \"french_doc105_p2_hydro_stage\",\n"
+               << "  \"case\": \""
+               << (local_cli.doc220_h0_hydro_probe ? "doc220_h0_hydro_stage" : "french_doc105_p2_hydro_stage")
+               << "\",\n"
+               << "  \"doc220_h0\": " << (local_cli.doc220_h0_hydro_probe ? 1 : 0) << ",\n"
                << "  \"doc105_p2\": 1,\n"
                << "  \"doc105_p2c\": 1,\n"
                << "  \"doc105_p2e\": 1,\n"
@@ -2750,9 +7699,20 @@ int main(int ac, char *av[])
                << "  \"kernel_correction\": " << (local_cli.kernel_correction ? 1 : 0) << ",\n"
                << "  \"acoustic_dens_mode\": " << local_cli.acoustic_dens_mode << ",\n"
                << "  \"reference_body_acc_z\": "
-               << (local_cli.acoustic_dens_mode == 1 ? -local_cli.gravity_g : Real(0)) << ",\n"
-               << "  \"french_pressure_path\": \"total_p_plus_GravityForceCK\",\n"
-               << "  \"perturbation_momentum\": 0,\n"
+               << ((local_cli.acoustic_dens_mode == 1 && !local_cli.omit_gravity_force)
+                       ? -local_cli.gravity_g
+                       : Real(0))
+               << ",\n"
+               << "  \"french_pressure_path\": \""
+               << (local_cli.doc220_pprime_hydro
+                       ? "p_prime_plus_BackgroundPressure_no_GravityForceCK"
+                       : (local_cli.background_hydro_p
+                              ? "total_p_plus_BackgroundPressure_plus_GravityForceCK"
+                              : "total_p_plus_GravityForceCK"))
+               << "\",\n"
+               << "  \"perturbation_momentum\": " << local_cli.perturbation_momentum << ",\n"
+               << "  \"doc220_pprime_hydro\": " << (local_cli.doc220_pprime_hydro ? 1 : 0) << ",\n"
+               << "  \"omit_gravity_force\": " << (local_cli.omit_gravity_force ? 1 : 0) << ",\n"
                << "  \"closed_box_p2b_copied\": 0,\n"
                << "  \"free_surface_regularization\": \"rho=max(rho_sum,rho0)\",\n"
                << "  \"extra_normalize\": \"rho=rho0*rho_sum/sigma0_overwrites_FreeSurface\",\n"
@@ -2946,10 +7906,17 @@ int main(int ac, char *av[])
                 density_regularization.exec();
                 apply_quiet_hydro_after_dens();
                 fluid_advection_step_setup.exec();
-                if (local_cli.kernel_correction)
+                if (local_cli.kernel_correction || local_cli.enable_tvf)
                     fluid_linear_correction_matrix.exec();
-                fluid_viscous_force.exec();
-                constant_gravity.exec();
+                // Doc219 F: quiet-keep must exercise TVF when enabled (F0/F1 A/B was a false
+                // negative before — only settle/main flow ran transport correction).
+                if (local_cli.enable_tvf)
+                {
+                    kernel_grad_integral.exec();
+                    transport_correction.exec();
+                }
+                exec_viscous();
+                apply_gravity_force_prior();
                 // No boussinesq in quiet-keep probe path.
                 if (advection_steps % 20 == 0)
                 {
@@ -3024,12 +7991,8 @@ int main(int ac, char *av[])
         fluid_advection_step_setup.exec();
         if (local_cli.kernel_correction)
             fluid_linear_correction_matrix.exec();
-        hostZeroVecFieldFrench(glass_particles, "ForcePrior");
-        hostZeroVecFieldFrench(glass_particles, "GravityForceCK");
-        hostZeroVecFieldFrench(glass_particles, "PreviousGravityForceCK");
-        hostZeroVecFieldFrench(glass_particles, "BoussinesqBuoyancyForceCK");
-        hostZeroVecFieldFrench(glass_particles, "PreviousBoussinesqBuoyancyForceCK");
-        constant_gravity.exec();
+        hostDoc223ZeroAllForcePriorChannels(glass_particles);
+        apply_gravity_force_prior();
         hostZeroVecFieldFrench(glass_particles, "Force");
         const Real dt_ac_end = acoustic_time_step.exec();
         if (local_cli.kernel_correction)
@@ -3097,9 +8060,17 @@ int main(int ac, char *av[])
                << "  \"dens_fs_atm_consistent\": " << (local_cli.dens_fs_atm_consistent ? 1 : 0) << ",\n"
                << "  \"background_hydro_p\": " << (local_cli.background_hydro_p ? 1 : 0) << ",\n"
                << "  \"kernel_correction\": " << (local_cli.kernel_correction ? 1 : 0) << ",\n"
+               << "  \"enable_tvf\": " << (local_cli.enable_tvf ? 1 : 0) << ",\n"
+               << "  \"doc219_hydro_profile\": " << (local_cli.doc219_hydro_profile ? 1 : 0) << ",\n"
                << "  \"acoustic_dens_mode\": " << local_cli.acoustic_dens_mode << ",\n"
                << "  \"reference_body_acc_z\": "
-               << (local_cli.acoustic_dens_mode == 1 ? -local_cli.gravity_g : Real(0)) << ",\n"
+               << ((local_cli.acoustic_dens_mode == 1 && !local_cli.omit_gravity_force)
+                       ? -local_cli.gravity_g
+                       : Real(0))
+               << ",\n"
+               << "  \"doc220_pprime_hydro\": " << (local_cli.doc220_pprime_hydro ? 1 : 0) << ",\n"
+               << "  \"perturbation_momentum\": " << local_cli.perturbation_momentum << ",\n"
+               << "  \"omit_gravity_force\": " << (local_cli.omit_gravity_force ? 1 : 0) << ",\n"
                << "  \"budget_a_net_mech\": " << budget_a_net_mech << ",\n"
                << "  \"budget_a_net_quiet\": " << budget_a_net_quiet << ",\n"
                << "  \"budget_u_rms_mech\": " << budget_u_rms_mech << ",\n"
@@ -3186,8 +8157,36 @@ int main(int ac, char *av[])
     {
         boussinesq_force.exec();
     }
-    auto apply_prescribed_temperature = [&]() {
-        if (local_cli.prescribe_t_radial_dT > TinyReal)
+    Doc224RzTemperatureGrid doc224_T_rz_grid;
+    if (!local_cli.init_T_rz_csv.empty())
+    {
+        std::string terr;
+        if (!hostLoadDoc224RzTemperatureGrid(local_cli.init_T_rz_csv, doc224_T_rz_grid, terr))
+        {
+            std::cerr << "[ophelie][doc224][D] " << terr << " path=" << local_cli.init_T_rz_csv << std::endl;
+            return 2;
+        }
+        std::cout << "[ophelie][doc225][B] loaded init-T-rz-csv=" << local_cli.init_T_rz_csv
+                  << " ASSUMED_absolute_Tmax_not_literature legacy_demean="
+                  << (local_cli.init_T_rz_demean_legacy ? 1 : 0) << std::endl;
+        if (local_cli.init_T_rz_demean_legacy)
+        {
+            std::cout << "[ophelie][doc225][B] WARNING ABSOLUTE_T_SHIFTED_LEGACY — not for acceptance mainline\n";
+        }
+    }
+    auto apply_prescribed_temperature = [&](bool quiet = false) {
+        if (!local_cli.init_T_rz_csv.empty() && doc224_T_rz_grid.ok)
+        {
+            hostApplyDoc224RzTemperatureGrid(glass_particles, french.glass_center, t0, doc224_T_rz_grid,
+                                             local_cli.init_T_rz_demean_legacy, quiet);
+        }
+        else if (local_cli.doc223_f2_annular_hot)
+        {
+            hostPrescribeDoc223AnnularHotRingTemperature(glass_particles, french.glass_center,
+                                                         french.glass_half_height, t0, Real(200),
+                                                         kOphelieTemperatureField, kOphelieThermalDeltaTField);
+        }
+        else if (local_cli.prescribe_t_radial_dT > TinyReal)
         {
             hostPrescribeRadialHotCoreTemperature(glass_particles, french.glass_center, french.glass_radius,
                                                   french.glass_half_height, t0, local_cli.prescribe_t_radial_dT,
@@ -3201,33 +8200,167 @@ int main(int ac, char *av[])
                                                     kOphelieThermalDeltaTField);
         }
     };
-    const bool has_prescribed_t =
-        local_cli.prescribe_t_radial_dT > TinyReal || local_cli.prescribe_t_hot_bottom_dT > TinyReal;
+    const bool has_prescribed_t = !local_cli.init_T_rz_csv.empty() || local_cli.doc223_f2_annular_hot ||
+                                  local_cli.prescribe_t_radial_dT > TinyReal ||
+                                  local_cli.prescribe_t_hot_bottom_dT > TinyReal;
     if (has_prescribed_t)
     {
-        apply_prescribed_temperature();
+        apply_prescribed_temperature(/*quiet=*/false);
+        const char *init_t_id = "prescribed_other";
+        if (!local_cli.init_T_rz_csv.empty())
+        {
+            init_t_id = local_cli.freeze_prescribed_temperature
+                            ? "prescribed_doc224_fig8_rz_csv_frozen_ASSUMED"
+                            : "prescribed_doc224_fig8_rz_csv_then_thaw_ASSUMED";
+        }
+        else if (local_cli.doc223_f2_annular_hot)
+        {
+            init_t_id = local_cli.freeze_prescribed_temperature
+                            ? "prescribed_doc223_f2_annular_hot_frozen"
+                            : "prescribed_doc223_f2_annular_hot_then_thaw";
+        }
+        else if (local_cli.prescribe_t_radial_dT > TinyReal)
+        {
+            init_t_id = local_cli.freeze_prescribed_temperature ? "prescribed_radial_hot_core_frozen"
+                                                                : "prescribed_radial_hot_core_then_thaw";
+        }
+        else if (local_cli.prescribe_t_hot_bottom_dT > TinyReal)
+        {
+            init_t_id = local_cli.freeze_prescribed_temperature ? "prescribed_hot_bottom_frozen"
+                                                               : "prescribed_hot_bottom_then_thaw";
+        }
+        const Real dT_log = !local_cli.init_T_rz_csv.empty()
+                                ? static_cast<Real>(doc224_T_rz_grid.T_max - doc224_T_rz_grid.T_min)
+                                : (local_cli.doc223_f2_annular_hot
+                                       ? Real(200)
+                                       : (local_cli.prescribe_t_radial_dT > TinyReal
+                                              ? local_cli.prescribe_t_radial_dT
+                                              : local_cli.prescribe_t_hot_bottom_dT));
+        std::cout << "[ophelie][init_T] " << init_t_id << " dT=" << dT_log
+                  << " freeze=" << (local_cli.freeze_prescribed_temperature ? 1 : 0)
+                  << " zero_q=" << (local_cli.literature.zero_q ? 1 : 0)
+                  << " thermal_diffusion=" << (local_cli.literature.enable_thermal_diffusion ? 1 : 0)
+                  << (!local_cli.init_T_rz_csv.empty()
+                          ? " (Doc224 D Fig8 ASSUMED Tmax; absolute T NOT_EVALUATED)"
+                          : (local_cli.doc223_f2_annular_hot
+                                 ? " (Doc223 F2 qualitative ring; NOT Fig8 digitization)"
+                                 : " (not literature steady IC; thaw keeps Q+diffusion+Robin)"))
+                  << std::endl;
+        // Doc225 B3: Fig8 CSV → T_force_ref = mass-weighted mean once (absolute T unchanged).
+        // F2 / radial / hot-bottom keep literature t0 as T_force_ref unless overridden.
+        Real t_force_ref = t0;
+        if (!std::isnan(local_cli.t_force_ref_override))
+        {
+            t_force_ref = local_cli.t_force_ref_override;
+        }
+        else if (!local_cli.init_T_rz_csv.empty() && local_cli.t_force_ref_from_mass_mean &&
+                 !local_cli.init_T_rz_demean_legacy)
+        {
+            t_force_ref = hostMassWeightedMeanTemperature(glass_particles, kOphelieTemperatureField);
+        }
         if (local_cli.literature.enable_boussinesq)
         {
+            boussinesq_force.setForceReferenceTemperature(t_force_ref);
             boussinesq_force.exec();
+            const Real t_force_used = boussinesq_force.getForceReferenceTemperature();
             const OphelieBoussinesqForceAudit audit = hostAuditBoussinesqForcePrior(
-                glass_particles, beta, t0, -local_cli.gravity_g, kOphelieTemperatureField);
-            const char *tag = local_cli.prescribe_t_radial_dT > TinyReal ? "prescribed_radial" : "prescribed_hot_bottom";
+                glass_particles, beta, t_force_used, -local_cli.gravity_g, kOphelieTemperatureField);
+            const OphelieBuoyancyFieldGate gate =
+                hostAuditBuoyancyFieldGate(glass_particles, beta, t_force_used, local_cli.gravity_g,
+                                           kOphelieTemperatureField);
+            const char *tag = !local_cli.init_T_rz_csv.empty()
+                                  ? "prescribed_doc225_fig8_rz"
+                                  : (local_cli.doc223_f2_annular_hot
+                                         ? "prescribed_doc223_f2_annular"
+                                         : (local_cli.prescribe_t_radial_dT > TinyReal ? "prescribed_radial"
+                                                                                      : "prescribed_hot_bottom"));
             logOphelieBoussinesqForceAudit(audit, tag);
-            // Radial drive: net Fz may be small; require force field matches analytic (rel_err).
-            const bool force_ok = audit.rel_err < Real(1.0e-4);
-            std::cout << "[ophelie][p1-03] prescribe_mode=" << tag
-                      << " dT=" << (local_cli.prescribe_t_radial_dT > TinyReal ? local_cli.prescribe_t_radial_dT
-                                                                               : local_cli.prescribe_t_hot_bottom_dT)
+            // Doc225 C: particle L2 + absolute net; do not FAIL near-zero ΣF via rel_err.
+            const bool force_ok = gate.algebraic_ok && gate.dynamic_reference_ok;
+            std::cout << "[ophelie][doc225][refs] T_thermal_ref=" << t0 << " T_property_ref=" << t0
+                      << " T_force_ref=" << t_force_used << " T_mean_mass=" << gate.tmean_K
+                      << " legacy_demean=" << (local_cli.init_T_rz_demean_legacy ? 1 : 0) << std::endl;
+            std::cout << "[ophelie][doc225][C] E_particle=" << gate.E_L2 << " E_net_abs=" << gate.net_abs_N
+                      << " max_abs_N=" << gate.max_abs_N << " sum_|Fref|=" << gate.sum_abs_fref_N
+                      << " near_zero=" << (gate.near_zero_force ? 1 : 0)
+                      << " algebraic_ok=" << (gate.algebraic_ok ? 1 : 0)
+                      << " tref_ok=" << (gate.dynamic_reference_ok ? 1 : 0) << std::endl;
+            std::cout << "[ophelie][p1-03] prescribe_mode=" << tag << " dT=" << dT_log
                       << " freeze=" << (local_cli.freeze_prescribed_temperature ? 1 : 0)
                       << " force_sign_up=" << (audit.f_z_sum > 0 ? 1 : 0) << " force_ok=" << (force_ok ? 1 : 0)
-                      << " Fz_sum=" << audit.f_z_sum << std::endl;
+                      << " Fz_sum=" << audit.f_z_sum << " legacy_net_rel_err=" << audit.rel_err
+                      << " (informational; gate uses E_particle)" << std::endl;
         }
+        else
+        {
+            std::cout << "[ophelie][doc225][refs] T_thermal_ref=" << t0 << " T_property_ref=" << t0
+                      << " T_force_ref=" << t_force_ref << " (boussinesq off)\n";
+        }
+    }
+    // Doc220 C: H0 must use the final IC temperature (after prescribe). Clear evolution ledgers.
+    {
+        const Real h_pre_ic = prev_energy;
+        prev_energy = local_cli.literature.constant_thermal_rheology
+                          ? hostThermalEnergy(glass_particles, rho0, cp, t0)
+                          : hostThermalEnthalpyEnergy(glass_particles, rho0, laws.cp, t0);
+        prev_energy_time = 0.0;
+        const Real e_prescribe = prev_energy - h_pre_ic;
+        coupling_state.ledger.e_q_applied = 0.0;
+        coupling_state.ledger.e_boundary_out = 0.0;
+        coupling_state.ledger.setH0(prev_energy);
+        if (local_cli.freeze_prescribed_temperature)
+        {
+            coupling_state.ledger.noteLiveLoss(Real(0), Real(0), Real(0));
+        }
+        else
+        {
+            Real side0 = 0, bottom0 = 0, free_conv0 = 0, free_rad0 = 0, total0 = 0;
+            hostOphelieThermalFrenchNaturalHeatLossPowers(glass_particles, thermal_bc,
+                                                          thermal_bc.boundary_shell_thickness, side0, bottom0,
+                                                          free_conv0, free_rad0, total0);
+            coupling_state.ledger.noteLiveLoss(side0, bottom0, free_conv0 + free_rad0);
+        }
+        std::cout << "[ophelie][doc220][energy] THERMAL_INITIALIZATION H0=" << prev_energy
+                  << " E_prescribe=" << e_prescribe << " (thaw: hot-core in H0; freeze: constraint energy)"
+                  << " residual_t0=" << coupling_state.ledger.residualH(prev_energy) << std::endl;
     }
     if (write_vtp)
     {
         glass_state_recorder.writeToFile(0);
     }
 
+    if (local_cli.diag_hard_lid)
+    {
+        // Doc221 M: re-flush after T prescribe / dens path so keep starts with z<=z_free, U=0.
+        const size_t n_reset = hostResetHardLidGeometry(glass_particles, z_free);
+        update_glass_cell_linked_list.exec();
+        update_wall_cell_linked_list.exec();
+        update_glass_relations.exec();
+        update_wall_relations.exec();
+        density_regularization.exec();
+        if (local_cli.doc220_pprime_hydro || local_cli.background_hydro_p)
+        {
+            hostFreezeDensityToRho0(glass_particles, rho0);
+            apply_french_background_ph();
+        }
+        std::cout << "[ophelie][doc221][M] hard-lid pre-keep reset n_clamp=" << n_reset
+                  << " z_lid=" << z_free << "\n";
+    }
+    // Doc226 F: Fig8/prescribe changes T after settle — refresh μ before first keep step,
+    // and shrink the already-created advection trigger (otherwise first interval stays T0/μ=4).
+    if (has_prescribed_t && refresh_mu_from_T)
+    {
+        const Real mu_ref_post = sync_mu_from_temperature("post_prescribe_T", /*log_particle=*/true);
+        const Real dt_in_post = advection_time_step.exec();
+        const Real dt_vis_post = advection_viscous_time_step.exec();
+        const Real dt_adv_post =
+            use_viscous_adv_cfl ? std::min(dt_in_post, dt_vis_post) : dt_in_post;
+        if (dt_adv_post + TinyReal < advection_step.getInterval())
+            advection_step.setInterval(dt_adv_post);
+        std::cout << "[ophelie][doc226] post_prescribe_adv_cfl dt_adv=" << advection_step.getInterval()
+                  << " inertial=" << dt_in_post << " viscous=" << dt_vis_post
+                  << " mu_ref=" << mu_ref_post << std::endl;
+    }
     std::cout << "[ophelie][stage4.1] flow start: end_time=" << local_cli.end_time
               << " n_glass=" << glass_particles.TotalRealParticles()
               << " n_wall=" << wall.getBaseParticles().TotalRealParticles() << " beta=" << beta << " mu=" << mu
@@ -3243,62 +8376,346 @@ int main(int ac, char *av[])
     const Real r_axis_hi_ts = Real(0.08);
     const Real r_rim_lo_ts = Real(0.18);
 
-    while (!time_stepper.isEndTime(local_cli.end_time))
+    Real last_adv_phys_time = time_stepper.getPhysicalTime();
+    size_t spatial_q_resample_count = 0;
+    /** Doc224 E4: abort instead of spinning after NaN / catastrophic U_max. */
+    bool numerical_abort = false;
+    std::string numerical_abort_reason;
+    bool doc221_ledger_csv_header = true;
+    const std::string doc221_ledger_csv = "output/doc221_force_ledger_stages.csv";
+    if (local_cli.doc221_legacy_omit_clears_forceprior)
     {
-        const Real acoustic_dt = time_stepper.incrementPhysicalTime(acoustic_time_step);
-        run_acoustic(acoustic_dt);
+        std::cout << "[ophelie][doc221] WARNING legacy omit clears ForcePrior each adv (Doc220 bug repro)\n";
+    }
+    else if (local_cli.omit_gravity_force)
+    {
+        std::cout << "[ophelie][doc221] omit_gravity=fixed_noop (ForcePrior not wiped)\n";
+    }
+    // Doc227 B: matched outer viscous/inertial budget for French keep (opt-in).
+    Real doc227_outer_budget = Real(0);
+    Real doc227_outer_elapsed = Real(0);
+    Real doc227_outer_t0 = time_stepper.getPhysicalTime();
+    Real doc227_viscous_force_last_t = time_stepper.getPhysicalTime();
+    Real doc227_dt_visc_cand = dt_adv_viscous0;
+    Real doc227_dt_ac_cand_last = Real(0);
+    size_t doc227_position_updates = 0;
+    size_t doc227_neighbor_updates = 0;
+    size_t doc227_viscous_updates = 0;
+    bool doc227_outer_need_init = local_cli.doc227_actual_timestep;
+    bool doc227_audit_header = true;
+    const std::string doc227_audit_path =
+        local_cli.doc227_step_audit_csv.empty() ? "output/doc227_actual_step_audit.csv"
+                                               : local_cli.doc227_step_audit_csv;
+    auto doc227_append_step_audit = [&](Real t_start, Real t_end, Real dt_actual, Real dt_ac_cand,
+                                        Real outer_start, Real outer_budget, Real outer_elapsed,
+                                        Real outer_remaining, Real dt_visc_cand, Real mu_raw_max,
+                                        Real mu_used_max) {
+        if (!local_cli.doc227_actual_timestep && local_cli.doc227_step_audit_csv.empty())
+            return;
+        std::ofstream csv(doc227_audit_path, std::ios::app);
+        if (doc227_audit_header)
+        {
+            csv << "t_start,t_end,dt_actual,dt_acoustic_candidate,"
+                   "outer_start,outer_budget,outer_elapsed,outer_remaining,"
+                   "dt_viscous_candidate,mu_raw_max,mu_used_max,"
+                   "viscous_force_last_update_time,viscous_force_age,"
+                   "position_update_count,neighbor_update_count,viscous_update_count\n";
+            doc227_audit_header = false;
+        }
+        const Real age = t_end - doc227_viscous_force_last_t;
+        csv << t_start << "," << t_end << "," << dt_actual << "," << dt_ac_cand << ","
+            << outer_start << "," << outer_budget << "," << outer_elapsed << "," << outer_remaining
+            << "," << dt_visc_cand << "," << mu_raw_max << "," << mu_used_max << ","
+            << doc227_viscous_force_last_t << "," << age << "," << doc227_position_updates << ","
+            << doc227_neighbor_updates << "," << doc227_viscous_updates << "\n";
+    };
+    auto doc227_begin_outer_if_needed = [&]() {
+        if (!local_cli.doc227_actual_timestep)
+            return;
+        if (!doc227_outer_need_init && doc227_outer_elapsed + TinyReal < doc227_outer_budget)
+            return;
+        advection_viscous_time_step.refreshViscousSpeedReference();
+        const Real dt_in = advection_time_step.exec();
+        const Real dt_vis = advection_viscous_time_step.exec();
+        doc227_dt_visc_cand = dt_vis;
+        const Real t_now = time_stepper.getPhysicalTime();
+        doc227_outer_budget = std::min({dt_in, dt_vis, local_cli.end_time - t_now});
+        if (doc227_outer_budget < TinyReal)
+            doc227_outer_budget = TinyReal;
+        doc227_outer_elapsed = Real(0);
+        doc227_outer_t0 = t_now;
+        doc227_outer_need_init = false;
+        // Lock viscous ForcePrior for this outer interval (age starts here).
+        fluid_advection_step_setup.exec();
+        exec_viscous();
+        apply_gravity_force_prior();
+        if (local_cli.literature.enable_boussinesq)
+            boussinesq_force.exec();
+        doc227_viscous_force_last_t = t_now;
+        ++doc227_viscous_updates;
+    };
 
+    auto apply_thermal_interval = [&](Real dt_th) {
+        if (dt_th <= TinyReal)
+            return;
+        // Doc219 E: re-sample fixed spatial Q each thermal update (not particle-ID advection).
+        if (local_cli.spatial_frozen_q && !local_cli.literature.zero_q)
+        {
+            size_t n_uncovered = 0;
+            const bool verbose = (spatial_q_resample_count % 50 == 0);
+            const Real p_sample = hostSampleSpatialFrozenQ(glass_particles, q_grid, p_joule,
+                                                           /*renormalize=*/true, n_uncovered, verbose);
+            ++spatial_q_resample_count;
+            recordFrenchFluidHeatPower(coupling_state, glass_particles);
+            if (!std::isfinite(p_sample) || !std::isfinite(coupling_state.last_power.p_heat_fluid))
+            {
+                numerical_abort = true;
+                numerical_abort_reason = "non_finite_P_heat_or_P_sample_in_spatial_q";
+                std::cerr << "[ophelie][doc224][numerical-abort] " << numerical_abort_reason
+                          << " t=" << time_stepper.getPhysicalTime() << " P_sample=" << p_sample
+                          << " P_heat_fluid=" << coupling_state.last_power.p_heat_fluid << std::endl;
+                return;
+            }
+            if (n_uncovered > 0 && verbose)
+            {
+                std::cerr << "[ophelie][doc219][spatial-q] note: n_outside_grid=" << n_uncovered
+                          << " clamped_to_edge (not Q=0) P_sample=" << p_sample << std::endl;
+            }
+        }
         if (!local_cli.literature.zero_q)
         {
             if (local_cli.literature.constant_thermal_rheology)
-            {
-                apply_q_const.exec(acoustic_dt);
-            }
+                apply_q_const.exec(dt_th);
             else
-            {
-                apply_q_variable.exec(acoustic_dt);
-            }
-            coupling_state.ledger.accumulateQ(coupling_state.last_power.p_heat_fluid, acoustic_dt);
+                apply_q_variable.exec(dt_th);
+            coupling_state.ledger.accumulateQ(coupling_state.last_power.p_heat_fluid, dt_th);
         }
-        if (!local_cli.literature.constant_thermal_rheology)
-        {
-            const Real mu_now = hostUpdateFrenchThermalRheologyFromTemperature(
-                glass_particles, laws, false, t0, rheology_stats);
-            glass_viscosity.setReferenceViscosity(mu_now);
-            invalidateViscosityDependentCkKernels(glass_inner, glass_wall_contact);
-        }
+        if (refresh_mu_from_T)
+            sync_mu_from_temperature("thermal_interval", /*log_particle=*/false);
         if (!local_cli.freeze_prescribed_temperature)
         {
             if (use_skull_shell_thermal)
             {
-                glass_shell_thermal->exec(acoustic_dt);
-                wall_shell_thermal->exec(acoustic_dt);
+                glass_shell_thermal->exec(dt_th);
+                wall_shell_thermal->exec(dt_th);
             }
             else if (laplace_temperature && apply_diffusion)
             {
                 laplace_temperature->exec();
-                apply_diffusion->exec(acoustic_dt);
+                apply_diffusion->exec(dt_th);
             }
             {
                 const Real p_boundary_now = boundary_loss_power.exec();
                 coupling_state.ledger.p_loss_live = p_boundary_now;
-                coupling_state.ledger.accumulateBoundary(p_boundary_now, acoustic_dt);
+                coupling_state.ledger.accumulateBoundary(p_boundary_now, dt_th);
             }
-            apply_natural_bc.exec(acoustic_dt);
+            apply_natural_bc.exec(dt_th);
         }
-        if (local_cli.literature.enable_boussinesq)
+    };
+
+    if (local_cli.doc227_actual_timestep)
+    {
+        std::cout << "[ophelie][doc227][B] actual_timestep=1 matched outer budget; "
+                     "acoustic substeps truncated; audit=" << doc227_audit_path << std::endl;
+        // Avoid dual physical ops: TriggerByInterval path disabled for keep.
+        std::ofstream wipe(doc227_audit_path, std::ios::trunc);
+        wipe.close();
+        doc227_audit_header = true;
+    }
+
+    while (!time_stepper.isEndTime(local_cli.end_time) && !numerical_abort)
+    {
+        doc227_begin_outer_if_needed();
+
+        const Real t_step_start = time_stepper.getPhysicalTime();
+        const Real dt_ac_cand = acoustic_time_step.exec();
+        doc227_dt_ac_cand_last = dt_ac_cand;
+        Real acoustic_dt = dt_ac_cand;
+        if (local_cli.doc227_actual_timestep)
         {
+            const Real rem_outer = std::max(Real(0), doc227_outer_budget - doc227_outer_elapsed);
+            const Real rem_end = std::max(Real(0), local_cli.end_time - t_step_start);
+            acoustic_dt = std::min({dt_ac_cand, rem_outer, rem_end});
+            if (acoustic_dt <= TinyReal)
+            {
+                doc227_outer_need_init = true;
+                continue;
+            }
+            // Hard gate: never exceed outer viscous/inertial budget (float tol only).
+            const Real rem_tol = doc227ScheduleTol(doc227_outer_budget);
+            if (acoustic_dt > rem_outer + rem_tol)
+            {
+                numerical_abort = true;
+                numerical_abort_reason = "doc227_dt_exceeds_outer_remaining";
+                break;
+            }
+            time_stepper.incrementPhysicalTime(acoustic_dt);
+        }
+        else
+        {
+            acoustic_dt = time_stepper.incrementPhysicalTime(acoustic_time_step);
+        }
+        run_acoustic(acoustic_dt);
+
+        // Legacy path: thermal on every acoustic substep (pre–Doc219).
+        // Doc227 matched path: thermal once per outer (after position), not per acoustic.
+        if (!local_cli.doc219_hydro_profile && !local_cli.doc227_actual_timestep)
+            apply_thermal_interval(acoustic_dt);
+
+        // Refresh buoyancy each acoustic substep (cavity-validated).
+        if (local_cli.literature.enable_boussinesq)
             boussinesq_force.exec();
+        if (local_cli.diag_tip_soft_force)
+        {
+            // Doc221 N4 / Doc222 B: tip soft force channel into ForcePrior (no host Uz edit).
+            hostApplyTipSoftForcePrior(glass_particles, z_free, Real(0.5) * french.dp,
+                                       local_cli.diag_tip_soft_force_r, local_cli.diag_tip_soft_force_k,
+                                       local_cli.diag_tip_soft_force_c, false, Real(0),
+                                       local_cli.diag_tip_soft_force_legacy_accumulate);
+        }
+        else if (local_cli.diag_tip_fs_dashpot)
+        {
+            // Doc221 N5 / Doc222 B: tip dashpot only on FS-incomplete particles.
+            hostApplyTipSoftForcePrior(glass_particles, z_free, Real(0.5) * french.dp,
+                                       local_cli.diag_tip_soft_force_r, Real(0),
+                                       local_cli.diag_tip_soft_force_c, /*fs_incomplete_only=*/true,
+                                       rho0, local_cli.diag_tip_soft_force_legacy_accumulate);
         }
 
-        if (advection_step(advection_time_step))
+        if (local_cli.doc227_actual_timestep)
+        {
+            doc227_outer_elapsed += acoustic_dt;
+            const Real t_step_end = time_stepper.getPhysicalTime();
+            doc227_append_step_audit(t_step_start, t_step_end, acoustic_dt, dt_ac_cand, doc227_outer_t0,
+                                     doc227_outer_budget, doc227_outer_elapsed,
+                                     doc227_outer_budget - doc227_outer_elapsed, doc227_dt_visc_cand,
+                                     rheology_stats.mu_raw_max, rheology_stats.mu_used_max);
+            // Viscous force age ≤ outer budget; equality allowed (one truncated step = full Dt).
+            // Age = t_end - t0 can sit ~1 ulp above budget after multi-acoustic fill (C2 abort).
+            const Real age = t_step_end - doc227_viscous_force_last_t;
+            const Real age_tol = doc227ScheduleTol(doc227_outer_budget);
+            if (age > doc227_outer_budget + age_tol)
+            {
+                numerical_abort = true;
+                numerical_abort_reason = "doc227_viscous_force_age_exceeds_budget";
+                break;
+            }
+        }
+
+        const bool do_outer_adv =
+            local_cli.doc227_actual_timestep
+                ? (doc227_outer_elapsed + doc227ScheduleTol(doc227_outer_budget) >=
+                       doc227_outer_budget ||
+                   time_stepper.isEndTime(local_cli.end_time))
+                : advection_step(use_viscous_adv_cfl
+                                     ? static_cast<BaseDynamics<Real> &>(advection_viscous_time_step)
+                                     : static_cast<BaseDynamics<Real> &>(advection_time_step));
+        if (do_outer_adv)
         {
             ++advection_steps;
+            if (local_cli.doc227_actual_timestep)
+            {
+                ++doc227_position_updates;
+                ++doc227_neighbor_updates;
+            }
+            if (local_cli.diag_zero_net_uz)
+            {
+                const Real uz_mean = hostSubtractMassWeightedMeanUz(glass_particles);
+                if (advection_steps == 1 || advection_steps % 100 == 0)
+                {
+                    std::cout << "[ophelie][doc221][diag-zero-net-uz] adv=" << advection_steps
+                              << " subtracted_Uz_mean=" << uz_mean
+                              << " (volume-closure diagnostic; NOT literature open FS)\n";
+                }
+            }
+            if (local_cli.diag_hard_lid)
+            {
+                // Doc221 M: thin band (0.5 dp) — only stop lid penetration; do not wipe near-surface upwelling.
+                const size_t n_kill =
+                    hostKillUpwardVelocityNearLid(glass_particles, z_free, Real(0.5) * french.dp);
+                if (advection_steps == 1 || advection_steps % 100 == 0)
+                {
+                    std::cout << "[ophelie][doc221][diag-hard-lid] adv=" << advection_steps
+                              << " n_kill_up=" << n_kill
+                              << " z_lid=" << z_free
+                              << " band=0.5*dp (kinematic hard lid; NOT literature open FS)\n";
+                }
+            }
+            else if (local_cli.diag_soft_lid)
+            {
+                // Doc221 N: same thin-band kill-up as soft top, but never clamp z.
+                const size_t n_kill =
+                    hostKillUpwardVelocityNearLid(glass_particles, z_free, Real(0.5) * french.dp);
+                if (advection_steps == 1 || advection_steps % 100 == 0)
+                {
+                    std::cout << "[ophelie][doc221][diag-soft-lid] adv=" << advection_steps
+                              << " n_kill_up=" << n_kill << " z_lid=" << z_free
+                              << " band=0.5*dp no_clamp (NOT literature open FS)\n";
+                }
+            }
+            else if (local_cli.diag_soft_lid_tip)
+            {
+                // Doc221 N2/N3: tip-local scale upward Uz; never clamp z; never full-lid wipe.
+                const size_t n_touch = hostScaleUpwardVelocityNearTip(
+                    glass_particles, z_free, Real(0.5) * french.dp, local_cli.diag_soft_lid_tip_r,
+                    local_cli.diag_soft_lid_tip_uz_scale);
+                if (advection_steps == 1 || advection_steps % 100 == 0)
+                {
+                    std::cout << "[ophelie][doc221][diag-soft-lid-tip] adv=" << advection_steps
+                              << " n_touch_up=" << n_touch << " z_lid=" << z_free
+                              << " tip_r=" << local_cli.diag_soft_lid_tip_r
+                              << " uz_scale=" << local_cli.diag_soft_lid_tip_uz_scale
+                              << " band=0.5*dp no_clamp (NOT literature open FS)\n";
+                }
+            }
+            else if (local_cli.diag_tip_soft_force)
+            {
+                // Doc222 B: log-only count (never re-apply ForcePrior here).
+                const size_t n_touch = hostCountTipSoftForceTouches(
+                    glass_particles, z_free, Real(0.5) * french.dp, local_cli.diag_tip_soft_force_r,
+                    local_cli.diag_tip_soft_force_k, local_cli.diag_tip_soft_force_c);
+                if (advection_steps == 1 || advection_steps % 100 == 0)
+                {
+                    std::cout << "[ophelie][doc221][diag-tip-soft-force] adv=" << advection_steps
+                              << " n_touch=" << n_touch << " z_lid=" << z_free
+                              << " tip_r=" << local_cli.diag_tip_soft_force_r
+                              << " k=" << local_cli.diag_tip_soft_force_k
+                              << " c=" << local_cli.diag_tip_soft_force_c
+                              << " band=0.5*dp no_Uz_kill no_clamp count_only"
+                              << " legacy_acc=" << (local_cli.diag_tip_soft_force_legacy_accumulate ? 1 : 0)
+                              << " (NOT literature open FS)\n";
+                }
+            }
+            else if (local_cli.diag_tip_fs_dashpot)
+            {
+                const size_t n_touch = hostCountTipSoftForceTouches(
+                    glass_particles, z_free, Real(0.5) * french.dp, local_cli.diag_tip_soft_force_r,
+                    Real(0), local_cli.diag_tip_soft_force_c, /*fs_incomplete_only=*/true, rho0);
+                if (advection_steps == 1 || advection_steps % 100 == 0)
+                {
+                    std::cout << "[ophelie][doc221][diag-tip-fs-dashpot] adv=" << advection_steps
+                              << " n_touch_fs=" << n_touch << " z_lid=" << z_free
+                              << " tip_r=" << local_cli.diag_tip_soft_force_r
+                              << " c=" << local_cli.diag_tip_soft_force_c
+                              << " fs_incomplete_only=1 no_Uz_kill no_clamp count_only"
+                              << " legacy_acc=" << (local_cli.diag_tip_soft_force_legacy_accumulate ? 1 : 0)
+                              << " (NOT literature open FS)\n";
+                }
+            }
             fluid_update_particle_position.exec();
+            if (local_cli.diag_hard_lid)
+            {
+                const size_t n_clamp = hostClampZToLid(glass_particles, z_free);
+                if (advection_steps == 1 || advection_steps % 100 == 0)
+                {
+                    std::cout << "[ophelie][doc221][diag-hard-lid] adv=" << advection_steps
+                              << " n_clamp_z=" << n_clamp << "\n";
+                }
+            }
             // Keep geometric freeze-T after motion (Doc77-C style); else residual advection scrambles drive.
             if (local_cli.freeze_prescribed_temperature && has_prescribed_t)
             {
-                apply_prescribed_temperature();
+                apply_prescribed_temperature(/*quiet=*/true);
             }
             if (advection_steps % 50 == 0)
             {
@@ -3313,17 +8730,178 @@ int main(int ac, char *av[])
                 (void)hostApplyFrenchSkullShellOuterCoolDirichlet(wall_particles, french, wall_thickness,
                                                                   local_cli.skull_shell.t_cool, t0);
             }
-            density_regularization.exec();
-            apply_quiet_hydro_after_dens();
+            run_density_update();
             maybe_dens_sum_audit(time_stepper.getPhysicalTime(), advection_steps);
+            if (local_cli.doc223_paper_flat_slip_top &&
+                (advection_steps == 1 || advection_steps % 100 == 0))
+            {
+                hostLogDoc223PaperTopHydroAudit(
+                    ("keep_adv" + std::to_string(advection_steps)).c_str(), glass_particles, rho0,
+                    local_cli.c0, local_cli.gravity_g, gc, french.glass_radius, z_bottom, z_free, french.dp);
+                if (doc223_e3_state.active)
+                {
+                    hostDoc223LogE3LidAudit(("keep_adv" + std::to_string(advection_steps)).c_str(),
+                                           glass_particles, z_free, french.dp, doc223_e3_state.ke0,
+                                           doc223_e3_state.z_com0);
+                }
+            }
+            if (doc222_fs_deform_on && (advection_steps == 1 || advection_steps % 10 == 0))
+            {
+                doc222_fs_surf_last = hostMeasureDoc222FsSurfaceStats(glass_particles, gc, french.glass_radius,
+                                                                      z_free, 12);
+                hostDoc222AppendFsSurfaceCsv(doc222_fs_csv_path, time_stepper.getPhysicalTime(),
+                                             static_cast<int>(advection_steps), doc222_fs_surf_last,
+                                             doc222_fs_csv_header);
+                doc222_fs_csv_header = false;
+                if (advection_steps == 1 || advection_steps % 100 == 0)
+                {
+                    std::cout << "[ophelie][doc222][D2] adv=" << advection_steps
+                              << " t=" << time_stepper.getPhysicalTime()
+                              << " mode_amp=" << doc222_fs_surf_last.mode_amp
+                              << " mode_amp0=" << doc222_fs_surf0.mode_amp
+                              << " z_max=" << doc222_fs_surf_last.z_max
+                              << " U_rms=" << doc222_fs_surf_last.u_rms << " KE=" << doc222_fs_surf_last.ke
+                              << "\n";
+                }
+            }
             fluid_advection_step_setup.exec();
-            if (local_cli.kernel_correction)
-                fluid_linear_correction_matrix.exec();
-            fluid_viscous_force.exec();
-            constant_gravity.exec();
+            // Doc227 matched path: viscous ForcePrior locked at outer START (not here).
+            // Legacy trigger path keeps end-of-adv viscous refresh.
+            if (!local_cli.doc227_actual_timestep)
+                exec_viscous();
+            else
+            {
+                // Thermal once per outer with actual integrated span; then reopen budget.
+                if (!local_cli.doc219_hydro_profile)
+                    apply_thermal_interval(doc227_outer_elapsed);
+                else
+                {
+                    const Real t_now = time_stepper.getPhysicalTime();
+                    const Real dt_adv = std::max(Real(0), t_now - last_adv_phys_time);
+                    last_adv_phys_time = t_now;
+                    apply_thermal_interval(dt_adv);
+                }
+                if (refresh_mu_from_T)
+                    sync_mu_from_temperature("doc227_outer_end", /*log_particle=*/false);
+                doc227_outer_need_init = true;
+            }
+            const bool doc221_probe_this =
+                local_cli.doc221_force_ledger_probe_adv > 0 &&
+                static_cast<int>(advection_steps) <= local_cli.doc221_force_ledger_probe_adv;
+            if (doc221_probe_this)
+            {
+                const auto st_v = hostDoc221ForceLedgerStats(glass_particles);
+                logDoc221ForceLedger("after_viscous_adv" + std::to_string(advection_steps), st_v);
+                hostDoc221AppendForceLedgerCsv(doc221_ledger_csv, "after_viscous",
+                                               static_cast<int>(advection_steps),
+                                               time_stepper.getPhysicalTime(), st_v, doc221_ledger_csv_header);
+                doc221_ledger_csv_header = false;
+            }
+            apply_gravity_force_prior();
+            if (doc221_probe_this)
+            {
+                const auto st_g = hostDoc221ForceLedgerStats(glass_particles);
+                logDoc221ForceLedger("after_omit_or_gravity_adv" + std::to_string(advection_steps), st_g);
+                hostDoc221AppendForceLedgerCsv(doc221_ledger_csv, "after_omit_or_gravity",
+                                               static_cast<int>(advection_steps),
+                                               time_stepper.getPhysicalTime(), st_g, doc221_ledger_csv_header);
+                doc221_ledger_csv_header = false;
+            }
             if (local_cli.literature.enable_boussinesq)
             {
                 boussinesq_force.exec();
+            }
+            if (local_cli.diag_tip_soft_force)
+            {
+                hostApplyTipSoftForcePrior(glass_particles, z_free, Real(0.5) * french.dp,
+                                           local_cli.diag_tip_soft_force_r,
+                                           local_cli.diag_tip_soft_force_k,
+                                           local_cli.diag_tip_soft_force_c, false, Real(0),
+                                           local_cli.diag_tip_soft_force_legacy_accumulate);
+            }
+            else if (local_cli.diag_tip_fs_dashpot)
+            {
+                hostApplyTipSoftForcePrior(glass_particles, z_free, Real(0.5) * french.dp,
+                                           local_cli.diag_tip_soft_force_r, Real(0),
+                                           local_cli.diag_tip_soft_force_c,
+                                           /*fs_incomplete_only=*/true, rho0,
+                                           local_cli.diag_tip_soft_force_legacy_accumulate);
+            }
+            if (doc221_probe_this)
+            {
+                const auto st_b = hostDoc221ForceLedgerStats(glass_particles);
+                logDoc221ForceLedger("after_boussinesq_adv" + std::to_string(advection_steps), st_b);
+                hostDoc221AppendForceLedgerCsv(doc221_ledger_csv, "after_boussinesq",
+                                               static_cast<int>(advection_steps),
+                                               time_stepper.getPhysicalTime(), st_b, doc221_ledger_csv_header);
+                doc221_ledger_csv_header = false;
+            }
+            if (local_cli.doc221_force_lifecycle_selftest && advection_steps == 1)
+            {
+                // Doc221 C/D: ledger + repeat buoyancy + omit helper must not destroy other channels.
+                const auto st0 = hostDoc221ForceLedgerStats(glass_particles);
+                logDoc221ForceLedger("selftest_assembled", st0);
+                const Real fp_before_omit = st0.fp_rms;
+                const Real visc_before = st0.visc_rms;
+                const Real buoy_before = st0.buoy_rms;
+                apply_gravity_force_prior();
+                const auto st_omit = hostDoc221ForceLedgerStats(glass_particles);
+                logDoc221ForceLedger("selftest_after_omit_helper", st_omit);
+                if (local_cli.literature.enable_boussinesq)
+                    boussinesq_force.exec();
+                const auto st_rep = hostDoc221ForceLedgerStats(glass_particles);
+                logDoc221ForceLedger("selftest_after_repeat_boussinesq", st_rep);
+                const bool ledger_ok = st0.residual_rel_rms <= Real(1.0e-5) && st0.residual_max <= Real(1.0e-4);
+                const bool omit_preserves =
+                    local_cli.doc221_legacy_omit_clears_forceprior
+                        ? (st_omit.fp_rms < Real(1.0e-8))
+                        : (std::abs(st_omit.fp_rms - fp_before_omit) <= Real(1.0e-6) * (fp_before_omit + Real(1)) &&
+                           std::abs(st_omit.visc_rms - visc_before) <= Real(1.0e-6) * (visc_before + Real(1)));
+                const bool repeat_ok =
+                    !local_cli.literature.enable_boussinesq ||
+                    (std::abs(st_rep.fp_rms - st_omit.fp_rms) <= Real(1.0e-5) * (st_omit.fp_rms + Real(1)) &&
+                     std::abs(st_rep.buoy_rms - buoy_before) <= Real(1.0e-5) * (buoy_before + Real(1)));
+                const bool pass = ledger_ok && omit_preserves && repeat_ok;
+                std::cout << "[ophelie][doc221][selftest] ledger_ok=" << (ledger_ok ? 1 : 0)
+                          << " omit_preserves=" << (omit_preserves ? 1 : 0) << " repeat_ok=" << (repeat_ok ? 1 : 0)
+                          << " legacy_wipe=" << (local_cli.doc221_legacy_omit_clears_forceprior ? 1 : 0)
+                          << " PASS=" << (pass ? 1 : 0) << std::endl;
+                if (!local_cli.summary_json.empty())
+                {
+                    std::ofstream js(local_cli.summary_json);
+                    js << "{\n"
+                       << "  \"doc221_force_lifecycle_selftest\": 1,\n"
+                       << "  \"legacy_omit_clears_forceprior\": "
+                       << (local_cli.doc221_legacy_omit_clears_forceprior ? 1 : 0) << ",\n"
+                       << "  \"ledger_ok\": " << (ledger_ok ? 1 : 0) << ",\n"
+                       << "  \"omit_preserves\": " << (omit_preserves ? 1 : 0) << ",\n"
+                       << "  \"repeat_ok\": " << (repeat_ok ? 1 : 0) << ",\n"
+                       << "  \"residual_rel_rms\": " << st0.residual_rel_rms << ",\n"
+                       << "  \"residual_max\": " << st0.residual_max << ",\n"
+                       << "  \"fp_rms\": " << st0.fp_rms << ",\n"
+                       << "  \"visc_rms\": " << st0.visc_rms << ",\n"
+                       << "  \"buoy_rms\": " << st0.buoy_rms << ",\n"
+                       << "  \"fp_rms_after_omit\": " << st_omit.fp_rms << ",\n"
+                       << "  \"fp_rms_after_repeat_bouss\": " << st_rep.fp_rms << ",\n"
+                       << "  \"passed\": " << (pass ? 1 : 0) << "\n"
+                       << "}\n";
+                }
+                return pass ? 0 : 2;
+            }
+            // Doc219: B (+ TVF) after ForcePrior; thermal after neighborhood rebuild.
+            if (local_cli.kernel_correction || local_cli.enable_tvf)
+                fluid_linear_correction_matrix.exec();
+            if (local_cli.enable_tvf)
+            {
+                kernel_grad_integral.exec();
+                transport_correction.exec();
+            }
+            if (local_cli.doc219_hydro_profile && !local_cli.doc227_actual_timestep)
+            {
+                const Real t_now = time_stepper.getPhysicalTime();
+                const Real dt_adv = std::max(Real(0), t_now - last_adv_phys_time);
+                last_adv_phys_time = t_now;
+                apply_thermal_interval(dt_adv);
             }
             if (periodic_coupling)
             {
@@ -3502,8 +9080,28 @@ int main(int ac, char *av[])
                               << " contact_wall_gain_W=" << contact_wall_gain_w;
                 }
                 std::cout << std::endl;
+                // Doc224: glass natural-convection U_max≫0.05 m/s is already a red-line blow-up.
+                if (!std::isfinite(u_now) || !std::isfinite(spatial.u_rms) || !std::isfinite(t_mean_now) ||
+                    u_now > Real(0.05))
+                {
+                    numerical_abort = true;
+                    numerical_abort_reason = !std::isfinite(u_now) || !std::isfinite(spatial.u_rms) ||
+                                                    !std::isfinite(t_mean_now)
+                                                ? "non_finite_U_or_T_at_monitor"
+                                                : "U_max_above_0p05_blowup_gate";
+                    std::cerr << "[ophelie][doc224][numerical-abort] " << numerical_abort_reason
+                              << " t=" << t_now << " U_max=" << u_now << " U_rms=" << spatial.u_rms
+                              << std::endl;
+                }
             }
         }
+    }
+
+    if (numerical_abort)
+    {
+        std::cerr << "[ophelie][doc224][numerical-abort] exiting early: " << numerical_abort_reason
+                  << " t=" << time_stepper.getPhysicalTime() << std::endl;
+        return 3;
     }
 
     const Real u_max = u_max_reduce.exec();
@@ -3514,11 +9112,63 @@ int main(int ac, char *av[])
     const Real u_buoy = frenchBuoyancySpeedScale(local_cli.gravity_g, beta, dT, glass_h);
     const FrenchMeltSpatialStats spatial_end =
         hostFrenchMeltSpatialStats(glass_particles, cyl_frame, kOphelieTemperatureField);
+    if (doc222_fs_deform_on)
+    {
+        doc222_fs_surf_last =
+            hostMeasureDoc222FsSurfaceStats(glass_particles, gc, french.glass_radius, z_free, 12);
+        hostDoc222AppendFsSurfaceCsv(doc222_fs_csv_path, time_stepper.getPhysicalTime(),
+                                     static_cast<int>(advection_steps), doc222_fs_surf_last, doc222_fs_csv_header);
+        doc222_fs_csv_header = false;
+        std::cout << "[ophelie][doc222][D2] end mode_amp=" << doc222_fs_surf_last.mode_amp
+                  << " mode_amp0=" << doc222_fs_surf0.mode_amp
+                  << " ratio="
+                  << (std::abs(doc222_fs_surf0.mode_amp) > TinyReal
+                          ? doc222_fs_surf_last.mode_amp / doc222_fs_surf0.mode_amp
+                          : Real(0))
+                  << " z_max=" << doc222_fs_surf_last.z_max << " U_rms=" << doc222_fs_surf_last.u_rms
+                  << " KE=" << doc222_fs_surf_last.ke << "\n";
+    }
     writeFluidTemperatureRzCsv("output/french_T_rz.csv", glass_particles, cyl_frame, kOphelieTemperatureField);
     const GlassEscapeCensus escape = hostCountEscapedGlassParticles(glass_particles, gc, french.glass_radius, z_bottom,
                                                                    z_rim, french.dp);
     const Real escaped_frac =
         escape.total > 0 ? static_cast<Real>(escape.escaped) / static_cast<Real>(escape.total) : Real(0);
+    bool doc223_e3_pass = false;
+    Real doc223_e3_ke_end = 0, doc223_e3_dz_com = 0, doc223_e3_overshoot = 0;
+    size_t doc223_e3_n_above = 0;
+    if (doc223_e3_state.active)
+    {
+        hostDoc223LogE3LidAudit("end", glass_particles, z_free, french.dp, doc223_e3_state.ke0,
+                                doc223_e3_state.z_com0);
+        syncVariableToHost<Vecd>(glass_particles, "Position");
+        const Vecd *pos_e3 = glass_particles.getVariableDataByName<Vecd>("Position");
+        const size_t n_e3 = glass_particles.TotalRealParticles();
+        for (size_t i = 0; i < n_e3; ++i)
+        {
+            if (pos_e3[i][2] > z_free)
+            {
+                ++doc223_e3_n_above;
+                doc223_e3_overshoot = std::max(doc223_e3_overshoot, pos_e3[i][2] - z_free);
+            }
+        }
+        doc223_e3_ke_end = hostDoc223KineticEnergy(glass_particles);
+        doc223_e3_dz_com = hostDoc223MassComZ(glass_particles) - doc223_e3_state.z_com0;
+        const Real ke_ratio =
+            (doc223_e3_state.ke0 > TinyReal) ? (doc223_e3_ke_end / doc223_e3_state.ke0) : Real(0);
+        const bool pass_escape = escaped_frac <= TinyReal && doc223_e3_n_above == 0;
+        const bool pass_overshoot = doc223_e3_overshoot < Real(0.25) * french.dp;
+        const bool pass_ke = ke_ratio < Real(2); // no strong self-excitation
+        const bool pass_com = std::abs(doc223_e3_dz_com) < french.dp;
+        const bool pass_ma = doc223_e3_state.ma < Real(0.05);
+        doc223_e3_pass = pass_escape && pass_overshoot && pass_ke && pass_com && pass_ma;
+        std::cout << "[ophelie][doc223][E3] verdict Ma=" << doc223_e3_state.ma
+                  << " ke_ratio=" << ke_ratio << " dz_com=" << doc223_e3_dz_com
+                  << " n_above=" << doc223_e3_n_above << " overshoot=" << doc223_e3_overshoot
+                  << " escaped_frac=" << escaped_frac
+                  << " pass_escape=" << (pass_escape ? 1 : 0)
+                  << " pass_ke=" << (pass_ke ? 1 : 0) << " pass_com=" << (pass_com ? 1 : 0)
+                  << " pass=" << (doc223_e3_pass ? 1 : 0) << "\n";
+    }
     Real side_w = 0, bottom_w = 0, free_conv_w = 0, free_rad_w = 0, total_loss_w = 0;
     hostOphelieThermalFrenchNaturalHeatLossPowers(glass_particles, thermal_bc, thermal_bc.boundary_shell_thickness,
                                                   side_w, bottom_w, free_conv_w, free_rad_w, total_loss_w);
@@ -3663,8 +9313,13 @@ int main(int ac, char *av[])
               << " coupling=" << thermoEMCouplingModeName(local_cli.literature.coupling)
               << " em_control=" << emControlModeName(local_cli.literature.em_control)
               << " passed=" << (passed ? 1 : 0) << std::endl;
-    const std::vector<std::pair<Real, Real>> default_windows = {
-        {Real(5), Real(10)}, {Real(10), Real(15)}, {Real(15), Real(20)}};
+    // Doc224 B1: fixed 5 s windows; extend list when end_time grows (20–25 / 25–30).
+    std::vector<std::pair<Real, Real>> default_windows = {
+        {Real(0), Real(5)}, {Real(5), Real(10)}, {Real(10), Real(15)}, {Real(15), Real(20)}};
+    if (local_cli.end_time + Real(1e-9) >= Real(25))
+        default_windows.push_back({Real(20), Real(25)});
+    if (local_cli.end_time + Real(1e-9) >= Real(30))
+        default_windows.push_back({Real(25), Real(30)});
     const auto meridional_windows = frenchMeridionalWindowsFromTimeseriesCsv(meridional_ts_path, default_windows);
     if (!local_cli.summary_json.empty())
     {
@@ -3682,7 +9337,51 @@ int main(int ac, char *av[])
            << "  \"effective_beta\": " << effective_beta << ",\n"
            << "  \"boussinesq\": " << (local_cli.literature.enable_boussinesq ? 1 : 0) << ",\n"
            << "  \"freeze_prescribed_t\": " << (local_cli.freeze_prescribed_temperature ? 1 : 0) << ",\n"
+           << "  \"diag_zero_net_uz\": " << (local_cli.diag_zero_net_uz ? 1 : 0) << ",\n"
+           << "  \"diag_hard_lid\": " << (local_cli.diag_hard_lid ? 1 : 0) << ",\n"
+           << "  \"diag_soft_lid\": " << (local_cli.diag_soft_lid ? 1 : 0) << ",\n"
+           << "  \"diag_soft_lid_tip\": " << (local_cli.diag_soft_lid_tip ? 1 : 0) << ",\n"
+           << "  \"diag_soft_lid_tip_r\": " << local_cli.diag_soft_lid_tip_r << ",\n"
+           << "  \"diag_soft_lid_tip_uz_scale\": " << local_cli.diag_soft_lid_tip_uz_scale << ",\n"
+           << "  \"diag_tip_soft_force\": " << (local_cli.diag_tip_soft_force ? 1 : 0) << ",\n"
+           << "  \"diag_tip_fs_dashpot\": " << (local_cli.diag_tip_fs_dashpot ? 1 : 0) << ",\n"
+           << "  \"diag_tip_soft_force_r\": " << local_cli.diag_tip_soft_force_r << ",\n"
+           << "  \"diag_tip_soft_force_k\": " << local_cli.diag_tip_soft_force_k << ",\n"
+           << "  \"diag_tip_soft_force_c\": " << local_cli.diag_tip_soft_force_c << ",\n"
+           << "  \"diag_wall_flat_lid\": " << (local_cli.diag_wall_flat_lid ? 1 : 0) << ",\n"
+           << "  \"diag_lid_free_slip\": " << (local_cli.diag_lid_free_slip ? 1 : 0) << ",\n"
+           << "  \"diag_lid_free_slip_post_settle\": "
+           << (local_cli.diag_lid_free_slip_post_settle ? 1 : 0) << ",\n"
+           << "  \"diag_wall_lid_viscous_omit\": " << (local_cli.diag_wall_lid_viscous_omit ? 1 : 0)
+           << ",\n"
+           << "  \"diag_lid_dens_silence\": " << (local_cli.diag_lid_dens_silence ? 1 : 0) << ",\n"
+           << "  \"diag_lid_cont_silent\": " << (local_cli.diag_lid_cont_silent ? 1 : 0) << ",\n"
+           << "  \"diag_lid_cont_silent_only\": " << (local_cli.diag_lid_cont_silent_only ? 1 : 0)
+           << ",\n"
+           << "  \"diag_lid_omit_pjump_only\": " << (local_cli.diag_lid_omit_pjump_only ? 1 : 0)
+           << ",\n"
            << "  \"prescribe_t_radial_dT\": " << local_cli.prescribe_t_radial_dT << ",\n"
+           << "  \"init_T_rz_csv\": \"" << local_cli.init_T_rz_csv << "\",\n"
+           << "  \"init_T_rz_demean_legacy\": " << (local_cli.init_T_rz_demean_legacy ? 1 : 0) << ",\n"
+           << "  \"t_force_ref_from_mass_mean\": " << (local_cli.t_force_ref_from_mass_mean ? 1 : 0) << ",\n"
+           << "  \"doc223_f2_annular_hot\": " << (local_cli.doc223_f2_annular_hot ? 1 : 0) << ",\n"
+           << "  \"init_T\": \""
+           << (!local_cli.init_T_rz_csv.empty()
+                   ? (local_cli.freeze_prescribed_temperature ? "prescribed_doc224_fig8_rz_csv_frozen_ASSUMED"
+                                                             : "prescribed_doc224_fig8_rz_csv_then_thaw_ASSUMED")
+                   : (local_cli.doc223_f2_annular_hot
+                          ? (local_cli.freeze_prescribed_temperature ? "prescribed_doc223_f2_annular_hot_frozen"
+                                                                    : "prescribed_doc223_f2_annular_hot_then_thaw")
+                          : (local_cli.prescribe_t_radial_dT > TinyReal
+                                 ? (local_cli.freeze_prescribed_temperature
+                                        ? "prescribed_radial_hot_core_frozen"
+                                        : "prescribed_radial_hot_core_then_thaw")
+                                 : (local_cli.prescribe_t_hot_bottom_dT > TinyReal
+                                        ? (local_cli.freeze_prescribed_temperature
+                                               ? "prescribed_hot_bottom_frozen"
+                                               : "prescribed_hot_bottom_then_thaw")
+                                        : "isothermal_T0"))))
+           << "\",\n"
            << "  \"c0\": " << local_cli.c0 << ",\n"
            << "  \"hydro_settle_time\": " << local_cli.hydro_settle_time << ",\n"
            << "  \"meridional_average_start\": " << local_cli.meridional_average_start << ",\n"
@@ -3702,8 +9401,15 @@ int main(int ac, char *av[])
            << local_cli.dens_sum_surface_recapture_interval << ",\n"
            << "  \"dens_sum_n_recaptured_last\": " << dens_sum_n_recaptured_last << ",\n"
            << "  \"background_hydro_p\": " << (local_cli.background_hydro_p ? 1 : 0) << ",\n"
-           << "  \"french_pressure_path\": \"total_p_plus_GravityForceCK\",\n"
-           << "  \"perturbation_momentum\": 0,\n"
+           << "  \"french_pressure_path\": \""
+           << (local_cli.doc220_pprime_hydro
+                   ? "p_prime_plus_BackgroundPressure_no_GravityForceCK"
+                   : (local_cli.background_hydro_p ? "total_p_plus_BackgroundPressure_plus_GravityForceCK"
+                                                   : "total_p_plus_GravityForceCK"))
+           << "\",\n"
+           << "  \"perturbation_momentum\": " << local_cli.perturbation_momentum << ",\n"
+           << "  \"doc220_pprime_hydro\": " << (local_cli.doc220_pprime_hydro ? 1 : 0) << ",\n"
+           << "  \"omit_gravity_force\": " << (local_cli.omit_gravity_force ? 1 : 0) << ",\n"
            << "  \"kernel_correction\": " << (local_cli.kernel_correction ? 1 : 0) << ",\n"
            << "  \"dt_scale\": " << local_cli.dt_scale << ",\n"
            << "  \"acoustic_cfl\": " << acoustic_cfl_eff << ",\n"
@@ -3734,9 +9440,59 @@ int main(int ac, char *av[])
            << "  \"T_ctr\": " << spatial_end.t_center << ",\n"
            << "  \"T_out\": " << spatial_end.t_outer << ",\n"
            << "  \"escaped_frac\": " << escaped_frac << ",\n"
+           << "  \"doc222_ph_signed\": " << (local_cli.doc222_ph_signed ? 1 : 0) << ",\n"
+           << "  \"doc222_deform_skip_rho_freeze\": " << (local_cli.doc222_deform_skip_rho_freeze ? 1 : 0)
+           << ",\n"
+           << "  \"doc222_ph_local_eta\": " << (local_cli.doc222_ph_local_eta ? 1 : 0) << ",\n"
+           << "  \"doc222_ph_local_eta_bins\": " << local_cli.doc222_ph_local_eta_bins << ",\n"
+           << "  \"doc222_ph_local_eta_spread\": " << doc222_local_eta_ph_last.eta_spread << ",\n"
+           << "  \"doc222_ph_local_eta_mean\": " << doc222_local_eta_ph_last.eta_mean << ",\n"
+           << "  \"doc222_fs_deform_eps\": " << local_cli.doc222_fs_deform_eps << ",\n"
+           << "  \"doc222_fs_deform_on\": " << (doc222_fs_deform_on ? 1 : 0) << ",\n"
+           << "  \"doc222_fs_mode_amp0\": " << doc222_fs_surf0.mode_amp << ",\n"
+           << "  \"doc222_fs_mode_amp_end\": " << doc222_fs_surf_last.mode_amp << ",\n"
+           << "  \"doc222_fs_z_max0\": " << doc222_fs_surf0.z_max << ",\n"
+           << "  \"doc222_fs_z_max_end\": " << doc222_fs_surf_last.z_max << ",\n"
+           << "  \"doc222_fs_ke0\": " << doc222_fs_surf0.ke << ",\n"
+           << "  \"doc222_fs_ke_end\": " << doc222_fs_surf_last.ke << ",\n"
+           << "  \"doc222_fs_eps_over_dp\": " << doc222_fs_deform_rep.eps_over_dp << ",\n"
+           << "  \"doc222_fs_eps_over_H\": " << doc222_fs_deform_rep.eps_over_H << ",\n"
+           << "  \"hydro_model\": \""
+           << (local_cli.doc223_paper_flat_slip_top
+                   ? "paper_flat_slip_top"
+                   : (local_cli.diag_wall_flat_lid ? "closed_crucible_diag" : "open_free_surface"))
+           << "\",\n"
+           << "  \"pressure_model\": \""
+           << (local_cli.doc223_paper_flat_slip_top ? "perturbation_fixed_top"
+                                                    : (local_cli.doc220_pprime_hydro ? "pprime_open_fs"
+                                                                                     : "total_p"))
+           << "\",\n"
+           << "  \"doc223_paper_flat_slip_top\": " << (local_cli.doc223_paper_flat_slip_top ? 1 : 0)
+           << ",\n"
+           << "  \"doc223_ablate_no_free_slip\": " << (local_cli.doc223_ablate_no_free_slip ? 1 : 0)
+           << ",\n"
+           << "  \"doc224_lid_keep_dens_jump\": " << (local_cli.doc224_lid_keep_dens_jump ? 1 : 0)
+           << ",\n"
+           << "  \"doc224_ablate_opencup\": " << (local_cli.doc224_ablate_opencup ? 1 : 0) << ",\n"
+           << "  \"doc224_ablate_acoustic_freeslip\": "
+           << (local_cli.doc224_ablate_acoustic_freeslip ? 1 : 0) << ",\n"
+           << "  \"doc223_e3_normal_perturb\": " << (doc223_e3_state.active ? 1 : 0) << ",\n"
+           << "  \"doc223_e3_Ma\": " << doc223_e3_state.ma << ",\n"
+           << "  \"doc223_e3_ke0\": " << doc223_e3_state.ke0 << ",\n"
+           << "  \"doc223_e3_ke_end\": " << doc223_e3_ke_end << ",\n"
+           << "  \"doc223_e3_dz_com\": " << doc223_e3_dz_com << ",\n"
+           << "  \"doc223_e3_n_above_lid\": " << doc223_e3_n_above << ",\n"
+           << "  \"doc223_e3_overshoot_max\": " << doc223_e3_overshoot << ",\n"
+           << "  \"doc223_e3_pass\": "
+           << (doc223_e3_state.active ? (doc223_e3_pass ? "1" : "0") : "null") << ",\n"
            << "  \"smoke_passed\": " << (gates.smoke_passed ? 1 : 0) << ",\n"
            << "  \"passed\": " << (passed ? 1 : 0) << ",\n"
-           << "  \"hydrostatic_pass\": null,\n"
+           << "  \"hydrostatic_pass\": "
+           << ((local_cli.doc223_paper_flat_slip_top && std::abs(local_cli.beta) <= TinyReal &&
+                !doc223_e3_state.active)
+                   ? ((spatial_end.u_rms < Real(1e-4) && escaped_frac <= TinyReal) ? "1" : "0")
+                   : "null")
+           << ",\n"
            << "  \"meridional_timeseries\": \"" << meridional_ts_path << "\",\n";
         writeFrenchMeridionalWindowsJsonArray(js, meridional_windows);
         js << ",\n"
@@ -3744,5 +9500,7 @@ int main(int ac, char *av[])
            << "}\n";
         std::cout << "[ophelie] summary_json=" << local_cli.summary_json << std::endl;
     }
+    if (doc223_e3_state.active)
+        return (passed && doc223_e3_pass) ? 0 : 1;
     return passed ? 0 : 1;
 }

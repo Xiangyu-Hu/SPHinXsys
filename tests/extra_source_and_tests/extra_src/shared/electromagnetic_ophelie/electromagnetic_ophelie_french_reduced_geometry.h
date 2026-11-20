@@ -38,6 +38,9 @@ struct OphelieFrenchReducedCaseParams
 
     OphelieMultiloopCoilSpec coil;
     Real ampere_turns = 8.0;
+    /** Doc219 C1: distinguish I-primary vs NI-primary so refresh cannot silently overwrite. */
+    bool coil_current_user_set = false;
+    bool ampere_turns_user_set = false;
     bool auto_coil_z = true;
     Real coil_z_inset = 0.05;
     bool coil_z_user_set = false;
@@ -100,14 +103,71 @@ inline void applyFrenchReducedDefaults(OphelieParameters &params, OphelieFrenchR
     params.softening_length_ = 0.25 * french.dp;
 }
 
+/**
+ * Doc219 C1 excitation sync:
+ * - If only NI user-set → I = NI / N
+ * - Else (I user-set, or neither) → keep I, NI = I * N
+ * - If both user-set and inconsistent → FATAL
+ * Changing --coil-num-loops alone therefore keeps I_peak=1 and updates NI (fixes 8/7 bug).
+ */
 inline void syncFrenchReducedCoilCurrentFromAmpereTurns(OphelieFrenchReducedCaseParams &french)
 {
     if (french.coil.num_loops == 0)
     {
         french.coil.current_per_loop = 0.0;
+        french.ampere_turns = 0.0;
         return;
     }
-    french.coil.current_per_loop = french.ampere_turns / static_cast<Real>(french.coil.num_loops);
+    const Real n = static_cast<Real>(french.coil.num_loops);
+    if (french.coil_current_user_set && french.ampere_turns_user_set)
+    {
+        const Real ni_from_i = french.coil.current_per_loop * n;
+        const Real rel = std::abs(ni_from_i - french.ampere_turns) /
+                         (std::max(std::abs(french.ampere_turns), std::abs(ni_from_i)) + TinyReal);
+        if (rel > Real(1.0e-6))
+        {
+            std::cerr << "[ophelie][doc219][excitation] FATAL conflicting --coil-current and --ampere-turns: I="
+                      << french.coil.current_per_loop << " N=" << french.coil.num_loops
+                      << " NI_from_I=" << ni_from_i << " NI=" << french.ampere_turns << " rel=" << rel
+                      << std::endl;
+            std::exit(2);
+        }
+        french.ampere_turns = ni_from_i;
+        return;
+    }
+    if (french.ampere_turns_user_set && !french.coil_current_user_set)
+    {
+        french.coil.current_per_loop = french.ampere_turns / n;
+        return;
+    }
+    // Default / I-primary: preserve peak current per loop; NI follows N.
+    french.ampere_turns = french.coil.current_per_loop * n;
+}
+
+/** Unified excitation identity (Biot endpoint centers). */
+inline void logFrenchReducedExcitationIdentity(const OphelieFrenchReducedCaseParams &french,
+                                              const OphelieParameters &params, const std::string &case_tag,
+                                              bool fixed_i_not_target_power)
+{
+    StdVec<Real> zc;
+    ophelieCoilFillEndpointTurnCenters(french.coil.num_loops, french.coil.z_min, french.coil.z_max, zc);
+    const Real i_peak = french.coil.current_per_loop;
+    const Real i_rms = i_peak / std::sqrt(Real(2));
+    std::cout << "[ophelie][doc219][excitation] case=" << case_tag
+              << " N_turn=" << french.coil.num_loops << " I_peak_per_loop=" << i_peak
+              << " I_rms_per_loop=" << i_rms << " NI=" << french.ampere_turns
+              << " I_im=" << french.coil_current_imag << " f_hz=" << french.frequency_hz
+              << " phase=exp(+iwt) coil_R=" << french.coil.loop_radius
+              << " segments=" << french.coil.segments_per_loop << " z_min=" << french.coil.z_min
+              << " z_max=" << french.coil.z_max << " power_mode="
+              << (fixed_i_not_target_power ? "fixed_I" : "target_power_calibrate_I")
+              << " self_induction=" << (params.enable_self_induction_ ? 1 : 0)
+              << " sigma=" << french.sigma_glass << " glass_R=" << french.glass_radius
+              << " glass_H=" << frenchReducedGlassHeight(french) << " dp=" << french.dp
+              << " turn_z=";
+    for (size_t k = 0; k < zc.size(); ++k)
+        std::cout << (k ? "," : "") << zc[k];
+    std::cout << std::endl;
 }
 
 /** Doc 66: reject silent defaults / trailing garbage / non-finite CLI values. */
@@ -553,6 +613,7 @@ inline void applyFrenchReducedCommandLineOption(const char *arg, OphelieFrenchRe
     else if (std::strncmp(arg, "--coil-current=", 15) == 0)
     {
         french.coil.current_per_loop = frenchReducedStrictFiniteReal("--coil-current", arg + 15);
+        french.coil_current_user_set = true;
         french.ampere_turns = french.coil.current_per_loop * static_cast<Real>(french.coil.num_loops);
     }
     else if (std::strncmp(arg, "--coil-z-min=", 13) == 0)
@@ -604,6 +665,7 @@ inline void applyFrenchReducedCommandLineOption(const char *arg, OphelieFrenchRe
     else if (std::strncmp(arg, "--ampere-turns=", 15) == 0)
     {
         french.ampere_turns = frenchReducedStrictFiniteReal("--ampere-turns", arg + 15);
+        french.ampere_turns_user_set = true;
     }
     else if (std::strncmp(arg, "--frequency=", 12) == 0)
     {

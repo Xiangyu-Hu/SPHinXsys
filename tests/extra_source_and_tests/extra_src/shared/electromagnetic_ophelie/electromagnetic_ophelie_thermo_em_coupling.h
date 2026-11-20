@@ -1115,7 +1115,7 @@ inline void appendFrenchMeridionalTimeseriesCsv(const std::string &path, Real ti
         << "," << b.w_axis << "," << b.w_rim << "," << b.w_tot << "\n";
 }
 
-/** Doc97 P3: time-weighted mean over a half-open physical window [t0,t1). */
+/** Doc97 P3 / Doc224 B1: time-weighted mean over a half-open physical window [t0,t1). */
 struct FrenchMeridionalWindowMean
 {
     Real t0 = 0;
@@ -1125,10 +1125,60 @@ struct FrenchMeridionalWindowMean
     Real circ_proxy = 0;
     Real u_rms = 0;
     Real u_merid = 0;
-    Real weight_s = 0;
-    int n_samples = 0;
-    bool ok = false;
+    Real weight_s = 0;              // actual covered physical time (s)
+    Real requested_duration = 0;    // t1 - t0
+    Real coverage_ratio = 0;        // weight_s / requested_duration
+    Real max_sample_interval = 0;   // max gap among samples that touch the window
+    int n_samples = 0;              // number of time samples with t in [t0,t1)
+    int n_intervals = 0;            // number of contributing [t_i,t_{i+1}) segments
+    bool ok = false;                // Doc224 complete-window gate
+    /** "PASS" | "NOT_EVALUATED" — never auto-PASS a truncated tip sample. */
+    const char *eval_status = "NOT_EVALUATED";
+    const char *eval_reason = "no_samples";
 };
+
+/** Doc224 B1 engineering gate for a complete late window (not a literature criterion). */
+inline void frenchMeridionalWindowApplyCoverageGate(FrenchMeridionalWindowMean &m,
+                                                    Real min_coverage = Real(0.99),
+                                                    int min_samples = 50,
+                                                    Real max_interval = Real(0.2))
+{
+    m.requested_duration = m.t1 - m.t0;
+    m.coverage_ratio =
+        (m.requested_duration > TinyReal)
+            ? static_cast<Real>(static_cast<double>(m.weight_s) / static_cast<double>(m.requested_duration))
+            : Real(0);
+    m.ok = false;
+    m.eval_status = "NOT_EVALUATED";
+    if (!(m.requested_duration > TinyReal))
+    {
+        m.eval_reason = "zero_requested_duration";
+        return;
+    }
+    if (m.n_samples <= 0 || !(m.weight_s > TinyReal))
+    {
+        m.eval_reason = "no_coverage";
+        return;
+    }
+    if (m.coverage_ratio + TinyReal < min_coverage)
+    {
+        m.eval_reason = "coverage_below_99pct";
+        return;
+    }
+    if (m.n_samples < min_samples)
+    {
+        m.eval_reason = "n_samples_below_50";
+        return;
+    }
+    if (m.max_sample_interval > max_interval + TinyReal)
+    {
+        m.eval_reason = "max_sample_interval_above_0p2s";
+        return;
+    }
+    m.ok = true;
+    m.eval_status = "PASS";
+    m.eval_reason = "complete_window";
+}
 
 inline std::vector<FrenchMeridionalWindowMean> frenchMeridionalWindowsFromTimeseriesCsv(
     const std::string &path, const std::vector<std::pair<Real, Real>> &windows)
@@ -1140,6 +1190,7 @@ inline std::vector<FrenchMeridionalWindowMean> frenchMeridionalWindowsFromTimese
         FrenchMeridionalWindowMean m;
         m.t0 = w.first;
         m.t1 = w.second;
+        m.requested_duration = m.t1 - m.t0;
         out.push_back(m);
     }
     std::ifstream in(path);
@@ -1170,7 +1221,35 @@ inline std::vector<FrenchMeridionalWindowMean> frenchMeridionalWindowsFromTimese
         samples.push_back(s);
     }
     if (samples.size() < 2)
+    {
+        for (auto &m : out)
+            frenchMeridionalWindowApplyCoverageGate(m);
         return out;
+    }
+    for (auto &m : out)
+    {
+        // Count distinct samples with t in [t0,t1) and max gap between consecutive in-window samples
+        // (also include the last sample before t0 / first after t1 when bridging edges).
+        std::vector<Real> t_touch;
+        t_touch.reserve(samples.size());
+        for (const auto &s : samples)
+        {
+            if (s.t >= m.t0 && s.t < m.t1)
+                t_touch.push_back(s.t);
+        }
+        m.n_samples = static_cast<int>(t_touch.size());
+        m.max_sample_interval = 0;
+        if (t_touch.size() >= 2)
+        {
+            for (size_t k = 0; k + 1 < t_touch.size(); ++k)
+                m.max_sample_interval = std::max(m.max_sample_interval, t_touch[k + 1] - t_touch[k]);
+        }
+        else if (t_touch.size() == 1)
+        {
+            // A single tip sample cannot cover the window; interval = full request for gate fail.
+            m.max_sample_interval = m.requested_duration;
+        }
+    }
     for (size_t i = 0; i + 1 < samples.size(); ++i)
     {
         const Sample &a = samples[i];
@@ -1191,20 +1270,20 @@ inline std::vector<FrenchMeridionalWindowMean> frenchMeridionalWindowsFromTimese
             m.circ_proxy = static_cast<Real>(static_cast<double>(m.circ_proxy) + dt * static_cast<double>(a.circ));
             m.u_rms = static_cast<Real>(static_cast<double>(m.u_rms) + dt * static_cast<double>(a.u_rms));
             m.u_merid = static_cast<Real>(static_cast<double>(m.u_merid) + dt * static_cast<double>(a.u_merid));
-            ++m.n_samples;
+            ++m.n_intervals;
         }
     }
     for (auto &m : out)
     {
-        if (m.weight_s > TinyReal && m.n_samples > 0)
+        if (m.weight_s > TinyReal)
         {
             m.uz_axis /= m.weight_s;
             m.uz_rim /= m.weight_s;
             m.circ_proxy /= m.weight_s;
             m.u_rms /= m.weight_s;
             m.u_merid /= m.weight_s;
-            m.ok = true;
         }
+        frenchMeridionalWindowApplyCoverageGate(m);
     }
     return out;
 }
@@ -1217,7 +1296,11 @@ inline void writeFrenchMeridionalWindowsJsonArray(std::ostream &js,
     {
         const auto &w = wins[i];
         js << "    {\"t0\": " << w.t0 << ", \"t1\": " << w.t1 << ", \"ok\": " << (w.ok ? 1 : 0)
-           << ", \"n_samples\": " << w.n_samples << ", \"weight_s\": " << w.weight_s
+           << ", \"eval_status\": \"" << w.eval_status << "\", \"eval_reason\": \"" << w.eval_reason << "\""
+           << ", \"n_samples\": " << w.n_samples << ", \"n_intervals\": " << w.n_intervals
+           << ", \"weight_s\": " << w.weight_s << ", \"requested_duration\": " << w.requested_duration
+           << ", \"coverage_ratio\": " << w.coverage_ratio
+           << ", \"max_sample_interval\": " << w.max_sample_interval
            << ", \"Uz_axis\": " << w.uz_axis << ", \"Uz_rim\": " << w.uz_rim
            << ", \"circ_proxy\": " << w.circ_proxy << ", \"U_rms\": " << w.u_rms
            << ", \"U_merid\": " << w.u_merid << "}" << (i + 1 < wins.size() ? "," : "") << "\n";

@@ -162,6 +162,8 @@ AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
         BaseParticles *wp = contact_particles[k];
         dv_wall_free_slip_.push_back(wp->template registerDiscreteVariable<Real>(
             "AcousticWallFreeSlip", wp->ParticlesBound(), Real(0)));
+        dv_wall_keep_dens_jump_.push_back(wp->template registerDiscreteVariable<Real>(
+            "AcousticWallKeepDensJump", wp->ParticlesBound(), Real(0)));
         dv_wall_contact_omit_.push_back(wp->template registerDiscreteVariable<Real>(
             "AcousticWallContactOmit", wp->ParticlesBound(), Real(0)));
         dv_wall_contact_omit_1st_.push_back(wp->template registerDiscreteVariable<Real>(
@@ -199,6 +201,7 @@ AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, Param
       wall_acc_ave_(encloser.dv_wall_acc_ave_[contact_index]->DelegatedData(ex_policy)),
       wall_n_(encloser.dv_wall_n_[contact_index]->DelegatedData(ex_policy)),
       wall_free_slip_(encloser.dv_wall_free_slip_[contact_index]->DelegatedData(ex_policy)),
+      wall_keep_dens_jump_(encloser.dv_wall_keep_dens_jump_[contact_index]->DelegatedData(ex_policy)),
       wall_contact_omit_(encloser.dv_wall_contact_omit_[contact_index]->DelegatedData(ex_policy)),
       wall_contact_omit_1st_(encloser.dv_wall_contact_omit_1st_[contact_index]->DelegatedData(ex_policy)) {}
 //=================================================================================================//
@@ -252,9 +255,12 @@ void AcousticStep1stHalf<Contact<Wall, RiemannSolverType, KernelCorrectionType, 
          * mode 3 (Doc201): omit pressure dens jump (continuity from 2nd-half u only).
          * Doc201 B2 H-dens-fs: AcousticWallFreeSlip wall particles also omit DissipativeUJump
          *   (local mode-3 on free-slip faces only; side/bottom noslip dens unchanged).
+         * Doc224 C3: AcousticWallKeepDensJump>0.5 keeps dens jump on free-slip lids
+         *   (mom force still projected onto n; impermeability regression).
          */
-        const bool omit_wall_dens_jump =
-            (dens_mode > Real(2.5)) || (wall_free_slip_[index_j] > Real(0.5));
+        const bool free_slip_omit_dens =
+            (wall_free_slip_[index_j] > Real(0.5)) && !(wall_keep_dens_jump_[index_j] > Real(0.5));
+        const bool omit_wall_dens_jump = (dens_mode > Real(2.5)) || free_slip_omit_dens;
         if (!omit_wall_dens_jump)
         {
             Real p_jump_for_dens = Real(0);

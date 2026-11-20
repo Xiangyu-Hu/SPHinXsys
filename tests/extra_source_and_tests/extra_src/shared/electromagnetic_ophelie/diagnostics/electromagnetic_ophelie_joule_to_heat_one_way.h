@@ -68,6 +68,23 @@ struct OphelieJouleHeatOneWayStepResult
     Real free_surface_conv_loss_w = 0.0;
     Real free_surface_rad_loss_w = 0.0;
     Real total_heat_loss_w = 0.0;
+    /** Doc219 C2: cumulative energies [J] integrated at the actual update layer. */
+    Real E_em_j = 0.0;
+    Real E_side_j = 0.0;
+    Real E_bottom_j = 0.0;
+    Real E_top_conv_j = 0.0;
+    Real E_top_rad_j = 0.0;
+    Real E_other_j = 0.0;
+    Real E_conduction_residual_j = 0.0; // diagnostic only; not in R_E source term
+    Real delta_U_j = 0.0;
+    Real R_E_j = 0.0;
+    Real S_E_j = 0.0;
+    Real E_floor_j = 0.0;
+    Real energy_closure_rel_err = 0.0;      // |R_E|/S_E cumulative
+    Real energy_closure_step_max_rel = 0.0; // max |R_E|/S_E over steps
+    bool energy_closure_measured = false;
+    /** When french-natural BC: joule-only metrics are NOT_APPLICABLE for pass gates. */
+    bool joule_only_metrics_na = false;
 };
 
 /** Particle Q field used as thermal source (complex edge-flux → recon complex Q on device). */
@@ -734,6 +751,10 @@ inline void registerOphelieJouleHeatTemperatureField(BaseParticles &particles, R
 {
     particles.registerStateVariable<Real>(kOphelieThermalDeltaTField, Real(0));
     particles.registerStateVariable<Real>(kOphelieTemperatureField, t_initial);
+    // Doc220: ParticleSortCK only permutes EvolvingVariables. Temperature/ΔT are material
+    // thermal state and must move with the particle; otherwise spatial T jumps at sort.
+    particles.addEvolvingVariable<Real>(kOphelieThermalDeltaTField);
+    particles.addEvolvingVariable<Real>(kOphelieTemperatureField);
     const size_t n = particles.TotalRealParticles();
     Real *delta_t = particles.getVariableDataByName<Real>(kOphelieThermalDeltaTField);
     Real *temperature = particles.getVariableDataByName<Real>(kOphelieTemperatureField);

@@ -276,6 +276,23 @@ int main(int ac, char *av[])
         cli_options.coil_source_model = OphelieCoilSourceModel::VolumeRacetrack;
     }
     finalizeOphelieCurrentFormConfiguration(params, cli_options);
+    // Doc213 G13: TEAM7 plate Neumann must use LevelSet normals (not AnalyticCylinder default).
+    if (params.phi_boundary_mode_ == OpheliePhiBoundaryMode::OneSidedNeumann &&
+        params.phi_boundary_normal_source_ == OpheliePhiBoundaryNormalSource::AnalyticCylinder)
+    {
+        params.phi_boundary_normal_source_ = OpheliePhiBoundaryNormalSource::LevelSet;
+        std::cout << "[ophelie][doc213][team7] auto phi_boundary_normal_source=level-set "
+                     "(plate STL; override with --phi-boundary-normal-source=)"
+                  << std::endl;
+    }
+    std::cout << "[ophelie][doc213][team7] recipe rhs="
+              << (params.doc212_shared_complex_div_sigma_rhs_ ? "div-sigma-a" : "legacy/other")
+              << " lhs=" << phiLhsOperatorKindName(params.phi_lhs_operator_kind_)
+              << " boundary=" << phiBoundaryModeName(params.phi_boundary_mode_)
+              << " neumann_kind=" << phiNeumannRhsKindName(params.phi_boundary_neumann_rhs_kind_)
+              << " neumann_amp=" << params.phi_boundary_neumann_rhs_amplification_
+              << " moment_shell_only=" << (params.phi_boundary_neumann_moment_shell_only_ ? 1 : 0)
+              << " distance_factor=" << params.phi_boundary_distance_factor_ << std::endl;
 
     StdVec<char *> filtered_argv;
     filtered_argv.reserve(filtered_arguments.size());

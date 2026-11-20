@@ -290,8 +290,15 @@ struct OphelieCylinderMidplaneCompareReport
 {
     Real delta_over_R = 0.0;
     Real P_sph_W = 0.0;
-    Real P_analytic_finite_W = 0.0; // P' * height
+    Real P_analytic_finite_W = 0.0; // P'_∞ × height (infinite-cylinder model × H; not true 3D ends)
     Real rel_P = 0.0;
+    /** Doc213: mid-band / interior-excluding-ends power vs same infinite×band-height (finite-H diagnosis). */
+    Real P_sph_mid_W = 0.0;
+    Real P_analytic_mid_W = 0.0;
+    Real rel_P_mid = 0.0;
+    Real P_sph_interior_W = 0.0;
+    Real P_analytic_interior_W = 0.0;
+    Real rel_P_interior = 0.0;
     Real corr_abs_Jtheta = 0.0;
     Real corr_Q_shape = 0.0;
     Real mean_rel_err_abs_J = 0.0;
@@ -453,21 +460,22 @@ inline OphelieCylinderMidplaneCompareReport hostOphelieCylinderMidplaneCompare(
     finalizeOphelieCylinderAnalyticPower(sol);
     rep.delta_over_R = sol.delta_over_R;
     const Real height = Real(2) * half_height;
-    if (reference_mode == OphelieCylinderReferenceMode::PrescribedANoSelf)
-    {
-        // Weak-skin limit: δ/R → ∞; still report skin sol.delta for context.
-        rep.P_analytic_finite_W =
-            ophelieCylinderPrescribedANoSelfPowerPerLength(radius_m, B0, omega, sigma) * height;
-    }
-    else
-    {
-        rep.P_analytic_finite_W = sol.P_per_length_Wpm * height;
-    }
+    const Real p_per_len =
+        (reference_mode == OphelieCylinderReferenceMode::PrescribedANoSelf)
+            ? ophelieCylinderPrescribedANoSelfPowerPerLength(radius_m, B0, omega, sigma)
+            : sol.P_per_length_Wpm;
+    // Name kept historical; this is infinite-cylinder P'×H (Doc213: ends ≠ this model).
+    rep.P_analytic_finite_W = p_per_len * height;
+    rep.P_analytic_mid_W = p_per_len * (Real(2) * z_half_band);
+    const Real z_end_inner_for_ref = Real(0.80) * half_height;
+    rep.P_analytic_interior_W = p_per_len * (Real(2) * z_end_inner_for_ref);
 
     std::vector<double> w_bin(static_cast<size_t>(n_bins), 0.0);
     std::vector<double> j_bin(static_cast<size_t>(n_bins), 0.0);
     std::vector<double> q_bin(static_cast<size_t>(n_bins), 0.0);
     double p_tot = 0.0;
+    double p_mid = 0.0;
+    double p_interior = 0.0;
     double q_o = 0.0, v_o = 0.0, q_c = 0.0, v_c = 0.0;
     double l2_num = 0.0, l2_den = 0.0;
     double l2s_num = 0.0, l2s_den = 0.0;
@@ -478,7 +486,7 @@ inline OphelieCylinderMidplaneCompareReport hostOphelieCylinderMidplaneCompare(
     const Real r_c = Real(0.25) * radius_m;
     const Real zc = axis_origin[2];
     // End slabs: outer 20% of half-height each side (finite-cylinder pollution vs infinite ref).
-    const Real z_end_inner = Real(0.80) * half_height;
+    const Real z_end_inner = z_end_inner_for_ref;
 
     struct MidSamp
     {
@@ -493,7 +501,17 @@ inline OphelieCylinderMidplaneCompareReport hostOphelieCylinderMidplaneCompare(
         const Real dy = pos[i][1] - axis_origin[1];
         const Real r = std::sqrt(dx * dx + dy * dy);
         const Real vi = vol[i];
-        p_tot += static_cast<double>(q[i]) * static_cast<double>(vi);
+        const double dq = static_cast<double>(q[i]) * static_cast<double>(vi);
+        p_tot += dq;
+        const Real abs_z = std::abs(pos[i][2] - zc);
+        if (abs_z <= z_half_band)
+        {
+            p_mid += dq;
+        }
+        if (abs_z <= z_end_inner)
+        {
+            p_interior += dq;
+        }
         if (r > r_o)
         {
             q_o += q[i] * vi;
@@ -514,7 +532,6 @@ inline OphelieCylinderMidplaneCompareReport hostOphelieCylinderMidplaneCompare(
         const Real jt = std::hypot(jt_re, jt_im);
         const auto samp =
             sampleOphelieCylinderByReferenceMode(reference_mode, sol, r, radius_m, B0, omega, sigma);
-        const Real abs_z = std::abs(pos[i][2] - zc);
         if (abs_z > z_end_inner)
         {
             ++rep.n_endband;
@@ -561,6 +578,12 @@ inline OphelieCylinderMidplaneCompareReport hostOphelieCylinderMidplaneCompare(
     }
     rep.P_sph_W = static_cast<Real>(p_tot);
     rep.rel_P = std::abs(rep.P_sph_W - rep.P_analytic_finite_W) / (std::abs(rep.P_analytic_finite_W) + TinyReal);
+    rep.P_sph_mid_W = static_cast<Real>(p_mid);
+    rep.rel_P_mid =
+        std::abs(rep.P_sph_mid_W - rep.P_analytic_mid_W) / (std::abs(rep.P_analytic_mid_W) + TinyReal);
+    rep.P_sph_interior_W = static_cast<Real>(p_interior);
+    rep.rel_P_interior = std::abs(rep.P_sph_interior_W - rep.P_analytic_interior_W) /
+                         (std::abs(rep.P_analytic_interior_W) + TinyReal);
     rep.q_outer_over_center_sph = (v_o > TinyReal && v_c > TinyReal) ? static_cast<Real>((q_o / v_o) / (q_c / v_c + TinyReal))
                                                                     : Real(0);
 
@@ -680,7 +703,10 @@ inline void logOphelieCylinderMidplaneCompare(const OphelieCylinderMidplaneCompa
               << " mean/med_rel_J=" << r.mean_rel_err_abs_J << "/" << r.median_rel_err_abs_J
               << " L2_rel_J_mid=" << r.l2_rel_abs_J_mid << " L2_rel_J_mid_strong=" << r.l2_rel_abs_J_mid_strong
               << " mean_rel_J_end=" << r.mean_rel_err_abs_J_end
-              << " P_sph=" << r.P_sph_W << " P_analytic_H=" << r.P_analytic_finite_W << " rel_P=" << r.rel_P
+              << " P_sph=" << r.P_sph_W << " P_analytic_inf×H=" << r.P_analytic_finite_W << " rel_P=" << r.rel_P
+              << " P_mid=" << r.P_sph_mid_W << " P_an_mid=" << r.P_analytic_mid_W
+              << " rel_P_mid=" << r.rel_P_mid << " P_int=" << r.P_sph_interior_W
+              << " P_an_int=" << r.P_analytic_interior_W << " rel_P_int=" << r.rel_P_interior
               << " Q_o/c_sph=" << r.q_outer_over_center_sph << " Q_o/c_an=" << r.q_outer_over_center_analytic
               << std::endl;
 }

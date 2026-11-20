@@ -158,8 +158,9 @@ class InvertOpheliePhiGradLinearCorrectionMatrixCK : public LocalDynamics
 {
   public:
     InvertOpheliePhiGradLinearCorrectionMatrixCK(RealBody &sph_body, const OphelieGlassFieldNames &names,
-                                                 Real det_min_threshold = Real(1.0e-6))
-        : LocalDynamics(sph_body), det_min_threshold_(det_min_threshold),
+                                                 Real det_min_threshold = Real(1.0e-6),
+                                                 Real det_max_cap = Real(0))
+        : LocalDynamics(sph_body), det_min_threshold_(det_min_threshold), det_max_cap_(det_max_cap),
           dv_linear_correction_(particles_->template getVariableByName<Matd>(names.phi_grad_linear_correction))
     {
     }
@@ -169,7 +170,7 @@ class InvertOpheliePhiGradLinearCorrectionMatrixCK : public LocalDynamics
       public:
         template <class ExecutionPolicy, class EncloserType>
         UpdateKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser)
-            : det_min_threshold_(encloser.det_min_threshold_),
+            : det_min_threshold_(encloser.det_min_threshold_), det_max_cap_(encloser.det_max_cap_),
               linear_correction_(encloser.dv_linear_correction_->DelegatedData(ex_policy))
         {
         }
@@ -184,15 +185,27 @@ class InvertOpheliePhiGradLinearCorrectionMatrixCK : public LocalDynamics
                 return;
             }
             linear_correction_[index_i] = inverseTikhonov(linear_correction_[index_i], SqrtEps);
+            // Doc215 E1e: reject over-amplified C after invert (free-surface truncation).
+            if (det_max_cap_ > Real(0))
+            {
+                const Real det_c = linear_correction_[index_i].determinant();
+                if (!std::isfinite(det_c) || std::abs(det_c) > det_max_cap_ ||
+                    std::abs(det_c) < Real(1) / det_max_cap_)
+                {
+                    linear_correction_[index_i] = Matd::Identity();
+                }
+            }
         }
 
       protected:
         Real det_min_threshold_;
+        Real det_max_cap_;
         Matd *linear_correction_;
     };
 
   protected:
     Real det_min_threshold_;
+    Real det_max_cap_;
     DiscreteVariable<Matd> *dv_linear_correction_;
 };
 
@@ -424,12 +437,17 @@ inline OpheliePhiGradCorrectionMatrixStats execOpheliePhiGradCorrectionMatrixPre
     const OpheliePhiGradCorrectionMatrixStats stats =
         computeOpheliePhiGradCorrectionMatrixStatsFromB(particles, names.phi_grad_linear_correction, n,
                                                         det_min_threshold);
-    StateDynamics<ExecutionPolicy, InvertOpheliePhiGradLinearCorrectionMatrixCK> invert_B(glass_body, names,
-                                                                                            det_min_threshold);
+    StateDynamics<ExecutionPolicy, InvertOpheliePhiGradLinearCorrectionMatrixCK> invert_B(
+        glass_body, names, det_min_threshold, params.phi_grad_correction_det_max_cap_);
     invert_B.exec();
     if (log_stats)
     {
         logOpheliePhiGradCorrectionMatrixStats(stats);
+        if (params.phi_grad_correction_det_max_cap_ > Real(0))
+        {
+            std::cout << "[ophelie][doc215][e1e] C_det_max_cap=" << params.phi_grad_correction_det_max_cap_
+                      << " (post-invert |det(C)|>cap or <1/cap → Identity)" << std::endl;
+        }
     }
     return stats;
 }

@@ -48,6 +48,99 @@ enum class OpheliePhiBoundaryMode
     VirtualShellDiagnostic
 };
 
+/** Doc213: how OneSidedNeumann injects n·J=0 into φ RHS. */
+enum class OpheliePhiNeumannRhsKind
+{
+    /** Legacy shell: amp*(V/d_b)*σ*g_n (under-scaled vs LegacyPairwise; G5b FAIL). */
+    ShellVdB,
+    /** Formal: amp * a_sign * ω * A_i · Σ C_ij (x_j−x_i) (matches EMF truncation moment). */
+    PairwiseTruncationMoment,
+    /**
+     * Doc213 G12: DivΣA-family surface flux on mask shell:
+     *   rhs += amp * σ * g_n * n·(−m),  m=Σ g_ij,  g_n=−a_sign ω n·A
+     * Same g_ij as ComputeOphelieVecdDivergenceCK (not C_ij).
+     */
+    DivSigmaASurfaceFlux
+};
+
+/**
+ * Doc214 B1b: restrict pairwise-moment shell by analytic |n_z|.
+ * Side: |n_z| < thr (cylinder wall); End: |n_z| ≥ thr (caps). All = no extra gate.
+ */
+enum class OpheliePhiNeumannMomentShellRegion
+{
+    All = 0,
+    Side = 1,
+    End = 2
+};
+
+inline OpheliePhiNeumannMomentShellRegion parseOpheliePhiNeumannMomentShellRegion(const std::string &name)
+{
+    if (name == "side" || name == "wall" || name == "lateral")
+    {
+        return OpheliePhiNeumannMomentShellRegion::Side;
+    }
+    if (name == "end" || name == "cap" || name == "caps" || name == "ends")
+    {
+        return OpheliePhiNeumannMomentShellRegion::End;
+    }
+    return OpheliePhiNeumannMomentShellRegion::All;
+}
+
+inline const char *phiNeumannMomentShellRegionName(OpheliePhiNeumannMomentShellRegion region)
+{
+    switch (region)
+    {
+    case OpheliePhiNeumannMomentShellRegion::Side:
+        return "side";
+    case OpheliePhiNeumannMomentShellRegion::End:
+        return "end";
+    default:
+        return "all";
+    }
+}
+
+/**
+ * Doc214 B1c/B1d: how A enters pairwise truncation moment.
+ * Full: A·m, m=Σ C Δx (B1 / G9).
+ * SideNormalEndFull (B1c): side (n·A)(n·m); end A·m.
+ * SideNormalAbsMEndFull (B1d): side (n·A)|m|sign(n·m); end A·m (full-magnitude normal).
+ */
+enum class OpheliePhiNeumannMomentAForm
+{
+    Full = 0,
+    SideNormalEndFull = 1,
+    SideNormalAbsMEndFull = 2
+};
+
+inline OpheliePhiNeumannMomentAForm parseOpheliePhiNeumannMomentAForm(const std::string &name)
+{
+    if (name == "side-normal-end-full" || name == "side_normal_end_full" || name == "b1c" ||
+        name == "normal-side")
+    {
+        return OpheliePhiNeumannMomentAForm::SideNormalEndFull;
+    }
+    if (name == "side-normal-absm-end-full" || name == "side_normal_absm_end_full" || name == "b1d" ||
+        name == "normal-absm-side")
+    {
+        return OpheliePhiNeumannMomentAForm::SideNormalAbsMEndFull;
+    }
+    return OpheliePhiNeumannMomentAForm::Full;
+}
+
+inline const char *phiNeumannMomentAFormName(OpheliePhiNeumannMomentAForm form)
+{
+    switch (form)
+    {
+    case OpheliePhiNeumannMomentAForm::SideNormalEndFull:
+        return "side-normal-end-full";
+    case OpheliePhiNeumannMomentAForm::SideNormalAbsMEndFull:
+        return "side-normal-absm-end-full";
+    default:
+        return "full";
+    }
+}
+
 enum class OpheliePhiBoundaryNormalSource
 {
     AnalyticBox,
@@ -250,6 +343,36 @@ inline OpheliePhiBoundaryMode parseOpheliePhiBoundaryMode(const std::string &nam
     return OpheliePhiBoundaryMode::None;
 }
 
+inline OpheliePhiNeumannRhsKind parseOpheliePhiNeumannRhsKind(const std::string &name)
+{
+    if (name == "pairwise-truncation-moment" || name == "pairwise_truncation_moment" ||
+        name == "truncation-moment" || name == "truncation_moment" || name == "pairwise-moment" ||
+        name == "pairwise_moment")
+    {
+        return OpheliePhiNeumannRhsKind::PairwiseTruncationMoment;
+    }
+    if (name == "div-sigma-a-surface-flux" || name == "div_sigma_a_surface_flux" ||
+        name == "div-sigma-surface" || name == "div_sigma_surface" || name == "g-deficiency" ||
+        name == "g_deficiency")
+    {
+        return OpheliePhiNeumannRhsKind::DivSigmaASurfaceFlux;
+    }
+    return OpheliePhiNeumannRhsKind::ShellVdB;
+}
+
+inline const char *phiNeumannRhsKindName(OpheliePhiNeumannRhsKind kind)
+{
+    switch (kind)
+    {
+    case OpheliePhiNeumannRhsKind::PairwiseTruncationMoment:
+        return "pairwise-truncation-moment";
+    case OpheliePhiNeumannRhsKind::DivSigmaASurfaceFlux:
+        return "div-sigma-a-surface-flux";
+    default:
+        return "shell-vdb";
+    }
+}
+
 inline OpheliePhiBoundaryNormalSource parseOpheliePhiBoundaryNormalSource(const std::string &name)
 {
     if (name == "analytic-cylinder" || name == "analytic_cylinder" || name == "cylinder")
@@ -359,6 +482,24 @@ struct OphelieParameters
     bool phi_boundary_diagnostics_ = true;
     /** Boundary shell width for Jn diagnostics: width = factor * dp. */
     Real phi_boundary_distance_factor_ = 2.0;
+    /** Doc213: multiply Neumann RHS load (shell needs ≫1; pairwise-moment ~1). */
+    Real phi_boundary_neumann_rhs_amplification_ = 1.0;
+    /** Doc213 G9: PairwiseTruncationMoment is production default; ShellVdB rollback only. */
+    OpheliePhiNeumannRhsKind phi_boundary_neumann_rhs_kind_ =
+        OpheliePhiNeumannRhsKind::PairwiseTruncationMoment;
+    /**
+     * Doc213 G11: if true, pairwise moment only where PhiBoundaryMask>0.5 (boundary shell).
+     * Global (false) hurts cylinder rotational A (G10); shell-only keeps EC0/EC1 insulation.
+     */
+    bool phi_boundary_neumann_moment_shell_only_ = true;
+    /**
+     * Doc214 B1b: further gate shell moment by |n_z| (needs PhiBoundaryNormal).
+     * Default All preserves Doc213 G9/G11. Threshold: |n_z| ≥ 0.5 → end cap.
+     */
+    OpheliePhiNeumannMomentShellRegion phi_boundary_neumann_moment_shell_region_ =
+        OpheliePhiNeumannMomentShellRegion::All;
+    /** Doc214 B1c: Full (default) or SideNormalEndFull hybrid. */
+    OpheliePhiNeumannMomentAForm phi_boundary_neumann_moment_a_form_ = OpheliePhiNeumannMomentAForm::Full;
     OpheliePhiBoundaryMode phi_boundary_mode_ = OpheliePhiBoundaryMode::None;
     OpheliePhiBoundaryNormalSource phi_boundary_normal_source_ = OpheliePhiBoundaryNormalSource::AnalyticCylinder;
     /** Post-solve grad_phi Neumann projection (experimental; can harm divJ on real Biot). */
@@ -367,6 +508,11 @@ struct OphelieParameters
     bool phi_boundary_lhs_grad_neumann_ = false;
     /** Linear-corrected SPH gradient (B-matrix) for grad_phi and DivSigmaGrad LHS. */
     bool phi_gradient_correction_ = false;
+    /**
+     * Doc215 E1e: after inverting B→C, if |det(C)| > this cap, replace C with I.
+     * 0 = off. Evidence (E1d): shell |det(C)|→30 while interior≈1; cap≈2 kills over-amp.
+     */
+    Real phi_grad_correction_det_max_cap_ = Real(0);
     /** Paired G_c/D_c operators: grad, LHS div, RHS div, E/J grad, divJ diagnostic. */
     bool phi_compatible_correction_ = false;
     /** Log D(σA) vs D_c(σA) on real Biot A_src in French reduced. */
@@ -415,6 +561,45 @@ struct OphelieParameters
     bool doc212_shared_complex_div_sigma_rhs_ = false;
     /** Diagnostic: unified pairwise (A_i−A_j)·g RHS imag+real. */
     bool doc212_shared_complex_pairwise_rhs_ = false;
+    /**
+     * Doc214 E2 opt-in: K=G^*(σG), b=−G^*(σ a_sign ω A) with exact adjoint of SPH G.
+     * Boundary mode stays none; not an amp scan. Disables DivΣA/EMF shared RHS when set.
+     */
+    bool doc214_e2_variational_ = false;
+    /**
+     * Doc216 E5 opt-in: replace full-space GᵀσG PCG by P1 energy projection
+     *   min_{φ∈span{1,x,y,z}} ||Gφ + a_sign ω A||_σ²
+     * Requires doc214_e2_variational_ (same G / recon). Not a Neumann amp scan.
+     */
+    bool doc216_e5_p1_projection_ = false;
+    /**
+     * Doc217 D2 opt-in: full-space local quadratic Neumann collocation (host Eigen SparseLU).
+     * Same discrete family as Python d2_cpu_local_poly_deepfix.py. Not production default.
+     * Mutually exclusive with doc216_e5_p1_projection_. Geometry fields below must be set by the case.
+     */
+    bool doc217_d2_local_poly_ = false;
+    Real doc217_d2_radius_ = Real(0.1);
+    Real doc217_d2_half_height_ = Real(0.3);
+    Vecd doc217_d2_center_ = Vecd::Zero();
+    Real doc217_d2_dp_ = Real(0.02);
+    Real doc217_d2_h_factor_ = Real(2.5);
+    Real doc217_d2_h_max_factor_ = Real(4.0);
+    /**
+     * Doc218 wall F evaluation for D2 Neumann RHS n·F:
+     *  0 = center_legacy (Doc217: F at particle center; LHS at wall) — diagnostic only
+     *  1 = wall_reconstructed (formal: same local fit, evaluate F at true wall point)
+     * Formal regression defaults to 1 after A repro; French entries must not expose legacy CLI.
+     */
+    int doc218_wall_F_mode_ = 1; // Doc218 formal default after A repro
+    /**
+     * Doc218 boundary compatibility handling for D2:
+     *  0 = boundary_mean_legacy (Doc217: subtract arithmetic mean of scaled boundary b)
+     *  1 = none (formal: do not alter physical boundary RHS)
+     */
+    int doc218_compat_mode_ = 1; // Doc218 formal default after A repro
+    /** Doc219 B: test-only failure injection (never for production French runs). */
+    bool doc219_inject_fit_fail_ = false;
+    bool doc219_inject_solve_fail_ = false;
     /** A_ind one-way: after K[J], re-solve complex edge-flux with A_total (Stage 3.5). */
     bool aind_one_way_feedback_resolve_ = true;
     /** Q spatial soft gate: max(Q)/mean(Q) upper bound (edge-flux production sanity). */

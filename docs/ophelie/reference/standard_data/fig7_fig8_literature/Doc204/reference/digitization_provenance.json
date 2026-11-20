@@ -1,0 +1,67 @@
+{
+  "source_title": "Numerical modelling of natural convection in molten glass heated by induction",
+  "source_pdf_sha256": "6dddf36ebe7078dd9d5dcf90f852e99032fe1cdb1aa07df30606105bf519c92b",
+  "doi": "10.1016/j.cep.2007.01.013",
+  "pdf_page_1based": 5,
+  "printed_page": 453,
+  "normalization": "Tstar=T/Tmax; NOT (T-Tcold)/(Thot-Tcold)",
+  "absolute_Tmax_K": null,
+  "case_side_h_W_m2_K": null,
+  "case_match": "PARTIAL_UNRESOLVED",
+  "R_m_assumed": 0.25,
+  "H_m_assumed": 0.185,
+  "geometry_provenance": "R user-confirmed; H thesis supplement, not read from image",
+  "calibration": {
+    "fig7": {
+      "x0": 145,
+      "x1": 2309,
+      "y_top": 12,
+      "y_bottom": 1606,
+      "width": 2318,
+      "height": 1882
+    },
+    "fig8": {
+      "x0": 145,
+      "x1": 2326,
+      "y_top": 12,
+      "y_bottom": 1618,
+      "width": 2335,
+      "height": 1907
+    }
+  },
+  "coordinate_origin": "r=0 symmetry axis; z=0 bottom; full plot height assumed H",
+  "image_sha256": {
+    "fig7": "e6987e0a254bea74b8dc68e35ff149a256c7baa90f10c53f831ec43ad8a8730a",
+    "fig8": "6718bfe258c5de2fd2964934dab0d69d76d3b9f6a15998cc8f9452c85212ab83"
+  },
+  "fig8": {
+    "status": "DIGITIZED_LABELLED_CONTOURS",
+    "point_count": 4928,
+    "levels": [
+      0.5,
+      0.6,
+      0.7,
+      0.8,
+      0.9
+    ],
+    "estimated_reading_error_r": 0.005,
+    "estimated_reading_error_z": 0.007,
+    "uncertainty_note": "Conservative manual coordinate allowance, not statistical confidence interval. Level text read exactly; contour spacing does not bound interpolation error.",
+    "reconstruction_status": "PARTIAL_INTERPOLATION_NOT_AUTHOR_DATA",
+    "absolute_F1_ready": false
+  },
+  "fig7": {
+    "status": "DIGITIZED_APPROXIMATE_DIRECTIONS_AND_REGIONS",
+    "direction_sample_count": 20,
+    "velocity_magnitude_available": false,
+    "streamfunction_available": false,
+    "center_ROIs_are_not_exact_vortex_centers": true,
+    "orientation_note": "Manual visual estimates rounded to 15 degrees in normalized plot coordinates; no arrow-length speed inference."
+  },
+  "limitations": [
+    "Do not generate exact velocity/streamfunction from Fig.7.",
+    "Do not feed partial reconstruction directly to a Kelvin-only input.",
+    "Do not use a reconstructed T field both to force the simulation and independently validate its temperature.",
+    "No temperature or velocity accuracy claim outside observed image constraints."
+  ]
+}

@@ -282,6 +282,50 @@ inline void hostPrescribeRadialHotCoreTemperature(BaseParticles &particles, cons
     }
 }
 
+/**
+ * Doc223 F2 qualitative annular hot ring (NOT digitized Fig8).
+ * Fixed for R=0.25m H=0.185m:
+ *   T = T0 + amp * exp(-((r-0.15)/0.05)^2 - ((z-z_bottom-0.13)/0.035)^2)
+ * Defaults amp=200K. Upper-outer heat / cooler axis-wall-surface — diagnostic only.
+ */
+inline void hostPrescribeDoc223AnnularHotRingTemperature(
+    BaseParticles &particles, const Vecd &glass_center, Real glass_half_height, Real t0, Real amp = Real(200),
+    const std::string &temperature_field = "Temperature",
+    const std::string &delta_t_field = "ThermalDeltaT")
+{
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Real>(particles, temperature_field);
+    Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    Real *temp = particles.getVariableDataByName<Real>(temperature_field);
+    Real *delta_t = nullptr;
+    try
+    {
+        syncVariableToHost<Real>(particles, delta_t_field);
+        delta_t = particles.getVariableDataByName<Real>(delta_t_field);
+    }
+    catch (const std::exception &)
+    {
+        delta_t = nullptr;
+    }
+    const Real z_bottom = glass_center[2] - glass_half_height;
+    const size_t n = particles.TotalRealParticles();
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real dx = pos[i][0] - glass_center[0];
+        const Real dy = pos[i][1] - glass_center[1];
+        const Real r = std::sqrt(dx * dx + dy * dy);
+        const Real zr = (pos[i][2] - z_bottom - Real(0.13)) / Real(0.035);
+        const Real rr = (r - Real(0.15)) / Real(0.05);
+        const Real Ti = t0 + amp * std::exp(-(rr * rr + zr * zr));
+        temp[i] = Ti;
+        if (delta_t != nullptr)
+            delta_t[i] = Ti - t0;
+    }
+    syncVariableToDevice<Real>(particles, temperature_field);
+    if (delta_t != nullptr)
+        syncVariableToDevice<Real>(particles, delta_t_field);
+}
+
 struct OphelieBoussinesqForceAudit
 {
     Real f_z_sum = 0.0;

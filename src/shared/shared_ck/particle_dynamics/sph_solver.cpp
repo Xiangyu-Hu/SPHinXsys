@@ -58,6 +58,11 @@ Real TimeStepper::TriggerByInterval::getIntervalWithScalingRef() const
     return getInterval() * sv_physical_time_->getScalingRef();
 }
 //=================================================================================================//
+void TimeStepper::TriggerByInterval::setInterval(Real interval)
+{
+    interval_ = interval;
+}
+//=================================================================================================//
 void TimeStepper::TriggerByInterval::incrementPresentTime(Real dt)
 {
     present_time_ += dt;

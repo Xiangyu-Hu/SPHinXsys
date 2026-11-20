@@ -271,6 +271,76 @@ class ComputeOphelieScalarPhiGradientCK<Inner<Parameters...>>
     }
 };
 
+/** Named scalar → gradient (imag or real chain for DivSigmaGrad LHS). */
+template <typename... RelationTypes>
+class ComputeOphelieNamedScalarGradientCK;
+
+template <template <typename...> class RelationType, typename... Parameters>
+class ComputeOphelieNamedScalarGradientCK<Base, RelationType<Parameters...>>
+    : public Interaction<RelationType<Parameters...>>
+{
+    using BaseInteraction = Interaction<RelationType<Parameters...>>;
+
+  public:
+    ComputeOphelieNamedScalarGradientCK(RelationType<Parameters...> &relation, const std::string &phi_field,
+                                        const std::string &grad_field)
+        : BaseInteraction(relation),
+          dv_Vol_(this->particles_->template getVariableByName<Real>("VolumetricMeasure")),
+          dv_phi_(this->particles_->template getVariableByName<Real>(phi_field)),
+          dv_grad_(this->particles_->template getVariableByName<Vecd>(grad_field))
+    {
+    }
+
+    class InteractKernel : public BaseInteraction::InteractKernel
+    {
+      public:
+        template <class ExecutionPolicy, class EncloserType, typename... Args>
+        InteractKernel(const ExecutionPolicy &ex_policy, EncloserType &encloser, Args &&...args)
+            : BaseInteraction::InteractKernel(ex_policy, encloser, std::forward<Args>(args)...),
+              Vol_(encloser.dv_Vol_->DelegatedData(ex_policy)), phi_(encloser.dv_phi_->DelegatedData(ex_policy)),
+              grad_(encloser.dv_grad_->DelegatedData(ex_policy))
+        {
+        }
+
+        void interact(size_t index_i, Real dt = 0.0)
+        {
+            (void)dt;
+            const Real phi_i = phi_[index_i];
+            Vecd grad_phi = Vecd::Zero();
+            for (UnsignedInt n = this->FirstNeighbor(index_i); n != this->LastNeighbor(index_i); ++n)
+            {
+                const UnsignedInt index_j = this->neighbor_index_[n];
+                const Real dW_ijV_j = this->dW_ij(index_i, index_j) * Vol_[index_j];
+                const Vecd g_ij = pairwiseGradientWeightUncorrected(dW_ijV_j, this->e_ij(index_i, index_j));
+                grad_phi += g_ij * (phi_i - phi_[index_j]);
+            }
+            grad_[index_i] = grad_phi;
+        }
+
+      protected:
+        Real *Vol_;
+        Real *phi_;
+        Vecd *grad_;
+    };
+
+  protected:
+    DiscreteVariable<Real> *dv_Vol_;
+    DiscreteVariable<Real> *dv_phi_;
+    DiscreteVariable<Vecd> *dv_grad_;
+};
+
+template <typename... Parameters>
+class ComputeOphelieNamedScalarGradientCK<Inner<Parameters...>>
+    : public ComputeOphelieNamedScalarGradientCK<Base, Inner<Parameters...>>
+{
+  public:
+    ComputeOphelieNamedScalarGradientCK(Inner<Parameters...> &inner_relation, const std::string &phi_field,
+                                        const std::string &grad_field)
+        : ComputeOphelieNamedScalarGradientCK<Base, Inner<Parameters...>>(inner_relation, phi_field, grad_field)
+    {
+    }
+};
+
 /** Add gauge penalty term onto Laplace lhs: lhs_phi += penalty * phi. */
 class OpheliePhiImagGaugePenaltyToLhsCK : public LocalDynamics
 {

@@ -88,8 +88,7 @@ class AdvectionTimeStepCK : public LocalDynamicsReduce<ReduceMax>
 
     class FinishDynamics
     {
-        Real h_min_;
-        Real speed_ref_, advectionCFL_;
+        AdvectionTimeStepCK &encloser_;
 
       public:
         using OutputType = Real;
@@ -128,6 +127,11 @@ class AdvectionViscousTimeStepCK : public AdvectionTimeStepCK
   public:
     AdvectionViscousTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL = 0.25);
     virtual ~AdvectionViscousTimeStepCK() {};
+    /** Re-read Viscosity::ReferenceViscosity into speed_ref_ (Doc226 local μ(T) refresh). */
+    void refreshViscousSpeedReference();
+
+  protected:
+    Real u_ref_;
 };
 
 class AdvectionStepSetup : public LocalDynamics

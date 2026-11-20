@@ -126,6 +126,7 @@ class TimeStepper
         bool operator()();
         Real getInterval() const;
         Real getIntervalWithScalingRef() const;
+        void setInterval(Real interval);
         void incrementPresentTime(Real dt);
 
       private:

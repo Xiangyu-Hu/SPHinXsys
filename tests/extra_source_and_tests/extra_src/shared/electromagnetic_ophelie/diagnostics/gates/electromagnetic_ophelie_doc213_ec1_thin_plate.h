@@ -78,12 +78,15 @@ inline int runOphelieDoc213Ec1ThinPlate(const OphelieDoc213Ec1ThinCli &cli)
     params.use_a_total_for_edge_flux_ = true;
     params.edge_flux_normalization_mode_ = OphelieEdgeFluxNormalizationMode::Off;
     params.edge_flux_solver_local_rhs_scale_ = Real(1);
-    params.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::LegacyFlux;
+    // Doc213 G9/G10: same production insulation as EC0 DivΣA + pairwise moment (not Legacy EMF pin).
+    params.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::DivSigmaA;
     params.phi_lhs_operator_kind_ = OpheliePhiLhsOperatorKind::LegacyPairwise;
-    params.doc212_shared_complex_div_sigma_rhs_ = false;
-    params.doc212_shared_complex_edge_rhs_ = true;
+    params.doc212_shared_complex_div_sigma_rhs_ = true;
+    params.doc212_shared_complex_edge_rhs_ = false;
     params.doc212_shared_complex_pairwise_rhs_ = false;
     params.phi_boundary_mode_ = OpheliePhiBoundaryMode::OneSidedNeumann;
+    params.phi_boundary_neumann_rhs_kind_ = OpheliePhiNeumannRhsKind::PairwiseTruncationMoment;
+    params.phi_boundary_neumann_rhs_amplification_ = Real(1);
     params.phi_rhs_project_zero_mean_ = true;
     params.phi_gauge_penalty_ = Real(1.0e-8);
     params.phi_boundary_lhs_grad_neumann_ = false;
@@ -144,7 +147,10 @@ inline int runOphelieDoc213Ec1ThinPlate(const OphelieDoc213Ec1ThinCli &cli)
 
     std::cout << "[ophelie][doc213][ec1] thin half=(" << half[0] << "," << half[1] << "," << half[2] << ") dp="
               << cli.dp << " thickness/dp=" << (Real(2) * half[2] / cli.dp) << " f=" << cli.frequency_hz
-              << " n=" << n << " dual_z_shell=" << dual.shell_m << " n_dual=" << dual.n_dual
+              << " n=" << n << " rhs=div-sigma-a"
+              << " neumann_kind=" << phiNeumannRhsKindName(params.phi_boundary_neumann_rhs_kind_)
+              << " neumann_amp=" << params.phi_boundary_neumann_rhs_amplification_
+              << " dual_z_shell=" << dual.shell_m << " n_dual=" << dual.n_dual
               << " n_near_+z=" << dual.n_near_pos << " n_near_-z=" << dual.n_near_neg << std::endl;
 
     auto run_tag = [&](const char *tag) -> OphelieDoc212Ec0BoxAudit {

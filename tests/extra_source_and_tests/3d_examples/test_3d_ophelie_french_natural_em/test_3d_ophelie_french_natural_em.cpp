@@ -49,6 +49,14 @@ struct LocalCli
     bool use_reload = true;
     bool lattice_only = false;
     std::string reload_dir = "./reload";
+    /** Doc217 F-M: opt-in D2 local-poly φ (not production default). */
+    bool doc217_d2_local_poly = false;
+    bool doc216_e5_p1 = false;
+    /**
+     * Doc217 F-M diagnostic: assign non-uniform σ from a synthetic radial snapshot
+     * σ=σ0*(1.2+0.3*x/R). Labeled diagnostic — NOT literature temperature data.
+     */
+    bool doc217_fm_var_sigma_snapshot = false;
 };
 
 inline void applyFrenchNaturalEmDefaults(OphelieParameters &params, OphelieFrenchReducedCaseParams &french)
@@ -149,9 +157,54 @@ inline bool parseLocalCli(int ac, char *av[], LocalCli &local_cli, StdVec<std::s
             local_cli.lattice_only = true;
             continue;
         }
+        if (std::strcmp(arg, "--doc217-d2-local-poly") == 0)
+        {
+            local_cli.doc217_d2_local_poly = true;
+            continue;
+        }
+        if (std::strcmp(arg, "--doc216-e5-p1") == 0)
+        {
+            local_cli.doc216_e5_p1 = true;
+            continue;
+        }
+        if (std::strcmp(arg, "--doc217-fm-var-sigma-snapshot") == 0)
+        {
+            local_cli.doc217_fm_var_sigma_snapshot = true;
+            continue;
+        }
         remaining.emplace_back(arg);
     }
     return true;
+}
+
+inline void printDoc217FmProfile(const OphelieParameters &params, const OphelieFrenchReducedCaseParams &french,
+                                 ExcitationMode mode, bool var_sigma_snapshot)
+{
+    const char *name = "production";
+    const char *phi_space = "full_sph_edgeflux";
+    if (params.doc217_d2_local_poly_)
+    {
+        name = "d2_local_poly";
+        phi_space = "d2_quadratic_neumann_host_sparselu";
+    }
+    else if (params.doc216_e5_p1_projection_)
+    {
+        name = "p1";
+        phi_space = "p1_span_1xyz";
+    }
+    std::cout << "[ophelie][doc217][profile] name=" << name
+              << " phi_space=" << phi_space
+              << " grad=local_poly_or_sph_G"
+              << " boundary=" << (params.doc217_d2_local_poly_ ? "wall_point_neumann" : "production_none_or_neumann")
+              << " gauge=" << (params.doc217_d2_local_poly_ ? "pin+demean" : "phi_gauge_penalty")
+              << " complex=1"
+              << " sigma_source=" << (var_sigma_snapshot ? "diagnostic_spatial_snapshot" : "const_sigma_glass")
+              << " self_induction=" << (params.enable_self_induction_ ? 1 : 0)
+              << " phasor=exp(+iwt)"
+              << " power_norm=" << (mode == ExcitationMode::TargetPower ? "target-power-calibrate-I" : "none_fixed_I")
+              << " geometry_source=french_natural_R250mm_H185mm"
+              << " R=" << french.glass_radius << " H=" << frenchReducedGlassHeight(french)
+              << " dp=" << french.dp << " f_hz=" << french.frequency_hz << std::endl;
 }
 
 inline void printNaturalEmSummary(const OphelieFrenchReducedCaseParams &french, ExcitationMode mode)
@@ -170,6 +223,8 @@ inline void printNaturalEmSummary(const OphelieFrenchReducedCaseParams &french, 
               << " target_P=" << french.target_joule_power << " W"
               << " edge_flux_complex=1 self_induction=0"
               << "\n[ophelie] note: N_turn/coil_R are EREBUS-system supplements when not stated in the journal text"
+              << "\n[ophelie] geometry: glass Ø500mm (R=0.25) H=0.185 from Jacoutot/EREBUS natural; "
+                 "NOT stirring STL axis"
               << std::endl;
     logFrenchReducedCoilGeometry(french);
 }
@@ -213,7 +268,7 @@ int main(int ac, char *av[])
     const StdVec<std::string> filtered_arguments = filterOphelieTestCommandLine(
         static_cast<int>(french_av.size()), french_av.data(), params, cli_options);
 
-    // Force production EM path for this case.
+    // Force production EM path for this case (default). Opt-in D2/P1 below.
     params.enable_phi_correction_ = true;
     params.enable_power_scaling_ = false;
     params.enable_self_induction_ = false;
@@ -222,11 +277,39 @@ int main(int ac, char *av[])
     cli_options.ophelie_current_form_user_set = true;
     finalizeOphelieCurrentFormConfiguration(params, cli_options);
 
+    if (local_cli.doc217_d2_local_poly && local_cli.doc216_e5_p1)
+    {
+        std::cerr << "[ophelie][doc217] refuse: --doc217-d2-local-poly exclusive vs --doc216-e5-p1" << std::endl;
+        return 2;
+    }
+    if (local_cli.doc217_d2_local_poly)
+    {
+        params.doc217_d2_local_poly_ = true;
+        params.doc216_e5_p1_projection_ = false;
+        params.doc217_d2_radius_ = french.glass_radius;
+        params.doc217_d2_half_height_ = french.glass_half_height;
+        params.doc217_d2_center_ = french.glass_center;
+        params.doc217_d2_dp_ = french.dp;
+        std::cout << "[ophelie][doc217][d2] French natural_em enable local quadratic Neumann "
+                     "(host SparseLU; opt-in; not production default)"
+                  << std::endl;
+    }
+    else if (local_cli.doc216_e5_p1)
+    {
+        params.doc216_e5_p1_projection_ = true;
+        params.doc214_e2_variational_ = true;
+        params.phi_gradient_correction_ = true;
+        std::cout << "[ophelie][doc216][e5] French natural_em enable P1 (opt-in contrast; not production default)"
+                  << std::endl;
+    }
+
     french.sigma_glass = params.sigma_glass_;
     french.frequency_hz = params.frequency_;
     french.target_joule_power = params.target_joule_power_;
     syncFrenchReducedToParameters(french, params);
     applyOphelieCoilCurrentScale(french, params);
+    logFrenchReducedExcitationIdentity(french, params, "french_natural_em",
+                                       local_cli.excitation_mode != ExcitationMode::TargetPower);
 
     if (local_cli.excitation_mode == ExcitationMode::TargetPower)
     {
@@ -236,10 +319,20 @@ int main(int ac, char *av[])
         params.ophelie_current_form_ = OphelieCurrentFormKind::EdgeFlux;
         params.edge_flux_complex_ = true;
         finalizeOphelieCurrentFormConfiguration(params, cli_options);
+        // Re-assert D2 geometry after literature mode (may re-finalize).
+        if (local_cli.doc217_d2_local_poly)
+        {
+            params.doc217_d2_local_poly_ = true;
+            params.doc217_d2_radius_ = french.glass_radius;
+            params.doc217_d2_half_height_ = french.glass_half_height;
+            params.doc217_d2_center_ = french.glass_center;
+            params.doc217_d2_dp_ = french.dp;
+        }
     }
 
     logOphelieFinalParams(params, cli_options);
     printNaturalEmSummary(french, local_cli.excitation_mode);
+    printDoc217FmProfile(params, french, local_cli.excitation_mode, local_cli.doc217_fm_var_sigma_snapshot);
 
     if (!cli_options.reload_dir.empty())
     {
@@ -304,6 +397,29 @@ int main(int ac, char *av[])
 
     BaseParticles &glass_particles = glass_body.getBaseParticles();
     const size_t n_glass = glass_particles.TotalRealParticles();
+
+    if (local_cli.doc217_fm_var_sigma_snapshot)
+    {
+        // Diagnostic spatial σ only — NOT literature temperature. σ = σ0 (1.2 + 0.3 x/R).
+        syncVariableToHost<Vecd>(glass_particles, "Position");
+        syncVariableToHost<Real>(glass_particles, glass_names.sigma);
+        Vecd *pos = glass_particles.getVariableDataByName<Vecd>("Position");
+        Real *sigma = glass_particles.getVariableDataByName<Real>(glass_names.sigma);
+        const Real R = french.glass_radius;
+        const Real s0 = params.sigma_glass_;
+        Real smin = s0, smax = s0;
+        for (size_t i = 0; i < n_glass; ++i)
+        {
+            const Real xi = (pos[i][0] - french.glass_center[0]) / (R + TinyReal);
+            sigma[i] = s0 * (Real(1.2) + Real(0.3) * xi);
+            smin = std::min(smin, sigma[i]);
+            smax = std::max(smax, sigma[i]);
+        }
+        syncVariableToDevice<Real>(glass_particles, glass_names.sigma);
+        std::cout << "[ophelie][doc217][fm] DIAGNOSTIC var-sigma snapshot ON "
+                     "(not literature T): sigma=sigma0*(1.2+0.3*x/R) sigma0="
+                  << s0 << " range=[" << smin << "," << smax << "]" << std::endl;
+    }
 
     // Stage1.5 closeout: reload/dp consistency audit (must gate).
     if (sph_system.ReloadParticles() && !local_cli.lattice_only)

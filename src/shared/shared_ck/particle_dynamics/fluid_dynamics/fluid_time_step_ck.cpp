@@ -17,21 +17,27 @@ AdvectionTimeStepCK::
       dv_vel_(particles_->getVariableByName<Vecd>("Velocity")) {}
 //=================================================================================================//
 AdvectionTimeStepCK::FinishDynamics::FinishDynamics(AdvectionTimeStepCK &encloser)
-    : h_min_(encloser.h_min_), speed_ref_(encloser.speed_ref_),
-      advectionCFL_(encloser.advectionCFL_) {}
+    : encloser_(encloser) {}
 //=================================================================================================//
 Real AdvectionTimeStepCK::FinishDynamics::Result(Real reduced_value)
 {
-    return advectionCFL_ * h_min_ / (SMAX(std::sqrt(reduced_value), speed_ref_) + TinyReal);
+    // Live speed_ref_: AdvectionViscousTimeStepCK may refresh after μ(T) updates.
+    return encloser_.advectionCFL_ * encloser_.h_min_ /
+           (SMAX(std::sqrt(reduced_value), encloser_.speed_ref_) + TinyReal);
 }
 //=================================================================================================//
 AdvectionViscousTimeStepCK::AdvectionViscousTimeStepCK(SPHBody &sph_body, Real U_ref, Real advectionCFL)
-    : AdvectionTimeStepCK(sph_body, U_ref, advectionCFL)
+    : AdvectionTimeStepCK(sph_body, U_ref, advectionCFL), u_ref_(U_ref)
+{
+    refreshViscousSpeedReference();
+}
+//=================================================================================================//
+void AdvectionViscousTimeStepCK::refreshViscousSpeedReference()
 {
     auto &material = sph_body_->getMatterMaterial();
     Viscosity &viscosity = sph_body_->getMaterialProperty<Viscosity>();
     Real viscous_speed = viscosity.ReferenceViscosity() / material.ReferenceDensity() / h_min_;
-    speed_ref_ = SMAX(viscous_speed, speed_ref_);
+    speed_ref_ = SMAX(viscous_speed, u_ref_);
 }
 //=================================================================================================//
 AdvectionStepSetup::AdvectionStepSetup(SPHBody &sph_body)

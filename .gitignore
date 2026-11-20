@@ -3,6 +3,9 @@
 .vscode
 *.json
 !CMakePresets.json
+# OPHELIE literature provenance / Fig.8 ASSUMED T metadata
+!docs/ophelie/reference/standard_data/**/*.json
+!docs/ophelie/reference/standard_data/**/*.meta.json
 
 ##### Windows
 # Windows thumbnail cache files
@@ -1053,6 +1056,9 @@ build_wasm_debug
 _codeql_detected_source_root
 build_test/
 
+##### Local git worktrees (never commit)
+.worktrees/
+
 ##### OPHELIE / RH200 local artifacts (do not commit)
 build_ophelie_cpu/
 discussion_bundle/team7_l2_outputs/
@@ -1065,6 +1071,18 @@ RH200_OPHELIE_CLIENT_PROGRESS_REPORT.log
 RH200_OPHELIE_CLIENT_PROGRESS_REPORT.out
 RH200_OPHELIE_CLIENT_PROGRESS_REPORT.aux
 RH200_OPHELIE_CLIENT_PROGRESS_REPORT.toc
+
+##### OPHELIE round packs / run dumps under docs (keep local; never track)
+# Literature/standard CSV+PNG live in docs/ophelie/reference/standard_data/ and jacoutot_sigma_t/
+docs/ophelie/reference/DOC*_ROUND_PACK*/
+docs/ophelie/reference/DOC*_ROUND_PACK*.tar.gz
+docs/ophelie/reference/DOC*_ROUND_PACK*.tar.gz.sha256
+docs/ophelie/reference/doc*_runs/
+docs/ophelie/reference/doc*_literature/
+docs/ophelie/welding/**/gate*_smoke/
+docs/ophelie/welding/**/*_vtp/
+docs/ophelie/welding/**/*.vtp
+docs/ophelie/welding/**/*.log
 
 ##### OPHELIE / test run artifacts (must live under build/, not source trees)
 tests/extra_source_and_tests/3d_examples/*/reload/

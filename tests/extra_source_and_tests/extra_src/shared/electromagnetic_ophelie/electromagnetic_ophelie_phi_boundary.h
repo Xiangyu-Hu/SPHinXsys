@@ -296,16 +296,18 @@ class ApplyOpheliePhiBoundaryGradNeumannProjectionCK : public LocalDynamics
 
 /** Host projection using precomputed PhiBoundaryMask/Normal/Gn (device-safe after Interaction CK). */
 inline void applyOpheliePhiBoundaryGradNeumannProjectionFromFields(BaseParticles &particles,
-                                                                   const OphelieGlassFieldNames &names)
+                                                                   const OphelieGlassFieldNames &names,
+                                                                   const std::string &grad_field,
+                                                                   const std::string &gn_field)
 {
     const size_t n = particles.TotalRealParticles();
-    syncVariableToHost<Vecd>(particles, names.grad_phi_imag);
+    syncVariableToHost<Vecd>(particles, grad_field);
     // Mask/normal/gn are authored on host in setupOpheliePhiBoundaryParticleFields; do not
     // prepareForOutput them here (device copies may be stale and would overwrite host).
     const Real *mask = particles.getVariableDataByName<Real>(names.phi_boundary_mask);
     const Vecd *normal = particles.getVariableDataByName<Vecd>(names.phi_boundary_normal);
-    const Real *g_n = particles.getVariableDataByName<Real>(names.phi_boundary_gn);
-    Vecd *grad_phi = particles.getVariableDataByName<Vecd>(names.grad_phi_imag);
+    const Real *g_n = particles.getVariableDataByName<Real>(gn_field);
+    Vecd *grad_phi = particles.getVariableDataByName<Vecd>(grad_field);
 
     for (size_t i = 0; i < n; ++i)
     {
@@ -317,7 +319,14 @@ inline void applyOpheliePhiBoundaryGradNeumannProjectionFromFields(BaseParticles
         const Real grad_n = grad_phi[i].dot(n_out);
         grad_phi[i] -= n_out * (grad_n - g_n[i]);
     }
-    syncVariableToDevice<Vecd>(particles, names.grad_phi_imag);
+    syncVariableToDevice<Vecd>(particles, grad_field);
+}
+
+inline void applyOpheliePhiBoundaryGradNeumannProjectionFromFields(BaseParticles &particles,
+                                                                   const OphelieGlassFieldNames &names)
+{
+    applyOpheliePhiBoundaryGradNeumannProjectionFromFields(particles, names, names.grad_phi_imag,
+                                                           names.phi_boundary_gn);
 }
 
 /**
@@ -386,10 +395,12 @@ inline void applyOpheliePhiBoundaryGradNeumannProjectionDynamics(
 }
 
 /**
- * One-sided Neumann RHS flux closure (host-only), single chain:
- *   rhs_i += (V_i / d_b) * σ_i * g_n
- * with d_b = max(dist_to_surface, 0.25 dp).
+ * One-sided Neumann RHS flux closure (host-only), single chain — ShellVdB kind only:
+ *   rhs_i += amp * (V_i / d_b) * σ_i * g_n
+ * with d_b = max(dist_to_surface, 0.25 dp), amp = phi_boundary_neumann_rhs_amplification_.
+ * AnalyticBox: accumulate every face within the shell (Doc213 dual-face / thin plate).
  * g_n_sign: imag −1 → g_n=−ω n·A_re; real +1 → g_n=+ω n·A_im.
+ * PairwiseTruncationMoment is applied via ComputeOpheliePhiPairwiseNeumannMomentCK (device).
  */
 inline OpheliePhiNeumannRhsCorrectionStats applyOpheliePhiOneSidedNeumannRhsCorrectionForChain(
     BaseParticles &particles, const OphelieGlassFieldNames &names, const OphelieParameters &params,
@@ -402,11 +413,18 @@ inline OpheliePhiNeumannRhsCorrectionStats applyOpheliePhiOneSidedNeumannRhsCorr
     {
         return stats;
     }
+    if (params.phi_boundary_neumann_rhs_kind_ == OpheliePhiNeumannRhsKind::PairwiseTruncationMoment ||
+        params.phi_boundary_neumann_rhs_kind_ == OpheliePhiNeumannRhsKind::DivSigmaASurfaceFlux)
+    {
+        // Formal discrete Neumann is injected by CK before finalize; skip shell formula.
+        return stats;
+    }
 
     const size_t n = particles.TotalRealParticles();
     const Real boundary_width = params.phi_boundary_distance_factor_ * dp;
     const Real omega = params.omega();
     const Real d_b_min = Real(0.25) * dp;
+    const Real amp = params.phi_boundary_neumann_rhs_amplification_;
 
     syncVariableToHost<Vecd>(particles, "Position");
     syncVariableToHost<Vecd>(particles, a_field);
@@ -420,6 +438,7 @@ inline OpheliePhiNeumannRhsCorrectionStats applyOpheliePhiOneSidedNeumannRhsCorr
     Real *rhs = particles.getVariableDataByName<Real>(rhs_field);
     const Real *vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
     const bool use_particle_n = opheliePhiBoundaryNormalSourceUsesParticleFields(geom.normal_source);
+    const bool analytic_box = !use_particle_n && geom.normal_source != OpheliePhiBoundaryNormalSource::AnalyticCylinder;
     const Real *signed_distance = nullptr;
     const Vecd *particle_normal = nullptr;
     if (use_particle_n)
@@ -439,37 +458,76 @@ inline OpheliePhiNeumannRhsCorrectionStats applyOpheliePhiOneSidedNeumannRhsCorr
     Real correction_l2_sq = 0.0;
     for (size_t i = 0; i < n; ++i)
     {
-        Real dist = 0.0;
-        Vecd n_out = Vecd::Zero();
+        Real correction_i = 0.0;
+        bool touched = false;
         if (use_particle_n)
         {
-            dist = std::abs(signed_distance[i]);
+            const Real dist = std::abs(signed_distance[i]);
+            Vecd n_out = Vecd::Zero();
             const Real n_norm = particle_normal[i].norm();
             if (n_norm > TinyReal)
             {
                 n_out = particle_normal[i] / n_norm;
             }
+            if (dist <= boundary_width && n_out.norm() > TinyReal)
+            {
+                const Real d_b = std::max(dist, d_b_min);
+                const Real g_n = g_n_sign * omega * n_out.dot(a_src[i]);
+                correction_i += amp * (vol[i] / d_b) * sigma[i] * g_n;
+                touched = true;
+            }
+        }
+        else if (analytic_box)
+        {
+            // Six faces: dist = half_k ± r_k; outward ±e_k.
+            const Vecd r = pos[i] - geom.box_center;
+            const Vecd &half = geom.box_halfsize;
+            const Real face_dist[6] = {half[0] - r[0], half[0] + r[0], half[1] - r[1],
+                                       half[1] + r[1], half[2] - r[2], half[2] + r[2]};
+            const Vecd face_n[6] = {Vecd(1, 0, 0),  Vecd(-1, 0, 0), Vecd(0, 1, 0),
+                                    Vecd(0, -1, 0), Vecd(0, 0, 1),  Vecd(0, 0, -1)};
+            for (int f = 0; f < 6; ++f)
+            {
+                if (face_dist[f] < Real(0) || face_dist[f] > boundary_width)
+                {
+                    continue;
+                }
+                const Real d_b = std::max(face_dist[f], d_b_min);
+                const Real g_n = g_n_sign * omega * face_n[f].dot(a_src[i]);
+                correction_i += amp * (vol[i] / d_b) * sigma[i] * g_n;
+                touched = true;
+            }
         }
         else
         {
-            dist = boundaryDistanceFromContext(pos[i], geom);
-            n_out = boundaryOutwardNormalFromContext(pos[i], geom);
+            const Real dist = boundaryDistanceFromContext(pos[i], geom);
+            const Vecd n_out = boundaryOutwardNormalFromContext(pos[i], geom);
+            if (dist <= boundary_width && n_out.norm() > TinyReal)
+            {
+                const Real d_b = std::max(dist, d_b_min);
+                const Real g_n = g_n_sign * omega * n_out.dot(a_src[i]);
+                correction_i += amp * (vol[i] / d_b) * sigma[i] * g_n;
+                touched = true;
+            }
         }
-        if (dist > boundary_width || n_out.norm() <= TinyReal)
+        if (!touched)
         {
             continue;
         }
         ++stats.n_boundary;
-        const Real d_b = std::max(dist, d_b_min);
-        const Real g_n = g_n_sign * omega * n_out.dot(a_src[i]);
-        const Real correction = (vol[i] / d_b) * sigma[i] * g_n;
-        rhs[i] += correction;
-        correction_l2_sq += vol[i] * correction * correction;
-        stats.correction_max = std::max(stats.correction_max, std::abs(correction));
+        rhs[i] += correction_i;
+        correction_l2_sq += vol[i] * correction_i * correction_i;
+        stats.correction_max = std::max(stats.correction_max, std::abs(correction_i));
     }
 
     stats.correction_l2 = std::sqrt(correction_l2_sq);
     syncVariableToDevice<Real>(particles, rhs_field);
+    if (amp != Real(1) || analytic_box)
+    {
+        std::cout << "[ophelie][doc213] neumann_rhs amp=" << amp << " analytic_box_multiface=" << (analytic_box ? 1 : 0)
+                  << " n_boundary=" << stats.n_boundary << " corr_l2=" << stats.correction_l2
+                  << " corr_max=" << stats.correction_max << std::endl;
+    }
     return stats;
 }
 

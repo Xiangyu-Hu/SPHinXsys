@@ -203,6 +203,7 @@ struct OphelieTestCliOptions
     bool phi_rhs_operator_user_set = false;
     bool phi_projection_operator_user_set = false;
     bool ophelie_current_form_user_set = false;
+    bool phi_neumann_rhs_kind_user_set = false;
 };
 
 inline void finalizeOphelieCurrentFormConfiguration(OphelieParameters &params, OphelieTestCliOptions &cli_options)
@@ -226,9 +227,18 @@ inline void finalizeOphelieCurrentFormConfiguration(OphelieParameters &params, O
             params.doc212_shared_complex_div_sigma_rhs_ = true;
             params.doc212_shared_complex_pairwise_rhs_ = false;
             params.doc212_shared_complex_edge_rhs_ = false;
+            // G9: DivΣA needs formal truncation-moment Neumann (shell amp sweeps FAIL).
+            // Mode stays None unless CLI enables one-sided-neumann (cylinder default None).
+            if (!cli_options.phi_neumann_rhs_kind_user_set)
+            {
+                params.phi_boundary_neumann_rhs_kind_ = OpheliePhiNeumannRhsKind::PairwiseTruncationMoment;
+                params.phi_boundary_neumann_rhs_amplification_ = Real(1);
+            }
             std::cout << "[ophelie][doc213] complex edge-flux production profile: "
                          "phi_rhs=div-sigma-a (imag+real shared); lhs=legacy-pairwise; "
-                         "EMF edge_rel diagnostic-only. Rollback: --phi-rhs-operator=legacy-flux"
+                         "neumann_rhs=" << phiNeumannRhsKindName(params.phi_boundary_neumann_rhs_kind_)
+                      << " amp=" << params.phi_boundary_neumann_rhs_amplification_
+                      << "; EMF edge_rel diagnostic-only. Rollback: --phi-rhs-operator=legacy-flux"
                       << std::endl;
         }
         if (cli_options.phi_rhs_operator_user_set)
@@ -239,12 +249,22 @@ inline void finalizeOphelieCurrentFormConfiguration(OphelieParameters &params, O
                 params.doc212_shared_complex_div_sigma_rhs_ = false;
                 params.doc212_shared_complex_pairwise_rhs_ = false;
                 params.doc212_shared_complex_edge_rhs_ = true;
+                // EMF already carries truncation moment — do not stack pairwise Neumann.
+                if (!cli_options.phi_neumann_rhs_kind_user_set)
+                {
+                    params.phi_boundary_neumann_rhs_kind_ = OpheliePhiNeumannRhsKind::ShellVdB;
+                }
             }
             else
             {
                 params.doc212_shared_complex_div_sigma_rhs_ = true;
                 params.doc212_shared_complex_pairwise_rhs_ = false;
                 params.doc212_shared_complex_edge_rhs_ = false;
+                if (!cli_options.phi_neumann_rhs_kind_user_set)
+                {
+                    params.phi_boundary_neumann_rhs_kind_ = OpheliePhiNeumannRhsKind::PairwiseTruncationMoment;
+                    params.phi_boundary_neumann_rhs_amplification_ = Real(1);
+                }
             }
             std::cout << "[ophelie] edge-flux: keeping user --phi-rhs-operator="
                       << (rhs_keep == OpheliePhiRhsOperatorKind::LegacyFlux ? "legacy-flux" : "div-sigma-a")
@@ -326,6 +346,11 @@ inline bool isOphelieTestCommandLineOption(const char *arg)
            ophelieCliStartsWith(arg, "--phi-boundary-distance-factor=") ||
            ophelieCliStartsWith(arg, "--phi-boundary-mode=") ||
            ophelieCliStartsWith(arg, "--phi-boundary-normal-source=") ||
+           ophelieCliStartsWith(arg, "--phi-boundary-neumann-rhs-kind=") ||
+           ophelieCliStartsWith(arg, "--phi-boundary-neumann-rhs-amp=") ||
+           ophelieCliStartsWith(arg, "--phi-boundary-neumann-moment-shell-only=") ||
+           ophelieCliStartsWith(arg, "--phi-boundary-neumann-moment-shell-region=") ||
+           ophelieCliStartsWith(arg, "--phi-boundary-neumann-moment-a-form=") ||
            ophelieCliStartsWith(arg, "--phi-boundary-grad-neumann=") ||
            ophelieCliStartsWith(arg, "--phi-boundary-lhs-grad-neumann=") ||
            ophelieCliStartsWith(arg, "--phi-gradient-correction=") ||
@@ -637,6 +662,32 @@ inline void applyOphelieTestCommandLineOption(const char *arg, OphelieParameters
         params.phi_boundary_normal_source_ =
             parseOpheliePhiBoundaryNormalSource(std::string(ophelieCliValueAfter(arg, "--phi-boundary-normal-source=")));
     }
+    else if (ophelieCliStartsWith(arg, "--phi-boundary-neumann-rhs-kind="))
+    {
+        params.phi_boundary_neumann_rhs_kind_ =
+            parseOpheliePhiNeumannRhsKind(std::string(ophelieCliValueAfter(arg, "--phi-boundary-neumann-rhs-kind=")));
+        cli_options.phi_neumann_rhs_kind_user_set = true;
+    }
+    else if (ophelieCliStartsWith(arg, "--phi-boundary-neumann-rhs-amp="))
+    {
+        params.phi_boundary_neumann_rhs_amplification_ =
+            static_cast<Real>(std::atof(ophelieCliValueAfter(arg, "--phi-boundary-neumann-rhs-amp=")));
+    }
+    else if (ophelieCliStartsWith(arg, "--phi-boundary-neumann-moment-shell-only="))
+    {
+        params.phi_boundary_neumann_moment_shell_only_ =
+            (std::atoi(ophelieCliValueAfter(arg, "--phi-boundary-neumann-moment-shell-only=")) != 0);
+    }
+    else if (ophelieCliStartsWith(arg, "--phi-boundary-neumann-moment-shell-region="))
+    {
+        params.phi_boundary_neumann_moment_shell_region_ = parseOpheliePhiNeumannMomentShellRegion(
+            std::string(ophelieCliValueAfter(arg, "--phi-boundary-neumann-moment-shell-region=")));
+    }
+    else if (ophelieCliStartsWith(arg, "--phi-boundary-neumann-moment-a-form="))
+    {
+        params.phi_boundary_neumann_moment_a_form_ = parseOpheliePhiNeumannMomentAForm(
+            std::string(ophelieCliValueAfter(arg, "--phi-boundary-neumann-moment-a-form=")));
+    }
     else if (ophelieCliStartsWith(arg, "--phi-boundary-grad-neumann="))
     {
         params.phi_boundary_grad_neumann_projection_ =
@@ -799,6 +850,13 @@ inline void logOphelieFinalParams(const OphelieParameters &params, const Ophelie
               << (params.phi_rhs_operator_kind_ == OpheliePhiRhsOperatorKind::LegacyFlux ? "legacy-flux"
                                                                                          : "div-sigma-a")
               << " phi_boundary_mode=" << phiBoundaryModeName(params.phi_boundary_mode_)
+              << " phi_neumann_rhs_kind=" << phiNeumannRhsKindName(params.phi_boundary_neumann_rhs_kind_)
+              << " phi_neumann_rhs_amp=" << params.phi_boundary_neumann_rhs_amplification_
+              << " phi_neumann_moment_shell_only=" << (params.phi_boundary_neumann_moment_shell_only_ ? 1 : 0)
+              << " phi_neumann_moment_shell_region="
+              << phiNeumannMomentShellRegionName(params.phi_boundary_neumann_moment_shell_region_)
+              << " phi_neumann_moment_a_form="
+              << phiNeumannMomentAFormName(params.phi_boundary_neumann_moment_a_form_)
               << " phi_rhs_project_zero_mean=" << (params.phi_rhs_project_zero_mean_ ? 1 : 0)
               << " phi_boundary_grad_neumann=" << (params.phi_boundary_grad_neumann_projection_ ? 1 : 0)
               << " phi_boundary_lhs_grad_neumann=" << (params.phi_boundary_lhs_grad_neumann_ ? 1 : 0)

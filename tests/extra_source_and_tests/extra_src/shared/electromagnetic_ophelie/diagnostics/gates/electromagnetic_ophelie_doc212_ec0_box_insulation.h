@@ -30,6 +30,16 @@ struct OphelieDoc212Ec0BoxCli
     Vecd a0_real = Vecd(1.0e-4, 0.0, 0.0);
     Real frequency_hz = 50.0;
     Real sigma = 16.0;
+    /** Doc213: if true, use production DivΣA + formal pairwise-moment Neumann (not Legacy EMF). */
+    bool use_div_sigma = false;
+    /** ShellVdB needs ≫1; PairwiseTruncationMoment / DivSigmaASurfaceFlux use ~1. */
+    Real neumann_rhs_amplification = 100.0;
+    /** empty → DivΣA defaults pairwise-truncation-moment; Legacy keeps shell-vdb. */
+    std::string neumann_rhs_kind;
+    /** empty → LegacyPairwise; set div-sigma-grad for G12 same-family test. */
+    std::string phi_lhs_operator;
+    /** G12: enforce n·∇φ=g_n inside DivSigmaGrad LHS matvec. */
+    bool lhs_grad_neumann = false;
 };
 
 struct OphelieDoc212Ec0BoxAudit
@@ -126,20 +136,54 @@ inline int runOphelieDoc212Ec0BoxInsulation(const OphelieDoc212Ec0BoxCli &cli)
     params.use_a_total_for_edge_flux_ = true;
     params.edge_flux_normalization_mode_ = OphelieEdgeFluxNormalizationMode::Off;
     params.edge_flux_solver_local_rhs_scale_ = Real(1);
-    // Insulation manufactured solution (constant A → J=0) needs shared LegacyFlux EMF:
-    // DivΣA RHS≈0 and the shell Neumann patch alone leave φ≈0 (G4c Jrms/Jchar~1 FAIL).
-    // Doc213 cylinder production stays DivΣA; EC0 deliberately pins EMF rollback.
-    params.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::LegacyFlux;
     params.phi_lhs_operator_kind_ = OpheliePhiLhsOperatorKind::LegacyPairwise;
-    params.doc212_shared_complex_div_sigma_rhs_ = false;
-    params.doc212_shared_complex_edge_rhs_ = true;
-    params.doc212_shared_complex_pairwise_rhs_ = false;
     params.phi_boundary_mode_ = OpheliePhiBoundaryMode::OneSidedNeumann;
     params.phi_rhs_project_zero_mean_ = true;
     params.phi_gauge_penalty_ = Real(1.0e-8);
     params.phi_boundary_lhs_grad_neumann_ = false;
     params.phi_boundary_grad_neumann_projection_ = false;
     params.phi_boundary_normal_source_ = OpheliePhiBoundaryNormalSource::AnalyticBox;
+    if (cli.use_div_sigma)
+    {
+        // Doc213: production DivΣA + formal pairwise truncation-moment Neumann (amp~1).
+        // Rollback shell: --doc213-neumann-kind=shell-vdb --doc213-neumann-amp=N.
+        params.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::DivSigmaA;
+        params.doc212_shared_complex_div_sigma_rhs_ = true;
+        params.doc212_shared_complex_edge_rhs_ = false;
+        params.doc212_shared_complex_pairwise_rhs_ = false;
+        if (!cli.neumann_rhs_kind.empty())
+        {
+            params.phi_boundary_neumann_rhs_kind_ = parseOpheliePhiNeumannRhsKind(cli.neumann_rhs_kind);
+        }
+        else
+        {
+            params.phi_boundary_neumann_rhs_kind_ = OpheliePhiNeumannRhsKind::PairwiseTruncationMoment;
+        }
+        params.phi_boundary_neumann_rhs_amplification_ =
+            (cli.neumann_rhs_amplification > Real(0)) ? cli.neumann_rhs_amplification : Real(1);
+        if (!cli.phi_lhs_operator.empty())
+        {
+            if (cli.phi_lhs_operator == "div-sigma-grad" || cli.phi_lhs_operator == "div_sigma_grad")
+            {
+                params.phi_lhs_operator_kind_ = OpheliePhiLhsOperatorKind::DivSigmaGrad;
+            }
+            else
+            {
+                params.phi_lhs_operator_kind_ = OpheliePhiLhsOperatorKind::LegacyPairwise;
+            }
+        }
+        params.phi_boundary_lhs_grad_neumann_ = cli.lhs_grad_neumann;
+    }
+    else
+    {
+        // Doc212 pin: LegacyFlux EMF carries insulation load for constant A.
+        params.phi_rhs_operator_kind_ = OpheliePhiRhsOperatorKind::LegacyFlux;
+        params.doc212_shared_complex_div_sigma_rhs_ = false;
+        params.doc212_shared_complex_edge_rhs_ = true;
+        params.doc212_shared_complex_pairwise_rhs_ = false;
+        params.phi_boundary_neumann_rhs_amplification_ = Real(1);
+        params.phi_boundary_neumann_rhs_kind_ = OpheliePhiNeumannRhsKind::ShellVdB;
+    }
 
     const Vecd center = Vecd::Zero();
     const Vecd half = cli.half;
@@ -194,7 +238,11 @@ inline int runOphelieDoc212Ec0BoxInsulation(const OphelieDoc212Ec0BoxCli &cli)
 
     std::cout << "[ophelie][doc212][ec0] box half=(" << half[0] << "," << half[1] << "," << half[2] << ") dp="
               << cli.dp << " f=" << cli.frequency_hz << " sigma=" << cli.sigma << " |A0|=" << cli.a0_real.norm()
-              << " n=" << n << std::endl;
+              << " n=" << n << " rhs=" << (cli.use_div_sigma ? "div-sigma-a" : "legacy-flux")
+              << " lhs=" << phiLhsOperatorKindName(params.phi_lhs_operator_kind_)
+              << " lhs_grad_neumann=" << (params.phi_boundary_lhs_grad_neumann_ ? 1 : 0)
+              << " neumann_kind=" << phiNeumannRhsKindName(params.phi_boundary_neumann_rhs_kind_)
+              << " neumann_amp=" << params.phi_boundary_neumann_rhs_amplification_ << std::endl;
 
     auto run_once = [&](const char *tag) -> OphelieDoc212Ec0BoxAudit {
         (void)execOphelieComplexEdgeFluxSolveReconAndPower<ExecutionPolicy>(glass_body, *glass_inner, names, params,
