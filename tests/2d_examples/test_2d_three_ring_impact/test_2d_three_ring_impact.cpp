@@ -5,6 +5,7 @@
  */
 
 #include "sphinxsys.h"
+#include <gtest/gtest.h>
 using namespace SPH;
 
 void relax_solid(RealBody &body, InnerRelation &inner)
@@ -172,7 +173,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     const Real physical_viscosity_m = get_physical_viscosity_general(rho_m, youngs_modulus_m, thickness_m);
     const Real physical_viscosity_s = get_physical_viscosity_general(rho_s, youngs_modulus_s, thickness_s);
 
-     // Bounding box
+    // Bounding box
     BoundingBoxd bb_system(center_l - 0.5 * diameter_outer_l * Vec2d::Ones(),
                            center_l + 0.5 * diameter_outer_l * Vec2d::Ones());
 
@@ -215,7 +216,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     ReduceDynamics<solid_dynamics::AcousticTimeStep> computing_time_step_size_l(ring_l_body);
 
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration_m(ring_m_inner);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half_m(ring_m_inner, 3, true);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half_m(ring_m_inner, 3, true, 0.02);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half_m(ring_m_inner);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         velocity_damping_m(0.2, ring_m_inner, "Velocity", physical_viscosity_m);
@@ -225,7 +226,7 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     ReduceDynamics<thin_structure_dynamics::ShellAcousticTimeStepSize> computing_time_step_size_m(ring_m_body);
 
     InteractionDynamics<thin_structure_dynamics::ShellCorrectConfiguration> corrected_configuration_s(ring_s_inner);
-    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half_s(ring_s_inner, 3, true);
+    Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationFirstHalf> stress_relaxation_first_half_s(ring_s_inner, 3, true, 0.02);
     Dynamics1Level<thin_structure_dynamics::ShellStressRelaxationSecondHalf> stress_relaxation_second_half_s(ring_s_inner);
     DampingWithRandomChoice<InteractionSplit<DampingPairwiseInner<Vec2d, FixedDampingRate>>>
         velocity_damping_s(0.2, ring_s_inner, "Velocity", physical_viscosity_s);
@@ -316,6 +317,37 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
 
     vel_ic_s.exec();
 
+    // Penetration check
+    const Real tolerance = 0.9;
+    auto check_contact_penetration = [&](BaseParticles &particles, const BaseContactRelation &contact_relation)
+    {
+        const Real dp_1 = particles.getSPHBody().getSPHBodyResolutionRef();
+        particle_for(execution::ParallelPolicy(), particles.getSPHBody().LoopRange(),
+                     [&](size_t index_i)
+                     {
+                         for (size_t k = 0; k < contact_relation.contact_configuration_.size(); ++k)
+                         {
+                             const Real dp_k = contact_relation.contact_bodies_[k]->getSPHBodyResolutionRef();
+                             const Real dp_ave = 0.5 * (dp_1 + dp_k);
+                             const auto &contact_neighbor = contact_relation.contact_configuration_[k][index_i];
+                             for (size_t n = 0; n < contact_neighbor.current_size_; ++n)
+                                 ASSERT_PRED_FORMAT2(::testing::internal::CmpHelperGE, contact_neighbor.r_ij_[n], tolerance * dp_ave);
+                         }
+                     });
+    };
+    auto check_self_penetration = [&](const BaseInnerRelation &self_relation)
+    {
+        const Real dp_1 = self_relation.real_body_->getSPHBodyResolutionRef();
+        auto &particles = self_relation.real_body_->getBaseParticles();
+        particle_for(execution::ParallelPolicy(), particles.getSPHBody().LoopRange(),
+                     [&](size_t index_i)
+                     {
+                         const auto &neighbor = self_relation.inner_configuration_[index_i];
+                         for (size_t n = 0; n < neighbor.current_size_; ++n)
+                             ASSERT_PRED_FORMAT2(::testing::internal::CmpHelperGE, neighbor.r_ij_[n], tolerance * dp_1);
+                     });
+    };
+
     // Simulation
     Real &physical_time = *system.getSystemVariableDataByName<Real>("PhysicalTime");
     int ite = 0;
@@ -400,6 +432,13 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
             ite_output++;
             vtp_output.writeToFile(ite_output);
             write_ring_m_pos.writeToFile(ite_output);
+
+            {
+                check_self_penetration(self_contact_m);
+                check_contact_penetration(*particles_l, contact_l);
+                check_contact_penetration(*particles_m, contact_m);
+                check_contact_penetration(*particles_s, contact_s);
+            }
         }
         TimeInterval tt = TickCount::now() - t1;
         std::cout << "Total wall time for computation: " << tt.seconds() << " seconds." << std::endl;
@@ -413,18 +452,19 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     {
         std::cerr << e.what() << '\n';
         vtp_output.writeToFile(ite_output + 1);
-        exit(0);
+        throw std::runtime_error(e.what());
     }
-
-    if (system.GenerateRegressionData())
-        write_ring_m_pos.generateDataBase(dp_m);
-    else
-        write_ring_m_pos.testResult();
 }
 //------------------------------------------------------------------------------
 // the main program
 //------------------------------------------------------------------------------
-int main(int ac, char *av[])
+TEST(contact, three_ring_impact)
 {
     three_ring_impact(2, 2, 2);
+}
+
+int main(int ac, char *av[])
+{
+    testing::InitGoogleTest(&ac, av);
+    return RUN_ALL_TESTS();
 }
