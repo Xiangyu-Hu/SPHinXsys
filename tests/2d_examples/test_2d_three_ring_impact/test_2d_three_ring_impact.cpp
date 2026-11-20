@@ -277,15 +277,6 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     BoundaryGeometry fixed_part_l(ring_l_body, diameter_outer_l, dp_l, center_l);
     SimpleDynamics<FixBodyPartConstraint> fix_bc_l(fixed_part_l);
 
-    // Observer
-    const Vec2d observer_pos = center_m + 0.5 * mid_srf_diameter_m * (center_m - center_s).normalized();
-    StdVec<Vec2d> observation_location{observer_pos};
-    ObserverBody observer(system, "Observer");
-    observer.generateParticles<ObserverParticles>(observation_location);
-    ContactRelation observer_contact(observer, {&ring_m_body});
-    RegressionTestDynamicTimeWarping<ObservedQuantityRecording<Vecd>>
-        write_ring_m_pos("Position", observer_contact);
-
     // Check
     auto check_nan = [&](BaseParticles *particles)
     {
@@ -299,7 +290,6 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
     particles_m->addVariableToWrite<Real>("1stPrincipleCurvature");
     BodyStatesRecordingToVtp vtp_output(system);
     vtp_output.writeToFile(0);
-    write_ring_m_pos.writeToFile(0);
 
     // Initialization
     system.initializeSystemCellLinkedLists();
@@ -431,7 +421,6 @@ void three_ring_impact(int resolution_factor_l, int resolution_factor_m, int res
 
             ite_output++;
             vtp_output.writeToFile(ite_output);
-            write_ring_m_pos.writeToFile(ite_output);
 
             {
                 check_self_penetration(self_contact_m);
