@@ -8,6 +8,8 @@
  */
 #include "electromagnetic_ophelie.h"
 #include "electromagnetic_ophelie_boussinesq.h"
+#include "electromagnetic_ophelie_client_case_params.h"
+#include "electromagnetic_ophelie_client_geometry.h"
 #include "electromagnetic_ophelie_french_literature.h"
 #include "electromagnetic_ophelie_french_literature_parameters.h"
 #include "electromagnetic_ophelie_french_material_laws.h"
@@ -56,15 +58,24 @@ inline bool reloadXmlExists(const std::string &folder)
     return fs::exists(fs::path(folder) / "Reload.xml");
 }
 
-inline std::string resolveDefaultFrenchReloadFolder()
+inline std::string resolveDefaultFrenchReloadFolder(bool prefer_client_nc = false)
 {
-    const StdVec<std::string> candidates = {
+    const StdVec<std::string> client_candidates = {
+        "../test_3d_ophelie_client_nc_glass_relax/bin/reload",
+        "../../test_3d_ophelie_client_nc_glass_relax/bin/reload",
+        "./reload",
+        "../reload",
+    };
+    const StdVec<std::string> french_candidates = {
         "./reload",
         "../reload",
         "../../../../../reload",
+        "../test_3d_ophelie_client_nc_glass_relax/bin/reload",
+        "../../test_3d_ophelie_client_nc_glass_relax/bin/reload",
         "../test_3d_ophelie_french_natural_glass_relax/bin/reload",
         "../../test_3d_ophelie_french_natural_glass_relax/bin/reload",
     };
+    const StdVec<std::string> &candidates = prefer_client_nc ? client_candidates : french_candidates;
     for (const std::string &candidate : candidates)
     {
         if (reloadXmlExists(candidate))
@@ -789,6 +800,16 @@ struct LocalCli
     bool bottom_band_vel_zero = false;
     Real target_power_w = 50000.0;
     std::string summary_json;
+    /**
+     * Doc230: map client NC parametric melt into french geometry knobs (Reload from
+     * test_3d_ophelie_client_nc_glass_relax). Prefer pairing with --client-nc-material.
+     * Do not combine with bare --glass-height= (that resets center to H/2).
+     */
+    bool client_nc_geometry = false;
+    /** Doc230: install client development materials (frozen μ @ 1000°C, σ16 borrowed). */
+    bool client_nc_material = false;
+    /** Optional override when --client-nc-geometry; NaN => development 0.180 m. */
+    Real client_melt_height_m = std::numeric_limits<Real>::quiet_NaN();
     FrenchLiteratureParameters literature = makeFrenchNaturalLiteratureParameters();
     FrenchSkullResistanceParams skull;
     FrenchFreeCrustParams free_crust;
@@ -802,6 +823,19 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
         if (std::strncmp(av[i], "--reload-dir=", 13) == 0)
         {
             cli.reload_dir = std::string(av[i] + 13);
+        }
+        else if (std::strcmp(av[i], "--client-nc-geometry") == 0)
+        {
+            cli.client_nc_geometry = true;
+        }
+        else if (std::strcmp(av[i], "--client-nc-material") == 0)
+        {
+            cli.client_nc_material = true;
+        }
+        else if (std::strncmp(av[i], "--melt-height=", 14) == 0)
+        {
+            // Consumed with --client-nc-geometry (same knob as client relax).
+            cli.client_melt_height_m = static_cast<Real>(std::atof(av[i] + 14));
         }
         else if (std::strncmp(av[i], "--end-time=", 11) == 0)
         {
@@ -1724,7 +1758,12 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
         cli.advection_cfl = Real(0.25);
     if (cli.reload_dir.empty())
     {
-        cli.reload_dir = resolveDefaultFrenchReloadFolder();
+        cli.reload_dir = resolveDefaultFrenchReloadFolder(cli.client_nc_geometry);
+    }
+    if (cli.literature.zero_q)
+    {
+        // Isothermal / Q-off hydro: do not calibrate coil to French 50 kW.
+        cli.enable_target_power = false;
     }
     if (cli.enable_target_power)
     {
@@ -4840,6 +4879,48 @@ int main(int ac, char *av[])
 
     if (const int cli_rc = applyLocalCli(ac, av, french, local_cli))
         return cli_rc;
+    if (local_cli.client_nc_geometry)
+    {
+        OphelieClientMeltGeometryM melt = makeClientNcMeltGeometryDevelopment();
+        if (std::isfinite(static_cast<double>(local_cli.client_melt_height_m)) &&
+            local_cli.client_melt_height_m > TinyReal)
+        {
+            melt.melt_height_m = local_cli.client_melt_height_m;
+            melt.glass_half_height = Real(0.5) * melt.melt_height_m;
+            melt.glass_center_z_m = melt.inner_bottom_z_m + melt.glass_half_height;
+            melt.glass_center = Vecd(0, 0, melt.glass_center_z_m);
+            melt.melt_height_status = "user_cli_override";
+        }
+        // Client development default 10 mm (matches relax). Later filterFrenchReduced applies --dp= if set.
+        applyClientNcMeltToFrenchReduced(french, melt, Real(0.010));
+        std::cout << "[ophelie][client-nc] geometry: R=" << french.glass_radius
+                  << " H=" << (Real(2) * french.glass_half_height) << " center_z=" << french.glass_center[2]
+                  << " bottom_z=" << (french.glass_center[2] - french.glass_half_height)
+                  << " dp=" << french.dp
+                  << " coil_loops=" << french.coil.num_loops << " f_Hz=" << french.frequency_hz
+                  << " (avoid bare --glass-height= after this; use --melt-height=)\n";
+    }
+    if (local_cli.client_nc_material)
+    {
+        const OphelieClientCaseParams preset = makeClientNaturalConvectionDevelopmentParams();
+        applyClientNcDevelopmentToLiterature(local_cli.literature, preset);
+        local_cli.enable_target_power = false;
+        local_cli.beta = preset.beta;
+        french.sigma_glass = local_cli.literature.material.sigma.evaluate(preset.t_initial_k);
+        french.frequency_hz = preset.frequency_hz;
+        // Isothermal hydro short-run default: no EM Q unless user later enables heating.
+        if (!local_cli.literature.zero_q)
+        {
+            std::cout << "[ophelie][client-nc] tip: pass --zero-q for isothermal hydro (no EM Q / no 50 kW)\n";
+        }
+        std::cout << "[ophelie][client-nc] material: id=" << preset.material_id
+                  << " T0_K=" << preset.t_initial_k
+                  << " mu=" << local_cli.literature.material.mu.evaluate(preset.t_initial_k)
+                  << " sigma=" << french.sigma_glass
+                  << " rho=" << local_cli.literature.material.rho.evaluate(preset.t_initial_k)
+                  << " boussinesq=" << (local_cli.literature.enable_boussinesq ? 1 : 0)
+                  << " generator_input_W=" << local_cli.literature.generator_power_w << "\n";
+    }
     if (local_cli.doc227_schedule_selftest)
     {
         std::string reason;
@@ -5253,88 +5334,109 @@ int main(int ac, char *av[])
                                                                                     params.sigma_glass_);
         assign_sigma.exec();
 
-        OphelieFrenchEmJouleHeatOneWayResult probe;
-        runFrenchReducedEmOrSelfInductionForThermalHandoff<MainExecutionPolicy>(
-            *glass_em, *glass_em_inner, glass_em_names, params, french, probe);
-        if (local_cli.enable_target_power)
+        BaseParticles &particles = glass_em->getBaseParticles();
+        const size_t n = particles.TotalRealParticles();
+        frozen_q.assign(n, Real(0));
+
+        if (local_cli.literature.zero_q)
         {
-            (void)calibrateFrenchCoilCurrentToTargetPower(french, params, probe.joule_power_w);
+            // Isothermal hydro: keep EM SPHSystem alive for GPU lifetime, but do not solve EM.
+            p_joule = Real(0);
+            phi_eq = Real(0);
+            coupling_state.calibrated_current_per_loop = french.coil.current_per_loop;
+            coupling_state.coil_current_per_loop = french.coil.current_per_loop;
+            coupling_state.current_frozen = true;
+            coupling_state.generator_power_w = local_cli.literature.generator_power_w;
+            coupling_state.target_glass_absorbed_power_w = Real(0);
+            coupling_state.reconstructed_glass_power_w = Real(0);
+            coupling_state.last_phi_eq_res = Real(0);
+            std::cout << "[ophelie][stage4.1] zero_q: skip EM; frozen_q=0 n=" << n
+                      << " (isothermal hydro path)\n";
+        }
+        else
+        {
+            OphelieFrenchEmJouleHeatOneWayResult probe;
             runFrenchReducedEmOrSelfInductionForThermalHandoff<MainExecutionPolicy>(
                 *glass_em, *glass_em_inner, glass_em_names, params, french, probe);
-        }
-        p_joule = probe.joule_power_w;
-        phi_eq = probe.phi_eq_res_vol;
-        coupling_state.calibrated_current_per_loop = french.coil.current_per_loop;
-        coupling_state.coil_current_per_loop = french.coil.current_per_loop;
-        coupling_state.current_frozen = local_cli.literature.em_control == EMControlMode::FixedCoilCurrent;
-        coupling_state.generator_power_w = local_cli.literature.generator_power_w;
-        coupling_state.target_glass_absorbed_power_w = local_cli.target_power_w;
-        coupling_state.reconstructed_glass_power_w = p_joule;
-        coupling_state.last_phi_eq_res = phi_eq;
-
-        BaseParticles &particles = glass_em->getBaseParticles();
-        const std::string q_field = ophelieJouleHeatSourceFieldForThermal(glass_em_names, params);
-        syncVariableToHost<Real>(particles, q_field);
-        const Real *q = particles.getVariableDataByName<Real>(q_field);
-        const size_t n = particles.TotalRealParticles();
-        frozen_q.resize(n);
-        for (size_t i = 0; i < n; ++i)
-        {
-            frozen_q[i] = q[i];
-        }
-        std::cout << "[ophelie][stage4.1] EM freeze: n=" << n << " P_joule_W=" << p_joule
-                  << " phi_eq_res_vol=" << phi_eq << " self_induction=" << (probe.used_self_induction ? 1 : 0)
-                  << " generator_power=" << coupling_state.generator_power_w
-                  << " target_glass_absorbed_power=" << coupling_state.target_glass_absorbed_power_w
-                  << " reconstructed_glass_power=" << p_joule
-                  << " coil_current=" << coupling_state.coil_current_per_loop << std::endl;
-
-        // Doc219 E: always deposit frozen Q to Euler grid when spatial_frozen_q (default).
-        const bool build_spatial_q = local_cli.spatial_frozen_q || periodic_coupling;
-        if (build_spatial_q)
-        {
-            const Vecd &gc_em = french.glass_center;
-            const FrenchCylindricalFrame frame = makeFrenchCylinderFrameFromGlass(
-                gc_em, french.glass_radius, french.glass_half_height, local_cli.literature.vertical_axis);
-            const BoundingBoxd melt_bounds(
-                Vecd(gc_em[0] - french.glass_radius, gc_em[1] - french.glass_radius,
-                     gc_em[2] - french.glass_half_height),
-                Vecd(gc_em[0] + french.glass_radius, gc_em[1] + french.glass_radius,
-                     gc_em[2] + french.glass_half_height));
-            // Free-surface particles can leave the geometric melt AABB; keep a wide Euler pad
-            // and clamp-sample (below) so Doc219 E never silently writes Q=0 on coverage miss.
-            q_grid.spec_ = rh200::makeRh200JouleHeatGridSpecFromBounds(melt_bounds, french.dp, Real(8));
-            coupling_state.sigma_rz.frame = frame;
-            coupling_state.q_rz.frame = frame;
-            // Fixed-shape / fixed-total-power diagnostic remap (not live EM feedback).
-            FrenchLiteratureParameters lit_q = local_cli.literature;
-            lit_q.q_conservative_remap = true;
-            depositEmQAndRecord(particles, glass_em_names, params, frame, lit_q, q_grid, coupling_state, p_joule);
-            if (periodic_coupling)
+            if (local_cli.enable_target_power)
             {
-                syncVariableToHost<Real>(particles, glass_em_names.sigma);
-                const Real *sigma0 = particles.getVariableDataByName<Real>(glass_em_names.sigma);
-                const Vecd *pos0 = particles.getVariableDataByName<Vecd>("Position");
-                const Real *vol0 = particles.getVariableDataByName<Real>("VolumetricMeasure");
-                azimuthalDeposit(coupling_state.sigma_rz, pos0, sigma0, vol0, n);
-                fillEmptyAxisymmetricBins(coupling_state.sigma_rz, params.sigma_glass_);
-                coupling_state.sigma_em.assign(sigma0, sigma0 + n);
-                sigmaFieldStats(coupling_state.sigma_em, vol0, n, coupling_state.last_sigma_min,
-                                coupling_state.last_sigma_max, coupling_state.last_sigma_mean);
-                coupling_state.last_update_time = 0.0;
-                armFrenchPeriodicRefreshSchedule(coupling_state, local_cli.literature.em_update_interval_s);
-                coupling_state.update_count = 1;
-                writeAxisymmetricCsv("output/french_sigma_rz.csv", coupling_state.sigma_rz, "sigma_Sm");
+                (void)calibrateFrenchCoilCurrentToTargetPower(french, params, probe.joule_power_w);
+                runFrenchReducedEmOrSelfInductionForThermalHandoff<MainExecutionPolicy>(
+                    *glass_em, *glass_em_inner, glass_em_names, params, french, probe);
             }
-            writeAxisymmetricCsv("output/french_q_rz.csv", coupling_state.q_rz, "Q_Wpm3");
-            writeThermoEMCouplingCsvHeader("output/french_thermo_em_coupling.csv");
-            appendThermoEMCouplingCsv("output/french_thermo_em_coupling.csv", coupling_state, Real(0),
-                                      local_cli.literature.em_control);
-            writeFrenchEnergyBudgetCsvHeader("output/french_energy_budget.csv");
-            std::cout << "[ophelie][doc219][spatial-q] euler_q_grid built; periodic="
-                      << (periodic_coupling ? 1 : 0) << " spatial_frozen_q="
-                      << (local_cli.spatial_frozen_q ? 1 : 0)
-                      << " mode=" << emControlModeName(local_cli.literature.em_control) << std::endl;
+            p_joule = probe.joule_power_w;
+            phi_eq = probe.phi_eq_res_vol;
+            coupling_state.calibrated_current_per_loop = french.coil.current_per_loop;
+            coupling_state.coil_current_per_loop = french.coil.current_per_loop;
+            coupling_state.current_frozen = local_cli.literature.em_control == EMControlMode::FixedCoilCurrent;
+            coupling_state.generator_power_w = local_cli.literature.generator_power_w;
+            coupling_state.target_glass_absorbed_power_w = local_cli.target_power_w;
+            coupling_state.reconstructed_glass_power_w = p_joule;
+            coupling_state.last_phi_eq_res = phi_eq;
+
+            const std::string q_field = ophelieJouleHeatSourceFieldForThermal(glass_em_names, params);
+            syncVariableToHost<Real>(particles, q_field);
+            const Real *q = particles.getVariableDataByName<Real>(q_field);
+            for (size_t i = 0; i < n; ++i)
+            {
+                frozen_q[i] = q[i];
+            }
+            std::cout << "[ophelie][stage4.1] EM freeze: n=" << n << " P_joule_W=" << p_joule
+                      << " phi_eq_res_vol=" << phi_eq
+                      << " self_induction=" << (probe.used_self_induction ? 1 : 0)
+                      << " generator_power=" << coupling_state.generator_power_w
+                      << " target_glass_absorbed_power=" << coupling_state.target_glass_absorbed_power_w
+                      << " reconstructed_glass_power=" << p_joule
+                      << " coil_current=" << coupling_state.coil_current_per_loop << std::endl;
+
+            // Doc219 E: always deposit frozen Q to Euler grid when spatial_frozen_q (default).
+            const bool build_spatial_q = local_cli.spatial_frozen_q || periodic_coupling;
+            if (build_spatial_q)
+            {
+                const Vecd &gc_em = french.glass_center;
+                const FrenchCylindricalFrame frame = makeFrenchCylinderFrameFromGlass(
+                    gc_em, french.glass_radius, french.glass_half_height, local_cli.literature.vertical_axis);
+                const BoundingBoxd melt_bounds(
+                    Vecd(gc_em[0] - french.glass_radius, gc_em[1] - french.glass_radius,
+                         gc_em[2] - french.glass_half_height),
+                    Vecd(gc_em[0] + french.glass_radius, gc_em[1] + french.glass_radius,
+                         gc_em[2] + french.glass_half_height));
+                // Free-surface particles can leave the geometric melt AABB; keep a wide Euler pad
+                // and clamp-sample (below) so Doc219 E never silently writes Q=0 on coverage miss.
+                q_grid.spec_ = rh200::makeRh200JouleHeatGridSpecFromBounds(melt_bounds, french.dp, Real(8));
+                coupling_state.sigma_rz.frame = frame;
+                coupling_state.q_rz.frame = frame;
+                // Fixed-shape / fixed-total-power diagnostic remap (not live EM feedback).
+                FrenchLiteratureParameters lit_q = local_cli.literature;
+                lit_q.q_conservative_remap = true;
+                depositEmQAndRecord(particles, glass_em_names, params, frame, lit_q, q_grid, coupling_state,
+                                    p_joule);
+                if (periodic_coupling)
+                {
+                    syncVariableToHost<Real>(particles, glass_em_names.sigma);
+                    const Real *sigma0 = particles.getVariableDataByName<Real>(glass_em_names.sigma);
+                    const Vecd *pos0 = particles.getVariableDataByName<Vecd>("Position");
+                    const Real *vol0 = particles.getVariableDataByName<Real>("VolumetricMeasure");
+                    azimuthalDeposit(coupling_state.sigma_rz, pos0, sigma0, vol0, n);
+                    fillEmptyAxisymmetricBins(coupling_state.sigma_rz, params.sigma_glass_);
+                    coupling_state.sigma_em.assign(sigma0, sigma0 + n);
+                    sigmaFieldStats(coupling_state.sigma_em, vol0, n, coupling_state.last_sigma_min,
+                                    coupling_state.last_sigma_max, coupling_state.last_sigma_mean);
+                    coupling_state.last_update_time = 0.0;
+                    armFrenchPeriodicRefreshSchedule(coupling_state, local_cli.literature.em_update_interval_s);
+                    coupling_state.update_count = 1;
+                    writeAxisymmetricCsv("output/french_sigma_rz.csv", coupling_state.sigma_rz, "sigma_Sm");
+                }
+                writeAxisymmetricCsv("output/french_q_rz.csv", coupling_state.q_rz, "Q_Wpm3");
+                writeThermoEMCouplingCsvHeader("output/french_thermo_em_coupling.csv");
+                appendThermoEMCouplingCsv("output/french_thermo_em_coupling.csv", coupling_state, Real(0),
+                                          local_cli.literature.em_control);
+                writeFrenchEnergyBudgetCsvHeader("output/french_energy_budget.csv");
+                std::cout << "[ophelie][doc219][spatial-q] euler_q_grid built; periodic="
+                          << (periodic_coupling ? 1 : 0) << " spatial_frozen_q="
+                          << (local_cli.spatial_frozen_q ? 1 : 0)
+                          << " mode=" << emControlModeName(local_cli.literature.em_control) << std::endl;
+            }
         }
     }
 
@@ -5559,7 +5661,13 @@ int main(int ac, char *av[])
             q_host[i] = frozen_q[i];
         }
         syncVariableToDevice<Real>(glass_particles, "JouleHeat");
-        if (local_cli.spatial_frozen_q || periodic_coupling)
+        // Doc230 isothermal hydro (--zero-q): Q≡0 and no Euler Q grid — skip Doc219 spatial-q gates.
+        if (local_cli.literature.zero_q)
+        {
+            std::cout << "[ophelie][doc219][spatial-q] skip self_check (zero_q isothermal; Q=0 by design)\n";
+            recordFrenchFluidHeatPower(coupling_state, glass_particles);
+        }
+        else if (local_cli.spatial_frozen_q || periodic_coupling)
         {
             // Doc219 E: initial map is Eulerian; self-check vs particle-ID snapshot at same layout.
             size_t n_uncovered = 0;
@@ -6502,11 +6610,10 @@ int main(int ac, char *av[])
                                             french.dp);
         }
         hostZeroVelocity(glass_particles);
-        if (local_cli.doc223_paper_flat_slip_top)
+        // Doc223 E1 / Doc230 isothermal: zero-U alone leaves DensityChangeRate/Force/Displacement
+        // from the last acoustic cycle; keep then re-excites U (client NC tripped Doc224 0.05 gate).
+        if (local_cli.doc223_paper_flat_slip_top || local_cli.literature.zero_q)
         {
-            // Doc223 B3/E1: settle zero-U alone left DensityChangeRate/Force/Displacement
-            // from the last acoustic cycle; keep then integrated those residuals → slow
-            // exponential U growth even with dens_sum_normalize (noslip ablation).
             hostZeroRealFieldFrench(glass_particles, "DensityChangeRate");
             hostZeroVecFieldFrench(glass_particles, "Force");
             hostZeroVecFieldFrench(glass_particles, "Displacement");
@@ -6514,11 +6621,19 @@ int main(int ac, char *av[])
             fluid_advection_step_setup.exec();
             if (local_cli.kernel_correction || local_cli.enable_tvf)
                 fluid_linear_correction_matrix.exec();
-            hostLogDoc223PaperTopHydroAudit("post_settle_flush", glass_particles, rho0, local_cli.c0,
-                                            local_cli.gravity_g, gc, french.glass_radius, z_bottom, z_free,
-                                            french.dp);
-            std::cout << "[ophelie][doc223][E1] post-settle flush: zeroed DensityChangeRate/"
-                         "Force/Displacement + dens/normalize/adv_setup\n";
+            if (local_cli.doc223_paper_flat_slip_top)
+            {
+                hostLogDoc223PaperTopHydroAudit("post_settle_flush", glass_particles, rho0, local_cli.c0,
+                                                local_cli.gravity_g, gc, french.glass_radius, z_bottom, z_free,
+                                                french.dp);
+                std::cout << "[ophelie][doc223][E1] post-settle flush: zeroed DensityChangeRate/"
+                             "Force/Displacement + dens/normalize/adv_setup\n";
+            }
+            else
+            {
+                std::cout << "[ophelie][doc230][zero-q] post-settle flush: zeroed DensityChangeRate/"
+                             "Force/Displacement + dens/adv_setup (quiet isothermal keep)\n";
+            }
         }
         if (local_cli.diag_lid_free_slip_post_settle)
         {
@@ -9080,18 +9195,23 @@ int main(int ac, char *av[])
                               << " contact_wall_gain_W=" << contact_wall_gain_w;
                 }
                 std::cout << std::endl;
-                // Doc224: glass natural-convection U_max≫0.05 m/s is already a red-line blow-up.
+                // Doc224 heated NC: U_max≫0.05 m/s is a red-line blow-up.
+                // Doc230 isothermal (--zero-q): use Ma-style gate vs c0 (settle/acoustic residual
+                // can sit near ~0.05–0.1 m/s without being a heated-NC runaway).
+                const Real u_blowup_gate =
+                    local_cli.literature.zero_q ? Real(0.05) * local_cli.c0 : Real(0.05);
                 if (!std::isfinite(u_now) || !std::isfinite(spatial.u_rms) || !std::isfinite(t_mean_now) ||
-                    u_now > Real(0.05))
+                    u_now > u_blowup_gate)
                 {
                     numerical_abort = true;
                     numerical_abort_reason = !std::isfinite(u_now) || !std::isfinite(spatial.u_rms) ||
                                                     !std::isfinite(t_mean_now)
                                                 ? "non_finite_U_or_T_at_monitor"
-                                                : "U_max_above_0p05_blowup_gate";
+                                                : (local_cli.literature.zero_q ? "U_max_above_0p05_c0_blowup_gate"
+                                                                               : "U_max_above_0p05_blowup_gate");
                     std::cerr << "[ophelie][doc224][numerical-abort] " << numerical_abort_reason
                               << " t=" << t_now << " U_max=" << u_now << " U_rms=" << spatial.u_rms
-                              << std::endl;
+                              << " gate=" << u_blowup_gate << std::endl;
                 }
             }
         }

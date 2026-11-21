@@ -1,0 +1,6 @@
+role,file,exists,bytes,sha256_or_token
+crucible_shell,glass.STL,1,22484,10f41cbe60dadc244098c2327f95b8c84ef3c9bd3b166999c83da85e186e2de7
+coil,coil.STL,1,96234,4333446b0215143cb1a3c80ed87e364d60431ad5c7aa318ffcdbaa9c590d7322
+cooling_pipes,cooling-pipes-1.STL,1,732034,988ac0cf59438923dda51d671b7ea6c6605501ce48efc3d3ecd6e4a7ea9af76d
+thermocouple,thermal-couple-1.STL,1,7484,73e868f18d3956072910b3f1f00401e0799c65c22481ed19a0df753c67a08d6a
+stirring_paddle,stirring paddle.STL,1,9784,ac6eebb0641eeea74b909763b86392bd4c556e0d5e361c0e79a3ee140a2bde7f

@@ -1,0 +1,25 @@
+{
+  "assembly_id": "client_nc_2026-11",
+  "stl_subdir": "docs/ophelie/software/自然对流stl",
+  "cad_vertical": "+Y",
+  "stl_unit": "mm",
+  "solver_up": "+Z",
+  "transform": "translate crucible outer-bottom axis to origin; (x,y,z)_cad -> (x,-z,y)/1000",
+  "has_paddle": false,
+  "paddle_eccentricity_x_mm_historical": 0,
+  "glass_aabb_raw_mm": {"min":[30.71500015,0,30.71500015],"max":[315.7149963,250,315.7149963]},
+  "probe": {"id":"thermocouple_nominal_tip","status":"unconfirmed_sensor_location","cad_tip_mm_raw":[173.2195129,130,173.2229919],"solver_m":[4.516601621e-06,-7.995606211e-06,0.1300000101],"target_temperature_k":1273.150024,"target_meaning":"NC thermocouple ~1000C target (not domain max / not IC)"},
+  "coil_rings_mm_relative_outer_bottom": [
+    {"index":1,"z_lo":39.07799911,"z_hi":119.0780029,"center":79.07800293,"r_center":170},
+    {"index":2,"z_lo":129.0780029,"z_hi":209.0780029,"center":169.0780029,"r_center":170},
+    {"index":3,"z_lo":220,"z_hi":300,"center":260,"r_center":170},
+    {"index":4,"z_lo":310,"z_hi":390,"center":350,"r_center":170}
+  ],
+  "parts": [
+    {"role":"crucible_shell","file":"glass_NC.STL","enters_solver":false,"display_or_probe_only":true},
+    {"role":"coil","file":"coil_NC.STL","enters_solver":false,"display_or_probe_only":true},
+    {"role":"cooling_pipes","file":"cooling-pipes_NC.STL","enters_solver":false,"display_or_probe_only":true},
+    {"role":"thermocouple","file":"thermal-couple_NC.STL","enters_solver":false,"display_or_probe_only":true}
+  ],
+  "notes": ["cooling pipes are display-only","thermocouple tip is nominal AABB lower end until client confirms","coil/cooling STL may contain zero-area triangles; keep originals"]
+}

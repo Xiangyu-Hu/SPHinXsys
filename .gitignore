@@ -6,6 +6,10 @@
 # OPHELIE literature provenance / Fig.8 ASSUMED T metadata
 !docs/ophelie/reference/standard_data/**/*.json
 !docs/ophelie/reference/standard_data/**/*.meta.json
+# Client case handoff / Doc228 gate summaries (software machine sync)
+!docs/ophelie/reference/client_case_audit_2026-11-20/**/*.json
+!docs/ophelie/reference/client_software_handoff_2026-11-21/**/*.json
+!docs/ophelie/reference/elastic_paddle_runs_2026-11-21/**/*.json
 
 ##### Windows
 # Windows thumbnail cache files
@@ -1088,7 +1092,14 @@ docs/ophelie/welding/**/*.log
 tests/extra_source_and_tests/3d_examples/*/reload/
 tests/extra_source_and_tests/3d_examples/*/bin/
 tests/extra_source_and_tests/3d_examples/*/output/
+tests/extra_source_and_tests/3d_examples/*/output_backup/
 tests/extra_source_and_tests/3d_examples/*/lib/
+# Heavy run dumps under docs (keep summary JSON via exceptions above; skip VTP/log)
+docs/ophelie/reference/elastic_paddle_runs_*/**/*.vtp
+docs/ophelie/reference/elastic_paddle_runs_*/**/*.log
+# Client proprietary Office blobs under software/ (keep the md plan only)
+docs/ophelie/software/*.docx
+docs/ophelie/software/*.DOCX
 
 # Local one-off GPU helper scripts (Cursor/session); keep case sources/README
 tests/extra_source_and_tests/3d_examples/test_3d_ophelie_induction_demo/scripts/

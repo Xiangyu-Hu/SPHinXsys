@@ -11,6 +11,33 @@ WCSPH hydro: the melt top is a free surface (no lid). The crucible wall is an op
 
 Full notes: [`docs/ophelie/10_THERMO_EM_COUPLING_ROUND1.md`](../../../../docs/ophelie/10_THERMO_EM_COUPLING_ROUND1.md).
 
+## Doc230 client NC isothermal hydro (Reload from client relax)
+
+Reuse this binary with client geometry/material flags. Requires prior
+`test_3d_ophelie_client_nc_glass_relax` Reload (`Reload.xml` under that case `bin/reload`).
+
+```bash
+cd /home/ubuntu/SPHinXsys/build
+cmake --build . --target test_3d_ophelie_french_natural_convection_frozen_q -j$(nproc)
+
+cd tests/extra_source_and_tests/3d_examples/test_3d_ophelie_french_natural_convection_frozen_q/bin
+./test_3d_ophelie_french_natural_convection_frozen_q \
+  --client-nc-geometry \
+  --client-nc-material \
+  --zero-q \
+  --zero-buoyancy \
+  --dp=0.010 \
+  --melt-height=0.180 \
+  --reload-dir=../../test_3d_ophelie_client_nc_glass_relax/bin/reload \
+  --end-time=0.50 \
+  --hydro-settle-time=0.15 \
+  --state-record-interval=0.05 \
+  --summary-json=./client_nc_isothermal_hydro_summary.json
+```
+
+Expect `[ophelie][client-nc] geometry/material`, `[ophelie][stage4.1] zero_q: skip EM`, low `U_max`, `escaped≈0`.
+Do not use bare `--glass-height=` with client geometry (use `--melt-height=`).
+
 ## Defaults
 
 | Flag | Default |

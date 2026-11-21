@@ -1,0 +1,26 @@
+{
+  "assembly_id": "client_stir_2026-11",
+  "stl_subdir": "docs/ophelie/software/搅拌stl",
+  "cad_vertical": "+Y",
+  "stl_unit": "mm",
+  "solver_up": "+Z",
+  "transform": "translate crucible outer-bottom axis to origin; (x,y,z)_cad -> (x,-z,y)/1000",
+  "has_paddle": true,
+  "paddle_eccentricity_x_mm_historical": -67,
+  "glass_aabb_raw_mm": {"min":[32.73899841,3.732000113,1029],"max":[317.7390137,253.7319946,1314]},
+  "probe": {"id":"thermocouple_nominal_tip","status":"unconfirmed_sensor_location","cad_tip_mm_raw":[245.7265015,133.7319946,1171.5],"solver_m":[0.07048749179,-0,0.1300000101],"target_temperature_k":1673.150024,"target_meaning":"stirring ~1400C qualitative peak trend only; time/location TBD"},
+  "coil_rings_mm_relative_outer_bottom": [
+    {"index":1,"z_lo":39.07799911,"z_hi":119.0780029,"center":79.07800293,"r_center":170},
+    {"index":2,"z_lo":129.0780029,"z_hi":209.0780029,"center":169.0780029,"r_center":170},
+    {"index":3,"z_lo":220,"z_hi":300,"center":260,"r_center":170},
+    {"index":4,"z_lo":310,"z_hi":390,"center":350,"r_center":170}
+  ],
+  "parts": [
+    {"role":"crucible_shell","file":"glass.STL","enters_solver":false,"display_or_probe_only":true},
+    {"role":"coil","file":"coil.STL","enters_solver":false,"display_or_probe_only":true},
+    {"role":"cooling_pipes","file":"cooling-pipes-1.STL","enters_solver":false,"display_or_probe_only":true},
+    {"role":"thermocouple","file":"thermal-couple-1.STL","enters_solver":false,"display_or_probe_only":true},
+    {"role":"stirring_paddle","file":"stirring paddle.STL","enters_solver":true,"display_or_probe_only":false}
+  ],
+  "notes": ["cooling pipes are display-only","thermocouple tip is nominal AABB lower end until client confirms","coil/cooling STL may contain zero-area triangles; keep originals"]
+}

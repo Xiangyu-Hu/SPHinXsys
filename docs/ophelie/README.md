@@ -26,6 +26,7 @@
 | [`archive/DOCS_201_250_MERGED.md`](archive/DOCS_201_250_MERGED.md) | Docs 201–227 combined archive (through Doc227 plan) |
 | [`archive/README_MERGED_DOCS.md`](archive/README_MERGED_DOCS.md) | Merge policy / volume index |
 | [`OPHELIE_BRANCH_STATUS_2026-11-20.md`](OPHELIE_BRANCH_STATUS_2026-11-20.md) | Branch snapshot: natural / stirring done vs gaps (2026-11-20) |
+| [`230_CLIENT_CASE_PHYSICS_LANDING_2026-11-20.md`](230_CLIENT_CASE_PHYSICS_LANDING_2026-11-20.md) | Client materials/geometry/presets landing (Doc229) |
 | [OPHELIE_CURRENT_CODE_AUDIT.md](OPHELIE_CURRENT_CODE_AUDIT.md) | 2026-08 code audit vs Jacoutot papers |
 | [OPHELIE_STAGE3_4_CLOSEOUT_AND_FRENCH_NATURAL_NEXT_PLAN_2026-08-11.md](OPHELIE_STAGE3_4_CLOSEOUT_AND_FRENCH_NATURAL_NEXT_PLAN_2026-08-11.md) | Binding plan: φ dual gate, σ_nat, Stage 3.5 → Natural thermal / Stage 4.x |
 

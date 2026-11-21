@@ -1,0 +1,13 @@
+{
+  "material_id": "stainless_304_1p4301_room_T_dev",
+  "source_status": "development_assumption",
+  "reference": "Outokumpu Core range datasheet Core 304/4301 (Doc228); room-T engineering defaults",
+  "rho_kg_m3": 7900,
+  "youngs_modulus_Pa": 2e+11,
+  "poisson": 0.3,
+  "k_W_per_mK": 15,
+  "cp_J_per_kgK": 500,
+  "alpha_1_per_K": 1.6e-05,
+  "T_ref_K": 293.15,
+  "note": "S0 may use softer rubber-like E for analytic SPH path gate; paddle E0/E1 must use this stainless preset without secretly lowering E"
+}
