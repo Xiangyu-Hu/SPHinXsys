@@ -1660,9 +1660,10 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
         {
             cli.doc232_boundary_audit_dir = std::string(av[i] + 28);
         }
-        else if (std::strncmp(av[i], "--boundary-face-t-mode=", 22) == 0)
+        else if (std::strncmp(av[i], "--boundary-face-t-mode=", 23) == 0)
         {
-            cli.boundary_face_t_mode = std::string(av[i] + 22);
+            // strlen("--boundary-face-t-mode=") == 23; offset 22 wrongly kept a leading '='.
+            cli.boundary_face_t_mode = std::string(av[i] + 23);
             if (cli.boundary_face_t_mode != "global_dt_dz" && cli.boundary_face_t_mode != "band")
             {
                 std::cerr << "[ophelie][doc233][D] FATAL: --boundary-face-t-mode must be "
@@ -9332,9 +9333,11 @@ int main(int ac, char *av[])
                 fp_on_copy[i] = fp_on[i];
                 fb_copy[i] = fb[i];
             }
-            // OFF: rebuild ForcePrior without buoyancy (same viscous+gravity).
+            // OFF: clear ForcePrior (+ channels) then rebuild viscous+gravity only.
+            // Without this, leftover ON buoyancy remains in ForcePrior and E_chain→1.
             hostZeroVecFieldFrench(glass_particles, "BoussinesqBuoyancyForceCK");
             hostZeroVecFieldFrench(glass_particles, "PreviousBoussinesqBuoyancyForceCK");
+            hostDoc223ZeroAllForcePriorChannels(glass_particles);
             fluid_advection_step_setup.exec();
             exec_viscous();
             apply_gravity_force_prior();
