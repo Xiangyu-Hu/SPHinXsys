@@ -1707,16 +1707,16 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
                 !(cli.doc234_fixed_t_radial_dT > TinyReal))
                 cli.prescribe_t_radial_dT = Real(30);
         }
-        else if (std::strncmp(av[i], "--doc234-force-precision-csv=", 28) == 0)
+        else if (std::strncmp(av[i], "--doc234-force-precision-csv=", 29) == 0)
         {
-            cli.doc234_force_precision_csv = std::string(av[i] + 28);
+            cli.doc234_force_precision_csv = std::string(av[i] + 29);
             cli.doc234_force_precision_exit = true;
             cli.doc233_buoyancy_force_chain_exit = true;
             cli.literature.enable_boussinesq = true;
         }
-        else if (std::strncmp(av[i], "--doc234-fixed-t-radial-dT=", 26) == 0)
+        else if (std::strncmp(av[i], "--doc234-fixed-t-radial-dT=", 27) == 0)
         {
-            cli.doc234_fixed_t_radial_dT = static_cast<Real>(std::atof(av[i] + 26));
+            cli.doc234_fixed_t_radial_dT = static_cast<Real>(std::atof(av[i] + 27));
         }
         else if (std::strncmp(av[i], "--doc234-particle-field-csv-prefix=", 35) == 0)
         {
