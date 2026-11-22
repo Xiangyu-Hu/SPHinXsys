@@ -308,6 +308,28 @@ struct OphelieCylinderMidplaneCompareReport
     /** Same L2 restricted to strong field |J_an| > strong_floor * max|J_an|_mid. */
     Real l2_rel_abs_J_mid_strong = 0.0;
     Real mean_rel_err_abs_J_end = 0.0; /**< end slabs; finite-height vs infinite ref */
+    /**
+     * Doc234 F2: mid-band volume-weighted complex J_θ error (no amplitude scale fit).
+     * E_J_complex = sqrt(Σ V |Jθ_num−Jθ_ref|² / Σ V |Jθ_ref|²) at particle coordinates.
+     */
+    Real E_J_complex_mid = 0.0;
+    /** Same region, amplitude-only: sqrt(Σ V (|J|_num−|J|_ref)² / Σ V |J|_ref²); alias of l2_rel_abs_J_mid. */
+    Real E_J_amplitude_mid = 0.0;
+    /** Unweighted mean of | |J|_num−|J|_ref | / |J|_ref | on mid particles (not radial-bin centers). */
+    Real mean_rel_abs_J_mid_particles = 0.0;
+    /** Doc234 F3: Σ V Q on same particle set (full column / mid band). */
+    Real P_num_discrete_W = 0.0;
+    Real P_ref_discrete_W = 0.0;
+    Real P_ref_geometric_W = 0.0; /**< infinite-cylinder P'×H (same as P_analytic_finite_W). */
+    Real P_num_discrete_mid_W = 0.0;
+    Real P_ref_discrete_mid_W = 0.0;
+    Real P_ref_geometric_mid_W = 0.0;
+    Real rel_P_num_vs_ref_discrete = 0.0;
+    Real rel_P_ref_discrete_vs_geometric = 0.0;
+    Real rel_P_num_vs_geometric = 0.0;
+    Real rel_P_num_vs_ref_discrete_mid = 0.0;
+    Real rel_P_ref_discrete_vs_geometric_mid = 0.0;
+    Real rel_P_num_vs_geometric_mid = 0.0;
     Real q_outer_over_center_sph = 0.0;
     Real q_outer_over_center_analytic = 0.0;
     size_t n_bins = 0;
@@ -476,9 +498,16 @@ inline OphelieCylinderMidplaneCompareReport hostOphelieCylinderMidplaneCompare(
     double p_tot = 0.0;
     double p_mid = 0.0;
     double p_interior = 0.0;
+    double p_num_disc = 0.0;
+    double p_num_disc_mid = 0.0;
+    double p_ref_disc = 0.0;
+    double p_ref_disc_mid = 0.0;
     double q_o = 0.0, v_o = 0.0, q_c = 0.0, v_c = 0.0;
     double l2_num = 0.0, l2_den = 0.0;
     double l2s_num = 0.0, l2s_den = 0.0;
+    double cplx_num = 0.0, cplx_den = 0.0;
+    double mid_part_rel_sum = 0.0;
+    size_t n_mid_part_rel = 0;
     double end_rel_sum = 0.0;
     size_t n_end_rel = 0;
     Real j_an_max_mid = Real(0);
@@ -532,6 +561,15 @@ inline OphelieCylinderMidplaneCompareReport hostOphelieCylinderMidplaneCompare(
         const Real jt = std::hypot(jt_re, jt_im);
         const auto samp =
             sampleOphelieCylinderByReferenceMode(reference_mode, sol, r, radius_m, B0, omega, sigma);
+        // Doc234 F3: same particle set (r<R) for num and analytic discrete power.
+        p_num_disc += dq;
+        const double dq_ref = static_cast<double>(samp.Q_Wpm3) * static_cast<double>(vi);
+        p_ref_disc += dq_ref;
+        if (abs_z <= z_half_band)
+        {
+            p_num_disc_mid += dq;
+            p_ref_disc_mid += dq_ref;
+        }
         if (abs_z > z_end_inner)
         {
             ++rep.n_endband;
@@ -548,6 +586,19 @@ inline OphelieCylinderMidplaneCompareReport hostOphelieCylinderMidplaneCompare(
         ++rep.n_midplane;
         mid_samps.push_back(MidSamp{vi, jt, samp.Jtheta_abs});
         j_an_max_mid = std::max(j_an_max_mid, samp.Jtheta_abs);
+        {
+            const double dre = static_cast<double>(jt_re - samp.Jtheta_re);
+            const double dim = static_cast<double>(jt_im - samp.Jtheta_im);
+            const double jref2 = static_cast<double>(samp.Jtheta_re * samp.Jtheta_re + samp.Jtheta_im * samp.Jtheta_im);
+            const double w = static_cast<double>(vi);
+            cplx_num += w * (dre * dre + dim * dim);
+            cplx_den += w * jref2;
+            if (samp.Jtheta_abs > Real(1.0e-9))
+            {
+                mid_part_rel_sum += static_cast<double>(std::abs(jt - samp.Jtheta_abs) / samp.Jtheta_abs);
+                ++n_mid_part_rel;
+            }
+        }
         const int b = std::min(n_bins - 1, static_cast<int>(r / radius_m * Real(n_bins)));
         w_bin[static_cast<size_t>(b)] += vi;
         j_bin[static_cast<size_t>(b)] += vi * jt;
@@ -572,6 +623,13 @@ inline OphelieCylinderMidplaneCompareReport hostOphelieCylinderMidplaneCompare(
         (l2_den > TinyReal) ? static_cast<Real>(std::sqrt(l2_num / l2_den)) : Real(0);
     rep.l2_rel_abs_J_mid_strong =
         (l2s_den > TinyReal) ? static_cast<Real>(std::sqrt(l2s_num / l2s_den)) : Real(0);
+    rep.E_J_amplitude_mid = rep.l2_rel_abs_J_mid;
+    rep.E_J_complex_mid = (cplx_den > TinyReal) ? static_cast<Real>(std::sqrt(cplx_num / cplx_den)) : Real(0);
+    if (n_mid_part_rel > 0)
+    {
+        rep.mean_rel_abs_J_mid_particles =
+            static_cast<Real>(mid_part_rel_sum / static_cast<double>(n_mid_part_rel));
+    }
     if (n_end_rel > 0)
     {
         rep.mean_rel_err_abs_J_end = static_cast<Real>(end_rel_sum / static_cast<double>(n_end_rel));
@@ -584,6 +642,22 @@ inline OphelieCylinderMidplaneCompareReport hostOphelieCylinderMidplaneCompare(
     rep.P_sph_interior_W = static_cast<Real>(p_interior);
     rep.rel_P_interior = std::abs(rep.P_sph_interior_W - rep.P_analytic_interior_W) /
                          (std::abs(rep.P_analytic_interior_W) + TinyReal);
+    // Doc234 F3 power triad (full column + mid band); discrete uses r<R particles only.
+    rep.P_num_discrete_W = static_cast<Real>(p_num_disc);
+    rep.P_ref_discrete_W = static_cast<Real>(p_ref_disc);
+    rep.P_ref_geometric_W = rep.P_analytic_finite_W;
+    rep.P_num_discrete_mid_W = static_cast<Real>(p_num_disc_mid);
+    rep.P_ref_discrete_mid_W = static_cast<Real>(p_ref_disc_mid);
+    rep.P_ref_geometric_mid_W = rep.P_analytic_mid_W;
+    auto rel3 = [](Real a, Real b) -> Real {
+        return std::abs(a - b) / (std::max({std::abs(a), std::abs(b), TinyReal}));
+    };
+    rep.rel_P_num_vs_ref_discrete = rel3(rep.P_num_discrete_W, rep.P_ref_discrete_W);
+    rep.rel_P_ref_discrete_vs_geometric = rel3(rep.P_ref_discrete_W, rep.P_ref_geometric_W);
+    rep.rel_P_num_vs_geometric = rel3(rep.P_num_discrete_W, rep.P_ref_geometric_W);
+    rep.rel_P_num_vs_ref_discrete_mid = rel3(rep.P_num_discrete_mid_W, rep.P_ref_discrete_mid_W);
+    rep.rel_P_ref_discrete_vs_geometric_mid = rel3(rep.P_ref_discrete_mid_W, rep.P_ref_geometric_mid_W);
+    rep.rel_P_num_vs_geometric_mid = rel3(rep.P_num_discrete_mid_W, rep.P_ref_geometric_mid_W);
     rep.q_outer_over_center_sph = (v_o > TinyReal && v_c > TinyReal) ? static_cast<Real>((q_o / v_o) / (q_c / v_c + TinyReal))
                                                                     : Real(0);
 
@@ -709,6 +783,20 @@ inline void logOphelieCylinderMidplaneCompare(const OphelieCylinderMidplaneCompa
               << " P_an_int=" << r.P_analytic_interior_W << " rel_P_int=" << r.rel_P_interior
               << " Q_o/c_sph=" << r.q_outer_over_center_sph << " Q_o/c_an=" << r.q_outer_over_center_analytic
               << std::endl;
+    std::cout << "[ophelie][doc234][F] " << tag
+              << " E_J_complex_mid=" << r.E_J_complex_mid << " E_J_amplitude_mid=" << r.E_J_amplitude_mid
+              << " mean_rel_abs_J_mid_particles=" << r.mean_rel_abs_J_mid_particles
+              << " mean_rel_J_radial_bins=" << r.mean_rel_err_abs_J
+              << " P_num_discrete=" << r.P_num_discrete_W << " P_ref_discrete=" << r.P_ref_discrete_W
+              << " P_ref_geometric=" << r.P_ref_geometric_W
+              << " rel_num_vs_ref_disc=" << r.rel_P_num_vs_ref_discrete
+              << " rel_ref_disc_vs_geom=" << r.rel_P_ref_discrete_vs_geometric
+              << " rel_num_vs_geom=" << r.rel_P_num_vs_geometric
+              << " P_num_mid=" << r.P_num_discrete_mid_W << " P_ref_disc_mid=" << r.P_ref_discrete_mid_W
+              << " P_ref_geom_mid=" << r.P_ref_geometric_mid_W
+              << " rel_num_vs_ref_disc_mid=" << r.rel_P_num_vs_ref_discrete_mid
+              << " rel_ref_disc_vs_geom_mid=" << r.rel_P_ref_discrete_vs_geometric_mid
+              << " rel_num_vs_geom_mid=" << r.rel_P_num_vs_geometric_mid << std::endl;
 }
 
 } // namespace ophelie
