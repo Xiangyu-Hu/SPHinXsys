@@ -1402,6 +1402,8 @@ struct FrenchCouplingGateInputs
 {
     bool periodic_coupling = false;
     bool zero_q = false;
+    /** Doc232 H: prescribed volumetric heat; EM was NOT_RUN (do not treat as EM convergence). */
+    bool prescribed_heat = false;
     bool constant_thermal_rheology = true;
     bool require_u_max_positive = true;
     bool energy_residual_available = false;
@@ -1477,8 +1479,10 @@ inline void evaluateFrenchCouplingRunGates(const FrenchCouplingGateInputs &in, F
     g.expected_periodic_refreshes =
         in.periodic_coupling ? frenchExpectedPeriodicRefreshes(in.end_time, in.em_interval) : 0;
 
-    const bool power_present = in.zero_q || (std::isfinite(in.p_em) && in.p_em > TinyReal);
-    g.startup_ok = power_present && (!in.periodic_coupling || in.update_count >= 1);
+    const bool em_skipped = in.zero_q || in.prescribed_heat;
+    const bool power_present =
+        em_skipped || (std::isfinite(in.p_em) && in.p_em > TinyReal);
+    g.startup_ok = power_present && (!in.periodic_coupling || in.update_count >= 1 || in.prescribed_heat);
     g.completed_requested_time =
         !in.budget_exhausted && in.physical_time + kFrenchValidationEndTimeTol >= in.end_time;
 
@@ -1493,15 +1497,16 @@ inline void evaluateFrenchCouplingRunGates(const FrenchCouplingGateInputs &in, F
                 in.periodic_refresh_count >= min_refresh));
     g.periodic_refresh_ok = enough_refreshes;
 
-    g.em_solver_ok = in.zero_q || (std::isfinite(in.p_em) &&
-                                   (in.periodic_coupling ? (std::isfinite(in.phi_eq) && in.phi_eq < Real(1.0e-2))
-                                                         : (in.power_rel_err < Real(1.0e-2))));
+    // Doc232 H: prescribed/zero_q skip EM — em_solver_ok means "EM gate N/A satisfied", not EM convergence.
+    g.em_solver_ok = em_skipped || (std::isfinite(in.p_em) &&
+                                    (in.periodic_coupling ? (std::isfinite(in.phi_eq) && in.phi_eq < Real(1.0e-2))
+                                                          : (in.power_rel_err < Real(1.0e-2))));
 
     const bool q_l2_ok = in.q_sample_rel_l2 < Real(0) ||
                          (std::isfinite(in.q_sample_rel_l2) && in.q_sample_rel_l2 < Real(0.2));
     // Doc 45 F03: nonzero EM with zero/unrecorded fluid heat is a transfer failure.
     const bool transfer_power_ok =
-        in.zero_q ||
+        em_skipped ||
         (in.fluid_power_recorded && std::isfinite(in.p_heat_fluid) && in.p_heat_fluid > TinyReal);
     const bool out_of_grid_ok =
         !in.out_of_grid_measured ||
