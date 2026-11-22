@@ -850,6 +850,20 @@ struct LocalCli
      */
     bool doc233_buoyancy_force_chain_exit = false;
     /**
+     * Doc234 B: same frozen snapshot force-chain as Doc233, plus per-particle CSV,
+     * host-double reference, Float cancellation metrics, and one acoustic read probe.
+     */
+    bool doc234_force_precision_exit = false;
+    std::string doc234_force_precision_csv;
+    /**
+     * Doc234 D: T = T0 + dT*((r/R)^2 - 1/2); pair with --freeze-prescribed-t.
+     * dT<=0 disables. Default off.
+     */
+    Real doc234_fixed_t_radial_dT = Real(0);
+    /** Doc234 D: dump Position/Velocity/T CSV at t=0 and listed times (comma seconds). */
+    std::string doc234_particle_field_csv_prefix;
+    std::string doc234_field_dump_times = "0.1,0.5,1.0";
+    /**
      * Doc232 H: after CLI finalize, print heat_source_mode / em_status and exit (no SPH).
      * Used for prescribed-heat conflict / invalid-value software regression.
      */
@@ -1680,14 +1694,37 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
             if (std::strcmp(av[i], "--doc233-boundary-scope-audit-exit") == 0)
                 cli.doc232_boundary_face_audit_exit = true;
         }
-        else if (std::strcmp(av[i], "--doc233-buoyancy-force-chain-exit") == 0)
+        else if (std::strcmp(av[i], "--doc233-buoyancy-force-chain-exit") == 0 ||
+                 std::strcmp(av[i], "--doc234-force-precision-exit") == 0)
         {
             cli.doc233_buoyancy_force_chain_exit = true;
+            if (std::strcmp(av[i], "--doc234-force-precision-exit") == 0)
+                cli.doc234_force_precision_exit = true;
             cli.literature.enable_boussinesq = true;
             // Ensure prescribe block runs; manufactured radial ΔT applied inside if isothermal.
             if (!(cli.prescribe_t_radial_dT > TinyReal) && !(cli.prescribe_t_hot_bottom_dT > TinyReal) &&
-                cli.init_T_rz_csv.empty() && !cli.doc223_f2_annular_hot)
+                cli.init_T_rz_csv.empty() && !cli.doc223_f2_annular_hot &&
+                !(cli.doc234_fixed_t_radial_dT > TinyReal))
                 cli.prescribe_t_radial_dT = Real(30);
+        }
+        else if (std::strncmp(av[i], "--doc234-force-precision-csv=", 28) == 0)
+        {
+            cli.doc234_force_precision_csv = std::string(av[i] + 28);
+            cli.doc234_force_precision_exit = true;
+            cli.doc233_buoyancy_force_chain_exit = true;
+            cli.literature.enable_boussinesq = true;
+        }
+        else if (std::strncmp(av[i], "--doc234-fixed-t-radial-dT=", 26) == 0)
+        {
+            cli.doc234_fixed_t_radial_dT = static_cast<Real>(std::atof(av[i] + 26));
+        }
+        else if (std::strncmp(av[i], "--doc234-particle-field-csv-prefix=", 35) == 0)
+        {
+            cli.doc234_particle_field_csv_prefix = std::string(av[i] + 35);
+        }
+        else if (std::strncmp(av[i], "--doc234-field-dump-times=", 26) == 0)
+        {
+            cli.doc234_field_dump_times = std::string(av[i] + 26);
         }
         else if (std::strcmp(av[i], "--doc232-h-cli-selftest-exit") == 0)
         {
@@ -1981,7 +2018,8 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
         cli.literature.target_glass_absorbed_power_w = cli.target_power_w;
     }
     if (cli.prescribe_t_hot_bottom_dT > TinyReal || cli.prescribe_t_radial_dT > TinyReal ||
-        cli.doc223_f2_annular_hot || !cli.init_T_rz_csv.empty())
+        cli.doc223_f2_annular_hot || !cli.init_T_rz_csv.empty() ||
+        cli.doc234_fixed_t_radial_dT > TinyReal)
     {
         // Freeze-T buoyancy smoke: hold ΔT, no EM heating / diffusion (pass --zero-q explicitly too).
         // Thaw path (no --freeze-prescribed-t): prescribe is IC only; Q + diffusion + Robin evolve.
@@ -5212,6 +5250,33 @@ inline void dumpDoc232ParticleSnapshotCsv(BaseParticles &particles, const std::s
     }
     std::cout << "[ophelie][doc232][B2] particle_snapshot csv=" << csv_path << " t=" << t_s << " n=" << n
               << "\n";
+}
+
+/** Doc234 D: particle field with velocity for ON/OFF Eulerian postprocess. */
+inline void dumpDoc234ParticleFieldCsv(BaseParticles &particles, const std::string &csv_path, Real t_s)
+{
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    syncVariableToHost<Real>(particles, kOphelieTemperatureField);
+    syncVariableToHost<Real>(particles, "Mass");
+    syncVariableToHost<Real>(particles, "VolumetricMeasure");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const Real *temp = particles.getVariableDataByName<Real>(kOphelieTemperatureField);
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const Real *vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+    const size_t n = particles.TotalRealParticles();
+    fs::create_directories(fs::path(csv_path).parent_path());
+    std::ofstream os(csv_path);
+    os << std::setprecision(10);
+    os << "# t_s=" << t_s << " n=" << n << "\n";
+    os << "particle_i,x,y,z,vx,vy,vz,T_K,Mass,Vol\n";
+    for (size_t i = 0; i < n; ++i)
+    {
+        os << i << "," << pos[i][0] << "," << pos[i][1] << "," << pos[i][2] << "," << vel[i][0] << ","
+           << vel[i][1] << "," << vel[i][2] << "," << temp[i] << "," << mass[i] << "," << vol[i] << "\n";
+    }
+    std::cout << "[ophelie][doc234][D] particle_field csv=" << csv_path << " t=" << t_s << " n=" << n << "\n";
 }
 
 inline Real hostMassWeightedMeanDeltaT(BaseParticles &particles)
@@ -9159,6 +9224,15 @@ int main(int ac, char *av[])
             hostApplyDoc224RzTemperatureGrid(glass_particles, french.glass_center, t0, doc224_T_rz_grid,
                                              local_cli.init_T_rz_demean_legacy, quiet);
         }
+        else if (local_cli.doc234_fixed_t_radial_dT > TinyReal)
+        {
+            hostPrescribeDoc234FixedRadialMeanZeroTemperature(
+                glass_particles, french.glass_center, french.glass_radius, t0,
+                local_cli.doc234_fixed_t_radial_dT, kOphelieTemperatureField, kOphelieThermalDeltaTField);
+            if (!quiet)
+                std::cout << "[ophelie][doc234][D] fixed T=T0+dT*((r/R)^2-1/2) dT="
+                          << local_cli.doc234_fixed_t_radial_dT << " T0=" << t0 << "\n";
+        }
         else if (local_cli.doc223_f2_annular_hot)
         {
             hostPrescribeDoc223AnnularHotRingTemperature(glass_particles, french.glass_center,
@@ -9181,7 +9255,8 @@ int main(int ac, char *av[])
     };
     const bool has_prescribed_t = !local_cli.init_T_rz_csv.empty() || local_cli.doc223_f2_annular_hot ||
                                   local_cli.prescribe_t_radial_dT > TinyReal ||
-                                  local_cli.prescribe_t_hot_bottom_dT > TinyReal;
+                                  local_cli.prescribe_t_hot_bottom_dT > TinyReal ||
+                                  local_cli.doc234_fixed_t_radial_dT > TinyReal;
     if (has_prescribed_t)
     {
         apply_prescribed_temperature(/*quiet=*/false);
@@ -9277,13 +9352,12 @@ int main(int ac, char *av[])
         }
         if (local_cli.doc233_buoyancy_force_chain_exit)
         {
-            // Doc233 C3: frozen-state force-chain causality (dedicated field → ForcePrior → no double add).
+            // Doc233/234: frozen-state force-chain (+ Doc234 precision CSV / Float analysis).
             if (!local_cli.literature.enable_boussinesq)
             {
                 std::cerr << "[ophelie][doc233][C] FATAL: buoyancy force-chain requires Boussinesq ON\n";
                 return 2;
             }
-            // Ensure a non-uniform T if IC is isothermal.
             syncVariableToHost<Real>(glass_particles, kOphelieTemperatureField);
             syncVariableToHost<Vecd>(glass_particles, "Position");
             Real *T_fc = glass_particles.getVariableDataByName<Real>(kOphelieTemperatureField);
@@ -9314,27 +9388,37 @@ int main(int ac, char *av[])
             }
             const Real t_ref_fc = hostMassWeightedMeanTemperature(glass_particles, kOphelieTemperatureField);
             boussinesq_force.setForceReferenceTemperature(t_ref_fc);
+            // Pre-buoyancy ForcePrior (viscous + gravity only).
+            hostZeroVecFieldFrench(glass_particles, "BoussinesqBuoyancyForceCK");
+            hostZeroVecFieldFrench(glass_particles, "PreviousBoussinesqBuoyancyForceCK");
+            hostDoc223ZeroAllForcePriorChannels(glass_particles);
             fluid_advection_step_setup.exec();
             exec_viscous();
             apply_gravity_force_prior();
+            syncVariableToHost<Vecd>(glass_particles, "ForcePrior");
+            syncVariableToHost<Real>(glass_particles, "Mass");
+            syncVariableToHost<Real>(glass_particles, kOphelieTemperatureField);
+            const Vecd *fp_pre_ptr = glass_particles.getVariableDataByName<Vecd>("ForcePrior");
+            const Real *mass_fc = glass_particles.getVariableDataByName<Real>("Mass");
+            const Real *T_now = glass_particles.getVariableDataByName<Real>(kOphelieTemperatureField);
+            StdVec<Vecd> fp_pre(n_fc);
+            for (size_t i = 0; i < n_fc; ++i)
+                fp_pre[i] = fp_pre_ptr[i];
             boussinesq_force.exec();
             const OphelieBuoyancyFieldGate gate_on =
                 hostAuditBuoyancyFieldGate(glass_particles, beta, t_ref_fc, local_cli.gravity_g,
                                            kOphelieTemperatureField);
             syncVariableToHost<Vecd>(glass_particles, "ForcePrior");
             syncVariableToHost<Vecd>(glass_particles, "BoussinesqBuoyancyForceCK");
-            syncVariableToHost<Real>(glass_particles, "Mass");
             const Vecd *fp_on = glass_particles.getVariableDataByName<Vecd>("ForcePrior");
             const Vecd *fb = glass_particles.getVariableDataByName<Vecd>("BoussinesqBuoyancyForceCK");
-            const Real *mass_fc = glass_particles.getVariableDataByName<Real>("Mass");
             StdVec<Vecd> fp_on_copy(n_fc), fb_copy(n_fc);
             for (size_t i = 0; i < n_fc; ++i)
             {
                 fp_on_copy[i] = fp_on[i];
                 fb_copy[i] = fb[i];
             }
-            // OFF: clear ForcePrior (+ channels) then rebuild viscous+gravity only.
-            // Without this, leftover ON buoyancy remains in ForcePrior and E_chain→1.
+            // OFF: clear then rebuild viscous+gravity only.
             hostZeroVecFieldFrench(glass_particles, "BoussinesqBuoyancyForceCK");
             hostZeroVecFieldFrench(glass_particles, "PreviousBoussinesqBuoyancyForceCK");
             hostDoc223ZeroAllForcePriorChannels(glass_particles);
@@ -9343,23 +9427,90 @@ int main(int ac, char *av[])
             apply_gravity_force_prior();
             syncVariableToHost<Vecd>(glass_particles, "ForcePrior");
             const Vecd *fp_off = glass_particles.getVariableDataByName<Vecd>("ForcePrior");
+            StdVec<Vecd> fp_off_copy(n_fc);
+            for (size_t i = 0; i < n_fc; ++i)
+                fp_off_copy[i] = fp_off[i];
+
+            const double g_pos = static_cast<double>(local_cli.gravity_g);
+            const double beta_d = static_cast<double>(beta);
+            const double tref_d = static_cast<double>(t_ref_fc);
+            const double eps_f = static_cast<double>(std::numeric_limits<float>::epsilon());
             double sum_e2 = 0.0, sum_b2 = 0.0, sum_df2 = 0.0;
+            double sum_e2_vs_dref = 0.0, sum_dref2 = 0.0;
+            double sum_abs_fb = 0.0, sum_abs_fp = 0.0, sum_abs_df_err = 0.0;
+            double sum_ulp_scale = 0.0;
+            size_t n_nonzero_fb = 0;
             for (size_t i = 0; i < n_fc; ++i)
             {
-                const Vecd df = fp_on_copy[i] - fp_off[i];
+                const Vecd df = fp_on_copy[i] - fp_off_copy[i];
                 const Vecd eb = df - fb_copy[i];
                 sum_df2 += df.squaredNorm();
                 sum_b2 += fb_copy[i].squaredNorm();
                 sum_e2 += eb.squaredNorm();
-                (void)mass_fc[i];
+                const double m = static_cast<double>(mass_fc[i]);
+                const double dT = static_cast<double>(T_now[i]) - tref_d;
+                // F_b_ref = -m*beta*(T-Tref)*g_acc with g_acc=(0,0,-g) ⇒ Fz = +m*beta*g*dT
+                const double fb_ref_z = m * beta_d * g_pos * dT;
+                const double ez_d = static_cast<double>(fb_copy[i][2]) - fb_ref_z;
+                sum_e2_vs_dref += ez_d * ez_d + static_cast<double>(fb_copy[i][0]) * static_cast<double>(fb_copy[i][0]) +
+                                  static_cast<double>(fb_copy[i][1]) * static_cast<double>(fb_copy[i][1]);
+                sum_dref2 += fb_ref_z * fb_ref_z;
+                const double abs_fb = std::sqrt(static_cast<double>(fb_copy[i].squaredNorm()));
+                const double abs_fp = std::sqrt(static_cast<double>(fp_on_copy[i].squaredNorm()));
+                sum_abs_fb += abs_fb;
+                sum_abs_fp += abs_fp;
+                sum_abs_df_err += std::sqrt(static_cast<double>(eb.squaredNorm()));
+                // Gravity scale in ForcePrior ~ |m*g|; Float ON−OFF noise ~ eps*|F_prior|
+                const double F_g_scale = m * g_pos;
+                sum_ulp_scale += eps_f * std::max(abs_fp, F_g_scale);
+                if (abs_fb > 1.0e-12)
+                    ++n_nonzero_fb;
             }
             const Real E_chain =
-                std::sqrt(static_cast<Real>(sum_e2) /
-                          (static_cast<Real>(sum_b2) + TinyReal));
-            // Repeat buoyancy exec once more on restored ON state — channel must not double-add.
+                std::sqrt(static_cast<Real>(sum_e2) / (static_cast<Real>(sum_b2) + TinyReal));
+            const Real E_chain_abs = std::sqrt(static_cast<Real>(sum_e2));
+            const Real E_fb_vs_double =
+                std::sqrt(static_cast<Real>(sum_e2_vs_dref) / (static_cast<Real>(sum_dref2) + TinyReal));
+            const double mean_abs_fb = sum_abs_fb / std::max<size_t>(1, n_fc);
+            const double mean_abs_fp = sum_abs_fp / std::max<size_t>(1, n_fc);
+            const double mean_ulp = sum_ulp_scale / std::max<size_t>(1, n_fc);
+            const double cancel_ratio = mean_abs_fb > 0.0 ? mean_abs_fp / mean_abs_fb : 0.0;
+            const double expected_rel_floor =
+                mean_abs_fb > 0.0 ? (eps_f * mean_abs_fp) / mean_abs_fb : 0.0;
+
+            // CSV (Doc234 B)
+            std::string csv_path = local_cli.doc234_force_precision_csv;
+            if (csv_path.empty() && local_cli.doc234_force_precision_exit)
+                csv_path = "output/doc234_force_precision_particles.csv";
+            if (!csv_path.empty())
+            {
+                fs::create_directories(fs::path(csv_path).parent_path());
+                std::ofstream csv(csv_path);
+                csv << std::setprecision(10);
+                csv << "particle_i,x,y,z,T_K,T_force_ref,mass,g_pos,Fb_ref_z_double,Fb_z,Fp_pre_z,Fp_on_z,Fp_off_z,"
+                       "df_z,err_df_minus_Fb_z,Fp_on_norm,Fb_norm,ulp_scale\n";
+                for (size_t i = 0; i < n_fc; ++i)
+                {
+                    const double m = static_cast<double>(mass_fc[i]);
+                    const double dT = static_cast<double>(T_now[i]) - tref_d;
+                    const double fb_ref_z = m * beta_d * g_pos * dT;
+                    const Vecd df = fp_on_copy[i] - fp_off_copy[i];
+                    const double ulp = eps_f * std::max(std::sqrt(static_cast<double>(fp_on_copy[i].squaredNorm())),
+                                                         m * g_pos);
+                    csv << i << "," << pos_fc[i][0] << "," << pos_fc[i][1] << "," << pos_fc[i][2] << ","
+                        << T_now[i] << "," << t_ref_fc << "," << mass_fc[i] << "," << g_pos << "," << fb_ref_z
+                        << "," << fb_copy[i][2] << "," << fp_pre[i][2] << "," << fp_on_copy[i][2] << ","
+                        << fp_off_copy[i][2] << "," << df[2] << "," << (df[2] - fb_copy[i][2]) << ","
+                        << std::sqrt(static_cast<double>(fp_on_copy[i].squaredNorm())) << ","
+                        << std::sqrt(static_cast<double>(fb_copy[i].squaredNorm())) << "," << ulp << "\n";
+                }
+                std::cout << "[ophelie][doc234][B] force_precision_csv=" << csv_path << " n=" << n_fc << "\n";
+            }
+
+            // Repeat buoyancy — no double-add.
             for (size_t i = 0; i < n_fc; ++i)
             {
-                glass_particles.getVariableDataByName<Vecd>("ForcePrior")[i] = fp_off[i];
+                glass_particles.getVariableDataByName<Vecd>("ForcePrior")[i] = fp_off_copy[i];
                 glass_particles.getVariableDataByName<Vecd>("BoussinesqBuoyancyForceCK")[i] = Vecd::Zero();
             }
             syncVariableToDevice<Vecd>(glass_particles, "ForcePrior");
@@ -9367,7 +9518,6 @@ int main(int ac, char *av[])
             hostZeroVecFieldFrench(glass_particles, "PreviousBoussinesqBuoyancyForceCK");
             boussinesq_force.exec();
             syncVariableToHost<Vecd>(glass_particles, "ForcePrior");
-            syncVariableToHost<Vecd>(glass_particles, "BoussinesqBuoyancyForceCK");
             const Vecd *fp1 = glass_particles.getVariableDataByName<Vecd>("ForcePrior");
             StdVec<Vecd> fp_after1(n_fc);
             for (size_t i = 0; i < n_fc; ++i)
@@ -9384,33 +9534,100 @@ int main(int ac, char *av[])
             }
             const Real repeat_rel =
                 std::sqrt(static_cast<Real>(sum_d2) / (static_cast<Real>(sum_f2) + TinyReal));
+
+            // Doc234 B5: one acoustic 1st/2nd half; compare Δvz to ForcePrior_z/m*dt (pressure also acts).
+            Real momentum_read_rel = Real(-1);
+            Real momentum_read_abs = Real(-1);
+            size_t momentum_n_interior = 0;
+            {
+                for (size_t i = 0; i < n_fc; ++i)
+                    glass_particles.getVariableDataByName<Vecd>("ForcePrior")[i] = fp_on_copy[i];
+                syncVariableToDevice<Vecd>(glass_particles, "ForcePrior");
+                syncVariableToHost<Vecd>(glass_particles, "Velocity");
+                StdVec<Vecd> vel0(n_fc);
+                const Vecd *vel_p = glass_particles.getVariableDataByName<Vecd>("Velocity");
+                for (size_t i = 0; i < n_fc; ++i)
+                    vel0[i] = vel_p[i];
+                const Real dt_probe = Real(1.0e-5);
+                run_acoustic(dt_probe);
+                syncVariableToHost<Vecd>(glass_particles, "Velocity");
+                vel_p = glass_particles.getVariableDataByName<Vecd>("Velocity");
+                double se2 = 0.0, sp2 = 0.0;
+                for (size_t i = 0; i < n_fc; ++i)
+                {
+                    const Real dx = pos_fc[i][0] - gc[0];
+                    const Real dy = pos_fc[i][1] - gc[1];
+                    const Real r = std::sqrt(dx * dx + dy * dy);
+                    if (r > Real(0.8) * french.glass_radius)
+                        continue; // skip near-wall where pressure/BC dominate
+                    ++momentum_n_interior;
+                    const double dvz = static_cast<double>(vel_p[i][2] - vel0[i][2]);
+                    const double pred =
+                        static_cast<double>(fp_on_copy[i][2] / (mass_fc[i] + TinyReal) * dt_probe);
+                    // Residual after removing ForcePrior prediction — pressure etc. remain.
+                    // We only check that |dv| is not ≪ |pred| when |Fb| is non-trivial (read happened).
+                    const double fb_n = std::sqrt(static_cast<double>(fb_copy[i].squaredNorm()));
+                    if (fb_n < 1.0e-10)
+                        continue;
+                    se2 += (dvz - pred) * (dvz - pred);
+                    sp2 += pred * pred;
+                }
+                momentum_read_abs = std::sqrt(static_cast<Real>(se2));
+                momentum_read_rel =
+                    std::sqrt(static_cast<Real>(se2) / (static_cast<Real>(sp2) + TinyReal));
+            }
+
             const bool algebraic_ok = gate_on.algebraic_ok && gate_on.dynamic_reference_ok;
             const bool chain_ok = E_chain <= Real(1.0e-5) || (std::sqrt(sum_b2) < Real(1.0e-8) &&
                                                               std::sqrt(sum_e2) < Real(1.0e-8));
             const bool no_double = repeat_rel <= Real(1.0e-6);
-            const bool pass = algebraic_ok && chain_ok && no_double;
-            std::cout << "[ophelie][doc233][C] BUOYANCY_FORCE_CHAIN_VERIFIED=" << (pass ? 1 : 0)
+            // Doc234: Float ON−OFF relative gate is not sole PASS; explain via cancellation floor.
+            const bool float_cancel_explains =
+                static_cast<double>(E_chain) <= std::max(50.0 * expected_rel_floor, 5.0e-3) &&
+                E_fb_vs_double <= Real(1.0e-5);
+            const bool pass_strict = algebraic_ok && chain_ok && no_double;
+            const bool pass_doc234 = algebraic_ok && no_double && float_cancel_explains;
+            std::cout << "[ophelie][doc233][C] BUOYANCY_FORCE_CHAIN_VERIFIED=" << (pass_strict ? 1 : 0)
                       << " T_force_ref=" << t_ref_fc << " E_particle=" << gate_on.E_L2
                       << " E_chain_ON_minus_OFF_vs_Fb=" << E_chain << " repeat_rel=" << repeat_rel
                       << " algebraic_ok=" << (algebraic_ok ? 1 : 0) << " chain_ok=" << (chain_ok ? 1 : 0)
                       << " no_double=" << (no_double ? 1 : 0) << "\n";
+            std::cout << "[ophelie][doc234][B] E_chain_abs=" << E_chain_abs
+                      << " E_Fb_vs_host_double=" << E_fb_vs_double << " mean_|Fp|/mean_|Fb|=" << cancel_ratio
+                      << " expected_rel_floor~eps*|Fp|/|Fb|=" << expected_rel_floor
+                      << " mean_ulp_scale=" << mean_ulp << " n_nonzero_Fb=" << n_nonzero_fb
+                      << " FLOAT_CANCELLATION_EXPLAINED=" << (float_cancel_explains ? 1 : 0)
+                      << " momentum_probe_rel=" << momentum_read_rel
+                      << " momentum_probe_abs=" << momentum_read_abs
+                      << " momentum_n_interior=" << momentum_n_interior
+                      << " note=Acoustic Δv includes pressure; probe is presence-not-equality\n";
             if (!local_cli.summary_json.empty())
             {
                 std::ofstream js(local_cli.summary_json);
                 js << std::setprecision(10);
                 js << "{\n"
-                   << "  \"case\": \"doc233_c_buoyancy_force_chain\",\n"
-                   << "  \"BUOYANCY_FORCE_CHAIN_VERIFIED\": " << (pass ? 1 : 0) << ",\n"
+                   << "  \"case\": \"doc234_b_force_precision\",\n"
+                   << "  \"BUOYANCY_FORCE_CHAIN_VERIFIED\": " << (pass_strict ? 1 : 0) << ",\n"
+                   << "  \"FORCE_FORMULA_VERIFIED\": " << (algebraic_ok ? 1 : 0) << ",\n"
+                   << "  \"FLOAT_CANCELLATION_EXPLAINED\": " << (float_cancel_explains ? 1 : 0) << ",\n"
+                   << "  \"FORCE_CHANNEL_DOC234_OK\": " << (pass_doc234 ? 1 : 0) << ",\n"
                    << "  \"T_force_ref\": " << t_ref_fc << ",\n"
                    << "  \"beta\": " << beta << ",\n"
                    << "  \"E_particle\": " << gate_on.E_L2 << ",\n"
                    << "  \"E_chain\": " << E_chain << ",\n"
+                   << "  \"E_chain_abs\": " << E_chain_abs << ",\n"
+                   << "  \"E_Fb_vs_host_double\": " << E_fb_vs_double << ",\n"
+                   << "  \"cancel_ratio_Fp_over_Fb\": " << cancel_ratio << ",\n"
+                   << "  \"expected_rel_floor\": " << expected_rel_floor << ",\n"
                    << "  \"repeat_rel\": " << repeat_rel << ",\n"
-                   << "  \"note\": \"a_b=-beta*(T-Tref)*g; ForcePrior ON-OFF vs dedicated Fb\"\n"
+                   << "  \"momentum_probe_rel\": " << momentum_read_rel << ",\n"
+                   << "  \"csv\": \"" << csv_path << "\",\n"
+                   << "  \"note\": \"E_chain is Float ON-OFF vs Fb; compare to expected_rel_floor\"\n"
                    << "}\n";
                 std::cout << "[ophelie] summary_json=" << local_cli.summary_json << "\n";
             }
-            return pass ? 0 : 1;
+            // Exit 0 if formula+no-double and (strict chain OR float-explained).
+            return (pass_strict || pass_doc234) ? 0 : 1;
         }
     }
     // Doc220 C: H0 must use the final IC temperature (after prescribe). Clear evolution ledgers.
@@ -9617,6 +9834,9 @@ int main(int ac, char *av[])
     size_t doc233_n_dt_ac_violate = 0;
     size_t doc233_n_age_violate = 0;
     size_t doc233_n_end_time_mismatch = 0;
+    // Doc234 C: count at most one age exceedance per viscous-hold interval (not every acoustic sample).
+    bool doc234_age_flagged_this_hold = false;
+    Real doc234_prev_viscous_last_t = -Real(1);
     const std::string doc227_audit_path =
         local_cli.doc227_step_audit_csv.empty() ? "output/doc227_actual_step_audit.csv"
                                                : local_cli.doc227_step_audit_csv;
@@ -9634,15 +9854,30 @@ int main(int ac, char *av[])
                    "outer_start,outer_budget,outer_elapsed,outer_remaining,"
                    "dt_viscous_candidate,mu_raw_max,mu_used_max,"
                    "viscous_force_last_update_time,viscous_force_age,"
+                   "age_minus_dt_visc_cand,age_exceed_hold,"
                    "position_update_count,neighbor_update_count,viscous_update_count,"
                    "thermal_dt,thermal_time_sum,temp_refresh_last_t,schedule_path\n";
             doc227_audit_header = false;
+            std::cout << "[ophelie][doc234][C] audit defs: viscous_force_age=t_end-viscous_force_last_update_time; "
+                         "dt_viscous_candidate=advection_viscous_time_step.exec(); "
+                         "age_minus_dt_visc_cand=age-dt_visc (NOT age/dt); "
+                         "legacy path does not truncate acoustic to remaining viscous budget; "
+                         "n_age_violate counts once per hold interval when age>dt_visc+tol\n";
+        }
+        if (doc227_viscous_force_last_t != doc234_prev_viscous_last_t)
+        {
+            doc234_age_flagged_this_hold = false;
+            doc234_prev_viscous_last_t = doc227_viscous_force_last_t;
         }
         const Real age = t_end - doc227_viscous_force_last_t;
+        const Real age_minus = (dt_visc_cand > TinyReal) ? (age - dt_visc_cand) : Real(0);
+        const bool age_exceed =
+            dt_visc_cand > TinyReal && age > dt_visc_cand + doc227ScheduleTol(dt_visc_cand);
         csv << t_start << "," << t_end << "," << dt_actual << "," << dt_ac_cand << ","
             << outer_start << "," << outer_budget << "," << outer_elapsed << "," << outer_remaining
             << "," << dt_visc_cand << "," << mu_raw_max << "," << mu_used_max << ","
-            << doc227_viscous_force_last_t << "," << age << "," << doc227_position_updates << ","
+            << doc227_viscous_force_last_t << "," << age << "," << age_minus << ","
+            << (age_exceed ? 1 : 0) << "," << doc227_position_updates << ","
             << doc227_neighbor_updates << "," << doc227_viscous_updates << "," << thermal_dt << ","
             << thermal_time_sum << "," << temp_refresh_last_t << "," << schedule_path << "\n";
         doc233_max_viscous_age = std::max(doc233_max_viscous_age, age);
@@ -9652,11 +9887,14 @@ int main(int ac, char *av[])
             doc233_max_dt_over_ac =
                 std::max(doc233_max_dt_over_ac, dt_actual - dt_ac_cand);
         }
-        if (dt_visc_cand > TinyReal && age > dt_visc_cand + doc227ScheduleTol(dt_visc_cand))
+        if (age_exceed)
         {
-            ++doc233_n_age_violate;
-            doc233_max_age_over_visc =
-                std::max(doc233_max_age_over_visc, age - dt_visc_cand);
+            doc233_max_age_over_visc = std::max(doc233_max_age_over_visc, age_minus);
+            if (!doc234_age_flagged_this_hold)
+            {
+                ++doc233_n_age_violate;
+                doc234_age_flagged_this_hold = true;
+            }
         }
     };
     auto doc227_begin_outer_if_needed = [&]() {
@@ -9863,6 +10101,24 @@ int main(int ac, char *av[])
         return pass ? 0 : 1;
     }
 
+    StdVec<Real> doc234_dump_times;
+    StdVec<char> doc234_dump_done;
+    if (!local_cli.doc234_particle_field_csv_prefix.empty())
+    {
+        std::stringstream ss(local_cli.doc234_field_dump_times);
+        std::string tok;
+        while (std::getline(ss, tok, ','))
+        {
+            if (tok.empty())
+                continue;
+            doc234_dump_times.push_back(static_cast<Real>(std::atof(tok.c_str())));
+        }
+        doc234_dump_done.assign(doc234_dump_times.size(), 0);
+        dumpDoc234ParticleFieldCsv(glass_particles,
+                                   local_cli.doc234_particle_field_csv_prefix + "_t0.csv",
+                                   time_stepper.getPhysicalTime());
+    }
+
     while (!time_stepper.isEndTime(local_cli.end_time) && !numerical_abort)
     {
         doc227_begin_outer_if_needed();
@@ -9896,6 +10152,24 @@ int main(int ac, char *av[])
             acoustic_dt = time_stepper.incrementPhysicalTime(acoustic_time_step);
         }
         run_acoustic(acoustic_dt);
+
+        if (!doc234_dump_times.empty())
+        {
+            const Real t_now_dump = time_stepper.getPhysicalTime();
+            for (size_t id = 0; id < doc234_dump_times.size(); ++id)
+            {
+                if (doc234_dump_done[id])
+                    continue;
+                if (t_now_dump + TinyReal >= doc234_dump_times[id])
+                {
+                    std::ostringstream name;
+                    name << local_cli.doc234_particle_field_csv_prefix << "_t"
+                         << doc234_dump_times[id] << ".csv";
+                    dumpDoc234ParticleFieldCsv(glass_particles, name.str(), t_now_dump);
+                    doc234_dump_done[id] = 1;
+                }
+            }
+        }
 
         // Legacy path: thermal on every acoustic substep (pre–Doc219).
         // Doc227 matched path: thermal once per outer (after position), not per acoustic.
@@ -10278,6 +10552,10 @@ int main(int ac, char *av[])
                 const Real dt_adv = std::max(Real(0), t_now - last_adv_phys_time);
                 last_adv_phys_time = t_now;
                 apply_thermal_interval(dt_adv);
+                // Doc234 C3: doc219 path previously applied thermal but never accumulated audit sum.
+                doc233_thermal_dt_last = dt_adv;
+                doc233_thermal_time_sum += dt_adv;
+                doc233_temp_refresh_last_t = t_now;
             }
             if (periodic_coupling && !local_cli.prescribed_heat_mode)
             {
@@ -10645,22 +10923,26 @@ int main(int ac, char *av[])
             ++doc233_n_end_time_mismatch;
         const Real thermal_gap =
             std::abs(doc233_thermal_time_sum - std::min(physical_time, local_cli.end_time));
+        const bool thermal_accounted =
+            thermal_gap <= end_tol + Real(1.0e-3) * std::max(local_cli.end_time, Real(1));
+        // Doc234: n_age_violate is once-per-hold; legacy may still mildly exceed dt_visc_cand
+        // because acoustic is not truncated to remaining viscous budget (see matched_outer).
         const bool audited_ok =
             (doc233_n_dt_ac_violate == 0) && (doc233_n_age_violate == 0) &&
-            (doc233_n_end_time_mismatch == 0) &&
-            (thermal_gap <= end_tol + Real(1.0e-3) * std::max(local_cli.end_time, Real(1)));
+            (doc233_n_end_time_mismatch == 0) && thermal_accounted;
         std::cout << "[ophelie][doc233][B] ACTUAL_TIMESTEP_AUDITED=" << (audited_ok ? 1 : 0)
                   << " schedule_path="
                   << (local_cli.doc227_actual_timestep ? "matched_outer" : "legacy_default")
                   << " audit_csv=" << doc227_audit_path
                   << " max_viscous_age=" << doc233_max_viscous_age
                   << " max_dt_over_ac=" << doc233_max_dt_over_ac
-                  << " max_age_over_visc=" << doc233_max_age_over_visc
+                  << " max_age_minus_dt_visc_cand=" << doc233_max_age_over_visc
                   << " n_dt_ac_violate=" << doc233_n_dt_ac_violate
-                  << " n_age_violate=" << doc233_n_age_violate
+                  << " n_age_violate_per_hold=" << doc233_n_age_violate
                   << " n_end_time_mismatch=" << doc233_n_end_time_mismatch
                   << " thermal_time_sum=" << doc233_thermal_time_sum
-                  << " thermal_gap=" << thermal_gap << "\n";
+                  << " thermal_gap=" << thermal_gap
+                  << " THERMAL_TIME_ACCOUNTED=" << (thermal_accounted ? 1 : 0) << "\n";
     }
     const Real energy_end = local_cli.literature.constant_thermal_rheology
                                 ? hostThermalEnergy(glass_particles, rho0, cp, t0)

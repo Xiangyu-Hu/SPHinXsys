@@ -229,6 +229,46 @@ inline void hostPrescribeHotBottomLinearTemperature(BaseParticles &particles, co
 }
 
 /**
+ * Doc234 D: fixed Eulerian radial field with zero area-mean at continuum level:
+ * T = T0 + dT * ( (r/R)^2 - 1/2 ). Hot rim / cold axis relative to T0; not literature T.
+ */
+inline void hostPrescribeDoc234FixedRadialMeanZeroTemperature(
+    BaseParticles &particles, const Vecd &glass_center, Real glass_radius, Real t0, Real dT,
+    const std::string &temperature_field = "Temperature",
+    const std::string &delta_t_field = "ThermalDeltaT")
+{
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Real>(particles, temperature_field);
+    Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    Real *temp = particles.getVariableDataByName<Real>(temperature_field);
+    Real *delta_t = nullptr;
+    try
+    {
+        syncVariableToHost<Real>(particles, delta_t_field);
+        delta_t = particles.getVariableDataByName<Real>(delta_t_field);
+    }
+    catch (const std::exception &)
+    {
+        delta_t = nullptr;
+    }
+    const Real R = std::max(glass_radius, TinyReal);
+    const size_t n = particles.TotalRealParticles();
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real dx = pos[i][0] - glass_center[0];
+        const Real dy = pos[i][1] - glass_center[1];
+        const Real r2 = (dx * dx + dy * dy) / (R * R);
+        const Real Ti = t0 + dT * (r2 - Real(0.5));
+        temp[i] = Ti;
+        if (delta_t != nullptr)
+            delta_t[i] = Ti - t0;
+    }
+    syncVariableToDevice<Real>(particles, temperature_field);
+    if (delta_t != nullptr)
+        syncVariableToDevice<Real>(particles, delta_t_field);
+}
+
+/**
  * Doc77 §3: smooth radial ΔT (non-hydrostatic drive).
  * T = T0 + dT * (1 − r/R) — hot axis, cold rim (EM-like). Optional mild z taper:
  * multiply by 0.5*(1+cos(π(ξ−0.5))) so mid-height is strongest (optional via z_taper).
