@@ -15,6 +15,7 @@
 #include "electromagnetic_ophelie_french_material_laws.h"
 #include "electromagnetic_ophelie_french_reduced_geometry.h"
 #include "electromagnetic_ophelie_french_thermal_material.h"
+#include "electromagnetic_ophelie_fixed_space_probe.h"
 #include "electromagnetic_ophelie_joule_to_heat_one_way.h"
 #include "electromagnetic_ophelie_self_induction.h"
 #include "electromagnetic_ophelie_french_skull_resistance.h"
@@ -37,6 +38,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <random>
 #include <sstream>
 #include <string>
@@ -409,6 +411,17 @@ struct LocalCli
     bool boundary_area_normalize = true;
     bool enable_self_induction = true;
     bool enable_target_power = true;
+    /**
+     * Doc231/232: development prescribed absorbed power (uniform volumetric Q).
+     * Mode is armed only when --prescribed-heat-power= appears (Doc232 H), not by P>0 alone.
+     * Skips EM; not generator 30 kW; not confirmed experiment Q.
+     */
+    bool prescribed_heat_mode = false;
+    Real prescribed_heat_power_w = Real(0);
+    /** Explicit CLI sightings for order-independent conflict checks (Doc232 H). */
+    bool zero_q_flag_seen = false;
+    bool target_power_flag_seen = false;
+    bool freeze_prescribed_t_flag_seen = false;
     /** Doc219 E: host D2 for frozen Q snapshot (opt-in; matches C/D EM identity). */
     bool doc217_d2_local_poly = false;
     /**
@@ -801,6 +814,36 @@ struct LocalCli
     Real target_power_w = 50000.0;
     std::string summary_json;
     /**
+     * Doc232 B: fixed-space probe timeseries CSV (production sampler). Empty =>
+     * default output/probes_timeseries.csv when --client-nc-geometry.
+     */
+    std::string probes_timeseries_csv;
+    bool probes_timeseries_user_set = false;
+    /** Doc232 B2: run uniform+linear manufacture gate on the production sampler before keep. */
+    bool doc232_probe_path_verify = false;
+    /** If set with path-verify, exit after gate (no warm keep). */
+    bool doc232_probe_path_verify_exit = false;
+    /**
+     * Doc232 B2: dump host Position/Temperature(/Mass) CSV at the last probe sample for offline
+     * Wendland recompute. Empty => no dump.
+     */
+    std::string doc232_dump_particles_csv;
+    /**
+     * Doc232 C: adiabatic production heat gate — prescribed Q via ApplyFrozenQToTemperatureCK,
+     * no Robin/radiation/diffusion, no fluid keep (thermal-only time advance).
+     */
+    bool doc232_adiabatic_heat = false;
+    /** Doc232 D: face-by-face boundary audit on production BC operator; exit after. */
+    bool doc232_boundary_face_audit = false;
+    bool doc232_boundary_face_audit_exit = false;
+    std::string doc232_boundary_audit_dir = "output/doc232_boundary_audit";
+    /**
+     * Doc232 H: after CLI finalize, print heat_source_mode / em_status and exit (no SPH).
+     * Used for prescribed-heat conflict / invalid-value software regression.
+     */
+    bool doc232_h_cli_selftest_exit = false;
+    Real probe_kernel_h_factor = Real(1.3);
+    /**
      * Doc230: map client NC parametric melt into french geometry knobs (Reload from
      * test_3d_ophelie_client_nc_glass_relax). Prefer pairing with --client-nc-material.
      * Do not combine with bare --glass-height= (that resets center to H/2).
@@ -855,8 +898,30 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
         }
         else if (std::strncmp(av[i], "--target-power=", 15) == 0)
         {
+            cli.target_power_flag_seen = true;
             cli.enable_target_power = true;
             cli.target_power_w = static_cast<Real>(std::atof(av[i] + 15));
+        }
+        else if (std::strncmp(av[i], "--prescribed-heat-power=", 24) == 0)
+        {
+            // Doc232 H: arm mode by flag presence; validate value (no silent EM fallback).
+            cli.prescribed_heat_mode = true;
+            const char *val = av[i] + 24;
+            if (val[0] == '\0')
+            {
+                std::cerr << "[ophelie][doc232][H] FATAL: --prescribed-heat-power= missing value\n";
+                return 2;
+            }
+            char *end = nullptr;
+            const double parsed = std::strtod(val, &end);
+            if (end == val || (end && *end != '\0') || !std::isfinite(parsed) || parsed < 0.0)
+            {
+                std::cerr << "[ophelie][doc232][H] FATAL: --prescribed-heat-power invalid '" << val
+                          << "' (need finite >=0; use --zero-q for isothermal Q≡0)\n";
+                return 2;
+            }
+            cli.prescribed_heat_power_w = static_cast<Real>(parsed);
+            // Defer conflict/policy apply to post-parse finalize (order-independent).
         }
         else if (std::strcmp(av[i], "--no-self-induction") == 0)
         {
@@ -877,8 +942,13 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
         }
         else if (tryApplyFrenchLiteratureCli(av[i], cli.literature, cli.thermal_diffusion_explicit))
         {
-            if (std::strncmp(av[i], "--target-absorbed-power=", 24) == 0)
+            if (std::strcmp(av[i], "--zero-q") == 0)
             {
+                cli.zero_q_flag_seen = true;
+            }
+            else if (std::strncmp(av[i], "--target-absorbed-power=", 24) == 0)
+            {
+                cli.target_power_flag_seen = true;
                 cli.enable_target_power = true;
                 cli.target_power_w = cli.literature.target_glass_absorbed_power_w;
             }
@@ -973,6 +1043,7 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
         }
         else if (std::strcmp(av[i], "--freeze-prescribed-t") == 0)
         {
+            cli.freeze_prescribed_t_flag_seen = true;
             cli.freeze_prescribed_temperature = true;
         }
         else if (std::strcmp(av[i], "--prescribe-radial-z-taper") == 0)
@@ -1542,6 +1613,45 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
         {
             cli.summary_json = std::string(av[i] + 15);
         }
+        else if (std::strncmp(av[i], "--probes-timeseries=", 20) == 0)
+        {
+            cli.probes_timeseries_csv = std::string(av[i] + 20);
+            cli.probes_timeseries_user_set = true;
+        }
+        else if (std::strcmp(av[i], "--doc232-probe-path-verify") == 0)
+        {
+            cli.doc232_probe_path_verify = true;
+        }
+        else if (std::strcmp(av[i], "--doc232-probe-path-verify-exit") == 0)
+        {
+            cli.doc232_probe_path_verify = true;
+            cli.doc232_probe_path_verify_exit = true;
+        }
+        else if (std::strncmp(av[i], "--doc232-dump-particles=", 24) == 0)
+        {
+            cli.doc232_dump_particles_csv = std::string(av[i] + 24);
+        }
+        else if (std::strcmp(av[i], "--doc232-adiabatic-heat") == 0)
+        {
+            cli.doc232_adiabatic_heat = true;
+        }
+        else if (std::strcmp(av[i], "--doc232-boundary-face-audit") == 0)
+        {
+            cli.doc232_boundary_face_audit = true;
+        }
+        else if (std::strcmp(av[i], "--doc232-boundary-face-audit-exit") == 0)
+        {
+            cli.doc232_boundary_face_audit = true;
+            cli.doc232_boundary_face_audit_exit = true;
+        }
+        else if (std::strncmp(av[i], "--doc232-boundary-audit-dir=", 28) == 0)
+        {
+            cli.doc232_boundary_audit_dir = std::string(av[i] + 28);
+        }
+        else if (std::strcmp(av[i], "--doc232-h-cli-selftest-exit") == 0)
+        {
+            cli.doc232_h_cli_selftest_exit = true;
+        }
         else if (std::strncmp(av[i], "--dt-scale=", 11) == 0)
         {
             cli.dt_scale = static_cast<Real>(std::atof(av[i] + 11));
@@ -1760,6 +1870,66 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
     {
         cli.reload_dir = resolveDefaultFrenchReloadFolder(cli.client_nc_geometry);
     }
+    // Doc232 H: prescribed-heat mode is armed by flag presence (incl. P=0); conflicts order-independent.
+    if (cli.prescribed_heat_mode)
+    {
+        if (cli.zero_q_flag_seen || cli.literature.zero_q)
+        {
+            std::cerr << "[ophelie][doc232][H] FATAL: --prescribed-heat-power conflicts with --zero-q\n";
+            return 2;
+        }
+        if (cli.freeze_prescribed_t_flag_seen || cli.freeze_prescribed_temperature)
+        {
+            std::cerr << "[ophelie][doc232][H] FATAL: --prescribed-heat-power conflicts with "
+                         "--freeze-prescribed-t (warm path needs evolving T)\n";
+            return 2;
+        }
+        if (cli.target_power_flag_seen)
+        {
+            std::cerr << "[ophelie][doc232][H] FATAL: --prescribed-heat-power conflicts with "
+                         "--target-power=/--target-absorbed-power= (EM target path)\n";
+            return 2;
+        }
+        cli.enable_target_power = false;
+        cli.literature.zero_q = false;
+        cli.literature.coupling = ThermoEMCouplingMode::Off; // mutual exclusion with online EM refresh
+        cli.literature.enable_thermal_diffusion = true;
+        cli.literature.target_glass_absorbed_power_w = cli.prescribed_heat_power_w;
+        cli.target_power_w = cli.prescribed_heat_power_w;
+        std::cout << "[ophelie][doc232][H] heat_source_mode=prescribed_uniform_volumetric"
+                  << " P_abs=" << cli.prescribed_heat_power_w
+                  << " W em_status=NOT_RUN (NOT generator "
+                  << cli.literature.generator_power_w << " W; development absorbed power)\n";
+    }
+    if (cli.doc232_adiabatic_heat)
+    {
+        if (!cli.prescribed_heat_mode || !(cli.prescribed_heat_power_w > TinyReal))
+        {
+            std::cerr << "[ophelie][doc232][C] FATAL: --doc232-adiabatic-heat requires "
+                         "--prescribed-heat-power=<P> with P>0\n";
+            return 2;
+        }
+        // Override warm-path diffusion; adiabatic gate is production Q only.
+        cli.literature.enable_thermal_diffusion = false;
+        cli.literature.enable_boussinesq = false;
+        cli.hydro_settle_time = Real(0);
+        std::cout << "[ophelie][doc232][C] adiabatic production heat gate: BC/diffusion/buoyancy off; "
+                     "hydro_settle forced 0; thermal-only keep\n";
+    }
+    if (cli.doc232_boundary_face_audit)
+    {
+        cli.literature.enable_boussinesq = false;
+        cli.hydro_settle_time = Real(0);
+        cli.literature.enable_thermal_diffusion = false;
+        if (cli.doc232_boundary_face_audit_exit && !(cli.literature.zero_q) && !cli.prescribed_heat_mode)
+        {
+            // Face audit needs particles + BC only; force Q off to skip EM.
+            cli.literature.zero_q = true;
+            cli.enable_target_power = false;
+        }
+        std::cout << "[ophelie][doc232][D] boundary face audit: settle/diffusion/buoyancy off"
+                  << (cli.doc232_boundary_face_audit_exit ? "; exit after gate" : "") << "\n";
+    }
     if (cli.literature.zero_q)
     {
         // Isothermal / Q-off hydro: do not calibrate coil to French 50 kW.
@@ -1805,7 +1975,8 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
         if (cli.diag_soft_lid_tip || cli.diag_tip_soft_force || cli.diag_tip_fs_dashpot ||
             cli.diag_zero_net_uz || cli.diag_lid_cont_silent)
             return fail("diagnostic velocity interventions must be OFF");
-        if (!(cli.target_power_w > Real(1) && std::abs(cli.target_power_w - Real(50000)) <= Real(50)))
+        if (!cli.prescribed_heat_mode &&
+            !(cli.target_power_w > Real(1) && std::abs(cli.target_power_w - Real(50000)) <= Real(50)))
         {
             std::cerr << "[ophelie][doc225][warm-preflight] WARN target_power_w=" << cli.target_power_w
                       << " (expected ~50000)\n";
@@ -4843,6 +5014,452 @@ inline bool depositEmQAndRecord(BaseParticles &em_particles, const OphelieGlassF
     return true;
 }
 
+/** Doc232 B: fixed-space NC probes (thermocouple unconfirmed + development interiors). */
+inline StdVec<OphelieFixedSpaceProbeDef> makeDoc232ClientNcProbes(const OphelieFrenchReducedCaseParams &french)
+{
+    StdVec<OphelieFixedSpaceProbeDef> probes;
+    const Real z_bot = french.glass_center[2] - french.glass_half_height;
+    const Real H = Real(2) * french.glass_half_height;
+    const Real z_mid = french.glass_center[2];
+    const Real R = french.glass_radius;
+    const OphelieClientProbeDefinition thermo =
+        makeClientNominalThermocoupleProbe(makeClientNaturalConvectionAssemblyCatalog());
+    probes.push_back({"thermocouple_nominal_tip",
+                      Vecd(thermo.solver_m.x, thermo.solver_m.y, thermo.solver_m.z), thermo.status, true,
+                      "CAD AABB tip candidate; not confirmed junction"});
+    probes.push_back({"dev_axis_mid", Vecd(0, 0, z_mid), "development", true, "axis mid-height"});
+    probes.push_back(
+        {"dev_r_half_mid", Vecd(Real(0.5) * R, 0, z_mid), "development", true, "mid-radius interior"});
+    probes.push_back({"dev_near_wall_mid", Vecd(std::max(R - Real(2) * french.dp, Real(0.5) * R), 0, z_mid),
+                      "development", true, "near-wall diagnostic (not surface T)"});
+    probes.push_back({"dev_axis_lower_quartile", Vecd(0, 0, z_bot + Real(0.25) * H), "development", true,
+                      "lower-quartile axis"});
+    return probes;
+}
+
+inline void writeProbesTimeseriesHeader(std::ostream &os)
+{
+    os << "time_s,probe_id,x,y,z,T_K,T_C,n_neighbors,support_h_m,weight_sum,nearest_dist_m,"
+          "coverage_valid,location_status,config_note\n";
+}
+
+inline void appendProbesTimeseries(std::ostream &os, Real t, BaseParticles &particles,
+                                   const StdVec<OphelieFixedSpaceProbeDef> &probes, Real kernel_h)
+{
+    syncFixedSpaceProbeFieldsToHost(particles, kOphelieTemperatureField);
+    for (const auto &p : probes)
+    {
+        const auto s = hostSampleFixedSpaceTemperature(particles, p.pos, kernel_h, kOphelieTemperatureField);
+        const Real T_C = s.valid ? (s.T - Real(273.15)) : std::numeric_limits<Real>::quiet_NaN();
+        os << std::setprecision(10) << t << "," << p.id << "," << p.pos[0] << "," << p.pos[1] << "," << p.pos[2]
+           << "," << s.T << "," << T_C << "," << s.n_neighbors << "," << kernel_h << "," << s.weight_sum << ","
+           << s.nearest_dist << "," << (s.valid ? 1 : 0) << "," << p.location_status << "," << p.note << "\n";
+    }
+    os.flush();
+}
+
+/**
+ * Doc232 B2 manufacture gate on the production sampler. Restores Temperature/ΔT afterward.
+ * Returns true if uniform+linear interior gates pass.
+ */
+inline bool runDoc232ProbePathVerify(BaseParticles &particles, const StdVec<OphelieFixedSpaceProbeDef> &probes,
+                                     Real kernel_h, Real z_bot, Real melt_h, Real t0_restore,
+                                     const std::string &csv_path, bool &uniform_ok, bool &linear_ok)
+{
+    uniform_ok = true;
+    linear_ok = true;
+    syncFixedSpaceProbeFieldsToHost(particles, kOphelieTemperatureField);
+    syncVariableToHost<Real>(particles, kOphelieThermalDeltaTField);
+    syncVariableToHost<Vecd>(particles, "Position");
+    Real *T = particles.getVariableDataByName<Real>(kOphelieTemperatureField);
+    Real *dT = particles.getVariableDataByName<Real>(kOphelieThermalDeltaTField);
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const size_t n = particles.TotalRealParticles();
+    StdVec<Real> T_backup(n), dT_backup(n);
+    for (size_t i = 0; i < n; ++i)
+    {
+        T_backup[i] = T[i];
+        dT_backup[i] = dT[i];
+    }
+
+    const Real T_uniform = Real(1273.15);
+    for (size_t i = 0; i < n; ++i)
+    {
+        T[i] = T_uniform;
+        dT[i] = T_uniform - t0_restore;
+    }
+
+    fs::create_directories(fs::path(csv_path).parent_path());
+    std::ofstream csv(csv_path);
+    csv << std::setprecision(10);
+    csv << "probe_id,x,y,z,field,T_exact,T_sample,abs_err,rel_err_vs_amp,n_neighbors,weight_sum,"
+           "nearest_dist_m,valid,pass_row,location_status\n";
+
+    const Real T_bot = Real(1100);
+    const Real T_top = Real(1300);
+    const Real amp = T_top - T_bot;
+    auto T_linear = [&](Real z) {
+        const Real a = (z - z_bot) / std::max(melt_h, TinyReal);
+        return T_bot + amp * std::min(Real(1), std::max(Real(0), a));
+    };
+
+    for (const auto &p : probes)
+    {
+        const auto s = hostSampleFixedSpaceTemperature(particles, p.pos, kernel_h, kOphelieTemperatureField);
+        const Real abs_err = std::abs(s.T - T_uniform);
+        const bool row_pass = s.valid && (abs_err <= Real(1.0e-3)) && (s.n_neighbors >= 4);
+        if (!row_pass)
+            uniform_ok = false;
+        csv << p.id << "," << p.pos[0] << "," << p.pos[1] << "," << p.pos[2] << ",uniform," << T_uniform << ","
+            << s.T << "," << abs_err << "," << (abs_err / std::max(amp, Real(1))) << "," << s.n_neighbors << ","
+            << s.weight_sum << "," << s.nearest_dist << "," << (s.valid ? 1 : 0) << "," << (row_pass ? 1 : 0)
+            << "," << p.location_status << "\n";
+    }
+
+    for (size_t i = 0; i < n; ++i)
+    {
+        T[i] = T_linear(pos[i][2]);
+        dT[i] = T[i] - t0_restore;
+    }
+    for (const auto &p : probes)
+    {
+        if (!p.expect_interior)
+            continue;
+        const auto s = hostSampleFixedSpaceTemperature(particles, p.pos, kernel_h, kOphelieTemperatureField);
+        const Real T_ex = T_linear(p.pos[2]);
+        const Real abs_err = std::abs(s.T - T_ex);
+        const Real rel = abs_err / std::max(amp, TinyReal);
+        const bool row_pass = s.valid && (rel <= Real(0.01)) && (s.n_neighbors >= 4);
+        if (!row_pass)
+            linear_ok = false;
+        csv << p.id << "," << p.pos[0] << "," << p.pos[1] << "," << p.pos[2] << ",linear_z," << T_ex << ","
+            << s.T << "," << abs_err << "," << rel << "," << s.n_neighbors << "," << s.weight_sum << ","
+            << s.nearest_dist << "," << (s.valid ? 1 : 0) << "," << (row_pass ? 1 : 0) << ","
+            << p.location_status << "\n";
+    }
+
+    for (size_t i = 0; i < n; ++i)
+    {
+        T[i] = T_backup[i];
+        dT[i] = dT_backup[i];
+    }
+    syncVariableToDevice<Real>(particles, kOphelieTemperatureField);
+    syncVariableToDevice<Real>(particles, kOphelieThermalDeltaTField);
+    std::cout << "[ophelie][doc232][B2] probe_path_verify uniform_ok=" << (uniform_ok ? 1 : 0)
+              << " linear_ok=" << (linear_ok ? 1 : 0) << " csv=" << csv_path << "\n";
+    return uniform_ok && linear_ok;
+}
+
+/** Doc232 B2: dump host Position/Temperature/Mass for offline probe recompute. */
+inline void dumpDoc232ParticleSnapshotCsv(BaseParticles &particles, const std::string &csv_path, Real t_s,
+                                          Real kernel_h)
+{
+    syncFixedSpaceProbeFieldsToHost(particles, kOphelieTemperatureField);
+    syncVariableToHost<Real>(particles, "Mass");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Real *temp = particles.getVariableDataByName<Real>(kOphelieTemperatureField);
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    fs::create_directories(fs::path(csv_path).parent_path());
+    std::ofstream os(csv_path);
+    os << std::setprecision(10);
+    os << "# t_s=" << t_s << " kernel_h_m=" << kernel_h << " n=" << n << "\n";
+    os << "x,y,z,T_K,Mass\n";
+    for (size_t i = 0; i < n; ++i)
+    {
+        os << pos[i][0] << "," << pos[i][1] << "," << pos[i][2] << "," << temp[i] << "," << mass[i] << "\n";
+    }
+    std::cout << "[ophelie][doc232][B2] particle_snapshot csv=" << csv_path << " t=" << t_s << " n=" << n
+              << "\n";
+}
+
+inline Real hostMassWeightedMeanDeltaT(BaseParticles &particles)
+{
+    syncVariableToHost<Real>(particles, kOphelieThermalDeltaTField);
+    syncVariableToHost<Real>(particles, "Mass");
+    const Real *dT = particles.getVariableDataByName<Real>(kOphelieThermalDeltaTField);
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    double sw = 0.0, s = 0.0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const double m = static_cast<double>(mass[i]);
+        sw += m;
+        s += m * static_cast<double>(dT[i]);
+    }
+    return (sw > 0.0) ? static_cast<Real>(s / sw) : Real(0);
+}
+
+/** Independent energy from Mass * cp * ΔT (Doc232 C reference path). */
+inline Real hostThermalEnergyFromDeltaTMass(BaseParticles &particles, Real cp)
+{
+    syncVariableToHost<Real>(particles, kOphelieThermalDeltaTField);
+    syncVariableToHost<Real>(particles, "Mass");
+    const Real *dT = particles.getVariableDataByName<Real>(kOphelieThermalDeltaTField);
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    const double cp_d = static_cast<double>(cp);
+    double e = 0.0;
+    for (size_t i = 0; i < n; ++i)
+        e += static_cast<double>(mass[i]) * cp_d * static_cast<double>(dT[i]);
+    return static_cast<Real>(e);
+}
+
+inline Real hostSumParticleMass(BaseParticles &particles)
+{
+    syncVariableToHost<Real>(particles, "Mass");
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    double s = 0.0;
+    for (size_t i = 0; i < n; ++i)
+        s += static_cast<double>(mass[i]);
+    return static_cast<Real>(s);
+}
+
+/**
+ * Doc232 D: production BC face isolation + single-step energy vs host power ledger.
+ * Independent geometric reference is written for offline Python; this gate also reports
+ * production vs closed-form analytic for immediate triage (≤2% power, ≤1% energy).
+ */
+inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &particles,
+                                       OphelieThermalDiffusionOneWayOptions thermal_bc_base,
+                                       const OphelieFrenchReducedCaseParams &french, Real rho0, Real cp, Real t0,
+                                       const std::string &out_dir)
+{
+    fs::create_directories(out_dir);
+    const Real z_bot = french.glass_center[2] - french.glass_half_height;
+    const Real H = Real(2) * french.glass_half_height;
+    const Real R = french.glass_radius;
+    const Real A_side = Real(2) * Real(M_PI) * R * H;
+    const Real A_disk = Real(M_PI) * R * R;
+    const Real shell = thermal_bc_base.boundary_shell_thickness;
+    const Real dt = Real(1.0e-3);
+    const Real T_uniform = Real(1273.15);
+    const Real T_lo = Real(1100);
+    const Real T_hi = Real(1300);
+
+    const OphelieFrenchBoundaryAreaAudit area =
+        hostOphelieThermalFrenchNaturalBoundaryAreaAudit(particles, thermal_bc_base, french, shell);
+    logOphelieFrenchBoundaryAreaAudit(area, "doc232_D_preface");
+    {
+        std::ofstream as(fs::path(out_dir) / "boundary_area_audit.csv");
+        as << std::setprecision(10);
+        as << "quantity,value\n";
+        as << "R_m," << R << "\nH_m," << H << "\nshell_m," << shell << "\n";
+        as << "A_geom_side," << area.geometric_area_side << "\nA_geom_bottom," << area.geometric_area_bottom
+           << "\nA_geom_free," << area.geometric_area_free << "\n";
+        as << "A_disc_side," << area.discrete_area_side << "\nA_disc_bottom," << area.discrete_area_bottom
+           << "\nA_disc_free," << area.discrete_area_free << "\n";
+        as << "A_ratio_side," << area.area_side_ratio << "\nA_ratio_bottom," << area.area_bottom_ratio
+           << "\nA_ratio_free," << area.area_free_ratio << "\n";
+        as << "n_side," << area.n_side << "\nn_bottom," << area.n_bottom << "\nn_free," << area.n_free
+           << "\nn_corner," << area.n_corner << "\nn_multi_face," << area.n_multi_face << "\n";
+        as << "note,shell_band_T_is_not_exact_wall_T; flux uses particle T in V/delta shell\n";
+    }
+    {
+        std::ofstream gj(fs::path(out_dir) / "geometry_ref.json");
+        gj << std::setprecision(10);
+        gj << "{\n"
+           << "  \"R_m\": " << R << ",\n"
+           << "  \"H_m\": " << H << ",\n"
+           << "  \"z_bot_m\": " << z_bot << ",\n"
+           << "  \"h_side\": " << thermal_bc_base.h_side << ",\n"
+           << "  \"h_bottom\": " << thermal_bc_base.h_bottom << ",\n"
+           << "  \"h_free\": " << thermal_bc_base.h_free << ",\n"
+           << "  \"emissivity\": " << thermal_bc_base.emissivity << ",\n"
+           << "  \"t_cool\": " << thermal_bc_base.t_cool << ",\n"
+           << "  \"t_ambient\": " << thermal_bc_base.t_ambient << ",\n"
+           << "  \"t_rad_ambient\": " << thermal_bc_base.t_rad_ambient << ",\n"
+           << "  \"stefan_boltzmann\": " << thermal_bc_base.stefan_boltzmann << ",\n"
+           << "  \"T_uniform\": " << T_uniform << ",\n"
+           << "  \"T_lo\": " << T_lo << ",\n"
+           << "  \"T_hi\": " << T_hi << ",\n"
+           << "  \"dt_s\": " << dt << ",\n"
+           << "  \"rho0\": " << rho0 << ",\n"
+           << "  \"cp\": " << cp << "\n"
+           << "}\n";
+    }
+
+    syncVariableToHost<Real>(particles, kOphelieTemperatureField);
+    syncVariableToHost<Real>(particles, kOphelieThermalDeltaTField);
+    syncVariableToHost<Vecd>(particles, "Position");
+    Real *T = particles.getVariableDataByName<Real>(kOphelieTemperatureField);
+    Real *dT = particles.getVariableDataByName<Real>(kOphelieThermalDeltaTField);
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const size_t n = particles.TotalRealParticles();
+    StdVec<Real> T_backup(n), dT_backup(n);
+    for (size_t i = 0; i < n; ++i)
+    {
+        T_backup[i] = T[i];
+        dT_backup[i] = dT[i];
+    }
+
+    auto set_uniform = [&]() {
+        for (size_t i = 0; i < n; ++i)
+        {
+            T[i] = T_uniform;
+            dT[i] = T_uniform - t0;
+        }
+        syncVariableToDevice<Real>(particles, kOphelieTemperatureField);
+        syncVariableToDevice<Real>(particles, kOphelieThermalDeltaTField);
+    };
+    auto set_linear_z = [&]() {
+        for (size_t i = 0; i < n; ++i)
+        {
+            const Real a = (pos[i][2] - z_bot) / std::max(H, TinyReal);
+            const Real Ti = T_lo + (T_hi - T_lo) * std::min(Real(1), std::max(Real(0), a));
+            T[i] = Ti;
+            dT[i] = Ti - t0;
+        }
+        syncVariableToDevice<Real>(particles, kOphelieTemperatureField);
+        syncVariableToDevice<Real>(particles, kOphelieThermalDeltaTField);
+    };
+
+    struct FaceCase
+    {
+        const char *face;
+        Real h_side, h_bottom, h_free, emissivity;
+    };
+    const FaceCase faces[] = {
+        {"side", thermal_bc_base.h_side, Real(0), Real(0), Real(0)},
+        {"bottom", Real(0), thermal_bc_base.h_bottom, Real(0), Real(0)},
+        {"free_conv", Real(0), Real(0), thermal_bc_base.h_free, Real(0)},
+        {"free_rad", Real(0), Real(0), Real(0), thermal_bc_base.emissivity},
+    };
+
+    auto analytic = [&](const std::string &field, const FaceCase &fc) -> Real {
+        const Real tc = thermal_bc_base.t_cool;
+        const Real ta = thermal_bc_base.t_ambient;
+        const Real tr = thermal_bc_base.t_rad_ambient;
+        const Real sb = thermal_bc_base.stefan_boltzmann;
+        if (field == "uniform")
+        {
+            if (std::strcmp(fc.face, "side") == 0)
+                return fc.h_side * A_side * (T_uniform - tc);
+            if (std::strcmp(fc.face, "bottom") == 0)
+                return fc.h_bottom * A_disk * (T_uniform - tc);
+            if (std::strcmp(fc.face, "free_conv") == 0)
+                return fc.h_free * A_disk * (T_uniform - ta);
+            const Real Tu2 = T_uniform * T_uniform;
+            const Real Tr2 = tr * tr;
+            return fc.emissivity * sb * A_disk * (Tu2 * Tu2 - Tr2 * Tr2);
+        }
+        // linear_z: surface integral on geometric cylinder (not particle weights).
+        if (std::strcmp(fc.face, "side") == 0)
+        {
+            const Real T_mean = Real(0.5) * (T_lo + T_hi);
+            return fc.h_side * A_side * (T_mean - tc);
+        }
+        if (std::strcmp(fc.face, "bottom") == 0)
+            return fc.h_bottom * A_disk * (T_lo - tc);
+        if (std::strcmp(fc.face, "free_conv") == 0)
+            return fc.h_free * A_disk * (T_hi - ta);
+        const Real Th2 = T_hi * T_hi;
+        const Real Tr2 = tr * tr;
+        return fc.emissivity * sb * A_disk * (Th2 * Th2 - Tr2 * Tr2);
+    };
+
+    std::ofstream pow_csv(fs::path(out_dir) / "boundary_face_powers.csv");
+    pow_csv << std::setprecision(10);
+    pow_csv << "field,face,P_production_W,P_analytic_geom_W,power_rel,DeltaH_J,E_ledger_J,energy_rel,"
+               "pass_power,pass_energy,h_side,h_bottom,h_free,emissivity,dt_s\n";
+
+    bool all_ok = true;
+    const Real power_tol = Real(0.02);
+    const Real energy_tol = Real(0.01);
+    const std::string fields[] = {"uniform", "linear_z"};
+
+    for (const auto &field : fields)
+    {
+        for (const auto &fc : faces)
+        {
+            if (field == "uniform")
+                set_uniform();
+            else
+                set_linear_z();
+
+            OphelieThermalDiffusionOneWayOptions face_bc = thermal_bc_base;
+            face_bc.h_side = fc.h_side;
+            face_bc.h_bottom = fc.h_bottom;
+            face_bc.h_free = fc.h_free;
+            face_bc.emissivity = fc.emissivity;
+            face_bc.enable_free_crust = false;
+
+            const Real dTdz = hostFitMassWeightedTemperatureDTdz(particles, kOphelieTemperatureField);
+            Real side_w = 0, bottom_w = 0, free_c = 0, free_r = 0, total_w = 0;
+            hostOphelieThermalFrenchNaturalHeatLossPowers(particles, face_bc, shell, side_w, bottom_w, free_c, free_r,
+                                                          total_w, z_bot, z_bot + H, dTdz, /*extrapolate_face_t=*/true);
+            Real P_prod = total_w;
+            if (std::strcmp(fc.face, "side") == 0)
+                P_prod = side_w;
+            else if (std::strcmp(fc.face, "bottom") == 0)
+                P_prod = bottom_w;
+            else if (std::strcmp(fc.face, "free_conv") == 0)
+                P_prod = free_c;
+            else
+                P_prod = free_r;
+
+            const Real P_ref = analytic(field, fc);
+            const Real power_scale = std::max({std::abs(P_ref), std::abs(P_prod), Real(1)});
+            const Real power_rel = std::abs(P_prod - P_ref) / power_scale;
+
+            // Incremental Σ ρ0 V cp Δ(dT): matches Apply BC (inv_rho_cp_delta) and host power (V/δ).
+            // Avoids float32 cancellation of two large absolute H sums; Mass≠ρ0V must not fail the gate.
+            syncVariableToHost<Real>(particles, kOphelieThermalDeltaTField);
+            syncVariableToHost<Real>(particles, "VolumetricMeasure");
+            const Real *dT_before = particles.getVariableDataByName<Real>(kOphelieThermalDeltaTField);
+            const Real *vol_e = particles.getVariableDataByName<Real>("VolumetricMeasure");
+            StdVec<Real> dT_pre(n);
+            for (size_t i = 0; i < n; ++i)
+                dT_pre[i] = dT_before[i];
+
+            Real dTdz_live = dTdz;
+            StateDynamics<MainExecutionPolicy, ApplyOphelieThermalFrenchNaturalBcCK> apply_face(
+                glass_body, kOphelieThermalDeltaTField, kOphelieTemperatureField, t0, rho0, cp, shell, face_bc, z_bot,
+                z_bot + H, &dTdz_live);
+            apply_face.exec(dt);
+
+            syncVariableToHost<Real>(particles, kOphelieThermalDeltaTField);
+            syncVariableToHost<Real>(particles, "VolumetricMeasure");
+            const Real *dT_after = particles.getVariableDataByName<Real>(kOphelieThermalDeltaTField);
+            vol_e = particles.getVariableDataByName<Real>("VolumetricMeasure");
+            double dE = 0.0;
+            const double rho_cp = static_cast<double>(rho0) * static_cast<double>(cp);
+            for (size_t i = 0; i < n; ++i)
+                dE += rho_cp * static_cast<double>(vol_e[i]) *
+                      (static_cast<double>(dT_after[i]) - static_cast<double>(dT_pre[i]));
+            const Real DeltaH = static_cast<Real>(dE);
+            const Real E_ledger = -P_prod * dt; // outward loss cools melt
+            const Real energy_scale = std::max({std::abs(E_ledger), std::abs(DeltaH), Real(1.0e-6)});
+            const Real energy_rel = std::abs(DeltaH - E_ledger) / energy_scale;
+
+            const bool pass_power = power_rel <= power_tol;
+            const bool pass_energy = energy_rel <= energy_tol;
+            all_ok = all_ok && pass_power && pass_energy;
+
+            pow_csv << field << "," << fc.face << "," << P_prod << "," << P_ref << "," << power_rel << "," << DeltaH
+                    << "," << E_ledger << "," << energy_rel << "," << (pass_power ? 1 : 0) << ","
+                    << (pass_energy ? 1 : 0) << "," << fc.h_side << "," << fc.h_bottom << "," << fc.h_free << ","
+                    << fc.emissivity << "," << dt << "\n";
+            std::cout << "[ophelie][doc232][D] " << field << "/" << fc.face << " P_prod=" << P_prod
+                      << " P_ref=" << P_ref << " power_rel=" << power_rel << " energy_rel=" << energy_rel
+                      << " pass_p=" << (pass_power ? 1 : 0) << " pass_e=" << (pass_energy ? 1 : 0) << "\n";
+        }
+    }
+
+    for (size_t i = 0; i < n; ++i)
+    {
+        T[i] = T_backup[i];
+        dT[i] = dT_backup[i];
+    }
+    syncVariableToDevice<Real>(particles, kOphelieTemperatureField);
+    syncVariableToDevice<Real>(particles, kOphelieThermalDeltaTField);
+
+    std::cout << "[ophelie][doc232][D] PRODUCTION_BOUNDARY_FACE_AUDIT=" << (all_ok ? 1 : 0)
+              << " out_dir=" << out_dir << "\n";
+    return all_ok;
+}
+
 #if SPHINXSYS_USE_SYCL
 inline LevelSetShape &defineOphelieSolidLevelSet(SolidBody &body)
 {
@@ -4909,7 +5526,7 @@ int main(int ac, char *av[])
         french.sigma_glass = local_cli.literature.material.sigma.evaluate(preset.t_initial_k);
         french.frequency_hz = preset.frequency_hz;
         // Isothermal hydro short-run default: no EM Q unless user later enables heating.
-        if (!local_cli.literature.zero_q)
+        if (!local_cli.literature.zero_q && !local_cli.prescribed_heat_mode)
         {
             std::cout << "[ophelie][client-nc] tip: pass --zero-q for isothermal hydro (no EM Q / no 50 kW)\n";
         }
@@ -4920,6 +5537,52 @@ int main(int ac, char *av[])
                   << " rho=" << local_cli.literature.material.rho.evaluate(preset.t_initial_k)
                   << " boussinesq=" << (local_cli.literature.enable_boussinesq ? 1 : 0)
                   << " generator_input_W=" << local_cli.literature.generator_power_w << "\n";
+    }
+    if (local_cli.prescribed_heat_mode)
+    {
+        // client-nc material zeroes target_glass_absorbed_power_w; restore prescribed identity.
+        local_cli.enable_target_power = false;
+        local_cli.literature.coupling = ThermoEMCouplingMode::Off;
+        local_cli.literature.target_glass_absorbed_power_w = local_cli.prescribed_heat_power_w;
+        local_cli.target_power_w = local_cli.prescribed_heat_power_w;
+    }
+    if (local_cli.doc232_h_cli_selftest_exit)
+    {
+        // After client-nc geometry/material so generator_power_w reflects the production 30 kW identity.
+        const char *heat_mode = local_cli.prescribed_heat_mode
+                                    ? "prescribed_uniform_volumetric"
+                                    : (local_cli.literature.zero_q ? "zero_q"
+                                                                  : (local_cli.enable_target_power
+                                                                         ? "em_target_power"
+                                                                         : "em_or_frozen_q"));
+        const char *em_status = local_cli.prescribed_heat_mode
+                                    ? "NOT_RUN"
+                                    : (local_cli.literature.zero_q ? "DISABLED" : "RUN");
+        std::cout << "[ophelie][doc232][H] cli_selftest heat_source_mode=" << heat_mode
+                  << " em_status=" << em_status
+                  << " prescribed_heat_power_w=" << local_cli.prescribed_heat_power_w
+                  << " generator_power_w=" << local_cli.literature.generator_power_w
+                  << " target_power_w=" << local_cli.target_power_w
+                  << " enable_target_power=" << (local_cli.enable_target_power ? 1 : 0) << "\n";
+        if (!local_cli.summary_json.empty())
+        {
+            std::ofstream js(local_cli.summary_json);
+            js << std::setprecision(10);
+            js << "{\n"
+               << "  \"case\": \"doc232_h_cli_selftest\",\n"
+               << "  \"heat_source_mode\": \"" << heat_mode << "\",\n"
+               << "  \"em_status\": \"" << em_status << "\",\n"
+               << "  \"prescribed_heat_power_w\": " << local_cli.prescribed_heat_power_w << ",\n"
+               << "  \"generator_power_w\": " << local_cli.literature.generator_power_w << ",\n"
+               << "  \"target_power_w\": " << local_cli.target_power_w << ",\n"
+               << "  \"enable_target_power\": " << (local_cli.enable_target_power ? 1 : 0) << ",\n"
+               << "  \"em_solver_ok\": null,\n"
+               << "  \"SOFTWARE_DELTA_READY_cli\": 1,\n"
+               << "  \"note\": \"CLI-only; EM not executed; em_solver_ok must not be read as convergence\"\n"
+               << "}\n";
+            std::cout << "[ophelie] summary_json=" << local_cli.summary_json << "\n";
+        }
+        return 0;
     }
     if (local_cli.doc227_schedule_selftest)
     {
@@ -5353,6 +6016,60 @@ int main(int ac, char *av[])
             std::cout << "[ophelie][stage4.1] zero_q: skip EM; frozen_q=0 n=" << n
                       << " (isothermal hydro path)\n";
         }
+        else if (local_cli.prescribed_heat_mode)
+        {
+            // Doc232 H / Doc231 C1: uniform volumetric absorbed heat; EM NOT_RUN (current unknown).
+            // Armed by --prescribed-heat-power= presence; P=0 is valid (Q≡0) and must not fall back to EM.
+            syncVariableToHost<Real>(particles, "VolumetricMeasure");
+            const Real *vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+            Real V = Real(0);
+            for (size_t i = 0; i < n; ++i)
+                V += vol[i];
+            const Real q_uni = local_cli.prescribed_heat_power_w / std::max(V, TinyReal);
+            const std::string q_field = ophelieJouleHeatSourceFieldForThermal(glass_em_names, params);
+            syncVariableToHost<Real>(particles, q_field);
+            Real *q = particles.getVariableDataByName<Real>(q_field);
+            for (size_t i = 0; i < n; ++i)
+            {
+                q[i] = q_uni;
+                frozen_q[i] = q_uni;
+            }
+            syncVariableToDevice<Real>(particles, q_field);
+            p_joule = local_cli.prescribed_heat_power_w;
+            phi_eq = Real(0);
+            coupling_state.calibrated_current_per_loop = french.coil.current_per_loop;
+            coupling_state.coil_current_per_loop = french.coil.current_per_loop;
+            coupling_state.current_frozen = true;
+            coupling_state.generator_power_w = local_cli.literature.generator_power_w;
+            coupling_state.target_glass_absorbed_power_w = local_cli.prescribed_heat_power_w;
+            coupling_state.reconstructed_glass_power_w = p_joule;
+            coupling_state.last_phi_eq_res = Real(0);
+            std::cout << "[ophelie][doc232][H] prescribed_uniform_q: em_status=NOT_RUN; n=" << n << " V=" << V
+                      << " Q=" << q_uni << " P_abs=" << p_joule
+                      << " W generator_power_w=" << coupling_state.generator_power_w << "\n";
+
+            const bool build_spatial_q = local_cli.spatial_frozen_q || periodic_coupling;
+            if (build_spatial_q)
+            {
+                const Vecd &gc_em = french.glass_center;
+                const FrenchCylindricalFrame frame = makeFrenchCylinderFrameFromGlass(
+                    gc_em, french.glass_radius, french.glass_half_height, local_cli.literature.vertical_axis);
+                const BoundingBoxd melt_bounds(
+                    Vecd(gc_em[0] - french.glass_radius, gc_em[1] - french.glass_radius,
+                         gc_em[2] - french.glass_half_height),
+                    Vecd(gc_em[0] + french.glass_radius, gc_em[1] + french.glass_radius,
+                         gc_em[2] + french.glass_half_height));
+                q_grid.spec_ = rh200::makeRh200JouleHeatGridSpecFromBounds(melt_bounds, french.dp, Real(8));
+                coupling_state.sigma_rz.frame = frame;
+                coupling_state.q_rz.frame = frame;
+                FrenchLiteratureParameters lit_q = local_cli.literature;
+                lit_q.q_conservative_remap = true;
+                depositEmQAndRecord(particles, glass_em_names, params, frame, lit_q, q_grid, coupling_state,
+                                    p_joule);
+                std::cout << "[ophelie][doc231] prescribed_uniform_q spatial grid built"
+                          << " spatial_frozen_q=" << (local_cli.spatial_frozen_q ? 1 : 0) << "\n";
+            }
+        }
         else
         {
             OphelieFrenchEmJouleHeatOneWayResult probe;
@@ -5733,18 +6450,23 @@ int main(int ac, char *av[])
     }
 
     OphelieThermalDiffusionOneWayOptions thermal_bc;
-    thermal_bc.enable_french_natural_bc = true;
+    thermal_bc.enable_french_natural_bc = !local_cli.doc232_adiabatic_heat;
     thermal_bc.enable_cold_wall_dirichlet = false;
     thermal_bc.enable_diffusion = local_cli.literature.enable_thermal_diffusion;
     thermal_bc.boundary_width_factor = params.phi_boundary_distance_factor_;
     thermal_bc.renormalize_boundary_area_to_geometry = local_cli.boundary_area_normalize;
-    thermal_bc.h_side = Real(300);
-    thermal_bc.h_bottom = Real(35);
-    thermal_bc.h_free = Real(20);
-    thermal_bc.emissivity = Real(0.8);
+    thermal_bc.h_side = local_cli.doc232_adiabatic_heat ? Real(0) : Real(300);
+    thermal_bc.h_bottom = local_cli.doc232_adiabatic_heat ? Real(0) : Real(35);
+    thermal_bc.h_free = local_cli.doc232_adiabatic_heat ? Real(0) : Real(20);
+    thermal_bc.emissivity = local_cli.doc232_adiabatic_heat ? Real(0) : Real(0.8);
     thermal_bc.t_cool = Real(300);
     thermal_bc.t_ambient = Real(300);
     thermal_bc.t_rad_ambient = Real(300);
+    if (local_cli.doc232_adiabatic_heat)
+    {
+        std::cout << "[ophelie][doc232][C] french natural BC disabled (adiabatic production heat)\n";
+    }
+    if (!local_cli.doc232_adiabatic_heat)
     {
         std::string skull_msg;
         if (!verifyFrenchSkullResistanceRegression(skull_msg))
@@ -6109,11 +6831,15 @@ int main(int ac, char *av[])
 
     StateDynamics<MainExecutionPolicy, ApplyFrozenQToTemperatureCK> apply_q_const(glass, rho0, cp, t0);
     StateDynamics<MainExecutionPolicy, ApplyJouleHeatWithParticleCpCK> apply_q_variable(glass, rho0, t0);
+    // Doc232 D: live dT/dz for geometric-face T extrapolation (shell-band T ≠ surface T).
+    Real face_dTdz_live = Real(0);
+    const Real z_bot_face = gc[2] - french.glass_half_height;
+    const Real z_top_face = gc[2] + french.glass_half_height;
     StateDynamics<MainExecutionPolicy, ApplyOphelieThermalFrenchNaturalBcCK> apply_natural_bc(
         glass, kOphelieThermalDeltaTField, kOphelieTemperatureField, t0, rho0, cp, thermal_bc.boundary_shell_thickness,
-        thermal_bc);
+        thermal_bc, z_bot_face, z_top_face, &face_dTdz_live);
     ReduceDynamicsCK<MainExecutionPolicy, OphelieFrenchBoundaryLossPowerReduceCK> boundary_loss_power(
-        glass, t0, thermal_bc.boundary_shell_thickness, thermal_bc);
+        glass, t0, thermal_bc.boundary_shell_thickness, thermal_bc, z_bot_face, z_top_face, &face_dTdz_live);
     UniquePtr<InteractionDynamicsCK<MainExecutionPolicy, OpheliePairwiseLaplaceCK<Inner<>>>> laplace_temperature;
     UniquePtr<StateDynamics<MainExecutionPolicy, ApplyLaplaceDiffusionDtCK>> apply_diffusion;
     // Level-2 shell: RH200-style Inner+Contact diffusion (replaces Ophelie melt Laplace when enabled).
@@ -8484,6 +9210,88 @@ int main(int ac, char *av[])
               << " meridional_avg_start=" << local_cli.meridional_average_start
               << " thermal_diffusion=" << (thermal_bc.enable_diffusion ? 1 : 0) << std::endl;
 
+    // Doc232 B: production fixed-space probes (client NC).
+    StdVec<OphelieFixedSpaceProbeDef> doc232_probes;
+    const Real probe_kernel_h = local_cli.probe_kernel_h_factor * french.dp;
+    std::unique_ptr<std::ofstream> probes_ts_stream;
+    int probes_ts_samples = 0;
+    bool doc232_probe_path_ok = true;
+    if (local_cli.client_nc_geometry || local_cli.probes_timeseries_user_set ||
+        local_cli.doc232_probe_path_verify)
+    {
+        doc232_probes = makeDoc232ClientNcProbes(french);
+        if (!local_cli.probes_timeseries_user_set && local_cli.probes_timeseries_csv.empty() &&
+            local_cli.client_nc_geometry)
+            local_cli.probes_timeseries_csv = "output/probes_timeseries.csv";
+        if (local_cli.doc232_probe_path_verify)
+        {
+            const Real z_bot_pv = french.glass_center[2] - french.glass_half_height;
+            const Real melt_h_pv = Real(2) * french.glass_half_height;
+            bool u_ok = false, l_ok = false;
+            doc232_probe_path_ok =
+                runDoc232ProbePathVerify(glass_particles, doc232_probes, probe_kernel_h, z_bot_pv, melt_h_pv, t0,
+                                         "output/doc232_probe_path_verify.csv", u_ok, l_ok);
+            std::cout << "[ophelie][doc232] PRODUCTION_PROBE_PATH_VERIFY="
+                      << (doc232_probe_path_ok ? 1 : 0) << "\n";
+            if (local_cli.doc232_probe_path_verify_exit)
+            {
+                if (!local_cli.summary_json.empty())
+                {
+                    std::ofstream js(local_cli.summary_json);
+                    js << "{\n  \"case\": \"doc232_probe_path_verify\",\n"
+                       << "  \"PRODUCTION_PROBE_PATH_VERIFY\": " << (doc232_probe_path_ok ? 1 : 0) << ",\n"
+                       << "  \"uniform_ok\": " << (u_ok ? 1 : 0) << ",\n"
+                       << "  \"linear_ok\": " << (l_ok ? 1 : 0) << ",\n"
+                       << "  \"probe_kernel_h_m\": " << probe_kernel_h << ",\n"
+                       << "  \"n_probes\": " << doc232_probes.size() << ",\n"
+                       << "  \"note\": \"manufacture gate on production sampler; sensor location unconfirmed\"\n}\n";
+                    std::cout << "[ophelie] summary_json=" << local_cli.summary_json << "\n";
+                }
+                return doc232_probe_path_ok ? 0 : 1;
+            }
+        }
+        if (!local_cli.probes_timeseries_csv.empty())
+        {
+            fs::create_directories(fs::path(local_cli.probes_timeseries_csv).parent_path());
+            probes_ts_stream = std::make_unique<std::ofstream>(local_cli.probes_timeseries_csv);
+            writeProbesTimeseriesHeader(*probes_ts_stream);
+            appendProbesTimeseries(*probes_ts_stream, time_stepper.getPhysicalTime(), glass_particles,
+                                   doc232_probes, probe_kernel_h);
+            ++probes_ts_samples;
+            std::cout << "[ophelie][doc232] probes_timeseries=" << local_cli.probes_timeseries_csv
+                      << " n_probes=" << doc232_probes.size() << " kernel_h=" << probe_kernel_h << "\n";
+        }
+    }
+
+    if (local_cli.doc232_boundary_face_audit)
+    {
+        if (!thermal_bc.enable_french_natural_bc)
+        {
+            std::cerr << "[ophelie][doc232][D] FATAL: french natural BC disabled; cannot audit faces\n";
+            return 2;
+        }
+        const bool d_ok =
+            runDoc232BoundaryFaceAudit(glass, glass_particles, thermal_bc, french, rho0, cp, t0,
+                                       local_cli.doc232_boundary_audit_dir);
+        if (!local_cli.summary_json.empty())
+        {
+            std::ofstream js(local_cli.summary_json);
+            js << "{\n"
+               << "  \"case\": \"doc232_d_boundary_face_audit\",\n"
+               << "  \"PRODUCTION_BOUNDARY_FACE_AUDIT\": " << (d_ok ? 1 : 0) << ",\n"
+               << "  \"passed\": " << (d_ok ? 1 : 0) << ",\n"
+               << "  \"out_dir\": \"" << local_cli.doc232_boundary_audit_dir << "\",\n"
+               << "  \"power_tol\": 0.02,\n"
+               << "  \"energy_tol\": 0.01,\n"
+               << "  \"note\": \"production host power + ApplyOphelieThermalFrenchNaturalBcCK; "
+                  "analytic ref is geometric cylinder (also offline Python)\"\n"
+               << "}\n";
+            std::cout << "[ophelie] summary_json=" << local_cli.summary_json << "\n";
+        }
+        if (local_cli.doc232_boundary_face_audit_exit)
+            return d_ok ? 0 : 1;
+    }
+
     FrenchMeridionalFlowAccumulator meridional;
     meridional.reset(cyl_frame);
     bool meridional_ts_header = true;
@@ -8619,12 +9427,14 @@ int main(int ac, char *av[])
                 laplace_temperature->exec();
                 apply_diffusion->exec(dt_th);
             }
+            if (thermal_bc.enable_french_natural_bc && !local_cli.doc232_adiabatic_heat)
             {
+                face_dTdz_live = hostFitMassWeightedTemperatureDTdz(glass_particles, kOphelieTemperatureField);
                 const Real p_boundary_now = boundary_loss_power.exec();
                 coupling_state.ledger.p_loss_live = p_boundary_now;
                 coupling_state.ledger.accumulateBoundary(p_boundary_now, dt_th);
+                apply_natural_bc.exec(dt_th);
             }
-            apply_natural_bc.exec(dt_th);
         }
     };
 
@@ -8636,6 +9446,112 @@ int main(int ac, char *av[])
         std::ofstream wipe(doc227_audit_path, std::ios::trunc);
         wipe.close();
         doc227_audit_header = true;
+    }
+
+    // Doc232 C: production ApplyFrozenQ path, thermal-only (no fluid keep / no BC).
+    if (local_cli.doc232_adiabatic_heat)
+    {
+        const Real t0_gate = time_stepper.getPhysicalTime();
+        const Real M = hostSumParticleMass(glass_particles);
+        const Real E0 = hostThermalEnergyFromDeltaTMass(glass_particles, cp);
+        const Real dT0 = hostMassWeightedMeanDeltaT(glass_particles);
+        const Real P = local_cli.prescribed_heat_power_w;
+        const Real dt_th = Real(1.0e-3);
+        int heat_steps = 0;
+        std::cout << "[ophelie][doc232][C] thermal-only keep start t=" << t0_gate << " end=" << local_cli.end_time
+                  << " P=" << P << " M=" << M << " cp=" << cp << " dt=" << dt_th
+                  << " operator=ApplyFrozenQToTemperatureCK"
+#if SPHINXSYS_USE_SYCL
+                  << " exec=SYCL_MainExecutionPolicy"
+#else
+                  << " exec=Host_MainExecutionPolicy"
+#endif
+                  << "\n";
+        while (!time_stepper.isEndTime(local_cli.end_time))
+        {
+            const Real t_now = time_stepper.getPhysicalTime();
+            Real dt_use = dt_th;
+            if (t_now + dt_use > local_cli.end_time)
+                dt_use = local_cli.end_time - t_now;
+            if (dt_use <= TinyReal)
+                break;
+            time_stepper.incrementPhysicalTime(dt_use);
+            apply_thermal_interval(dt_use);
+            ++heat_steps;
+        }
+        const Real t_end = time_stepper.getPhysicalTime();
+        const Real t_heat = t_end - t0_gate;
+        const Real E_end = hostThermalEnergyFromDeltaTMass(glass_particles, cp);
+        const Real DeltaH = E_end - E0;
+        const Real E_Q = coupling_state.ledger.e_q_applied;
+        const Real E_b = coupling_state.ledger.e_boundary_out;
+        const Real dT_num = hostMassWeightedMeanDeltaT(glass_particles) - dT0;
+        const Real dT_exact = (M * cp > TinyReal) ? (P * t_heat / (M * cp)) : Real(0);
+        const Real dT_rel =
+            std::abs(dT_exact) > TinyReal ? std::abs(dT_num - dT_exact) / std::abs(dT_exact) : Real(1);
+        const Real energy_scale = std::max({std::abs(E_Q), std::abs(DeltaH), Real(1)});
+        const Real energy_rel = std::abs(DeltaH - E_Q + E_b) / energy_scale;
+        const Real abs_dT_err = std::abs(dT_num - dT_exact);
+        const bool finite_ok =
+            std::isfinite(static_cast<double>(dT_num)) && std::isfinite(static_cast<double>(energy_rel));
+        const bool dT_ok = (dT_rel <= Real(0.01)) && (dT_num > TinyReal);
+        const bool energy_ok = (energy_rel <= Real(0.01)) && (std::abs(E_b) <= Real(1.0e-6) * energy_scale);
+        const bool time_ok = std::abs(t_heat - local_cli.end_time) <= Real(1.0e-9) + Real(1.0e-6) * local_cli.end_time;
+        const bool pass = finite_ok && dT_ok && energy_ok && time_ok && (heat_steps > 0);
+        std::cout << "[ophelie][doc232][C] dT_num=" << dT_num << " dT_exact=" << dT_exact
+                  << " dT_rel=" << dT_rel << " abs_dT_err=" << abs_dT_err << " DeltaH=" << DeltaH
+                  << " E_Q=" << E_Q << " E_boundary=" << E_b << " energy_rel=" << energy_rel
+                  << " t_heat=" << t_heat << " steps=" << heat_steps << "\n";
+        std::cout << "[ophelie][doc232][C] PRODUCTION_HEAT_SOURCE_VERIFIED=" << (pass ? 1 : 0)
+                  << " (production ApplyFrozenQ; not hostApplyUniformHeat)\n";
+        if (!local_cli.doc232_dump_particles_csv.empty())
+        {
+            dumpDoc232ParticleSnapshotCsv(glass_particles, local_cli.doc232_dump_particles_csv, t_end,
+                                          probe_kernel_h);
+        }
+        if (!local_cli.summary_json.empty())
+        {
+            std::ofstream js(local_cli.summary_json);
+            js << std::setprecision(10);
+            js << "{\n"
+               << "  \"case\": \"doc232_c_adiabatic_production_heat\",\n"
+               << "  \"PRODUCTION_HEAT_SOURCE_VERIFIED\": " << (pass ? 1 : 0) << ",\n"
+               << "  \"passed\": " << (pass ? 1 : 0) << ",\n"
+               << "  \"heat_source_mode\": \"prescribed_uniform_volumetric\",\n"
+               << "  \"em_status\": \"NOT_RUN\",\n"
+               << "  \"em_solver_ok\": null,\n"
+               << "  \"generator_power_w\": " << local_cli.literature.generator_power_w << ",\n"
+               << "  \"operator\": \"ApplyFrozenQToTemperatureCK\",\n"
+               << "  \"not_hostApplyUniformHeat\": 1,\n"
+#if SPHINXSYS_USE_SYCL
+               << "  \"execution\": \"SYCL_MainExecutionPolicy\",\n"
+#else
+               << "  \"execution\": \"Host_MainExecutionPolicy\",\n"
+#endif
+               << "  \"prescribed_heat_power_w\": " << P << ",\n"
+               << "  \"end_time\": " << local_cli.end_time << ",\n"
+               << "  \"t_heat_s\": " << t_heat << ",\n"
+               << "  \"heat_steps\": " << heat_steps << ",\n"
+               << "  \"dt_thermal_s\": " << dt_th << ",\n"
+               << "  \"M_kg\": " << M << ",\n"
+               << "  \"cp\": " << cp << ",\n"
+               << "  \"rho0\": " << rho0 << ",\n"
+               << "  \"dT_num_K\": " << dT_num << ",\n"
+               << "  \"dT_exact_K\": " << dT_exact << ",\n"
+               << "  \"dT_rel\": " << dT_rel << ",\n"
+               << "  \"abs_dT_err_K\": " << abs_dT_err << ",\n"
+               << "  \"DeltaH_J\": " << DeltaH << ",\n"
+               << "  \"E_Q_J\": " << E_Q << ",\n"
+               << "  \"E_boundary_J\": " << E_b << ",\n"
+               << "  \"energy_rel\": " << energy_rel << ",\n"
+               << "  \"bc_disabled\": 1,\n"
+               << "  \"diffusion_disabled\": 1,\n"
+               << "  \"fluid_keep_disabled\": 1,\n"
+               << "  \"note\": \"independent ref DeltaT=P*t/(M*cp); DeltaH=sum(m*cp*dT); not EM\"\n"
+               << "}\n";
+            std::cout << "[ophelie] summary_json=" << local_cli.summary_json << "\n";
+        }
+        return pass ? 0 : 1;
     }
 
     while (!time_stepper.isEndTime(local_cli.end_time) && !numerical_abort)
@@ -9018,7 +9934,7 @@ int main(int ac, char *av[])
                 last_adv_phys_time = t_now;
                 apply_thermal_interval(dt_adv);
             }
-            if (periodic_coupling)
+            if (periodic_coupling && !local_cli.prescribed_heat_mode)
             {
                 hostSampleEulerQOntoParticles(glass_particles, q_grid);
                 recordFrenchFluidHeatPower(coupling_state, glass_particles);
@@ -9181,6 +10097,11 @@ int main(int ac, char *av[])
                         << spatial.t_outer << "," << spatial.t_center << "," << spatial.t_bottom << ","
                         << spatial.t_top << "\n";
                 monitor.flush();
+                if (probes_ts_stream)
+                {
+                    appendProbesTimeseries(*probes_ts_stream, t_now, glass_particles, doc232_probes, probe_kernel_h);
+                    ++probes_ts_samples;
+                }
                 std::cout << "[ophelie][stage4.1] N=" << advection_steps << " t=" << t_now << " U_max=" << u_now
                           << " U_rms=" << spatial.u_rms << " U_th=" << spatial.u_theta_rms << " U_z=" << spatial.u_z_rms
                           << " U_buoy=" << u_buoy << " T_min=" << t_min_now << " T_mean=" << t_mean_now
@@ -9195,11 +10116,12 @@ int main(int ac, char *av[])
                               << " contact_wall_gain_W=" << contact_wall_gain_w;
                 }
                 std::cout << std::endl;
-                // Doc224 heated NC: U_max≫0.05 m/s is a red-line blow-up.
-                // Doc230 isothermal (--zero-q): use Ma-style gate vs c0 (settle/acoustic residual
-                // can sit near ~0.05–0.1 m/s without being a heated-NC runaway).
-                const Real u_blowup_gate =
-                    local_cli.literature.zero_q ? Real(0.05) * local_cli.c0 : Real(0.05);
+                // Doc224 heated French NC: absolute U_max≫0.05 m/s was a red-line for quiet smokes.
+                // Doc230 isothermal (--zero-q) and Doc231 prescribed-heat client warm NC: use Ma-style
+                // gate vs c0 (settle/acoustic residual ~0.05–0.2 m/s is not heated French runaway).
+                const bool soft_u_blowup =
+                    local_cli.literature.zero_q || local_cli.prescribed_heat_mode;
+                const Real u_blowup_gate = soft_u_blowup ? Real(0.05) * local_cli.c0 : Real(0.05);
                 if (!std::isfinite(u_now) || !std::isfinite(spatial.u_rms) || !std::isfinite(t_mean_now) ||
                     u_now > u_blowup_gate)
                 {
@@ -9207,8 +10129,8 @@ int main(int ac, char *av[])
                     numerical_abort_reason = !std::isfinite(u_now) || !std::isfinite(spatial.u_rms) ||
                                                     !std::isfinite(t_mean_now)
                                                 ? "non_finite_U_or_T_at_monitor"
-                                                : (local_cli.literature.zero_q ? "U_max_above_0p05_c0_blowup_gate"
-                                                                               : "U_max_above_0p05_blowup_gate");
+                                                : (soft_u_blowup ? "U_max_above_0p05_c0_blowup_gate"
+                                                                 : "U_max_above_0p05_blowup_gate");
                     std::cerr << "[ophelie][doc224][numerical-abort] " << numerical_abort_reason
                               << " t=" << t_now << " U_max=" << u_now << " U_rms=" << spatial.u_rms
                               << " gate=" << u_blowup_gate << std::endl;
@@ -9222,6 +10144,30 @@ int main(int ac, char *av[])
         std::cerr << "[ophelie][doc224][numerical-abort] exiting early: " << numerical_abort_reason
                   << " t=" << time_stepper.getPhysicalTime() << std::endl;
         return 3;
+    }
+
+    if (!local_cli.doc232_dump_particles_csv.empty())
+    {
+        const Real t_dump = time_stepper.getPhysicalTime();
+        dumpDoc232ParticleSnapshotCsv(glass_particles, local_cli.doc232_dump_particles_csv, t_dump,
+                                      probe_kernel_h);
+        const fs::path online_path =
+            fs::path(local_cli.doc232_dump_particles_csv).parent_path() / "online_probe_samples.csv";
+        std::ofstream online(online_path);
+        online << std::setprecision(10);
+        online << "t_s,probe_id,x,y,z,T_K,n_neighbors,support_h_m,weight_sum,nearest_dist_m,coverage_valid\n";
+        syncFixedSpaceProbeFieldsToHost(glass_particles, kOphelieTemperatureField);
+        if (doc232_probes.empty() && local_cli.client_nc_geometry)
+            doc232_probes = makeDoc232ClientNcProbes(french);
+        for (const auto &p : doc232_probes)
+        {
+            const auto s =
+                hostSampleFixedSpaceTemperature(glass_particles, p.pos, probe_kernel_h, kOphelieTemperatureField);
+            online << t_dump << "," << p.id << "," << p.pos[0] << "," << p.pos[1] << "," << p.pos[2] << "," << s.T
+                   << "," << s.n_neighbors << "," << probe_kernel_h << "," << s.weight_sum << "," << s.nearest_dist
+                   << "," << (s.valid ? 1 : 0) << "\n";
+        }
+        std::cout << "[ophelie][doc232][B2] online_probe_samples=" << online_path << "\n";
     }
 
     const Real u_max = u_max_reduce.exec();
@@ -9351,8 +10297,9 @@ int main(int ac, char *av[])
                                 : hostThermalEnthalpyEnergy(glass_particles, rho0, laws.cp, t0);
     const bool periodic_coupling_end = periodic_coupling;
     FrenchCouplingGateInputs gate_in;
-    gate_in.periodic_coupling = periodic_coupling_end;
+    gate_in.periodic_coupling = periodic_coupling_end && !local_cli.prescribed_heat_mode;
     gate_in.zero_q = local_cli.literature.zero_q;
+    gate_in.prescribed_heat = local_cli.prescribed_heat_mode;
     gate_in.constant_thermal_rheology = local_cli.literature.constant_thermal_rheology;
     gate_in.require_u_max_positive = false;
     gate_in.energy_residual_available = coupling_state.ledger.h0_set && physical_time > TinyReal;
@@ -9393,8 +10340,21 @@ int main(int ac, char *av[])
     FrenchCouplingRunGates gates;
     evaluateFrenchCouplingRunGates(gate_in, gates);
     const bool passed = local_cli.require_validation ? gates.validation_passed : gates.smoke_passed;
+    const char *heat_source_mode = local_cli.prescribed_heat_mode
+                                       ? "prescribed_uniform_volumetric"
+                                       : (local_cli.literature.zero_q
+                                              ? "zero_q"
+                                              : (local_cli.enable_target_power ? "em_target_power"
+                                                                              : "em_or_frozen_q"));
+    const char *em_status = local_cli.prescribed_heat_mode
+                                ? "NOT_RUN"
+                                : (local_cli.literature.zero_q ? "DISABLED" : "RUN");
 
     std::cout << "test_3d_ophelie_french_natural_convection_frozen_q"
+              << " heat_source_mode=" << heat_source_mode << " em_status=" << em_status
+              << " prescribed_heat_power_w=" << local_cli.prescribed_heat_power_w
+              << " generator_power_w=" << local_cli.literature.generator_power_w
+              << " P_heat_fluid_W=" << coupling_state.last_power.p_heat_fluid
               << " P_joule_W=" << p_joule << " power_rel_err=" << power_rel_err << " phi_eq_res_vol=" << phi_eq
               << " end_time=" << local_cli.end_time << " U_max=" << u_max << " U_rms=" << spatial_end.u_rms
               << " U_th=" << spatial_end.u_theta_rms << " U_z=" << spatial_end.u_z_rms << " U_buoy=" << u_buoy
@@ -9420,7 +10380,11 @@ int main(int ac, char *av[])
               << " startup_ok=" << (gates.startup_ok ? 1 : 0)
               << " completed_requested_time=" << (gates.completed_requested_time ? 1 : 0)
               << " periodic_refresh_ok=" << (gates.periodic_refresh_ok ? 1 : 0)
-              << " em_solver_ok=" << (gates.em_solver_ok ? 1 : 0) << " q_transfer_ok=" << (gates.q_transfer_ok ? 1 : 0)
+              << " em_solver_ok="
+              << ((local_cli.prescribed_heat_mode || local_cli.literature.zero_q)
+                      ? "null"
+                      : (gates.em_solver_ok ? "1" : "0"))
+              << " q_transfer_ok=" << (gates.q_transfer_ok ? 1 : 0)
               << " flow_sanity_ok=" << (gates.flow_sanity_ok ? 1 : 0)
               << " thermal_energy_ok=" << (gates.thermal_energy_ok ? 1 : 0)
               << " smoke_passed=" << (gates.smoke_passed ? 1 : 0)
@@ -9450,6 +10414,18 @@ int main(int ac, char *av[])
            << "  \"case\": \"french_natural_frozen_q\",\n"
            << "  \"doc95\": 1,\n"
            << "  \"doc97_p3\": 1,\n"
+           << "  \"heat_source_mode\": \"" << heat_source_mode << "\",\n"
+           << "  \"em_status\": \"" << em_status << "\",\n"
+           << "  \"prescribed_heat_power_w\": " << local_cli.prescribed_heat_power_w << ",\n"
+           << "  \"generator_power_w\": " << local_cli.literature.generator_power_w << ",\n"
+           << "  \"P_heat_fluid_W\": " << coupling_state.last_power.p_heat_fluid << ",\n"
+           << "  \"P_joule_W\": " << p_joule << ",\n"
+           << "  \"target_power_w\": " << local_cli.target_power_w << ",\n"
+           << "  \"em_solver_ok\": "
+           << ((local_cli.prescribed_heat_mode || local_cli.literature.zero_q)
+                   ? "null"
+                   : (gates.em_solver_ok ? "1" : "0"))
+           << ",\n"
            << "  \"dp\": " << french.dp << ",\n"
            << "  \"end_time\": " << local_cli.end_time << ",\n"
            << "  \"beta\": " << beta << ",\n"
@@ -9457,6 +10433,10 @@ int main(int ac, char *av[])
            << "  \"effective_beta\": " << effective_beta << ",\n"
            << "  \"boussinesq\": " << (local_cli.literature.enable_boussinesq ? 1 : 0) << ",\n"
            << "  \"freeze_prescribed_t\": " << (local_cli.freeze_prescribed_temperature ? 1 : 0) << ",\n"
+           << "  \"doc232_probes_timeseries\": \"" << local_cli.probes_timeseries_csv << "\",\n"
+           << "  \"doc232_probe_samples\": " << probes_ts_samples << ",\n"
+           << "  \"doc232_probe_path_verify\": " << (local_cli.doc232_probe_path_verify ? 1 : 0) << ",\n"
+           << "  \"PRODUCTION_PROBE_PATH_VERIFY\": " << (doc232_probe_path_ok ? 1 : 0) << ",\n"
            << "  \"diag_zero_net_uz\": " << (local_cli.diag_zero_net_uz ? 1 : 0) << ",\n"
            << "  \"diag_hard_lid\": " << (local_cli.diag_hard_lid ? 1 : 0) << ",\n"
            << "  \"diag_soft_lid\": " << (local_cli.diag_soft_lid ? 1 : 0) << ",\n"
