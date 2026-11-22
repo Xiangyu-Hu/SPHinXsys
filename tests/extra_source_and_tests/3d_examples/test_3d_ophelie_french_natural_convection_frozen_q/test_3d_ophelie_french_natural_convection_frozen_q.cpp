@@ -838,6 +838,18 @@ struct LocalCli
     bool doc232_boundary_face_audit_exit = false;
     std::string doc232_boundary_audit_dir = "output/doc232_boundary_audit";
     /**
+     * Doc233 D: face-T reconstruction mode for production BC.
+     * "global_dt_dz" = Doc232 mass-weighted vertical fit (experimental).
+     * "band" = shell-band particle T without face extrapolation (legacy).
+     */
+    std::string boundary_face_t_mode = "global_dt_dz";
+    /** Doc233 D: also run radial + parabolic-z manufacturing fields (scope audit). */
+    bool doc233_boundary_scope_audit = false;
+    /**
+     * Doc233 C3: after IC (prefer non-uniform T), verify buoyancy force chain and exit.
+     */
+    bool doc233_buoyancy_force_chain_exit = false;
+    /**
      * Doc232 H: after CLI finalize, print heat_source_mode / em_status and exit (no SPH).
      * Used for prescribed-heat conflict / invalid-value software regression.
      */
@@ -1647,6 +1659,34 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
         else if (std::strncmp(av[i], "--doc232-boundary-audit-dir=", 28) == 0)
         {
             cli.doc232_boundary_audit_dir = std::string(av[i] + 28);
+        }
+        else if (std::strncmp(av[i], "--boundary-face-t-mode=", 22) == 0)
+        {
+            cli.boundary_face_t_mode = std::string(av[i] + 22);
+            if (cli.boundary_face_t_mode != "global_dt_dz" && cli.boundary_face_t_mode != "band")
+            {
+                std::cerr << "[ophelie][doc233][D] FATAL: --boundary-face-t-mode must be "
+                             "global_dt_dz|band, got '"
+                          << cli.boundary_face_t_mode << "'\n";
+                return 2;
+            }
+        }
+        else if (std::strcmp(av[i], "--doc233-boundary-scope-audit") == 0 ||
+                 std::strcmp(av[i], "--doc233-boundary-scope-audit-exit") == 0)
+        {
+            cli.doc232_boundary_face_audit = true;
+            cli.doc233_boundary_scope_audit = true;
+            if (std::strcmp(av[i], "--doc233-boundary-scope-audit-exit") == 0)
+                cli.doc232_boundary_face_audit_exit = true;
+        }
+        else if (std::strcmp(av[i], "--doc233-buoyancy-force-chain-exit") == 0)
+        {
+            cli.doc233_buoyancy_force_chain_exit = true;
+            cli.literature.enable_boussinesq = true;
+            // Ensure prescribe block runs; manufactured radial ΔT applied inside if isothermal.
+            if (!(cli.prescribe_t_radial_dT > TinyReal) && !(cli.prescribe_t_hot_bottom_dT > TinyReal) &&
+                cli.init_T_rz_csv.empty() && !cli.doc223_f2_annular_hot)
+                cli.prescribe_t_radial_dT = Real(30);
         }
         else if (std::strcmp(av[i], "--doc232-h-cli-selftest-exit") == 0)
         {
@@ -5224,7 +5264,9 @@ inline Real hostSumParticleMass(BaseParticles &particles)
 inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &particles,
                                        OphelieThermalDiffusionOneWayOptions thermal_bc_base,
                                        const OphelieFrenchReducedCaseParams &french, Real rho0, Real cp, Real t0,
-                                       const std::string &out_dir)
+                                       const std::string &out_dir,
+                                       const std::string &face_t_mode = "global_dt_dz",
+                                       bool doc233_scope_fields = false)
 {
     fs::create_directories(out_dir);
     const Real z_bot = french.glass_center[2] - french.glass_half_height;
@@ -5237,6 +5279,10 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
     const Real T_uniform = Real(1273.15);
     const Real T_lo = Real(1100);
     const Real T_hi = Real(1300);
+    const bool extrapolate_face = (face_t_mode != "band");
+    std::cout << "[ophelie][doc233][D] boundary_face_t_mode=" << face_t_mode
+              << " extrapolate_face_t=" << (extrapolate_face ? 1 : 0)
+              << " scope_fields=" << (doc233_scope_fields ? 1 : 0) << "\n";
 
     const OphelieFrenchBoundaryAreaAudit area =
         hostOphelieThermalFrenchNaturalBoundaryAreaAudit(particles, thermal_bc_base, french, shell);
@@ -5314,6 +5360,34 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
         syncVariableToDevice<Real>(particles, kOphelieTemperatureField);
         syncVariableToDevice<Real>(particles, kOphelieThermalDeltaTField);
     };
+    // Doc233 D: T=1200+100*(r/R)^2
+    auto set_radial_quad = [&]() {
+        for (size_t i = 0; i < n; ++i)
+        {
+            const Real dx = pos[i][0] - french.glass_center[0];
+            const Real dy = pos[i][1] - french.glass_center[1];
+            const Real r = std::sqrt(dx * dx + dy * dy);
+            const Real rr = std::min(Real(1), r / std::max(R, TinyReal));
+            const Real Ti = Real(1200) + Real(100) * rr * rr;
+            T[i] = Ti;
+            dT[i] = Ti - t0;
+        }
+        syncVariableToDevice<Real>(particles, kOphelieTemperatureField);
+        syncVariableToDevice<Real>(particles, kOphelieThermalDeltaTField);
+    };
+    // Doc233 D: T=1200+100*(2*(z-zb)/H-1)^2 — symmetric; global dT/dz ~ 0 but faces have slope.
+    auto set_parabolic_z = [&]() {
+        for (size_t i = 0; i < n; ++i)
+        {
+            const Real a = (pos[i][2] - z_bot) / std::max(H, TinyReal);
+            const Real s = Real(2) * std::min(Real(1), std::max(Real(0), a)) - Real(1);
+            const Real Ti = Real(1200) + Real(100) * s * s;
+            T[i] = Ti;
+            dT[i] = Ti - t0;
+        }
+        syncVariableToDevice<Real>(particles, kOphelieTemperatureField);
+        syncVariableToDevice<Real>(particles, kOphelieThermalDeltaTField);
+    };
 
     struct FaceCase
     {
@@ -5344,6 +5418,48 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
             const Real Tr2 = tr * tr;
             return fc.emissivity * sb * A_disk * (Tu2 * Tu2 - Tr2 * Tr2);
         }
+        if (field == "radial_quad")
+        {
+            // Geometric face T: side at r=R → 1300; disks mean T=1250.
+            const Real T_side = Real(1300);
+            const Real T_disk = Real(1250);
+            if (std::strcmp(fc.face, "side") == 0)
+                return fc.h_side * A_side * (T_side - tc);
+            if (std::strcmp(fc.face, "bottom") == 0)
+                return fc.h_bottom * A_disk * (T_disk - tc);
+            if (std::strcmp(fc.face, "free_conv") == 0)
+                return fc.h_free * A_disk * (T_disk - ta);
+            // Radiation uses area integral of T^4; for T=1200+100(r/R)^2 closed form:
+            // ∫ T^4 dA / A is not (mean T)^4 — use numerical ring sum for reference.
+            const int nbin = 400;
+            double acc = 0.0;
+            for (int k = 0; k < nbin; ++k)
+            {
+                const double r0 = R * (static_cast<double>(k) / nbin);
+                const double r1 = R * (static_cast<double>(k + 1) / nbin);
+                const double rm = 0.5 * (r0 + r1);
+                const double Tk = 1200.0 + 100.0 * (rm / R) * (rm / R);
+                const double dA = M_PI * (r1 * r1 - r0 * r0);
+                acc += dA * Tk * Tk * Tk * Tk;
+            }
+            const double Tr2 = static_cast<double>(tr) * static_cast<double>(tr);
+            return static_cast<Real>(fc.emissivity * sb * (acc - A_disk * Tr2 * Tr2));
+        }
+        if (field == "parabolic_z")
+        {
+            // Side mean: 1200+100/3; faces at zbot/ztop: 1300.
+            const Real T_side_mean = Real(1200) + Real(100) / Real(3);
+            const Real T_face = Real(1300);
+            if (std::strcmp(fc.face, "side") == 0)
+                return fc.h_side * A_side * (T_side_mean - tc);
+            if (std::strcmp(fc.face, "bottom") == 0)
+                return fc.h_bottom * A_disk * (T_face - tc);
+            if (std::strcmp(fc.face, "free_conv") == 0)
+                return fc.h_free * A_disk * (T_face - ta);
+            const Real Tf2 = T_face * T_face;
+            const Real Tr2 = tr * tr;
+            return fc.emissivity * sb * A_disk * (Tf2 * Tf2 - Tr2 * Tr2);
+        }
         // linear_z: surface integral on geometric cylinder (not particle weights).
         if (std::strcmp(fc.face, "side") == 0)
         {
@@ -5367,7 +5483,12 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
     bool all_ok = true;
     const Real power_tol = Real(0.02);
     const Real energy_tol = Real(0.01);
-    const std::string fields[] = {"uniform", "linear_z"};
+    StdVec<std::string> fields = {"uniform", "linear_z"};
+    if (doc233_scope_fields)
+    {
+        fields.push_back("radial_quad");
+        fields.push_back("parabolic_z");
+    }
 
     for (const auto &field : fields)
     {
@@ -5375,8 +5496,12 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
         {
             if (field == "uniform")
                 set_uniform();
-            else
+            else if (field == "linear_z")
                 set_linear_z();
+            else if (field == "radial_quad")
+                set_radial_quad();
+            else
+                set_parabolic_z();
 
             OphelieThermalDiffusionOneWayOptions face_bc = thermal_bc_base;
             face_bc.h_side = fc.h_side;
@@ -5388,7 +5513,7 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
             const Real dTdz = hostFitMassWeightedTemperatureDTdz(particles, kOphelieTemperatureField);
             Real side_w = 0, bottom_w = 0, free_c = 0, free_r = 0, total_w = 0;
             hostOphelieThermalFrenchNaturalHeatLossPowers(particles, face_bc, shell, side_w, bottom_w, free_c, free_r,
-                                                          total_w, z_bot, z_bot + H, dTdz, /*extrapolate_face_t=*/true);
+                                                          total_w, z_bot, z_bot + H, dTdz, extrapolate_face);
             Real P_prod = total_w;
             if (std::strcmp(fc.face, "side") == 0)
                 P_prod = side_w;
@@ -5414,9 +5539,10 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
                 dT_pre[i] = dT_before[i];
 
             Real dTdz_live = dTdz;
+            Real *dTdz_ptr = extrapolate_face ? &dTdz_live : nullptr;
             StateDynamics<MainExecutionPolicy, ApplyOphelieThermalFrenchNaturalBcCK> apply_face(
                 glass_body, kOphelieThermalDeltaTField, kOphelieTemperatureField, t0, rho0, cp, shell, face_bc, z_bot,
-                z_bot + H, &dTdz_live);
+                z_bot + H, dTdz_ptr);
             apply_face.exec(dt);
 
             syncVariableToHost<Real>(particles, kOphelieThermalDeltaTField);
@@ -5456,7 +5582,13 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
     syncVariableToDevice<Real>(particles, kOphelieThermalDeltaTField);
 
     std::cout << "[ophelie][doc232][D] PRODUCTION_BOUNDARY_FACE_AUDIT=" << (all_ok ? 1 : 0)
-              << " out_dir=" << out_dir << "\n";
+              << " boundary_face_t_mode=" << face_t_mode << " out_dir=" << out_dir << "\n";
+    if (doc233_scope_fields)
+    {
+        std::cout << "[ophelie][doc233][D] BOUNDARY_RECONSTRUCTION_SCOPE="
+                  << (all_ok ? "PASS_WITHIN_TOL" : "LIMITED_OR_FAIL")
+                  << " note=global_dt_dz experimental for nonlinear/radial; see CSV per-field\n";
+    }
     return all_ok;
 }
 
@@ -6831,15 +6963,20 @@ int main(int ac, char *av[])
 
     StateDynamics<MainExecutionPolicy, ApplyFrozenQToTemperatureCK> apply_q_const(glass, rho0, cp, t0);
     StateDynamics<MainExecutionPolicy, ApplyJouleHeatWithParticleCpCK> apply_q_variable(glass, rho0, t0);
-    // Doc232 D: live dT/dz for geometric-face T extrapolation (shell-band T ≠ surface T).
+    // Doc232/233 D: live dT/dz for geometric-face T extrapolation (shell-band T ≠ surface T).
+    // Doc233: --boundary-face-t-mode=band disables extrapolation (legacy shell T).
     Real face_dTdz_live = Real(0);
+    const bool face_t_extrapolate = (local_cli.boundary_face_t_mode != "band");
+    Real *face_dTdz_ptr = face_t_extrapolate ? &face_dTdz_live : nullptr;
     const Real z_bot_face = gc[2] - french.glass_half_height;
     const Real z_top_face = gc[2] + french.glass_half_height;
+    std::cout << "[ophelie][doc233][D] live boundary_face_t_mode=" << local_cli.boundary_face_t_mode
+              << " extrapolate=" << (face_t_extrapolate ? 1 : 0) << "\n";
     StateDynamics<MainExecutionPolicy, ApplyOphelieThermalFrenchNaturalBcCK> apply_natural_bc(
         glass, kOphelieThermalDeltaTField, kOphelieTemperatureField, t0, rho0, cp, thermal_bc.boundary_shell_thickness,
-        thermal_bc, z_bot_face, z_top_face, &face_dTdz_live);
+        thermal_bc, z_bot_face, z_top_face, face_dTdz_ptr);
     ReduceDynamicsCK<MainExecutionPolicy, OphelieFrenchBoundaryLossPowerReduceCK> boundary_loss_power(
-        glass, t0, thermal_bc.boundary_shell_thickness, thermal_bc, z_bot_face, z_top_face, &face_dTdz_live);
+        glass, t0, thermal_bc.boundary_shell_thickness, thermal_bc, z_bot_face, z_top_face, face_dTdz_ptr);
     UniquePtr<InteractionDynamicsCK<MainExecutionPolicy, OpheliePairwiseLaplaceCK<Inner<>>>> laplace_temperature;
     UniquePtr<StateDynamics<MainExecutionPolicy, ApplyLaplaceDiffusionDtCK>> apply_diffusion;
     // Level-2 shell: RH200-style Inner+Contact diffusion (replaces Ophelie melt Laplace when enabled).
@@ -9137,6 +9274,141 @@ int main(int ac, char *av[])
             std::cout << "[ophelie][doc225][refs] T_thermal_ref=" << t0 << " T_property_ref=" << t0
                       << " T_force_ref=" << t_force_ref << " (boussinesq off)\n";
         }
+        if (local_cli.doc233_buoyancy_force_chain_exit)
+        {
+            // Doc233 C3: frozen-state force-chain causality (dedicated field → ForcePrior → no double add).
+            if (!local_cli.literature.enable_boussinesq)
+            {
+                std::cerr << "[ophelie][doc233][C] FATAL: buoyancy force-chain requires Boussinesq ON\n";
+                return 2;
+            }
+            // Ensure a non-uniform T if IC is isothermal.
+            syncVariableToHost<Real>(glass_particles, kOphelieTemperatureField);
+            syncVariableToHost<Vecd>(glass_particles, "Position");
+            Real *T_fc = glass_particles.getVariableDataByName<Real>(kOphelieTemperatureField);
+            Real *dT_fc = glass_particles.getVariableDataByName<Real>(kOphelieThermalDeltaTField);
+            const Vecd *pos_fc = glass_particles.getVariableDataByName<Vecd>("Position");
+            const size_t n_fc = glass_particles.TotalRealParticles();
+            Real tmin_fc = T_fc[0], tmax_fc = T_fc[0];
+            for (size_t i = 0; i < n_fc; ++i)
+            {
+                tmin_fc = std::min(tmin_fc, T_fc[i]);
+                tmax_fc = std::max(tmax_fc, T_fc[i]);
+            }
+            if (tmax_fc - tmin_fc < Real(1))
+            {
+                const Real R_fc = french.glass_radius;
+                for (size_t i = 0; i < n_fc; ++i)
+                {
+                    const Real dx = pos_fc[i][0] - gc[0];
+                    const Real dy = pos_fc[i][1] - gc[1];
+                    const Real r = std::sqrt(dx * dx + dy * dy);
+                    const Real Ti = t0 + Real(30) * (r / std::max(R_fc, TinyReal));
+                    T_fc[i] = Ti;
+                    dT_fc[i] = Ti - t0;
+                }
+                syncVariableToDevice<Real>(glass_particles, kOphelieTemperatureField);
+                syncVariableToDevice<Real>(glass_particles, kOphelieThermalDeltaTField);
+                std::cout << "[ophelie][doc233][C] manufactured radial ΔT=30K for force-chain (was isothermal)\n";
+            }
+            const Real t_ref_fc = hostMassWeightedMeanTemperature(glass_particles, kOphelieTemperatureField);
+            boussinesq_force.setForceReferenceTemperature(t_ref_fc);
+            fluid_advection_step_setup.exec();
+            exec_viscous();
+            apply_gravity_force_prior();
+            boussinesq_force.exec();
+            const OphelieBuoyancyFieldGate gate_on =
+                hostAuditBuoyancyFieldGate(glass_particles, beta, t_ref_fc, local_cli.gravity_g,
+                                           kOphelieTemperatureField);
+            syncVariableToHost<Vecd>(glass_particles, "ForcePrior");
+            syncVariableToHost<Vecd>(glass_particles, "BoussinesqBuoyancyForceCK");
+            syncVariableToHost<Real>(glass_particles, "Mass");
+            const Vecd *fp_on = glass_particles.getVariableDataByName<Vecd>("ForcePrior");
+            const Vecd *fb = glass_particles.getVariableDataByName<Vecd>("BoussinesqBuoyancyForceCK");
+            const Real *mass_fc = glass_particles.getVariableDataByName<Real>("Mass");
+            StdVec<Vecd> fp_on_copy(n_fc), fb_copy(n_fc);
+            for (size_t i = 0; i < n_fc; ++i)
+            {
+                fp_on_copy[i] = fp_on[i];
+                fb_copy[i] = fb[i];
+            }
+            // OFF: rebuild ForcePrior without buoyancy (same viscous+gravity).
+            hostZeroVecFieldFrench(glass_particles, "BoussinesqBuoyancyForceCK");
+            hostZeroVecFieldFrench(glass_particles, "PreviousBoussinesqBuoyancyForceCK");
+            fluid_advection_step_setup.exec();
+            exec_viscous();
+            apply_gravity_force_prior();
+            syncVariableToHost<Vecd>(glass_particles, "ForcePrior");
+            const Vecd *fp_off = glass_particles.getVariableDataByName<Vecd>("ForcePrior");
+            double sum_e2 = 0.0, sum_b2 = 0.0, sum_df2 = 0.0;
+            for (size_t i = 0; i < n_fc; ++i)
+            {
+                const Vecd df = fp_on_copy[i] - fp_off[i];
+                const Vecd eb = df - fb_copy[i];
+                sum_df2 += df.squaredNorm();
+                sum_b2 += fb_copy[i].squaredNorm();
+                sum_e2 += eb.squaredNorm();
+                (void)mass_fc[i];
+            }
+            const Real E_chain =
+                std::sqrt(static_cast<Real>(sum_e2) /
+                          (static_cast<Real>(sum_b2) + TinyReal));
+            // Repeat buoyancy exec once more on restored ON state — channel must not double-add.
+            for (size_t i = 0; i < n_fc; ++i)
+            {
+                glass_particles.getVariableDataByName<Vecd>("ForcePrior")[i] = fp_off[i];
+                glass_particles.getVariableDataByName<Vecd>("BoussinesqBuoyancyForceCK")[i] = Vecd::Zero();
+            }
+            syncVariableToDevice<Vecd>(glass_particles, "ForcePrior");
+            syncVariableToDevice<Vecd>(glass_particles, "BoussinesqBuoyancyForceCK");
+            hostZeroVecFieldFrench(glass_particles, "PreviousBoussinesqBuoyancyForceCK");
+            boussinesq_force.exec();
+            syncVariableToHost<Vecd>(glass_particles, "ForcePrior");
+            syncVariableToHost<Vecd>(glass_particles, "BoussinesqBuoyancyForceCK");
+            const Vecd *fp1 = glass_particles.getVariableDataByName<Vecd>("ForcePrior");
+            StdVec<Vecd> fp_after1(n_fc);
+            for (size_t i = 0; i < n_fc; ++i)
+                fp_after1[i] = fp1[i];
+            boussinesq_force.exec();
+            syncVariableToHost<Vecd>(glass_particles, "ForcePrior");
+            const Vecd *fp2 = glass_particles.getVariableDataByName<Vecd>("ForcePrior");
+            double sum_d2 = 0.0, sum_f2 = 0.0;
+            for (size_t i = 0; i < n_fc; ++i)
+            {
+                const Vecd d = fp2[i] - fp_after1[i];
+                sum_d2 += d.squaredNorm();
+                sum_f2 += fp_after1[i].squaredNorm();
+            }
+            const Real repeat_rel =
+                std::sqrt(static_cast<Real>(sum_d2) / (static_cast<Real>(sum_f2) + TinyReal));
+            const bool algebraic_ok = gate_on.algebraic_ok && gate_on.dynamic_reference_ok;
+            const bool chain_ok = E_chain <= Real(1.0e-5) || (std::sqrt(sum_b2) < Real(1.0e-8) &&
+                                                              std::sqrt(sum_e2) < Real(1.0e-8));
+            const bool no_double = repeat_rel <= Real(1.0e-6);
+            const bool pass = algebraic_ok && chain_ok && no_double;
+            std::cout << "[ophelie][doc233][C] BUOYANCY_FORCE_CHAIN_VERIFIED=" << (pass ? 1 : 0)
+                      << " T_force_ref=" << t_ref_fc << " E_particle=" << gate_on.E_L2
+                      << " E_chain_ON_minus_OFF_vs_Fb=" << E_chain << " repeat_rel=" << repeat_rel
+                      << " algebraic_ok=" << (algebraic_ok ? 1 : 0) << " chain_ok=" << (chain_ok ? 1 : 0)
+                      << " no_double=" << (no_double ? 1 : 0) << "\n";
+            if (!local_cli.summary_json.empty())
+            {
+                std::ofstream js(local_cli.summary_json);
+                js << std::setprecision(10);
+                js << "{\n"
+                   << "  \"case\": \"doc233_c_buoyancy_force_chain\",\n"
+                   << "  \"BUOYANCY_FORCE_CHAIN_VERIFIED\": " << (pass ? 1 : 0) << ",\n"
+                   << "  \"T_force_ref\": " << t_ref_fc << ",\n"
+                   << "  \"beta\": " << beta << ",\n"
+                   << "  \"E_particle\": " << gate_on.E_L2 << ",\n"
+                   << "  \"E_chain\": " << E_chain << ",\n"
+                   << "  \"repeat_rel\": " << repeat_rel << ",\n"
+                   << "  \"note\": \"a_b=-beta*(T-Tref)*g; ForcePrior ON-OFF vs dedicated Fb\"\n"
+                   << "}\n";
+                std::cout << "[ophelie] summary_json=" << local_cli.summary_json << "\n";
+            }
+            return pass ? 0 : 1;
+        }
     }
     // Doc220 C: H0 must use the final IC temperature (after prescribe). Clear evolution ledgers.
     {
@@ -9272,12 +9544,15 @@ int main(int ac, char *av[])
         }
         const bool d_ok =
             runDoc232BoundaryFaceAudit(glass, glass_particles, thermal_bc, french, rho0, cp, t0,
-                                       local_cli.doc232_boundary_audit_dir);
+                                       local_cli.doc232_boundary_audit_dir, local_cli.boundary_face_t_mode,
+                                       local_cli.doc233_boundary_scope_audit);
         if (!local_cli.summary_json.empty())
         {
             std::ofstream js(local_cli.summary_json);
             js << "{\n"
-               << "  \"case\": \"doc232_d_boundary_face_audit\",\n"
+               << "  \"case\": \"doc233_d_boundary_face_audit\",\n"
+               << "  \"boundary_face_t_mode\": \"" << local_cli.boundary_face_t_mode << "\",\n"
+               << "  \"doc233_scope_fields\": " << (local_cli.doc233_boundary_scope_audit ? 1 : 0) << ",\n"
                << "  \"PRODUCTION_BOUNDARY_FACE_AUDIT\": " << (d_ok ? 1 : 0) << ",\n"
                << "  \"passed\": " << (d_ok ? 1 : 0) << ",\n"
                << "  \"out_dir\": \"" << local_cli.doc232_boundary_audit_dir << "\",\n"
@@ -9326,14 +9601,28 @@ int main(int ac, char *av[])
     size_t doc227_viscous_updates = 0;
     bool doc227_outer_need_init = local_cli.doc227_actual_timestep;
     bool doc227_audit_header = true;
+    // Doc233 B: audit CSV on the *effective* path — default/legacy when --doc227-step-audit= is set
+    // without --doc227-actual-timestep (do not grant PASS to default path from matched-path-only logs).
+    const bool doc233_timestep_audit =
+        local_cli.doc227_actual_timestep || !local_cli.doc227_step_audit_csv.empty();
+    Real doc233_thermal_dt_last = Real(0);
+    Real doc233_thermal_time_sum = Real(0);
+    Real doc233_temp_refresh_last_t = time_stepper.getPhysicalTime();
+    Real doc233_max_viscous_age = Real(0);
+    Real doc233_max_dt_over_ac = Real(0);
+    Real doc233_max_age_over_visc = Real(0);
+    size_t doc233_n_dt_ac_violate = 0;
+    size_t doc233_n_age_violate = 0;
+    size_t doc233_n_end_time_mismatch = 0;
     const std::string doc227_audit_path =
         local_cli.doc227_step_audit_csv.empty() ? "output/doc227_actual_step_audit.csv"
                                                : local_cli.doc227_step_audit_csv;
     auto doc227_append_step_audit = [&](Real t_start, Real t_end, Real dt_actual, Real dt_ac_cand,
                                         Real outer_start, Real outer_budget, Real outer_elapsed,
                                         Real outer_remaining, Real dt_visc_cand, Real mu_raw_max,
-                                        Real mu_used_max) {
-        if (!local_cli.doc227_actual_timestep && local_cli.doc227_step_audit_csv.empty())
+                                        Real mu_used_max, Real thermal_dt, Real thermal_time_sum,
+                                        Real temp_refresh_last_t, const char *schedule_path) {
+        if (!doc233_timestep_audit)
             return;
         std::ofstream csv(doc227_audit_path, std::ios::app);
         if (doc227_audit_header)
@@ -9342,7 +9631,8 @@ int main(int ac, char *av[])
                    "outer_start,outer_budget,outer_elapsed,outer_remaining,"
                    "dt_viscous_candidate,mu_raw_max,mu_used_max,"
                    "viscous_force_last_update_time,viscous_force_age,"
-                   "position_update_count,neighbor_update_count,viscous_update_count\n";
+                   "position_update_count,neighbor_update_count,viscous_update_count,"
+                   "thermal_dt,thermal_time_sum,temp_refresh_last_t,schedule_path\n";
             doc227_audit_header = false;
         }
         const Real age = t_end - doc227_viscous_force_last_t;
@@ -9350,7 +9640,21 @@ int main(int ac, char *av[])
             << outer_start << "," << outer_budget << "," << outer_elapsed << "," << outer_remaining
             << "," << dt_visc_cand << "," << mu_raw_max << "," << mu_used_max << ","
             << doc227_viscous_force_last_t << "," << age << "," << doc227_position_updates << ","
-            << doc227_neighbor_updates << "," << doc227_viscous_updates << "\n";
+            << doc227_neighbor_updates << "," << doc227_viscous_updates << "," << thermal_dt << ","
+            << thermal_time_sum << "," << temp_refresh_last_t << "," << schedule_path << "\n";
+        doc233_max_viscous_age = std::max(doc233_max_viscous_age, age);
+        if (dt_ac_cand > TinyReal && dt_actual > dt_ac_cand + doc227ScheduleTol(dt_ac_cand))
+        {
+            ++doc233_n_dt_ac_violate;
+            doc233_max_dt_over_ac =
+                std::max(doc233_max_dt_over_ac, dt_actual - dt_ac_cand);
+        }
+        if (dt_visc_cand > TinyReal && age > dt_visc_cand + doc227ScheduleTol(dt_visc_cand))
+        {
+            ++doc233_n_age_violate;
+            doc233_max_age_over_visc =
+                std::max(doc233_max_age_over_visc, age - dt_visc_cand);
+        }
     };
     auto doc227_begin_outer_if_needed = [&]() {
         if (!local_cli.doc227_actual_timestep)
@@ -9429,7 +9733,9 @@ int main(int ac, char *av[])
             }
             if (thermal_bc.enable_french_natural_bc && !local_cli.doc232_adiabatic_heat)
             {
-                face_dTdz_live = hostFitMassWeightedTemperatureDTdz(glass_particles, kOphelieTemperatureField);
+                if (face_t_extrapolate)
+                    face_dTdz_live =
+                        hostFitMassWeightedTemperatureDTdz(glass_particles, kOphelieTemperatureField);
                 const Real p_boundary_now = boundary_loss_power.exec();
                 coupling_state.ledger.p_loss_live = p_boundary_now;
                 coupling_state.ledger.accumulateBoundary(p_boundary_now, dt_th);
@@ -9438,11 +9744,11 @@ int main(int ac, char *av[])
         }
     };
 
-    if (local_cli.doc227_actual_timestep)
+    if (doc233_timestep_audit)
     {
-        std::cout << "[ophelie][doc227][B] actual_timestep=1 matched outer budget; "
-                     "acoustic substeps truncated; audit=" << doc227_audit_path << std::endl;
-        // Avoid dual physical ops: TriggerByInterval path disabled for keep.
+        std::cout << "[ophelie][doc233][B] timestep_audit enabled schedule_path="
+                  << (local_cli.doc227_actual_timestep ? "matched_outer" : "legacy_default")
+                  << " audit=" << doc227_audit_path << std::endl;
         std::ofstream wipe(doc227_audit_path, std::ios::trunc);
         wipe.close();
         doc227_audit_header = true;
@@ -9591,7 +9897,12 @@ int main(int ac, char *av[])
         // Legacy path: thermal on every acoustic substep (pre–Doc219).
         // Doc227 matched path: thermal once per outer (after position), not per acoustic.
         if (!local_cli.doc219_hydro_profile && !local_cli.doc227_actual_timestep)
+        {
             apply_thermal_interval(acoustic_dt);
+            doc233_thermal_dt_last = acoustic_dt;
+            doc233_thermal_time_sum += acoustic_dt;
+            doc233_temp_refresh_last_t = time_stepper.getPhysicalTime();
+        }
 
         // Refresh buoyancy each acoustic substep (cavity-validated).
         if (local_cli.literature.enable_boussinesq)
@@ -9620,7 +9931,9 @@ int main(int ac, char *av[])
             doc227_append_step_audit(t_step_start, t_step_end, acoustic_dt, dt_ac_cand, doc227_outer_t0,
                                      doc227_outer_budget, doc227_outer_elapsed,
                                      doc227_outer_budget - doc227_outer_elapsed, doc227_dt_visc_cand,
-                                     rheology_stats.mu_raw_max, rheology_stats.mu_used_max);
+                                     rheology_stats.mu_raw_max, rheology_stats.mu_used_max,
+                                     doc233_thermal_dt_last, doc233_thermal_time_sum,
+                                     doc233_temp_refresh_last_t, "matched_outer");
             // Viscous force age ≤ outer budget; equality allowed (one truncated step = full Dt).
             // Age = t_end - t0 can sit ~1 ulp above budget after multi-acoustic fill (C2 abort).
             const Real age = t_step_end - doc227_viscous_force_last_t;
@@ -9631,6 +9944,21 @@ int main(int ac, char *av[])
                 numerical_abort_reason = "doc227_viscous_force_age_exceeds_budget";
                 break;
             }
+        }
+        else if (doc233_timestep_audit)
+        {
+            // Doc233 B: record the currently effective legacy schedule (not matched-outer).
+            advection_viscous_time_step.refreshViscousSpeedReference();
+            const Real dt_in_leg = advection_time_step.exec();
+            const Real dt_vis_leg = advection_viscous_time_step.exec();
+            doc227_dt_visc_cand = dt_vis_leg;
+            const Real t_step_end = time_stepper.getPhysicalTime();
+            doc227_append_step_audit(t_step_start, t_step_end, acoustic_dt, dt_ac_cand, t_step_start,
+                                     std::min(dt_in_leg, dt_vis_leg), acoustic_dt,
+                                     std::min(dt_in_leg, dt_vis_leg) - acoustic_dt, dt_vis_leg,
+                                     rheology_stats.mu_raw_max, rheology_stats.mu_used_max,
+                                     doc233_thermal_dt_last, doc233_thermal_time_sum,
+                                     doc233_temp_refresh_last_t, "legacy_default");
         }
 
         const bool do_outer_adv =
@@ -9799,18 +10127,32 @@ int main(int ac, char *av[])
             // Doc227 matched path: viscous ForcePrior locked at outer START (not here).
             // Legacy trigger path keeps end-of-adv viscous refresh.
             if (!local_cli.doc227_actual_timestep)
+            {
                 exec_viscous();
+                doc227_viscous_force_last_t = time_stepper.getPhysicalTime();
+                ++doc227_viscous_updates;
+                ++doc227_position_updates;
+                ++doc227_neighbor_updates;
+            }
             else
             {
                 // Thermal once per outer with actual integrated span; then reopen budget.
                 if (!local_cli.doc219_hydro_profile)
+                {
                     apply_thermal_interval(doc227_outer_elapsed);
+                    doc233_thermal_dt_last = doc227_outer_elapsed;
+                    doc233_thermal_time_sum += doc227_outer_elapsed;
+                    doc233_temp_refresh_last_t = time_stepper.getPhysicalTime();
+                }
                 else
                 {
                     const Real t_now = time_stepper.getPhysicalTime();
                     const Real dt_adv = std::max(Real(0), t_now - last_adv_phys_time);
                     last_adv_phys_time = t_now;
                     apply_thermal_interval(dt_adv);
+                    doc233_thermal_dt_last = dt_adv;
+                    doc233_thermal_time_sum += dt_adv;
+                    doc233_temp_refresh_last_t = t_now;
                 }
                 if (refresh_mu_from_T)
                     sync_mu_from_temperature("doc227_outer_end", /*log_particle=*/false);
@@ -10292,9 +10634,66 @@ int main(int ac, char *av[])
     const Real power_rel_err =
         std::abs(p_joule - local_cli.target_power_w) / (local_cli.target_power_w + TinyReal);
     const Real physical_time = time_stepper.getPhysicalTime();
+    if (doc233_timestep_audit)
+    {
+        const Real end_tol = kFrenchValidationEndTimeTol;
+        if (std::abs(physical_time - local_cli.end_time) > end_tol &&
+            physical_time + end_tol < local_cli.end_time)
+            ++doc233_n_end_time_mismatch;
+        const Real thermal_gap =
+            std::abs(doc233_thermal_time_sum - std::min(physical_time, local_cli.end_time));
+        const bool audited_ok =
+            (doc233_n_dt_ac_violate == 0) && (doc233_n_age_violate == 0) &&
+            (doc233_n_end_time_mismatch == 0) &&
+            (thermal_gap <= end_tol + Real(1.0e-3) * std::max(local_cli.end_time, Real(1)));
+        std::cout << "[ophelie][doc233][B] ACTUAL_TIMESTEP_AUDITED=" << (audited_ok ? 1 : 0)
+                  << " schedule_path="
+                  << (local_cli.doc227_actual_timestep ? "matched_outer" : "legacy_default")
+                  << " audit_csv=" << doc227_audit_path
+                  << " max_viscous_age=" << doc233_max_viscous_age
+                  << " max_dt_over_ac=" << doc233_max_dt_over_ac
+                  << " max_age_over_visc=" << doc233_max_age_over_visc
+                  << " n_dt_ac_violate=" << doc233_n_dt_ac_violate
+                  << " n_age_violate=" << doc233_n_age_violate
+                  << " n_end_time_mismatch=" << doc233_n_end_time_mismatch
+                  << " thermal_time_sum=" << doc233_thermal_time_sum
+                  << " thermal_gap=" << thermal_gap << "\n";
+    }
     const Real energy_end = local_cli.literature.constant_thermal_rheology
                                 ? hostThermalEnergy(glass_particles, rho0, cp, t0)
                                 : hostThermalEnthalpyEnergy(glass_particles, rho0, laws.cp, t0);
+    // Doc233 E: mass enthalpy vs rho0*V operator ledger side-by-side.
+    const Real mass_sum_e = hostSumParticleMass(glass_particles);
+    const Real H_mass_end = hostThermalEnergyFromDeltaTMass(glass_particles, cp);
+    Real sum_V = Real(0);
+    Real rho_min = Real(0), rho_max = Real(0);
+    {
+        syncVariableToHost<Real>(glass_particles, "VolumetricMeasure");
+        syncVariableToHost<Real>(glass_particles, "Density");
+        const Real *vol_e = glass_particles.getVariableDataByName<Real>("VolumetricMeasure");
+        const Real *dens = glass_particles.getVariableDataByName<Real>("Density");
+        const size_t n_e = glass_particles.TotalRealParticles();
+        rho_min = dens[0];
+        rho_max = dens[0];
+        for (size_t i = 0; i < n_e; ++i)
+        {
+            sum_V += vol_e[i];
+            rho_min = std::min(rho_min, dens[i]);
+            rho_max = std::max(rho_max, dens[i]);
+        }
+    }
+    const Real H_rhoV_end = energy_end; // hostThermalEnergy uses rho0*V*cp*dT
+    const Real mass_vs_rhoV_rel =
+        std::abs(H_mass_end - H_rhoV_end) /
+        std::max({std::abs(H_mass_end), std::abs(H_rhoV_end), Real(1)});
+    std::cout << "[ophelie][doc233][E] MASS_ENTHALPY_ACCOUNTING"
+              << " sum_m=" << mass_sum_e << " sum_V=" << sum_V << " rho0*sum_V=" << (rho0 * sum_V)
+              << " rho_range=[" << rho_min << "," << rho_max << "]"
+              << " H_mass=" << H_mass_end << " H_rho0V=" << H_rhoV_end
+              << " mass_vs_rhoV_rel=" << mass_vs_rhoV_rel
+              << " E_Q=" << coupling_state.ledger.e_q_applied
+              << " E_boundary=" << coupling_state.ledger.e_boundary_out
+              << " residualH_rel=" << coupling_state.ledger.residualHRel(energy_end) << "\n";
     const bool periodic_coupling_end = periodic_coupling;
     FrenchCouplingGateInputs gate_in;
     gate_in.periodic_coupling = periodic_coupling_end && !local_cli.prescribed_heat_mode;
@@ -10426,6 +10825,21 @@ int main(int ac, char *av[])
                    ? "null"
                    : (gates.em_solver_ok ? "1" : "0"))
            << ",\n"
+           << "  \"doc233_timestep_audit\": " << (doc233_timestep_audit ? 1 : 0) << ",\n"
+           << "  \"ACTUAL_TIMESTEP_AUDITED\": "
+           << (doc233_timestep_audit
+                   ? ((doc233_n_dt_ac_violate == 0 && doc233_n_age_violate == 0 &&
+                       doc233_n_end_time_mismatch == 0)
+                          ? "1"
+                          : "0")
+                   : "null")
+           << ",\n"
+           << "  \"doc233_schedule_path\": \""
+           << (local_cli.doc227_actual_timestep ? "matched_outer" : "legacy_default") << "\",\n"
+           << "  \"doc233_max_viscous_age\": " << doc233_max_viscous_age << ",\n"
+           << "  \"doc233_n_dt_ac_violate\": " << doc233_n_dt_ac_violate << ",\n"
+           << "  \"doc233_n_age_violate\": " << doc233_n_age_violate << ",\n"
+           << "  \"doc233_thermal_time_sum\": " << doc233_thermal_time_sum << ",\n"
            << "  \"dp\": " << french.dp << ",\n"
            << "  \"end_time\": " << local_cli.end_time << ",\n"
            << "  \"beta\": " << beta << ",\n"
