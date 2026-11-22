@@ -5587,6 +5587,10 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
                         hostFitLocalFaceBandDTdz(particles, z_bot, z_bot + H, band, kOphelieTemperatureField);
                     dTdz_bot = loc.bottom_ok ? loc.dTdz_bottom : Real(0);
                     dTdz_top = loc.top_ok ? loc.dTdz_top : Real(0);
+                    std::cout << "[ophelie][doc234][E] local_dt_dz field=" << field << " face=" << fc.face
+                              << " band=" << band << " n_bot=" << loc.n_bottom << " ok_bot=" << (loc.bottom_ok ? 1 : 0)
+                              << " dTdz_bot=" << dTdz_bot << " n_top=" << loc.n_top
+                              << " ok_top=" << (loc.top_ok ? 1 : 0) << " dTdz_top=" << dTdz_top << "\n";
                 }
                 else
                 {
@@ -5673,7 +5677,7 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
     {
         std::cout << "[ophelie][doc233][D] BOUNDARY_RECONSTRUCTION_SCOPE="
                   << (all_ok ? "PASS_WITHIN_TOL" : "LIMITED_OR_FAIL")
-                  << " note=global_dt_dz experimental for nonlinear/radial; see CSV per-field\n";
+                  << " note=band|global_dt_dz|local_dt_dz; parabolic_z stresses vertical nonlinearity; see CSV\n";
     }
     return all_ok;
 }
