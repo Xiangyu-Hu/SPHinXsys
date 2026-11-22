@@ -1678,10 +1678,11 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
         {
             // strlen("--boundary-face-t-mode=") == 23; offset 22 wrongly kept a leading '='.
             cli.boundary_face_t_mode = std::string(av[i] + 23);
-            if (cli.boundary_face_t_mode != "global_dt_dz" && cli.boundary_face_t_mode != "band")
+            if (cli.boundary_face_t_mode != "global_dt_dz" && cli.boundary_face_t_mode != "band" &&
+                cli.boundary_face_t_mode != "local_dt_dz")
             {
                 std::cerr << "[ophelie][doc233][D] FATAL: --boundary-face-t-mode must be "
-                             "global_dt_dz|band, got '"
+                             "global_dt_dz|local_dt_dz|band, got '"
                           << cli.boundary_face_t_mode << "'\n";
                 return 2;
             }
@@ -5576,10 +5577,27 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
             face_bc.emissivity = fc.emissivity;
             face_bc.enable_free_crust = false;
 
-            const Real dTdz = hostFitMassWeightedTemperatureDTdz(particles, kOphelieTemperatureField);
+            Real dTdz_bot = Real(0), dTdz_top = Real(0);
+            if (extrapolate_face)
+            {
+                if (face_t_mode == "local_dt_dz")
+                {
+                    const Real band = std::max(Real(2) * french.dp, shell);
+                    const OphelieLocalFaceDTdz loc =
+                        hostFitLocalFaceBandDTdz(particles, z_bot, z_bot + H, band, kOphelieTemperatureField);
+                    dTdz_bot = loc.bottom_ok ? loc.dTdz_bottom : Real(0);
+                    dTdz_top = loc.top_ok ? loc.dTdz_top : Real(0);
+                }
+                else
+                {
+                    dTdz_bot = hostFitMassWeightedTemperatureDTdz(particles, kOphelieTemperatureField);
+                    dTdz_top = dTdz_bot;
+                }
+            }
             Real side_w = 0, bottom_w = 0, free_c = 0, free_r = 0, total_w = 0;
             hostOphelieThermalFrenchNaturalHeatLossPowers(particles, face_bc, shell, side_w, bottom_w, free_c, free_r,
-                                                          total_w, z_bot, z_bot + H, dTdz, extrapolate_face);
+                                                          total_w, z_bot, z_bot + H, dTdz_bot, extrapolate_face,
+                                                          dTdz_top);
             Real P_prod = total_w;
             if (std::strcmp(fc.face, "side") == 0)
                 P_prod = side_w;
@@ -5604,11 +5622,13 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
             for (size_t i = 0; i < n; ++i)
                 dT_pre[i] = dT_before[i];
 
-            Real dTdz_live = dTdz;
-            Real *dTdz_ptr = extrapolate_face ? &dTdz_live : nullptr;
+            Real dTdz_bot_live = dTdz_bot;
+            Real dTdz_top_live = dTdz_top;
+            Real *dTdz_bot_ptr = extrapolate_face ? &dTdz_bot_live : nullptr;
+            Real *dTdz_top_ptr = extrapolate_face ? &dTdz_top_live : nullptr;
             StateDynamics<MainExecutionPolicy, ApplyOphelieThermalFrenchNaturalBcCK> apply_face(
                 glass_body, kOphelieThermalDeltaTField, kOphelieTemperatureField, t0, rho0, cp, shell, face_bc, z_bot,
-                z_bot + H, dTdz_ptr);
+                z_bot + H, dTdz_bot_ptr, dTdz_top_ptr);
             apply_face.exec(dt);
 
             syncVariableToHost<Real>(particles, kOphelieThermalDeltaTField);
@@ -7029,20 +7049,25 @@ int main(int ac, char *av[])
 
     StateDynamics<MainExecutionPolicy, ApplyFrozenQToTemperatureCK> apply_q_const(glass, rho0, cp, t0);
     StateDynamics<MainExecutionPolicy, ApplyJouleHeatWithParticleCpCK> apply_q_variable(glass, rho0, t0);
-    // Doc232/233 D: live dT/dz for geometric-face T extrapolation (shell-band T ≠ surface T).
-    // Doc233: --boundary-face-t-mode=band disables extrapolation (legacy shell T).
-    Real face_dTdz_live = Real(0);
+    // Doc232/233/234: live dT/dz for geometric-face T extrapolation (shell-band T ≠ surface T).
+    // band: no extrapolate; global_dt_dz: single slope; local_dt_dz: near-face bands (Doc234 E).
+    Real face_dTdz_bottom_live = Real(0);
+    Real face_dTdz_top_live = Real(0);
     const bool face_t_extrapolate = (local_cli.boundary_face_t_mode != "band");
-    Real *face_dTdz_ptr = face_t_extrapolate ? &face_dTdz_live : nullptr;
+    const bool face_t_local = (local_cli.boundary_face_t_mode == "local_dt_dz");
+    Real *face_dTdz_bot_ptr = face_t_extrapolate ? &face_dTdz_bottom_live : nullptr;
+    Real *face_dTdz_top_ptr = face_t_extrapolate ? &face_dTdz_top_live : nullptr;
     const Real z_bot_face = gc[2] - french.glass_half_height;
     const Real z_top_face = gc[2] + french.glass_half_height;
+    const Real face_local_band = std::max(Real(2) * french.dp, thermal_bc.boundary_shell_thickness);
     std::cout << "[ophelie][doc233][D] live boundary_face_t_mode=" << local_cli.boundary_face_t_mode
-              << " extrapolate=" << (face_t_extrapolate ? 1 : 0) << "\n";
+              << " extrapolate=" << (face_t_extrapolate ? 1 : 0) << " local_band_m=" << face_local_band << "\n";
     StateDynamics<MainExecutionPolicy, ApplyOphelieThermalFrenchNaturalBcCK> apply_natural_bc(
         glass, kOphelieThermalDeltaTField, kOphelieTemperatureField, t0, rho0, cp, thermal_bc.boundary_shell_thickness,
-        thermal_bc, z_bot_face, z_top_face, face_dTdz_ptr);
+        thermal_bc, z_bot_face, z_top_face, face_dTdz_bot_ptr, face_dTdz_top_ptr);
     ReduceDynamicsCK<MainExecutionPolicy, OphelieFrenchBoundaryLossPowerReduceCK> boundary_loss_power(
-        glass, t0, thermal_bc.boundary_shell_thickness, thermal_bc, z_bot_face, z_top_face, face_dTdz_ptr);
+        glass, t0, thermal_bc.boundary_shell_thickness, thermal_bc, z_bot_face, z_top_face, face_dTdz_bot_ptr,
+        face_dTdz_top_ptr);
     UniquePtr<InteractionDynamicsCK<MainExecutionPolicy, OpheliePairwiseLaplaceCK<Inner<>>>> laplace_temperature;
     UniquePtr<StateDynamics<MainExecutionPolicy, ApplyLaplaceDiffusionDtCK>> apply_diffusion;
     // Level-2 shell: RH200-style Inner+Contact diffusion (replaces Ophelie melt Laplace when enabled).
@@ -9975,8 +10000,22 @@ int main(int ac, char *av[])
             if (thermal_bc.enable_french_natural_bc && !local_cli.doc232_adiabatic_heat)
             {
                 if (face_t_extrapolate)
-                    face_dTdz_live =
-                        hostFitMassWeightedTemperatureDTdz(glass_particles, kOphelieTemperatureField);
+                {
+                    if (face_t_local)
+                    {
+                        const OphelieLocalFaceDTdz loc = hostFitLocalFaceBandDTdz(
+                            glass_particles, z_bot_face, z_top_face, face_local_band, kOphelieTemperatureField);
+                        face_dTdz_bottom_live = loc.bottom_ok ? loc.dTdz_bottom : Real(0);
+                        face_dTdz_top_live = loc.top_ok ? loc.dTdz_top : Real(0);
+                    }
+                    else
+                    {
+                        const Real g =
+                            hostFitMassWeightedTemperatureDTdz(glass_particles, kOphelieTemperatureField);
+                        face_dTdz_bottom_live = g;
+                        face_dTdz_top_live = g;
+                    }
+                }
                 const Real p_boundary_now = boundary_loss_power.exec();
                 coupling_state.ledger.p_loss_live = p_boundary_now;
                 coupling_state.ledger.accumulateBoundary(p_boundary_now, dt_th);
@@ -10971,14 +11010,25 @@ int main(int ac, char *av[])
     const Real mass_vs_rhoV_rel =
         std::abs(H_mass_end - H_rhoV_end) /
         std::max({std::abs(H_mass_end), std::abs(H_rhoV_end), Real(1)});
-    std::cout << "[ophelie][doc233][E] MASS_ENTHALPY_ACCOUNTING"
+    // Doc234 E1: explicit dual-ledger residuals (do not confuse rho0V residual with mass enthalpy).
+    const Real E_source_J = coupling_state.ledger.e_q_applied;
+    const Real E_boundary_out_J = coupling_state.ledger.e_boundary_out;
+    const Real residual_mass_J = H_mass_end - (E_source_J - E_boundary_out_J);
+    const Real residual_rho0V_J = H_rhoV_end - (E_source_J - E_boundary_out_J);
+    const Real energy_norm =
+        std::max({std::abs(E_source_J), std::abs(E_boundary_out_J), Real(1)});
+    const Real residual_mass_rel = residual_mass_J / energy_norm;
+    const Real residual_rho0V_rel = residual_rho0V_J / energy_norm;
+    std::cout << "[ophelie][doc234][E] MASS_ENTHALPY_ACCOUNTING"
               << " sum_m=" << mass_sum_e << " sum_V=" << sum_V << " rho0*sum_V=" << (rho0 * sum_V)
               << " rho_range=[" << rho_min << "," << rho_max << "]"
-              << " H_mass=" << H_mass_end << " H_rho0V=" << H_rhoV_end
+              << " deltaH_mass_J=" << H_mass_end << " deltaH_rho0V_J=" << H_rhoV_end
               << " mass_vs_rhoV_rel=" << mass_vs_rhoV_rel
-              << " E_Q=" << coupling_state.ledger.e_q_applied
-              << " E_boundary=" << coupling_state.ledger.e_boundary_out
-              << " residualH_rel=" << coupling_state.ledger.residualHRel(energy_end) << "\n";
+              << " E_source_J=" << E_source_J << " E_boundary_out_J=" << E_boundary_out_J
+              << " residual_mass_J=" << residual_mass_J << " residual_mass_rel=" << residual_mass_rel
+              << " residual_rho0V_J=" << residual_rho0V_J << " residual_rho0V_rel=" << residual_rho0V_rel
+              << " residual_norm=max(|E_source|,|E_boundary|,1)"
+              << " legacy_ledger_residualH_rel=" << coupling_state.ledger.residualHRel(energy_end) << "\n";
     const bool periodic_coupling_end = periodic_coupling;
     FrenchCouplingGateInputs gate_in;
     gate_in.periodic_coupling = periodic_coupling_end && !local_cli.prescribed_heat_mode;
