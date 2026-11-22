@@ -173,6 +173,30 @@ inline void frenchFreeSurfaceHeatFlux(Real t_melt, Real h_free, Real emissivity,
     q_total = (t_melt - t_s) / r_cond;
 }
 
+/**
+ * Combined wall flux [W/m^2] using non-exclusive face weights. Shared by kernel and host audit.
+ * Optional per-face temperatures support Doc232 shell→geometric-face extrapolation (T^4-sensitive).
+ */
+inline Real frenchCombinedBoundaryHeatFluxWm2AtFaces(Real t_side, Real t_bottom, Real t_free, Real w_side,
+                                                     Real w_bottom, Real w_free, Real h_side, Real h_bottom,
+                                                     Real t_cool, Real h_free, Real emissivity, Real t_ambient,
+                                                     Real t_rad_ambient, Real stefan_boltzmann, Real enable_crust,
+                                                     Real crust_delta, Real crust_k, Real &q_side, Real &q_bottom,
+                                                     Real &q_free_total, Real &q_free_conv, Real &q_free_rad)
+{
+    q_side = h_side * (t_side - t_cool);
+    q_bottom = h_bottom * (t_bottom - t_cool);
+    q_free_total = Real(0);
+    q_free_conv = Real(0);
+    q_free_rad = Real(0);
+    if (w_free > TinyReal)
+    {
+        frenchFreeSurfaceHeatFlux(t_free, h_free, emissivity, t_ambient, t_rad_ambient, stefan_boltzmann, enable_crust,
+                                  crust_delta, crust_k, q_free_total, q_free_conv, q_free_rad);
+    }
+    return w_side * q_side + w_bottom * q_bottom + w_free * q_free_total;
+}
+
 /** Combined wall flux [W/m^2] using non-exclusive face weights. Shared by kernel and host audit. */
 inline Real frenchCombinedBoundaryHeatFluxWm2(Real t, Real w_side, Real w_bottom, Real w_free, Real h_side,
                                              Real h_bottom, Real t_cool, Real h_free, Real emissivity, Real t_ambient,
@@ -180,17 +204,41 @@ inline Real frenchCombinedBoundaryHeatFluxWm2(Real t, Real w_side, Real w_bottom
                                              Real crust_delta, Real crust_k, Real &q_side, Real &q_bottom,
                                              Real &q_free_total, Real &q_free_conv, Real &q_free_rad)
 {
-    q_side = h_side * (t - t_cool);
-    q_bottom = h_bottom * (t - t_cool);
-    q_free_total = Real(0);
-    q_free_conv = Real(0);
-    q_free_rad = Real(0);
-    if (w_free > TinyReal)
+    return frenchCombinedBoundaryHeatFluxWm2AtFaces(t, t, t, w_side, w_bottom, w_free, h_side, h_bottom, t_cool, h_free,
+                                                    emissivity, t_ambient, t_rad_ambient, stefan_boltzmann, enable_crust,
+                                                    crust_delta, crust_k, q_side, q_bottom, q_free_total, q_free_conv,
+                                                    q_free_rad);
+}
+
+/** Mass-weighted linear regression dT/dz for face-temperature extrapolation (Doc232 D). */
+inline Real hostFitMassWeightedTemperatureDTdz(BaseParticles &particles,
+                                               const std::string &temperature_field = "Temperature")
+{
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Real>(particles, temperature_field);
+    syncVariableToHost<Real>(particles, "Mass");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Real *temp = particles.getVariableDataByName<Real>(temperature_field);
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const size_t n = particles.TotalRealParticles();
+    double sw = 0.0, sz = 0.0, st = 0.0, szz = 0.0, szt = 0.0;
+    for (size_t i = 0; i < n; ++i)
     {
-        frenchFreeSurfaceHeatFlux(t, h_free, emissivity, t_ambient, t_rad_ambient, stefan_boltzmann, enable_crust,
-                                  crust_delta, crust_k, q_free_total, q_free_conv, q_free_rad);
+        const double m = static_cast<double>(mass[i]);
+        if (!(m > 0.0) || !std::isfinite(static_cast<double>(temp[i])))
+            continue;
+        const double z = static_cast<double>(pos[i][2]);
+        const double T = static_cast<double>(temp[i]);
+        sw += m;
+        sz += m * z;
+        st += m * T;
+        szz += m * z * z;
+        szt += m * z * T;
     }
-    return w_side * q_side + w_bottom * q_bottom + w_free * q_free_total;
+    const double det = sw * szz - sz * sz;
+    if (!(sw > 0.0) || !(std::abs(det) > 1.0e-30))
+        return Real(0);
+    return static_cast<Real>((sw * szt - sz * st) / det);
 }
 
 struct OphelieThermalDiffusionOneWayStepResult : public OphelieJouleHeatOneWayStepResult
@@ -522,20 +570,27 @@ class ApplyOphelieThermalDirichletWallCK : public LocalDynamics
 class ApplyOphelieThermalFrenchNaturalBcCK : public LocalDynamics
 {
   public:
+    /**
+     * @param z_bot/z_top geometric melt bottom/free planes; @param dTdz_live optional live slope.
+     * When dTdz_live != nullptr and z_top > z_bot, bottom/free fluxes use T extrapolated to the
+     * geometric face (Doc232: shell-band T ≠ surface T, critical for T^4 radiation).
+     */
     ApplyOphelieThermalFrenchNaturalBcCK(SPHBody &sph_body, const std::string &delta_t_field,
                                          const std::string &temperature_field, Real t_initial, Real rho, Real cp,
-                                         Real shell_thickness, const OphelieThermalDiffusionOneWayOptions &bc)
+                                         Real shell_thickness, const OphelieThermalDiffusionOneWayOptions &bc,
+                                         Real z_bot = Real(0), Real z_top = Real(0), Real *dTdz_live = nullptr)
         : LocalDynamics(sph_body), t_initial_(t_initial),
           inv_rho_cp_delta_(Real(1) / ((rho * cp + TinyReal) * (shell_thickness + TinyReal))), h_side_(bc.h_side),
           h_bottom_(bc.h_bottom), h_free_(bc.h_free), emissivity_(bc.emissivity), t_cool_(bc.t_cool),
           t_ambient_(bc.t_ambient), t_rad_ambient_(bc.t_rad_ambient), stefan_boltzmann_(bc.stefan_boltzmann),
           enable_free_crust_(bc.enable_free_crust ? Real(1) : Real(0)), free_crust_delta_(bc.free_crust_delta_m),
-          free_crust_k_(bc.free_crust_k),
+          free_crust_k_(bc.free_crust_k), z_bot_(z_bot), z_top_(z_top), dTdz_live_(dTdz_live),
           dv_w_side_(particles_->template getVariableByName<Real>(kOphelieThermalBoundaryWeightSideField)),
           dv_w_bottom_(particles_->template getVariableByName<Real>(kOphelieThermalBoundaryWeightBottomField)),
           dv_w_free_(particles_->template getVariableByName<Real>(kOphelieThermalBoundaryWeightFreeField)),
           dv_delta_t_(particles_->template getVariableByName<Real>(delta_t_field)),
-          dv_temperature_(particles_->template getVariableByName<Real>(temperature_field))
+          dv_temperature_(particles_->template getVariableByName<Real>(temperature_field)),
+          dv_pos_(particles_->template getVariableByName<Vecd>("Position"))
     {
     }
 
@@ -549,11 +604,15 @@ class ApplyOphelieThermalFrenchNaturalBcCK : public LocalDynamics
               t_cool_(encloser.t_cool_), t_ambient_(encloser.t_ambient_), t_rad_ambient_(encloser.t_rad_ambient_),
               stefan_boltzmann_(encloser.stefan_boltzmann_), enable_free_crust_(encloser.enable_free_crust_),
               free_crust_delta_(encloser.free_crust_delta_), free_crust_k_(encloser.free_crust_k_),
+              z_bot_(encloser.z_bot_), z_top_(encloser.z_top_),
+              dTdz_(encloser.dTdz_live_ != nullptr ? *encloser.dTdz_live_ : Real(0)),
+              extrapolate_(encloser.dTdz_live_ != nullptr && encloser.z_top_ > encloser.z_bot_ + TinyReal),
               w_side_(encloser.dv_w_side_->DelegatedData(ex_policy)),
               w_bottom_(encloser.dv_w_bottom_->DelegatedData(ex_policy)),
               w_free_(encloser.dv_w_free_->DelegatedData(ex_policy)),
               delta_t_(encloser.dv_delta_t_->DelegatedData(ex_policy)),
-              temperature_(encloser.dv_temperature_->DelegatedData(ex_policy))
+              temperature_(encloser.dv_temperature_->DelegatedData(ex_policy)),
+              pos_(encloser.dv_pos_->DelegatedData(ex_policy))
         {
         }
 
@@ -568,11 +627,18 @@ class ApplyOphelieThermalFrenchNaturalBcCK : public LocalDynamics
                 return;
             }
             const Real t = t_initial_ + delta_t_[index_i];
+            Real t_side = t, t_bottom = t, t_free = t;
+            if (extrapolate_)
+            {
+                const Real z = pos_[index_i][2];
+                t_bottom = t + dTdz_ * (z_bot_ - z);
+                t_free = t + dTdz_ * (z_top_ - z);
+            }
             Real q_side = 0, q_bottom = 0, q_free = 0, q_conv = 0, q_rad = 0;
-            const Real q_out = frenchCombinedBoundaryHeatFluxWm2(
-                t, ws, wb, wf, h_side_, h_bottom_, t_cool_, h_free_, emissivity_, t_ambient_, t_rad_ambient_,
-                stefan_boltzmann_, enable_free_crust_, free_crust_delta_, free_crust_k_, q_side, q_bottom, q_free,
-                q_conv, q_rad);
+            const Real q_out = frenchCombinedBoundaryHeatFluxWm2AtFaces(
+                t_side, t_bottom, t_free, ws, wb, wf, h_side_, h_bottom_, t_cool_, h_free_, emissivity_, t_ambient_,
+                t_rad_ambient_, stefan_boltzmann_, enable_free_crust_, free_crust_delta_, free_crust_k_, q_side,
+                q_bottom, q_free, q_conv, q_rad);
             (void)q_conv;
             (void)q_rad;
             delta_t_[index_i] -= dt * inv_rho_cp_delta_ * q_out;
@@ -593,11 +659,16 @@ class ApplyOphelieThermalFrenchNaturalBcCK : public LocalDynamics
         Real enable_free_crust_;
         Real free_crust_delta_;
         Real free_crust_k_;
+        Real z_bot_;
+        Real z_top_;
+        Real dTdz_;
+        bool extrapolate_;
         Real *w_side_;
         Real *w_bottom_;
         Real *w_free_;
         Real *delta_t_;
         Real *temperature_;
+        Vecd *pos_;
     };
 
   protected:
@@ -614,11 +685,15 @@ class ApplyOphelieThermalFrenchNaturalBcCK : public LocalDynamics
     Real enable_free_crust_;
     Real free_crust_delta_;
     Real free_crust_k_;
+    Real z_bot_;
+    Real z_top_;
+    Real *dTdz_live_;
     DiscreteVariable<Real> *dv_w_side_;
     DiscreteVariable<Real> *dv_w_bottom_;
     DiscreteVariable<Real> *dv_w_free_;
     DiscreteVariable<Real> *dv_delta_t_;
     DiscreteVariable<Real> *dv_temperature_;
+    DiscreteVariable<Vecd> *dv_pos_;
 };
 
 /**
@@ -1091,7 +1166,9 @@ inline void hostOphelieThermalWallTemperatureHeatLossPowers(BaseParticles &parti
 inline void hostOphelieThermalFrenchNaturalHeatLossPowers(BaseParticles &particles,
                                                           const OphelieThermalDiffusionOneWayOptions &options,
                                                           Real shell_thickness, Real &side_w, Real &bottom_w,
-                                                          Real &free_conv_w, Real &free_rad_w, Real &total_w)
+                                                          Real &free_conv_w, Real &free_rad_w, Real &total_w,
+                                                          Real z_bot = Real(0), Real z_top = Real(0),
+                                                          Real dTdz = Real(0), bool extrapolate_face_t = false)
 {
     side_w = bottom_w = free_conv_w = free_rad_w = total_w = Real(0);
     if (!options.enable_french_natural_bc)
@@ -1104,6 +1181,12 @@ inline void hostOphelieThermalFrenchNaturalHeatLossPowers(BaseParticles &particl
     syncVariableToHost<Real>(particles, kOphelieThermalBoundaryWeightBottomField);
     syncVariableToHost<Real>(particles, kOphelieThermalBoundaryWeightFreeField);
     syncVariableToHost<Real>(particles, "VolumetricMeasure");
+    const Vecd *pos = nullptr;
+    if (extrapolate_face_t && z_top > z_bot + TinyReal)
+    {
+        syncVariableToHost<Vecd>(particles, "Position");
+        pos = particles.getVariableDataByName<Vecd>("Position");
+    }
     const Real *temperature = particles.getVariableDataByName<Real>(kOphelieTemperatureField);
     const Real *w_side = particles.getVariableDataByName<Real>(kOphelieThermalBoundaryWeightSideField);
     const Real *w_bottom = particles.getVariableDataByName<Real>(kOphelieThermalBoundaryWeightBottomField);
@@ -1119,12 +1202,20 @@ inline void hostOphelieThermalFrenchNaturalHeatLossPowers(BaseParticles &particl
             continue;
         }
         const Real area = vol[i] * inv_delta;
+        const Real t = temperature[i];
+        Real t_side = t, t_bottom = t, t_free = t;
+        if (pos != nullptr)
+        {
+            const Real z = pos[i][2];
+            t_bottom = t + dTdz * (z_bot - z);
+            t_free = t + dTdz * (z_top - z);
+        }
         Real q_side = 0, q_bottom = 0, q_free = 0, q_conv = 0, q_rad = 0;
-        (void)frenchCombinedBoundaryHeatFluxWm2(temperature[i], w_side[i], w_bottom[i], w_free[i], options.h_side,
-                                                options.h_bottom, options.t_cool, options.h_free, options.emissivity,
-                                                options.t_ambient, options.t_rad_ambient, options.stefan_boltzmann,
-                                                enable_crust, options.free_crust_delta_m, options.free_crust_k, q_side,
-                                                q_bottom, q_free, q_conv, q_rad);
+        (void)frenchCombinedBoundaryHeatFluxWm2AtFaces(
+            t_side, t_bottom, t_free, w_side[i], w_bottom[i], w_free[i], options.h_side, options.h_bottom,
+            options.t_cool, options.h_free, options.emissivity, options.t_ambient, options.t_rad_ambient,
+            options.stefan_boltzmann, enable_crust, options.free_crust_delta_m, options.free_crust_k, q_side, q_bottom,
+            q_free, q_conv, q_rad);
         side_w += w_side[i] * q_side * area;
         bottom_w += w_bottom[i] * q_bottom * area;
         free_conv_w += w_free[i] * q_conv * area;
@@ -1164,18 +1255,20 @@ class OphelieFrenchBoundaryLossPowerReduceCK : public LocalDynamicsReduce<Reduce
 {
   public:
     OphelieFrenchBoundaryLossPowerReduceCK(SPHBody &sph_body, Real t_initial, Real shell_thickness,
-                                           const OphelieThermalDiffusionOneWayOptions &bc)
+                                           const OphelieThermalDiffusionOneWayOptions &bc, Real z_bot = Real(0),
+                                           Real z_top = Real(0), Real *dTdz_live = nullptr)
         : LocalDynamicsReduce<ReduceSum<Real>>(sph_body), t_initial_(t_initial),
           inv_delta_(Real(1) / (shell_thickness + TinyReal)), h_side_(bc.h_side), h_bottom_(bc.h_bottom),
           h_free_(bc.h_free), emissivity_(bc.emissivity), t_cool_(bc.t_cool), t_ambient_(bc.t_ambient),
           t_rad_ambient_(bc.t_rad_ambient), stefan_boltzmann_(bc.stefan_boltzmann),
           enable_free_crust_(bc.enable_free_crust ? Real(1) : Real(0)), free_crust_delta_(bc.free_crust_delta_m),
-          free_crust_k_(bc.free_crust_k),
+          free_crust_k_(bc.free_crust_k), z_bot_(z_bot), z_top_(z_top), dTdz_live_(dTdz_live),
           dv_w_side_(particles_->template getVariableByName<Real>(kOphelieThermalBoundaryWeightSideField)),
           dv_w_bottom_(particles_->template getVariableByName<Real>(kOphelieThermalBoundaryWeightBottomField)),
           dv_w_free_(particles_->template getVariableByName<Real>(kOphelieThermalBoundaryWeightFreeField)),
           dv_delta_t_(particles_->template getVariableByName<Real>(kOphelieThermalDeltaTField)),
-          dv_vol_(particles_->template getVariableByName<Real>("VolumetricMeasure"))
+          dv_vol_(particles_->template getVariableByName<Real>("VolumetricMeasure")),
+          dv_pos_(particles_->template getVariableByName<Vecd>("Position"))
     {
         quantity_name_ = "OphelieFrenchBoundaryLossPower";
     }
@@ -1190,11 +1283,14 @@ class OphelieFrenchBoundaryLossPowerReduceCK : public LocalDynamicsReduce<Reduce
               t_cool_(encloser.t_cool_), t_ambient_(encloser.t_ambient_), t_rad_ambient_(encloser.t_rad_ambient_),
               stefan_boltzmann_(encloser.stefan_boltzmann_), enable_free_crust_(encloser.enable_free_crust_),
               free_crust_delta_(encloser.free_crust_delta_), free_crust_k_(encloser.free_crust_k_),
+              z_bot_(encloser.z_bot_), z_top_(encloser.z_top_),
+              dTdz_(encloser.dTdz_live_ != nullptr ? *encloser.dTdz_live_ : Real(0)),
+              extrapolate_(encloser.dTdz_live_ != nullptr && encloser.z_top_ > encloser.z_bot_ + TinyReal),
               w_side_(encloser.dv_w_side_->DelegatedData(ex_policy)),
               w_bottom_(encloser.dv_w_bottom_->DelegatedData(ex_policy)),
               w_free_(encloser.dv_w_free_->DelegatedData(ex_policy)),
               delta_t_(encloser.dv_delta_t_->DelegatedData(ex_policy)),
-              vol_(encloser.dv_vol_->DelegatedData(ex_policy))
+              vol_(encloser.dv_vol_->DelegatedData(ex_policy)), pos_(encloser.dv_pos_->DelegatedData(ex_policy))
         {
         }
 
@@ -1209,12 +1305,19 @@ class OphelieFrenchBoundaryLossPowerReduceCK : public LocalDynamicsReduce<Reduce
                 return Real(0);
             }
             const Real t = t_initial_ + delta_t_[index_i];
+            Real t_side = t, t_bottom = t, t_free = t;
+            if (extrapolate_)
+            {
+                const Real z = pos_[index_i][2];
+                t_bottom = t + dTdz_ * (z_bot_ - z);
+                t_free = t + dTdz_ * (z_top_ - z);
+            }
             const Real area = vol_[index_i] * inv_delta_;
             Real q_side = 0, q_bottom = 0, q_free = 0, q_conv = 0, q_rad = 0;
-            (void)frenchCombinedBoundaryHeatFluxWm2(t, ws, wb, wf, h_side_, h_bottom_, t_cool_, h_free_, emissivity_,
-                                                    t_ambient_, t_rad_ambient_, stefan_boltzmann_, enable_free_crust_,
-                                                    free_crust_delta_, free_crust_k_, q_side, q_bottom, q_free, q_conv,
-                                                    q_rad);
+            (void)frenchCombinedBoundaryHeatFluxWm2AtFaces(
+                t_side, t_bottom, t_free, ws, wb, wf, h_side_, h_bottom_, t_cool_, h_free_, emissivity_, t_ambient_,
+                t_rad_ambient_, stefan_boltzmann_, enable_free_crust_, free_crust_delta_, free_crust_k_, q_side,
+                q_bottom, q_free, q_conv, q_rad);
             return (ws * q_side + wb * q_bottom + wf * q_free) * area;
         }
 
@@ -1232,11 +1335,16 @@ class OphelieFrenchBoundaryLossPowerReduceCK : public LocalDynamicsReduce<Reduce
         Real enable_free_crust_;
         Real free_crust_delta_;
         Real free_crust_k_;
+        Real z_bot_;
+        Real z_top_;
+        Real dTdz_;
+        bool extrapolate_;
         Real *w_side_;
         Real *w_bottom_;
         Real *w_free_;
         Real *delta_t_;
         Real *vol_;
+        Vecd *pos_;
     };
 
   protected:
@@ -1253,11 +1361,15 @@ class OphelieFrenchBoundaryLossPowerReduceCK : public LocalDynamicsReduce<Reduce
     Real enable_free_crust_;
     Real free_crust_delta_;
     Real free_crust_k_;
+    Real z_bot_;
+    Real z_top_;
+    Real *dTdz_live_;
     DiscreteVariable<Real> *dv_w_side_;
     DiscreteVariable<Real> *dv_w_bottom_;
     DiscreteVariable<Real> *dv_w_free_;
     DiscreteVariable<Real> *dv_delta_t_;
     DiscreteVariable<Real> *dv_vol_;
+    DiscreteVariable<Vecd> *dv_pos_;
 };
 
 /** Discrete vs geometric boundary-area audit (doc 23 P0-06). Area proxy: A_i = V_i / shell_thickness. */
