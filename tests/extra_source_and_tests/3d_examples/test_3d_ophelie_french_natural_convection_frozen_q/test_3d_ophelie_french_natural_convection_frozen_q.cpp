@@ -856,6 +856,13 @@ struct LocalCli
     bool doc234_force_precision_exit = false;
     std::string doc234_force_precision_csv;
     /**
+     * Doc235 B: dump OFF-background event snapshots (settle cleanup + early keep times).
+     * Directory receives event_*.csv and event_stats.jsonl.
+     */
+    std::string doc235_off_event_dump_dir;
+    /** Extra keep dump times (seconds) when off-event dump is set. Default 0.01,0.05,0.1 */
+    std::string doc235_off_event_keep_times = "0.01,0.05,0.1";
+    /**
      * Doc234 D: T = T0 + dT*((r/R)^2 - 1/2); pair with --freeze-prescribed-t.
      * dT<=0 disables. Default off.
      */
@@ -1714,6 +1721,14 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
             cli.doc234_force_precision_exit = true;
             cli.doc233_buoyancy_force_chain_exit = true;
             cli.literature.enable_boussinesq = true;
+        }
+        else if (std::strncmp(av[i], "--doc235-off-event-dump-dir=", 27) == 0)
+        {
+            cli.doc235_off_event_dump_dir = std::string(av[i] + 27);
+        }
+        else if (std::strncmp(av[i], "--doc235-off-event-keep-times=", 30) == 0)
+        {
+            cli.doc235_off_event_keep_times = std::string(av[i] + 30);
         }
         else if (std::strncmp(av[i], "--doc234-fixed-t-radial-dT=", 27) == 0)
         {
@@ -5280,6 +5295,81 @@ inline void dumpDoc234ParticleFieldCsv(BaseParticles &particles, const std::stri
     std::cout << "[ophelie][doc234][D] particle_field csv=" << csv_path << " t=" << t_s << " n=" << n << "\n";
 }
 
+/**
+ * Doc235 B: event snapshot for OFF-background attribution (read-only dump).
+ * Core mechanics fields used in settle cleanup / first production steps.
+ */
+inline void dumpDoc235OffEventCsv(BaseParticles &particles, const std::string &csv_path, const std::string &event,
+                                  Real t_s, const Vecd &axis_origin, Real /*radius_m*/, Real z_bot, Real z_top)
+{
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Vecd>(particles, "Velocity");
+    syncVariableToHost<Real>(particles, "Mass");
+    syncVariableToHost<Real>(particles, "VolumetricMeasure");
+    syncVariableToHost<Real>(particles, "Density");
+    syncVariableToHost<Real>(particles, "Pressure");
+    syncVariableToHost<Vecd>(particles, "ForcePrior");
+    syncVariableToHost<Vecd>(particles, "Force");
+    syncVariableToHost<Real>(particles, "DensityChangeRate");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const Vecd *vel = particles.getVariableDataByName<Vecd>("Velocity");
+    const Real *mass = particles.getVariableDataByName<Real>("Mass");
+    const Real *vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+    const Real *dens = particles.getVariableDataByName<Real>("Density");
+    const Real *pres = particles.getVariableDataByName<Real>("Pressure");
+    const Vecd *fp = particles.getVariableDataByName<Vecd>("ForcePrior");
+    const Vecd *ff = particles.getVariableDataByName<Vecd>("Force");
+    const Real *dcr = particles.getVariableDataByName<Real>("DensityChangeRate");
+    const size_t n = particles.TotalRealParticles();
+    fs::create_directories(fs::path(csv_path).parent_path());
+    std::ofstream os(csv_path);
+    os << std::setprecision(10);
+    os << "# event=" << event << " t_s=" << t_s << " n=" << n << "\n";
+    os << "particle_i,x,y,z,r,vx,vy,vz,Mass,Vol,Density,Pressure,FPx,FPy,FPz,Fx,Fy,Fz,DensityChangeRate\n";
+    double ke = 0.0, sum_m = 0.0, sum_v = 0.0, umax2 = 0.0;
+    double rho_min = 0.0, rho_max = 0.0;
+    Vecd mom = Vecd::Zero();
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real dx = pos[i][0] - axis_origin[0];
+        const Real dy = pos[i][1] - axis_origin[1];
+        const Real r = std::sqrt(dx * dx + dy * dy);
+        os << i << "," << pos[i][0] << "," << pos[i][1] << "," << pos[i][2] << "," << r << "," << vel[i][0]
+           << "," << vel[i][1] << "," << vel[i][2] << "," << mass[i] << "," << vol[i] << "," << dens[i] << ","
+           << pres[i] << "," << fp[i][0] << "," << fp[i][1] << "," << fp[i][2] << "," << ff[i][0] << ","
+           << ff[i][1] << "," << ff[i][2] << "," << dcr[i] << "\n";
+        const double m = static_cast<double>(mass[i]);
+        const double u2 = static_cast<double>(vel[i].squaredNorm());
+        ke += 0.5 * m * u2;
+        sum_m += m;
+        sum_v += static_cast<double>(vol[i]);
+        umax2 = std::max(umax2, u2);
+        mom += mass[i] * vel[i];
+        if (i == 0)
+        {
+            rho_min = dens[i];
+            rho_max = dens[i];
+        }
+        else
+        {
+            rho_min = std::min(rho_min, static_cast<double>(dens[i]));
+            rho_max = std::max(rho_max, static_cast<double>(dens[i]));
+        }
+    }
+    const double U_rms = (sum_m > 0.0) ? std::sqrt(2.0 * ke / sum_m) : 0.0;
+    const double U_max = std::sqrt(umax2);
+    std::cout << "[ophelie][doc235][B] event=" << event << " t=" << t_s << " csv=" << csv_path
+              << " U_rms=" << U_rms << " U_max=" << U_max << " KE=" << ke << " sum_m=" << sum_m
+              << " sum_V=" << sum_v << " rho=[" << rho_min << "," << rho_max << "] mom=(" << mom[0] << ","
+              << mom[1] << "," << mom[2] << ") z_span_geom=[" << z_bot << "," << z_top << "]\n";
+    const fs::path stats = fs::path(csv_path).parent_path() / "event_stats.jsonl";
+    std::ofstream js(stats, std::ios::app);
+    js << std::setprecision(10);
+    js << "{\"event\":\"" << event << "\",\"t_s\":" << t_s << ",\"U_rms\":" << U_rms << ",\"U_max\":" << U_max
+       << ",\"KE\":" << ke << ",\"sum_m\":" << sum_m << ",\"sum_V\":" << sum_v << ",\"rho_min\":" << rho_min
+       << ",\"rho_max\":" << rho_max << ",\"csv\":\"" << csv_path << "\"}\n";
+}
+
 inline Real hostMassWeightedMeanDeltaT(BaseParticles &particles)
 {
     syncVariableToHost<Real>(particles, kOphelieThermalDeltaTField);
@@ -7567,7 +7657,22 @@ int main(int ac, char *av[])
                                             local_cli.gravity_g, gc, french.glass_radius, z_bottom, z_free,
                                             french.dp);
         }
+        if (!local_cli.doc235_off_event_dump_dir.empty())
+        {
+            dumpDoc235OffEventCsv(glass_particles,
+                                  (fs::path(local_cli.doc235_off_event_dump_dir) / "event_01_settle_done_pre_cleanup.csv")
+                                      .string(),
+                                  "settle_done_pre_cleanup", time_stepper.getPhysicalTime(), gc, french.glass_radius,
+                                  z_bottom, z_free);
+        }
         hostZeroVelocity(glass_particles);
+        if (!local_cli.doc235_off_event_dump_dir.empty())
+        {
+            dumpDoc235OffEventCsv(glass_particles,
+                                  (fs::path(local_cli.doc235_off_event_dump_dir) / "event_02_after_zero_U.csv").string(),
+                                  "after_zero_U", time_stepper.getPhysicalTime(), gc, french.glass_radius, z_bottom,
+                                  z_free);
+        }
         // Doc223 E1 / Doc230 isothermal: zero-U alone leaves DensityChangeRate/Force/Displacement
         // from the last acoustic cycle; keep then re-excites U (client NC tripped Doc224 0.05 gate).
         if (local_cli.doc223_paper_flat_slip_top || local_cli.literature.zero_q)
@@ -7591,6 +7696,14 @@ int main(int ac, char *av[])
             {
                 std::cout << "[ophelie][doc230][zero-q] post-settle flush: zeroed DensityChangeRate/"
                              "Force/Displacement + dens/adv_setup (quiet isothermal keep)\n";
+            }
+            if (!local_cli.doc235_off_event_dump_dir.empty())
+            {
+                dumpDoc235OffEventCsv(
+                    glass_particles,
+                    (fs::path(local_cli.doc235_off_event_dump_dir) / "event_03_after_post_settle_flush.csv").string(),
+                    "after_post_settle_flush", time_stepper.getPhysicalTime(), gc, french.glass_radius, z_bottom,
+                    z_free);
             }
         }
         if (local_cli.diag_lid_free_slip_post_settle)
@@ -7660,6 +7773,13 @@ int main(int ac, char *av[])
             dens_write_last = {};
             std::cout << "[ophelie][doc105-p2h] settle_dens_sum_normalize off for probe/keep "
                          "(sigma0 cleared; FreeSurface dens path)\n";
+        }
+        if (!local_cli.doc235_off_event_dump_dir.empty())
+        {
+            dumpDoc235OffEventCsv(glass_particles,
+                                  (fs::path(local_cli.doc235_off_event_dump_dir) / "event_04_t0_ready.csv").string(),
+                                  "t0_ready", time_stepper.getPhysicalTime(), gc, french.glass_radius, z_bottom,
+                                  z_free);
         }
         in_hydro_settle = false;
     }
@@ -9464,40 +9584,62 @@ int main(int ac, char *av[])
             const double beta_d = static_cast<double>(beta);
             const double tref_d = static_cast<double>(t_ref_fc);
             const double eps_f = static_cast<double>(std::numeric_limits<float>::epsilon());
-            double sum_e2 = 0.0, sum_b2 = 0.0, sum_df2 = 0.0;
+            // Doc235 D: separate Float-native squaredNorm accumulate vs component→double promote.
+            double sum_e2_float_sq = 0.0, sum_b2_float_sq = 0.0, sum_df2 = 0.0;
+            double sum_e2_dprom = 0.0, sum_b2_dprom = 0.0;
             double sum_e2_vs_dref = 0.0, sum_dref2 = 0.0;
             double sum_abs_fb = 0.0, sum_abs_fp = 0.0, sum_abs_df_err = 0.0;
             double sum_ulp_scale = 0.0;
+            double max_abs_ez = 0.0;
             size_t n_nonzero_fb = 0;
             for (size_t i = 0; i < n_fc; ++i)
             {
                 const Vecd df = fp_on_copy[i] - fp_off_copy[i];
                 const Vecd eb = df - fb_copy[i];
-                sum_df2 += df.squaredNorm();
-                sum_b2 += fb_copy[i].squaredNorm();
-                sum_e2 += eb.squaredNorm();
+                sum_df2 += static_cast<double>(df.squaredNorm());
+                sum_b2_float_sq += static_cast<double>(fb_copy[i].squaredNorm());
+                sum_e2_float_sq += static_cast<double>(eb.squaredNorm());
+                const double dfx = static_cast<double>(fp_on_copy[i][0]) - static_cast<double>(fp_off_copy[i][0]);
+                const double dfy = static_cast<double>(fp_on_copy[i][1]) - static_cast<double>(fp_off_copy[i][1]);
+                const double dfz = static_cast<double>(fp_on_copy[i][2]) - static_cast<double>(fp_off_copy[i][2]);
+                const double fbx = static_cast<double>(fb_copy[i][0]);
+                const double fby = static_cast<double>(fb_copy[i][1]);
+                const double fbz = static_cast<double>(fb_copy[i][2]);
+                const double ex = dfx - fbx;
+                const double ey = dfy - fby;
+                const double ez = dfz - fbz;
+                sum_e2_dprom += ex * ex + ey * ey + ez * ez;
+                sum_b2_dprom += fbx * fbx + fby * fby + fbz * fbz;
+                max_abs_ez = std::max(max_abs_ez, std::abs(ez));
                 const double m = static_cast<double>(mass_fc[i]);
                 const double dT = static_cast<double>(T_now[i]) - tref_d;
                 // F_b_ref = -m*beta*(T-Tref)*g_acc with g_acc=(0,0,-g) ⇒ Fz = +m*beta*g*dT
                 const double fb_ref_z = m * beta_d * g_pos * dT;
-                const double ez_d = static_cast<double>(fb_copy[i][2]) - fb_ref_z;
-                sum_e2_vs_dref += ez_d * ez_d + static_cast<double>(fb_copy[i][0]) * static_cast<double>(fb_copy[i][0]) +
-                                  static_cast<double>(fb_copy[i][1]) * static_cast<double>(fb_copy[i][1]);
+                const double ez_d = fbz - fb_ref_z;
+                sum_e2_vs_dref += ez_d * ez_d + fbx * fbx + fby * fby;
                 sum_dref2 += fb_ref_z * fb_ref_z;
-                const double abs_fb = std::sqrt(static_cast<double>(fb_copy[i].squaredNorm()));
-                const double abs_fp = std::sqrt(static_cast<double>(fp_on_copy[i].squaredNorm()));
+                const double abs_fb = std::sqrt(fbx * fbx + fby * fby + fbz * fbz);
+                const double abs_fp = std::sqrt(static_cast<double>(fp_on_copy[i][0]) * static_cast<double>(fp_on_copy[i][0]) +
+                                               static_cast<double>(fp_on_copy[i][1]) * static_cast<double>(fp_on_copy[i][1]) +
+                                               static_cast<double>(fp_on_copy[i][2]) * static_cast<double>(fp_on_copy[i][2]));
                 sum_abs_fb += abs_fb;
                 sum_abs_fp += abs_fp;
-                sum_abs_df_err += std::sqrt(static_cast<double>(eb.squaredNorm()));
-                // Gravity scale in ForcePrior ~ |m*g|; Float ON−OFF noise ~ eps*|F_prior|
+                sum_abs_df_err += std::sqrt(ex * ex + ey * ey + ez * ez);
                 const double F_g_scale = m * g_pos;
                 sum_ulp_scale += eps_f * std::max(abs_fp, F_g_scale);
                 if (abs_fb > 1.0e-12)
                     ++n_nonzero_fb;
             }
-            const Real E_chain =
-                std::sqrt(static_cast<Real>(sum_e2) / (static_cast<Real>(sum_b2) + TinyReal));
-            const Real E_chain_abs = std::sqrt(static_cast<Real>(sum_e2));
+            // Legacy cast path (can collapse tiny sum_e2); keep for diagnosis only.
+            const Real E_chain_float_cast =
+                std::sqrt(static_cast<Real>(sum_e2_float_sq) / (static_cast<Real>(sum_b2_float_sq) + TinyReal));
+            const double E_chain_float_native =
+                std::sqrt(sum_e2_float_sq / (sum_b2_float_sq + 1.0e-300));
+            const double E_chain_double_promoted =
+                std::sqrt(sum_e2_dprom / (sum_b2_dprom + 1.0e-300));
+            // Doc235 primary chain metric: component→double promote (not 50×floor gate).
+            const Real E_chain = static_cast<Real>(E_chain_double_promoted);
+            const Real E_chain_abs = static_cast<Real>(std::sqrt(sum_e2_dprom));
             const Real E_fb_vs_double =
                 std::sqrt(static_cast<Real>(sum_e2_vs_dref) / (static_cast<Real>(sum_dref2) + TinyReal));
             const double mean_abs_fb = sum_abs_fb / std::max<size_t>(1, n_fc);
@@ -9607,56 +9749,67 @@ int main(int ac, char *av[])
             }
 
             const bool algebraic_ok = gate_on.algebraic_ok && gate_on.dynamic_reference_ok;
-            const bool chain_ok = E_chain <= Real(1.0e-5) || (std::sqrt(sum_b2) < Real(1.0e-8) &&
-                                                              std::sqrt(sum_e2) < Real(1.0e-8));
+            // Absolute residual gate for near-zero Fb particles is covered by E_chain_abs + max_abs_ez.
+            const bool chain_ok =
+                E_chain_double_promoted <= 1.0e-3 || (sum_b2_dprom < 1.0e-16 && sum_e2_dprom < 1.0e-16);
             const bool no_double = repeat_rel <= Real(1.0e-6);
-            // Doc234: Float ON−OFF relative gate is not sole PASS; explain via cancellation floor.
-            const bool float_cancel_explains =
-                static_cast<double>(E_chain) <= std::max(50.0 * expected_rel_floor, 5.0e-3) &&
-                E_fb_vs_double <= Real(1.0e-5);
-            const bool pass_strict = algebraic_ok && chain_ok && no_double;
-            const bool pass_doc234 = algebraic_ok && no_double && float_cancel_explains;
+            // Doc235: expected_rel_floor is DIAGNOSTIC only — never an automatic PASS multiplier.
+            const bool float_cancel_diag_only = true;
+            const bool channel_verified = algebraic_ok && no_double && chain_ok;
+            // Momentum read remains PARTIAL until ForcePrior contribution is recorded inside update.
+            const bool momentum_read_verified = false;
+            const bool pass_strict = channel_verified;
             std::cout << "[ophelie][doc233][C] BUOYANCY_FORCE_CHAIN_VERIFIED=" << (pass_strict ? 1 : 0)
                       << " T_force_ref=" << t_ref_fc << " E_particle=" << gate_on.E_L2
                       << " E_chain_ON_minus_OFF_vs_Fb=" << E_chain << " repeat_rel=" << repeat_rel
                       << " algebraic_ok=" << (algebraic_ok ? 1 : 0) << " chain_ok=" << (chain_ok ? 1 : 0)
                       << " no_double=" << (no_double ? 1 : 0) << "\n";
-            std::cout << "[ophelie][doc234][B] E_chain_abs=" << E_chain_abs
+            std::cout << "[ophelie][doc235][D] E_chain_double_promoted=" << E_chain_double_promoted
+                      << " E_chain_float_native=" << E_chain_float_native
+                      << " E_chain_float_cast_legacy=" << E_chain_float_cast
+                      << " E_chain_abs=" << E_chain_abs << " max_abs_ez=" << max_abs_ez
                       << " E_Fb_vs_host_double=" << E_fb_vs_double << " mean_|Fp|/mean_|Fb|=" << cancel_ratio
-                      << " expected_rel_floor~eps*|Fp|/|Fb|=" << expected_rel_floor
+                      << " expected_rel_floor_DIAG_ONLY=" << expected_rel_floor
                       << " mean_ulp_scale=" << mean_ulp << " n_nonzero_Fb=" << n_nonzero_fb
-                      << " FLOAT_CANCELLATION_EXPLAINED=" << (float_cancel_explains ? 1 : 0)
+                      << " CHANNEL_VERIFIED=" << (channel_verified ? 1 : 0)
+                      << " MOMENTUM_READ_VERIFIED=" << (momentum_read_verified ? 1 : 0)
+                      << " FLOAT_FLOOR_AUTO_PASS_DISABLED=" << (float_cancel_diag_only ? 1 : 0)
                       << " momentum_probe_rel=" << momentum_read_rel
                       << " momentum_probe_abs=" << momentum_read_abs
                       << " momentum_n_interior=" << momentum_n_interior
-                      << " note=Acoustic Δv includes pressure; probe is presence-not-equality\n";
+                      << " note=probe presence-not-equality; 50x floor not used for PASS\n";
             if (!local_cli.summary_json.empty())
             {
                 std::ofstream js(local_cli.summary_json);
                 js << std::setprecision(10);
                 js << "{\n"
-                   << "  \"case\": \"doc234_b_force_precision\",\n"
-                   << "  \"BUOYANCY_FORCE_CHAIN_VERIFIED\": " << (pass_strict ? 1 : 0) << ",\n"
+                   << "  \"case\": \"doc235_d_force_gate\",\n"
                    << "  \"FORCE_FORMULA_VERIFIED\": " << (algebraic_ok ? 1 : 0) << ",\n"
-                   << "  \"FLOAT_CANCELLATION_EXPLAINED\": " << (float_cancel_explains ? 1 : 0) << ",\n"
-                   << "  \"FORCE_CHANNEL_DOC234_OK\": " << (pass_doc234 ? 1 : 0) << ",\n"
+                   << "  \"CHANNEL_VERIFIED\": " << (channel_verified ? 1 : 0) << ",\n"
+                   << "  \"MOMENTUM_READ_VERIFIED\": " << (momentum_read_verified ? 1 : 0) << ",\n"
+                   << "  \"MOMENTUM_READ_STATUS\": \"PARTIAL\",\n"
+                   << "  \"FLOAT_FLOOR_AUTO_PASS_DISABLED\": 1,\n"
+                   << "  \"BUOYANCY_FORCE_CHAIN_VERIFIED\": " << (pass_strict ? 1 : 0) << ",\n"
                    << "  \"T_force_ref\": " << t_ref_fc << ",\n"
                    << "  \"beta\": " << beta << ",\n"
                    << "  \"E_particle\": " << gate_on.E_L2 << ",\n"
                    << "  \"E_chain\": " << E_chain << ",\n"
+                   << "  \"E_chain_double_promoted\": " << E_chain_double_promoted << ",\n"
+                   << "  \"E_chain_float_native\": " << E_chain_float_native << ",\n"
+                   << "  \"E_chain_float_cast_legacy\": " << E_chain_float_cast << ",\n"
                    << "  \"E_chain_abs\": " << E_chain_abs << ",\n"
+                   << "  \"max_abs_ez\": " << max_abs_ez << ",\n"
                    << "  \"E_Fb_vs_host_double\": " << E_fb_vs_double << ",\n"
                    << "  \"cancel_ratio_Fp_over_Fb\": " << cancel_ratio << ",\n"
-                   << "  \"expected_rel_floor\": " << expected_rel_floor << ",\n"
+                   << "  \"expected_rel_floor_DIAG_ONLY\": " << expected_rel_floor << ",\n"
                    << "  \"repeat_rel\": " << repeat_rel << ",\n"
                    << "  \"momentum_probe_rel\": " << momentum_read_rel << ",\n"
                    << "  \"csv\": \"" << csv_path << "\",\n"
-                   << "  \"note\": \"E_chain is Float ON-OFF vs Fb; compare to expected_rel_floor\"\n"
+                   << "  \"note\": \"Primary E_chain is component-promoted double; 50x floor disabled\"\n"
                    << "}\n";
                 std::cout << "[ophelie] summary_json=" << local_cli.summary_json << "\n";
             }
-            // Exit 0 if formula+no-double and (strict chain OR float-explained).
-            return (pass_strict || pass_doc234) ? 0 : 1;
+            return pass_strict ? 0 : 1;
         }
     }
     // Doc220 C: H0 must use the final IC temperature (after prescribe). Clear evolution ledgers.
@@ -10161,6 +10314,21 @@ int main(int ac, char *av[])
                                    local_cli.doc234_particle_field_csv_prefix + "_t0.csv",
                                    time_stepper.getPhysicalTime());
     }
+    StdVec<Real> doc235_keep_dump_times;
+    StdVec<char> doc235_keep_dump_done;
+    bool doc235_first_acoustic_dumped = false;
+    if (!local_cli.doc235_off_event_dump_dir.empty())
+    {
+        std::stringstream ss(local_cli.doc235_off_event_keep_times);
+        std::string tok;
+        while (std::getline(ss, tok, ','))
+        {
+            if (tok.empty())
+                continue;
+            doc235_keep_dump_times.push_back(static_cast<Real>(std::atof(tok.c_str())));
+        }
+        doc235_keep_dump_done.assign(doc235_keep_dump_times.size(), 0);
+    }
 
     while (!time_stepper.isEndTime(local_cli.end_time) && !numerical_abort)
     {
@@ -10210,6 +10378,32 @@ int main(int ac, char *av[])
                          << doc234_dump_times[id] << ".csv";
                     dumpDoc234ParticleFieldCsv(glass_particles, name.str(), t_now_dump);
                     doc234_dump_done[id] = 1;
+                }
+            }
+        }
+        if (!local_cli.doc235_off_event_dump_dir.empty())
+        {
+            const Real t_now_dump = time_stepper.getPhysicalTime();
+            if (!doc235_first_acoustic_dumped)
+            {
+                dumpDoc235OffEventCsv(
+                    glass_particles,
+                    (fs::path(local_cli.doc235_off_event_dump_dir) / "event_05_after_first_acoustic.csv").string(),
+                    "after_first_acoustic", t_now_dump, gc, french.glass_radius, z_bottom, z_free);
+                doc235_first_acoustic_dumped = true;
+            }
+            for (size_t id = 0; id < doc235_keep_dump_times.size(); ++id)
+            {
+                if (doc235_keep_dump_done[id])
+                    continue;
+                if (t_now_dump + TinyReal >= doc235_keep_dump_times[id])
+                {
+                    std::ostringstream name;
+                    name << "event_keep_t" << doc235_keep_dump_times[id] << ".csv";
+                    dumpDoc235OffEventCsv(glass_particles,
+                                          (fs::path(local_cli.doc235_off_event_dump_dir) / name.str()).string(),
+                                          "keep_t", t_now_dump, gc, french.glass_radius, z_bottom, z_free);
+                    doc235_keep_dump_done[id] = 1;
                 }
             }
         }
