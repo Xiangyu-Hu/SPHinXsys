@@ -161,19 +161,12 @@ int main(int ac, char *av[])
     UpdateRelation<MainExecutionPolicy, Contact<>> update_water_wall_contact(water_wall_contact);
     UpdateRelation<MainExecutionPolicy, Contact<>> update_fluid_observer_contact(fluid_observer_contact);
 
-    InteractionDynamicsCK<MainExecutionPolicy, LinearCorrectionMatrix<Inner<WithUpdate>, Contact<>>>
-        linear_correction_matrix(DynamicsArgs(water_block_inner, 0.0), water_wall_contact);
     InteractionDynamicsCK<MainExecutionPolicy, LinearGradient<Inner<Vecd>, Contact<Vecd>>>
         position_linear_gradient(
             DynamicsArgs(water_block_inner, std::string("Position")),
             DynamicsArgs(water_wall_contact, std::string("Position")));
     ObservedQuantityRecording<MainExecutionPolicy, Matd, RestoringCorrection>
         observed_position_gradient(fluid_observer_contact, "PositionGradient");
-
-    InteractionDynamicsCK<MainExecutionPolicy, DisplacementMatrixGradient<Inner<>, Contact<>>>
-        displacement_matrix_gradient(water_block_inner, water_wall_contact);
-    InteractionDynamicsCK<MainExecutionPolicy, HessianCorrectionMatrix<Inner<WithUpdate>, Contact<>>>
-        hessian_correction_matrix(DynamicsArgs(water_block_inner, 0.0), water_wall_contact);
 
     StateDynamics<MainExecutionPolicy, VariableAssignment<SPHBody, SpatialDistribution<ParabolicProfile>>>
         water_block_initial_condition(water_block, "Phi");
@@ -209,13 +202,10 @@ int main(int ac, char *av[])
     water_block_initial_condition.exec();
     wall_initial_condition.exec();
 
-    linear_correction_matrix.exec();
     position_linear_gradient.exec();
     observed_position_gradient.writeToFile(0);
     approximated_gradient = *observed_position_gradient.getObservedQuantity();
 
-    displacement_matrix_gradient.exec();
-    hessian_correction_matrix.exec();
     variable_linear_gradient.exec();
     variable_hessian.exec();
     observed_hessian.writeToFile(0);
