@@ -1722,9 +1722,9 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
             cli.doc233_buoyancy_force_chain_exit = true;
             cli.literature.enable_boussinesq = true;
         }
-        else if (std::strncmp(av[i], "--doc235-off-event-dump-dir=", 27) == 0)
+        else if (std::strncmp(av[i], "--doc235-off-event-dump-dir=", 28) == 0)
         {
-            cli.doc235_off_event_dump_dir = std::string(av[i] + 27);
+            cli.doc235_off_event_dump_dir = std::string(av[i] + 28);
         }
         else if (std::strncmp(av[i], "--doc235-off-event-keep-times=", 30) == 0)
         {
@@ -2168,6 +2168,20 @@ inline void hostZeroVelocity(BaseParticles &particles)
         vel[i] = Vecd::Zero();
     }
     syncVariableToDevice<Vecd>(particles, "Velocity");
+}
+
+/** Doc235 B: keep Pressure consistent with Density after dens flush (p = c0²(ρ−ρ0)). */
+inline void hostSyncEosPressureFromDensity(BaseParticles &particles, Real rho0, Real c0)
+{
+    syncVariableToHost<Real>(particles, "Density");
+    syncVariableToHost<Real>(particles, "Pressure");
+    Real *rho = particles.getVariableDataByName<Real>("Density");
+    Real *pres = particles.getVariableDataByName<Real>("Pressure");
+    const Real c2 = c0 * c0;
+    const size_t n = particles.TotalRealParticles();
+    for (size_t i = 0; i < n; ++i)
+        pres[i] = c2 * (rho[i] - rho0);
+    syncVariableToDevice<Real>(particles, "Pressure");
 }
 
 inline void hostZeroVecFieldFrench(BaseParticles &particles, const std::string &name)
@@ -7675,6 +7689,7 @@ int main(int ac, char *av[])
         }
         // Doc223 E1 / Doc230 isothermal: zero-U alone leaves DensityChangeRate/Force/Displacement
         // from the last acoustic cycle; keep then re-excites U (client NC tripped Doc224 0.05 gate).
+        // Doc235 B: dens flush previously left settle Pressure + stale ForcePrior → first acoustic kick.
         if (local_cli.doc223_paper_flat_slip_top || local_cli.literature.zero_q)
         {
             hostZeroRealFieldFrench(glass_particles, "DensityChangeRate");
@@ -7684,18 +7699,32 @@ int main(int ac, char *av[])
             fluid_advection_step_setup.exec();
             if (local_cli.kernel_correction || local_cli.enable_tvf)
                 fluid_linear_correction_matrix.exec();
+            // Rebuild mechanics consistent with post-flush Density (keep U=0).
+            if (local_cli.doc220_pprime_hydro || local_cli.background_hydro_p)
+            {
+                hostFreezeDensityToRho0(glass_particles, rho0);
+                apply_french_background_ph();
+            }
+            else
+            {
+                hostSyncEosPressureFromDensity(glass_particles, rho0, local_cli.c0);
+            }
+            hostDoc223ZeroAllForcePriorChannels(glass_particles);
+            apply_gravity_force_prior();
+            hostZeroVelocity(glass_particles);
+            hostZeroVecFieldFrench(glass_particles, "Force");
             if (local_cli.doc223_paper_flat_slip_top)
             {
                 hostLogDoc223PaperTopHydroAudit("post_settle_flush", glass_particles, rho0, local_cli.c0,
                                                 local_cli.gravity_g, gc, french.glass_radius, z_bottom, z_free,
                                                 french.dp);
-                std::cout << "[ophelie][doc223][E1] post-settle flush: zeroed DensityChangeRate/"
-                             "Force/Displacement + dens/normalize/adv_setup\n";
+                std::cout << "[ophelie][doc223][E1] post-settle flush: dens/adv + EOS-Pressure sync + "
+                             "ForcePrior(gravity) rebuild (Doc235)\n";
             }
             else
             {
-                std::cout << "[ophelie][doc230][zero-q] post-settle flush: zeroed DensityChangeRate/"
-                             "Force/Displacement + dens/adv_setup (quiet isothermal keep)\n";
+                std::cout << "[ophelie][doc235][B] post-settle flush: dens/adv + EOS-Pressure sync + "
+                             "ForcePrior(gravity) rebuild; U/Force cleared\n";
             }
             if (!local_cli.doc235_off_event_dump_dir.empty())
             {
