@@ -90,5 +90,62 @@ void DensitySummation<Contact<AdaptiveSmoothingLength>>::interaction(size_t inde
                          sph_adaptation_.NumberDensityScaleFactor(h_ratio_[index_i]);
 }
 //=================================================================================================//
+ShepardDensityRegularizationWithWall::ShepardDensityRegularizationWithWall(
+    BaseInnerRelation &inner_relation, BaseContactRelation &wall_contact_relation)
+    : LocalDynamics(inner_relation.getSPHBody()), DataDelegateInner(inner_relation),
+      DataDelegateContact(wall_contact_relation),
+      rho_(particles_->getVariableDataByName<Real>("Density")),
+      mass_(particles_->getVariableDataByName<Real>("Mass")),
+      rho_regularized_(particles_->registerStateVariableData<Real>("ShepardDensity")),
+      Vol_(particles_->getVariableDataByName<Real>("VolumetricMeasure")),
+      W0_(getSPHAdaptation().getKernel()->W0(ZeroVecd))
+{
+    for (size_t k = 0; k != contact_particles_.size(); ++k)
+    {
+        contact_inv_rho0_.push_back(
+            1.0 / contact_bodies_[k]->getMatterMaterial().ReferenceDensity());
+        contact_mass_.push_back(
+            contact_particles_[k]->getVariableDataByName<Real>("Mass"));
+    }
+}
+//=================================================================================================//
+void ShepardDensityRegularizationWithWall::interaction(size_t index_i, Real dt)
+{
+    Real denominator = Vol_[index_i] * W0_;
+    Real numerator = rho_[index_i] * denominator;
+
+    const Neighborhood &inner_neighborhood = inner_configuration_[index_i];
+    for (size_t n = 0; n != inner_neighborhood.current_size_; ++n)
+    {
+        const size_t index_j = inner_neighborhood.j_[n];
+        const Real kernel_volume = inner_neighborhood.W_ij_[n] * Vol_[index_j];
+        denominator += kernel_volume;
+        numerator += rho_[index_j] * kernel_volume;
+    }
+
+    Real wall_denominator = 0.0;
+    for (size_t k = 0; k != contact_configuration_.size(); ++k)
+    {
+        const Neighborhood &wall_neighborhood = (*contact_configuration_[k])[index_i];
+        Real *contact_mass_k = contact_mass_[k];
+        const Real contact_inv_rho0_k = contact_inv_rho0_[k];
+        for (size_t n = 0; n != wall_neighborhood.current_size_; ++n)
+        {
+            const size_t index_j = wall_neighborhood.j_[n];
+            wall_denominator += wall_neighborhood.W_ij_[n] *
+                                contact_mass_k[index_j] * contact_inv_rho0_k;
+        }
+    }
+    denominator += wall_denominator;
+    numerator += rho_[index_i] * wall_denominator;
+    rho_regularized_[index_i] = numerator / denominator;
+}
+//=================================================================================================//
+void ShepardDensityRegularizationWithWall::update(size_t index_i, Real dt)
+{
+    rho_[index_i] = rho_regularized_[index_i];
+    Vol_[index_i] = mass_[index_i] / rho_[index_i];
+}
+//=================================================================================================//
 } // namespace fluid_dynamics
 } // namespace SPH

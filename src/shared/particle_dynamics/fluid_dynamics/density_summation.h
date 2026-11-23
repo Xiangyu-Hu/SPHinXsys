@@ -182,6 +182,49 @@ using DensitySummationFreeSurfaceComplexAdaptive = BaseDensitySummationComplex<I
 using DensitySummationFreeStreamComplex = BaseDensitySummationComplex<Inner<NearFreeStream>, Contact<>>;
 using DensitySummationFreeStreamComplexAdaptive = BaseDensitySummationComplex<Inner<NearFreeStream, AdaptiveSmoothingLength>, Contact<AdaptiveSmoothingLength>>;
 using DensitySummationNotNearSurfaceComplex = BaseDensitySummationComplex<Inner<NotNearSurface>, Contact<>>;
+
+/**
+ * @class ShepardDensityRegularizationWithWall
+ * @brief Zeroth-order consistent density regularization for a fluid with solid walls.
+ * @details The density is reconstructed from the current fluid density field with
+ * a normalized SPH interpolant. Solid-wall particles complete the denominator
+ * with their reference volume and use a zero-normal-gradient extension of the
+ * target fluid density. Applying the same expression to every real fluid
+ * particle avoids a discontinuous switch at the edge of the wall contact list.
+ *
+ * This is an opt-in, fixed-smoothing-length operator; it does not replace the
+ * existing density summation defaults. Use it with InteractionWithUpdate so
+ * that all interactions read the old density and volume before any update.
+ * Example: InteractionWithUpdate<ShepardDensityRegularizationWithWall>
+ *              regularize_density(fluid_inner_relation, fluid_wall_relation);
+ * The reconstructed result is staged in ShepardDensity. DensitySummation is
+ * neither computed nor modified: it denotes the raw geometric density sum used
+ * by existing boundary consumers such as FreeStreamVelocityCorrection. Callers
+ * using those consumers must compute that raw sum separately before applying
+ * this regularization; the regularization is not a replacement for that field.
+ *
+ * The zero-normal-gradient wall extension is not a hydrostatic or accelerating
+ * wall pressure condition. It does not supply an adaptive-resolution or a
+ * free-surface density constraint. Selecting this operator changes the density
+ * evolution, so an existing trajectory regression database is not validation
+ * of the new method. The caller must validate the chosen physical application.
+ */
+class ShepardDensityRegularizationWithWall
+    : public LocalDynamics, public DataDelegateInner, public DataDelegateContact
+{
+  public:
+    ShepardDensityRegularizationWithWall(BaseInnerRelation &inner_relation,
+                                         BaseContactRelation &wall_contact_relation);
+    virtual ~ShepardDensityRegularizationWithWall() {};
+    void interaction(size_t index_i, Real dt = 0.0);
+    void update(size_t index_i, Real dt = 0.0);
+
+  protected:
+    Real *rho_, *mass_, *rho_regularized_, *Vol_;
+    Real W0_;
+    StdVec<Real> contact_inv_rho0_;
+    StdVec<Real *> contact_mass_;
+};
 } // namespace fluid_dynamics
 } // namespace SPH
 #endif // DENSITY_SUMMATION_INNER_H
