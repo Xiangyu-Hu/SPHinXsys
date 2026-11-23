@@ -5559,6 +5559,24 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
         syncVariableToDevice<Real>(particles, kOphelieTemperatureField);
         syncVariableToDevice<Real>(particles, kOphelieThermalDeltaTField);
     };
+    // Doc235 F: T=1200+100*(1+0.5*(r/R)^2)*(2*(z-zb)/H-1)^2 — vertical slope varies with r.
+    auto set_rz_quad = [&]() {
+        for (size_t i = 0; i < n; ++i)
+        {
+            const Real dx = pos[i][0] - french.glass_center[0];
+            const Real dy = pos[i][1] - french.glass_center[1];
+            const Real r = std::sqrt(dx * dx + dy * dy);
+            const Real rr = std::min(Real(1), r / std::max(R, TinyReal));
+            const Real a = (pos[i][2] - z_bot) / std::max(H, TinyReal);
+            const Real s = Real(2) * std::min(Real(1), std::max(Real(0), a)) - Real(1);
+            const Real amp = Real(1) + Real(0.5) * rr * rr;
+            const Real Ti = Real(1200) + Real(100) * amp * s * s;
+            T[i] = Ti;
+            dT[i] = Ti - t0;
+        }
+        syncVariableToDevice<Real>(particles, kOphelieTemperatureField);
+        syncVariableToDevice<Real>(particles, kOphelieThermalDeltaTField);
+    };
 
     struct FaceCase
     {
@@ -5631,6 +5649,31 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
             const Real Tr2 = tr * tr;
             return fc.emissivity * sb * A_disk * (Tf2 * Tf2 - Tr2 * Tr2);
         }
+        if (field == "rz_quad")
+        {
+            // Face T(r)=1300+50(r/R)^2; disk mean=1325. Side: 1200+150*s^2 → mean 1250.
+            const Real T_side_mean = Real(1250);
+            const Real T_disk_mean = Real(1325);
+            if (std::strcmp(fc.face, "side") == 0)
+                return fc.h_side * A_side * (T_side_mean - tc);
+            if (std::strcmp(fc.face, "bottom") == 0)
+                return fc.h_bottom * A_disk * (T_disk_mean - tc);
+            if (std::strcmp(fc.face, "free_conv") == 0)
+                return fc.h_free * A_disk * (T_disk_mean - ta);
+            const int nbin = 400;
+            double acc = 0.0;
+            for (int k = 0; k < nbin; ++k)
+            {
+                const double r0 = R * (static_cast<double>(k) / nbin);
+                const double r1 = R * (static_cast<double>(k + 1) / nbin);
+                const double rm = 0.5 * (r0 + r1);
+                const double Tk = 1300.0 + 50.0 * (rm / R) * (rm / R);
+                const double dA = M_PI * (r1 * r1 - r0 * r0);
+                acc += dA * Tk * Tk * Tk * Tk;
+            }
+            const double Tr2 = static_cast<double>(tr) * static_cast<double>(tr);
+            return static_cast<Real>(fc.emissivity * sb * (acc - A_disk * Tr2 * Tr2));
+        }
         // linear_z: surface integral on geometric cylinder (not particle weights).
         if (std::strcmp(fc.face, "side") == 0)
         {
@@ -5659,6 +5702,7 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
     {
         fields.push_back("radial_quad");
         fields.push_back("parabolic_z");
+        fields.push_back("rz_quad"); // Doc235 F cross r–z manufactured field
     }
 
     for (const auto &field : fields)
@@ -5671,6 +5715,8 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
                 set_linear_z();
             else if (field == "radial_quad")
                 set_radial_quad();
+            else if (field == "rz_quad")
+                set_rz_quad();
             else
                 set_parabolic_z();
 
@@ -5693,8 +5739,18 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
                     dTdz_top = loc.top_ok ? loc.dTdz_top : Real(0);
                     std::cout << "[ophelie][doc234][E] local_dt_dz field=" << field << " face=" << fc.face
                               << " band=" << band << " n_bot=" << loc.n_bottom << " ok_bot=" << (loc.bottom_ok ? 1 : 0)
-                              << " dTdz_bot=" << dTdz_bot << " n_top=" << loc.n_top
-                              << " ok_top=" << (loc.top_ok ? 1 : 0) << " dTdz_top=" << dTdz_top << "\n";
+                              << " dTdz_bot=" << dTdz_bot << " z_var_bot=" << loc.bottom_detail.z_var
+                              << " det_bot=" << loc.bottom_detail.det
+                              << " fail_bot=" << loc.bottom_detail.fail_reason << " n_top=" << loc.n_top
+                              << " ok_top=" << (loc.top_ok ? 1 : 0) << " dTdz_top=" << dTdz_top
+                              << " z_var_top=" << loc.top_detail.z_var << " det_top=" << loc.top_detail.det
+                              << " fail_top=" << loc.top_detail.fail_reason << "\n";
+                    if (!loc.bottom_ok)
+                        std::cout << "[ophelie][doc235][F] fit_fallback face=bottom field=" << field
+                                  << " reason=" << loc.bottom_detail.fail_reason << " slope_forced=0\n";
+                    if (!loc.top_ok)
+                        std::cout << "[ophelie][doc235][F] fit_fallback face=top field=" << field
+                                  << " reason=" << loc.top_detail.fail_reason << " slope_forced=0\n";
                 }
                 else
                 {
@@ -5781,7 +5837,9 @@ inline bool runDoc232BoundaryFaceAudit(SPHBody &glass_body, BaseParticles &parti
     {
         std::cout << "[ophelie][doc233][D] BOUNDARY_RECONSTRUCTION_SCOPE="
                   << (all_ok ? "PASS_WITHIN_TOL" : "LIMITED_OR_FAIL")
-                  << " note=band|global_dt_dz|local_dt_dz; parabolic_z stresses vertical nonlinearity; see CSV\n";
+                  << " note=band|global_dt_dz|local_dt_dz; parabolic_z+rz_quad stress face-slope limits; see CSV\n";
+        std::cout << "[ophelie][doc235][F] rz_quad=T=1200+100*(1+0.5*(r/R)^2)*(2*(z-zb)/H-1)^2 "
+                     "local_dt_dz=per-face-single-slope (not per-point 2D)\n";
     }
     return all_ok;
 }
@@ -7689,23 +7747,31 @@ int main(int ac, char *av[])
         }
         // Doc223 E1 / Doc230 isothermal: zero-U alone leaves DensityChangeRate/Force/Displacement
         // from the last acoustic cycle; keep then re-excites U (client NC tripped Doc224 0.05 gate).
-        // Doc235 B: dens flush previously left settle Pressure + stale ForcePrior → first acoustic kick.
+        // Doc235 B fix1: dens flush + EOS Pressure sync + ForcePrior(gravity) — fixed stale (ρ,p,FP)
+        // but did NOT reduce first-acoustic / t=0.01 U_rms (bit-match baseline).
+        // Doc235 B fix2 (zero_q): skip dens summation flush; keep settle Density/Pressure, only clear
+        // DCR/Force/Displacement and rebuild ForcePrior(gravity). dens flush itself injects an
+        // EOS ∇p that is not hydrostatically balanced → acoustic kick.
         if (local_cli.doc223_paper_flat_slip_top || local_cli.literature.zero_q)
         {
             hostZeroRealFieldFrench(glass_particles, "DensityChangeRate");
             hostZeroVecFieldFrench(glass_particles, "Force");
             hostZeroVecFieldFrench(glass_particles, "Displacement");
-            run_density_update();
-            fluid_advection_step_setup.exec();
-            if (local_cli.kernel_correction || local_cli.enable_tvf)
-                fluid_linear_correction_matrix.exec();
-            // Rebuild mechanics consistent with post-flush Density (keep U=0).
+            const bool doc235_skip_dens_flush = local_cli.literature.zero_q && !local_cli.doc223_paper_flat_slip_top;
+            if (!doc235_skip_dens_flush)
+            {
+                run_density_update();
+                fluid_advection_step_setup.exec();
+                if (local_cli.kernel_correction || local_cli.enable_tvf)
+                    fluid_linear_correction_matrix.exec();
+            }
+            // Rebuild mechanics (keep U=0). Skip EOS rewrite when dens was not refreshed.
             if (local_cli.doc220_pprime_hydro || local_cli.background_hydro_p)
             {
                 hostFreezeDensityToRho0(glass_particles, rho0);
                 apply_french_background_ph();
             }
-            else
+            else if (!doc235_skip_dens_flush)
             {
                 hostSyncEosPressureFromDensity(glass_particles, rho0, local_cli.c0);
             }
@@ -7720,6 +7786,11 @@ int main(int ac, char *av[])
                                                 french.dp);
                 std::cout << "[ophelie][doc223][E1] post-settle flush: dens/adv + EOS-Pressure sync + "
                              "ForcePrior(gravity) rebuild (Doc235)\n";
+            }
+            else if (doc235_skip_dens_flush)
+            {
+                std::cout << "[ophelie][doc235][B] post-settle flush: skip dens; keep settle Density/Pressure; "
+                             "clear DCR/Force/Displacement + ForcePrior(gravity); U/Force cleared\n";
             }
             else
             {

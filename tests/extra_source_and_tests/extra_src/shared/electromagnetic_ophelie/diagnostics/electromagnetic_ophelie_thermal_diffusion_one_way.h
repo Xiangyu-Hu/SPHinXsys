@@ -242,7 +242,19 @@ inline Real hostFitMassWeightedTemperatureDTdz(BaseParticles &particles,
     return static_cast<Real>((sw * szt - sz * st) / det);
 }
 
-/** Doc234 E: near-face band fits (bottom / free) for local vertical extrapolation. */
+/** Doc234 E / Doc235 F: near-face band fits (bottom / free) for local vertical extrapolation. */
+struct OphelieDTdzFitDetail
+{
+    Real dTdz = Real(0);
+    size_t n_used = 0;
+    double sw = 0.0;
+    double z_var = 0.0;   // mass-weighted Var(z)
+    double det = 0.0;     // sw*szz - sz*sz
+    bool slope_finite = false;
+    bool ok = false;
+    const char *fail_reason = "none";
+};
+
 struct OphelieLocalFaceDTdz
 {
     Real dTdz_bottom = Real(0);
@@ -251,12 +263,14 @@ struct OphelieLocalFaceDTdz
     size_t n_top = 0;
     bool bottom_ok = false;
     bool top_ok = false;
+    OphelieDTdzFitDetail bottom_detail;
+    OphelieDTdzFitDetail top_detail;
 };
 
-inline Real hostFitMassWeightedDTdzInZBand(BaseParticles &particles, Real z_lo, Real z_hi,
-                                           size_t &n_used,
-                                           const std::string &temperature_field = "Temperature")
+inline OphelieDTdzFitDetail hostFitMassWeightedDTdzInZBandDetailed(
+    BaseParticles &particles, Real z_lo, Real z_hi, const std::string &temperature_field = "Temperature")
 {
+    OphelieDTdzFitDetail out;
     syncVariableToHost<Vecd>(particles, "Position");
     syncVariableToHost<Real>(particles, temperature_field);
     syncVariableToHost<Real>(particles, "Mass");
@@ -265,27 +279,65 @@ inline Real hostFitMassWeightedDTdzInZBand(BaseParticles &particles, Real z_lo, 
     const Real *mass = particles.getVariableDataByName<Real>("Mass");
     const size_t n = particles.TotalRealParticles();
     double sw = 0.0, sz = 0.0, st = 0.0, szz = 0.0, szt = 0.0;
-    n_used = 0;
     for (size_t i = 0; i < n; ++i)
     {
         const double z = static_cast<double>(pos[i][2]);
         if (z < static_cast<double>(z_lo) || z > static_cast<double>(z_hi))
             continue;
         const double m = static_cast<double>(mass[i]);
-        if (!(m > 0.0) || !std::isfinite(static_cast<double>(temp[i])))
-            continue;
         const double T = static_cast<double>(temp[i]);
+        if (!(m > 0.0) || !std::isfinite(T))
+            continue;
         sw += m;
         sz += m * z;
         st += m * T;
         szz += m * z * z;
         szt += m * z * T;
-        ++n_used;
+        ++out.n_used;
     }
-    const double det = sw * szz - sz * sz;
-    if (!(sw > 0.0) || !(std::abs(det) > 1.0e-30) || n_used < 4)
-        return Real(0);
-    return static_cast<Real>((sw * szt - sz * st) / det);
+    out.sw = sw;
+    out.det = sw * szz - sz * sz;
+    out.z_var = (sw > 0.0) ? (out.det / (sw * sw)) : 0.0;
+    const double band_h = std::max(static_cast<double>(z_hi - z_lo), 0.0);
+    // Effective height layers: need nontrivial z spread vs band (Doc235 F3).
+    const double z_var_min = std::max(1.0e-16, 1.0e-4 * band_h * band_h);
+    if (out.n_used < 4)
+    {
+        out.fail_reason = "n_lt_4";
+        return out;
+    }
+    if (!(sw > 0.0))
+    {
+        out.fail_reason = "sw_le_0";
+        return out;
+    }
+    if (!(std::abs(out.det) > 1.0e-30) || !(out.z_var > z_var_min))
+    {
+        out.fail_reason = "z_var_or_det_degenerate";
+        return out;
+    }
+    const double slope = (sw * szt - sz * st) / out.det;
+    out.slope_finite = std::isfinite(slope);
+    if (!out.slope_finite)
+    {
+        out.fail_reason = "slope_nonfinite";
+        return out;
+    }
+    out.dTdz = static_cast<Real>(slope);
+    out.ok = true;
+    out.fail_reason = "none";
+    return out;
+}
+
+inline Real hostFitMassWeightedDTdzInZBand(BaseParticles &particles, Real z_lo, Real z_hi,
+                                           size_t &n_used,
+                                           const std::string &temperature_field = "Temperature")
+{
+    const OphelieDTdzFitDetail d =
+        hostFitMassWeightedDTdzInZBandDetailed(particles, z_lo, z_hi, temperature_field);
+    n_used = d.n_used;
+    // Doc235 F3: degenerate fit returns 0 and must not be treated as a valid slope elsewhere.
+    return d.ok ? d.dTdz : Real(0);
 }
 
 inline OphelieLocalFaceDTdz hostFitLocalFaceBandDTdz(BaseParticles &particles, Real z_bot, Real z_top,
@@ -294,10 +346,14 @@ inline OphelieLocalFaceDTdz hostFitLocalFaceBandDTdz(BaseParticles &particles, R
 {
     OphelieLocalFaceDTdz out;
     const Real b = std::max(band, TinyReal);
-    out.dTdz_bottom = hostFitMassWeightedDTdzInZBand(particles, z_bot, z_bot + b, out.n_bottom, temperature_field);
-    out.dTdz_top = hostFitMassWeightedDTdzInZBand(particles, z_top - b, z_top, out.n_top, temperature_field);
-    out.bottom_ok = out.n_bottom >= 4;
-    out.top_ok = out.n_top >= 4;
+    out.bottom_detail = hostFitMassWeightedDTdzInZBandDetailed(particles, z_bot, z_bot + b, temperature_field);
+    out.top_detail = hostFitMassWeightedDTdzInZBandDetailed(particles, z_top - b, z_top, temperature_field);
+    out.n_bottom = out.bottom_detail.n_used;
+    out.n_top = out.top_detail.n_used;
+    out.bottom_ok = out.bottom_detail.ok;
+    out.top_ok = out.top_detail.ok;
+    out.dTdz_bottom = out.bottom_ok ? out.bottom_detail.dTdz : Real(0);
+    out.dTdz_top = out.top_ok ? out.top_detail.dTdz : Real(0);
     return out;
 }
 
