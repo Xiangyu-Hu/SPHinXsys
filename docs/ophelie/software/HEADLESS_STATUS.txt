@@ -1,0 +1,25 @@
+OPHELIE Linux software — headless progress snapshot
+Date: 2026-11-21
+Git: feature/EM-Biot-Savart @ 832dbc782 (plus local software/ worktree changes)
+
+DONE (no display required)
+- coldcrucible-solver: info/validate/prepare/run/inspect-run/import-history/selfcheck
+- NC prepare+run on this host: PASS (runs/ssh_nc_iso2, summary passed=1)
+- Stir prepare on this host: PASS (prepared/687ffa80fec95a2e, elastic_driven)
+- Desktop binary builds (Qt5+VTK); STL browse, results-root chooser, open run dir
+- Linux bundle skeleton with SYCL/UR libs + Qt/VTK lib list packaging
+- Anti-overclaim notes in effective-case / result-index
+
+BLOCKED / PENDING
+- A01 GUI launch: no DISPLAY (SSH)
+- A06 F0 fresh run: user running / optional (slow stainless substeps)
+- A15 clean-machine pack test
+- Full customer installer polish + license audit for bundled .so
+- Rich in-GUI field coloring / time slider (hooks only)
+
+NEXT when display available
+1) ./software/desktop/build/ophelie_desktop or bundle bin/ophelie-desktop.sh
+2) Open NC example → validate → prepare → run → open result dir
+3) Open stir example → validate → prepare → (short) run or history F0
+
+F0 note: use cancel.request in run dir to stop; history_f0 remains valid demo replay.

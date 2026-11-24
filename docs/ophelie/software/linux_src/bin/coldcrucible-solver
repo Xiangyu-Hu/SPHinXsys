@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LINUX_SRC="$(cd "$HERE/.." && pwd)"
+export PYTHONPATH="${LINUX_SRC}${PYTHONPATH:+:$PYTHONPATH}"
+# Optional overrides for other machines:
+#   export OPHELIE_REPO_ROOT=/path/to/SPHinXsys
+#   export OPHELIE_BUILD=$OPHELIE_REPO_ROOT/build
+#   export OPHELIE_EXAMPLES_ROOT=$LINUX_SRC/examples
+exec python3 -m coldcrucible_solver "$@"

@@ -1,0 +1,65 @@
+{
+  "schema_version": "ophelie-case-2026-11-21",
+  "case_id": "client_stir_dev_10rpm",
+  "project_name": "甲方机械搅拌 elastic_driven（开发短跑）",
+  "purpose": "function_verification_dev_params",
+  "stirring": {
+    "enabled": true,
+    "mechanics_mode": "elastic_driven",
+    "rpm": 10,
+    "rpm_status": "confirmed",
+    "omega_ramp_s": 0.05,
+    "clamp_top_band_m": 0.05
+  },
+  "assembly": {
+    "stl_unit": "mm",
+    "roles": {
+      "crucible": "assets/glass.STL",
+      "coil": "assets/coil.STL",
+      "cooling_pipes": "assets/cooling-pipes-1.STL",
+      "thermocouple": "assets/thermal-couple-1.STL",
+      "paddle": "assets/stirring paddle.STL",
+      "paddle_solver": "assets/client_stir_paddle_solver_m.stl"
+    }
+  },
+  "geometry": {
+    "melt_height_m": 0.180
+  },
+  "material": {
+    "material_id": "french_table1_sigma16_borrowed",
+    "mu_preset": "frozen_at_reference_T",
+    "mu_Pa_s_at_ref": 14.53201199,
+    "mu_freeze_T_K": 1273.15,
+    "sigma_S_per_m_at_ref": 16,
+    "rho_kg_m3": 2700,
+    "paddle_material": "stainless_304_dev_room_temp",
+    "notes": "elastic_driven required; rigid animation forbidden"
+  },
+  "thermal": {
+    "t_initial_k": 1273.15,
+    "t_initial_status": "provisional"
+  },
+  "heating": {
+    "mode": "none",
+    "generator_input_power_W": 30000,
+    "coil_current_A": 0,
+    "current_status": "unknown",
+    "note": "default F0 isothermal; F1 prescribed heat is NOT EM"
+  },
+  "numerics": {
+    "dp_m": 0.005
+  },
+  "run": {
+    "profile": "f0_isothermal_elastic_fsi",
+    "end_time_s": 0.05,
+    "backend": "nvidia_sycl_gpu"
+  },
+  "acceptance_scope": {
+    "allows": ["elastic_driven short-window F0", "optional F1 prescribed heat replay"],
+    "forbids": [
+      "label E2 short window as full 2pi revolution",
+      "label F1 prescribed heat as solved EM",
+      "claim 1400C quantitative PASS"
+    ]
+  }
+}

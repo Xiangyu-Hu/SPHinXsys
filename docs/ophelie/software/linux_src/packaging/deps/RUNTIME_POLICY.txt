@@ -1,0 +1,20 @@
+OPHELIE Linux runtime dependency policy (draft)
+
+A. Must come from target machine (do NOT ship Toolkit stubs as driver)
+- NVIDIA driver: libcuda.so.1 (and kernel modules)
+- Display stack for GUI: X11/Wayland + OpenGL
+
+B. GUI stack (now copied into bundle/lib + bundle/plugins when packaging)
+- Qt5 libs + platforms/libqxcb.so (see qt_vtk_libs.txt)
+- VTK 9.1 GUISupportQt and related .so
+- Still needs a working display (DISPLAY/Wayland); SSH-only cannot validate GUI
+- License/redistribution of Ubuntu packages must be reviewed before customer shipment
+
+C. oneAPI / Codeplay (copied into bundle/lib by make_linux_bundle.sh)
+- libsycl.so.8, libur_loader.so.0, libur_adapter_cuda.so*
+- Intel math/TBB helpers as pulled by ldd
+→ Launcher sets LD_LIBRARY_PATH=$bundle/lib
+
+See ldd_snapshot.txt / BUNDLED_LIBS.txt for this host's concrete graph.
+Do not claim A15 PASS until a clean machine runs without sourcing developer setvars
+and GUI/CLI both start with only NVIDIA driver + (if still needed) minimal OS libs.
