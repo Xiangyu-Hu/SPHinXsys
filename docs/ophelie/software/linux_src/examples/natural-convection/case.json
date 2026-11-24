@@ -1,0 +1,54 @@
+{
+  "schema_version": "ophelie-case-2026-11-21",
+  "case_id": "client_nc_dev_frozen_mu_sigma16",
+  "project_name": "甲方自然对流（开发短跑）",
+  "purpose": "function_verification_dev_params",
+  "stirring": {
+    "enabled": false,
+    "mechanics_mode": "none"
+  },
+  "assembly": {
+    "stl_unit": "mm",
+    "roles": {
+      "crucible": "assets/glass_NC.STL",
+      "coil": "assets/coil_NC.STL",
+      "cooling_pipes": "assets/cooling-pipes_NC.STL",
+      "thermocouple": "assets/thermal-couple_NC.STL"
+    }
+  },
+  "geometry": {
+    "melt_height_m": 0.180
+  },
+  "material": {
+    "material_id": "french_table1_sigma16_borrowed",
+    "mu_preset": "frozen_at_reference_T",
+    "mu_Pa_s_at_ref": 14.53201199,
+    "mu_freeze_T_K": 1273.15,
+    "sigma_S_per_m_at_ref": 16,
+    "rho_kg_m3": 2700,
+    "notes": "frozen mu + borrowed sigma16; not full mu(T)/client-measured sigma"
+  },
+  "thermal": {
+    "t_initial_k": 1273.15,
+    "t_initial_status": "provisional"
+  },
+  "heating": {
+    "mode": "none",
+    "generator_input_power_W": 30000,
+    "coil_current_A": 0,
+    "current_status": "unknown",
+    "note": "30 kW generator input; current unknown; no online EM in this preset"
+  },
+  "numerics": {
+    "dp_m": 0.010
+  },
+  "run": {
+    "profile": "isothermal_hydro",
+    "end_time_s": 0.50,
+    "backend": "nvidia_sycl_gpu"
+  },
+  "acceptance_scope": {
+    "allows": ["isothermal hydro short run", "optional dT20 buoyancy smoke"],
+    "forbids": ["claim 1000C probe quantitative PASS", "claim full EM heating verified"]
+  }
+}

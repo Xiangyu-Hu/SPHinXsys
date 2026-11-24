@@ -1,0 +1,13 @@
+**/__pycache__/
+*.pyc
+desktop/build/
+dist/
+*.user
+*.autosave
+# Un-ignore launcher scripts and example cases (repo root ignores Bin/ and *.json)
+!bin/
+!bin/**
+!examples/**/case.json
+!packaging/**/*.txt
+!packaging/**/*.sh
+
