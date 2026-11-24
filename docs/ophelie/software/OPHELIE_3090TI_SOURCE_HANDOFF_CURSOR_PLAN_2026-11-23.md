@@ -6,7 +6,7 @@
 
 ## 0. 开工依据
 
-3090 Ti 上一次交接记录的工作树是 `/home/ubuntu/worktree/SPHinXsys-Ophelie-software`，当时的基线为 `feature/EM-Biot-Savart` 上的 `832dbc782`，`software/` 仍有未跟踪内容。以上是历史定位线索，先核对实际 checkout、当前 HEAD、已提交和未提交内容、活跃任务及最新验收结果。
+3090 Ti 上一次交接记录的工作树为仓库根任意 clone 路径（勿写死本机绝对路径），当时的基线为 `feature/EM-Biot-Savart` 上的 `832dbc782`；根目录 `software/` 为本地 WIP，正式交接树在 `docs/ophelie/software/linux_src/`。先核对实际 checkout、当前 HEAD、已提交和未提交内容、活跃任务及最新验收结果。
 
 上次证据覆盖 Linux GPU 的自然对流等温短窗新算、搅拌粒子准备、Qt5/VTK 桌面编译和打包骨架。SSH 下的实际 GUI 交互、3090 Ti 本机搅拌 F0 新算和干净环境发行包验收当时待补。历史回放、编译和本机新算各自记账。若本次已经补做，用对应的命令、日志和结果更新结论。
 

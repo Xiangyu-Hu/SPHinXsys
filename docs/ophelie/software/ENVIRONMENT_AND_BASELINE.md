@@ -1,7 +1,7 @@
 # ENVIRONMENT_AND_BASELINE（L0）
 
-日期：2026-11-21  
-工作树：`/home/ubuntu/worktree/SPHinXsys-Ophelie-software`  
+日期：2026-11-21（路径说明已于 2026-11-24 改为相对/可移植）  
+工作树：仓库根（任意 checkout；勿写死本机绝对路径）  
 对照：`230_OPHELIE_LINUX_DESKTOP_THIRD_PARTY_REVIEW_CURSOR_PLAN_2026-11-21.md` §2
 
 ## 1. 环境（已查）
@@ -55,16 +55,16 @@
 | NC relax + iso / ΔT20 | **本机复跑 passed=1**（2026-11-21 ~22:50） | `docs/.../handoff/.../nc/*.json`；reload 已生成 |
 | 搅拌 F0 | 本机曾启动；满窗可后补。交接 summary `ELASTIC_FSI_SHORT_PASS=1` | 不锈钢亚步慢；软件演示可用已落盘结果 |
 
-CMake（已验证）：Ninja + icx/icpx + SYCL `nvptx64-nvidia-cuda` + `CMAKE_PREFIX_PATH=/home/ubuntu/deps` + `-DFMT_HEADER_ONLY=1`；`SPHINXSYS_BUILD_3D_EXAMPLES=ON`。
+CMake（已验证）：Ninja + icx/icpx + SYCL `nvptx64-nvidia-cuda` + `CMAKE_PREFIX_PATH=$HOME/deps`（或本机第三方前缀）+ `-DFMT_HEADER_ONLY=1`；`SPHINXSYS_BUILD_3D_EXAMPLES=ON`。
 
 ## 5. 阻塞 / 缺项
 
-1. **无 Qt6 / VTK** → 阻塞 L2 GUI。  
+1. 早期记录：Qt6/VTK 未装 → 后改用 **Qt5 + VTK9.1**（见 `linux_src/desktop/`）。  
 2. **无 DISPLAY** → GUI 试跑需图形会话；CLI 可继续。  
-3. L1 适配层已落在 `software/`（info/validate/prepare/run）。
+3. L1 适配层现位于 `docs/ophelie/software/linux_src/`（info/validate/prepare/run）。
 
 ## 6. 下一步
 
-1. 安装 Qt6 Widgets + VTK，确认图形会话。  
-2. L1：用 `software/bin/coldcrucible-solver` 对两示例做 validate；需要时再 prepare/run。  
-3. L2：NC 桌面闭环。
+1. 安装 Qt5 Widgets + VTK（与 Qt5 同 ABI），确认图形会话。  
+2. L1：用 `docs/ophelie/software/linux_src/bin/coldcrucible-solver` 对两示例做 validate；需要时再 prepare/run。  
+3. L2：NC 桌面闭环（见 `LINUX_SOFTWARE_HANDOFF_3090TI.md`）。
