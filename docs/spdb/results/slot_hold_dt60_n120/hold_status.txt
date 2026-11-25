@@ -1,0 +1,17 @@
+updated_at=2026-10-23T17:50:18+0800
+phase=finished
+hold_physical_s=7200
+hold_step=120
+hold_steps_requested=120
+physical_dt_s=60
+target_hold_s=7200
+progress_frac=1
+relax_pseudo_s=0
+ke_J=1.666433769e-17
+max_penetration_m=9.061329142e-07
+cavity_net_height_m=0.01099683675
+mean_inelastic_lower=1.693358635e-05
+mean_inelastic_upper=1.422330254e-05
+aborted=0
+finished=1
+hold_is_7200s=1

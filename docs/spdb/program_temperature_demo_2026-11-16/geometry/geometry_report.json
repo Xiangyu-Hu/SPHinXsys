@@ -1,0 +1,67 @@
+{
+  "source_sha256": "6061ffb5e71e5e571d17ca60ea2a81f352fb361847a917d1cfaa0a73e4a89faf",
+  "original_units": "mm_assumed_by_user",
+  "generated_units": "m",
+  "original": {
+    "bounds": [
+      [
+        -20.0,
+        -20.0,
+        0.0
+      ],
+      [
+        20.0,
+        20.0,
+        20.0
+      ]
+    ],
+    "signed_volume": 23817.088169420815,
+    "triangles": 196,
+    "all_edges_two_faces": true
+  },
+  "lower": {
+    "bounds": [
+      [
+        -0.02,
+        -0.02,
+        -0.02
+      ],
+      [
+        0.02,
+        0.02,
+        0.0
+      ]
+    ],
+    "signed_volume": 2.38170881694208e-05,
+    "triangles": 196,
+    "all_edges_two_faces": true
+  },
+  "upper": {
+    "bounds": [
+      [
+        -0.02,
+        -0.02,
+        0.0
+      ],
+      [
+        0.02,
+        0.02,
+        0.02
+      ]
+    ],
+    "signed_volume": 2.38170881694208e-05,
+    "triangles": 196,
+    "all_edges_two_faces": true
+  },
+  "nominal_slot_each_mm": [
+    10,
+    10,
+    10
+  ],
+  "nominal_combined_void_mm": [
+    10,
+    10,
+    20
+  ],
+  "note": "Two separate bodies; interface at z=0; no welding. Exact source chamfers preserved."
+}

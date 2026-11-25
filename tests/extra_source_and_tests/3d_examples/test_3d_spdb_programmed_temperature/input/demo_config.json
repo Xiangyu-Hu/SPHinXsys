@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "case_name_proposed": "test_3d_spdb_programmed_temperature",
+  "geometry": {
+    "lower_stl": "geometry/lower_m.stl",
+    "upper_stl": "geometry/upper_m.stl",
+    "stl_scale": 1.0,
+    "internal_length_unit": "m",
+    "particle_spacing_m": 0.001,
+    "use_exact_source_surface": true
+  },
+  "temperature": {
+    "mode": "prescribed_uniform_all_specimen_particles",
+    "program_csv": "config/temperature_program.csv",
+    "reference_temperature_K": 293.15,
+    "last_600s_hold_assumption": true
+  },
+  "mechanics": {
+    "nominal_pressure_Pa": 5000000.0,
+    "reference_area_m2": 0.0012566370614359172,
+    "total_force_N": 6283.185307179587,
+    "load_mode": "constant_force_initial_area",
+    "pre_equilibrate_at_20C": true,
+    "bottom_bc": "axial_support_radially_free",
+    "friction_coefficient": 0.0,
+    "welding": false,
+    "void_pressure_Pa": 0
+  },
+  "material": {
+    "rate_model": "Ren2014_X20Cr13",
+    "coefficient_eval_strain_min": 0.05,
+    "stop_strain_max": 0.75,
+    "allow_low_rate_extrapolation": true,
+    "nonelastic_gate_assumption_C": [
+      850,
+      900
+    ],
+    "fallback_properties": {
+      "source": "demo_assumption_NOT_measured_NOT_from_Ren2014",
+      "E_Pa": 120000000000.0,
+      "nu": 0.3,
+      "rho_kg_m3": 7700,
+      "thermal_expansion_per_K": 1.2e-05
+    }
+  },
+  "time": {
+    "end_time_s": 1800,
+    "initial_macro_dt_s": 10,
+    "max_macro_dt_s": 30,
+    "land_exactly_on_program_breakpoints": true,
+    "physical_time_separate_from_relaxation_time": true
+  },
+  "excluded_physics": [
+    "heat_equation",
+    "electric_potential",
+    "joule_heating",
+    "graphite",
+    "plasma",
+    "metallurgical_bonding",
+    "phase_transformation"
+  ],
+  "machine_context_only": {
+    "current_A": 1000,
+    "voltage_V": 5,
+    "power_W": 5000,
+    "apply_as_bc": false
+  }
+}

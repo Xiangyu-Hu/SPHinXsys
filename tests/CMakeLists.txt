@@ -34,8 +34,13 @@ if(NOT SPHINXSYS_USE_SYCL)
         ADD_SUBDIRECTORY(extra_source_and_tests)
     endif()
 
+else()
+    # SYCL/GPU builds skip CPU extra examples, but SPDB GPU cases still need
+    # extra_src (Ren2014, ContactPenaltyForceCK, axial CK helpers).
+    if(SPHINXSYS_BUILD_EXTRA_SOURCE_AND_TESTS AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/extra_source_and_tests/extra_src/CMakeLists.txt)
+        ADD_SUBDIRECTORY(extra_source_and_tests/extra_src)
+    endif()
 endif()
-
 if(SPHINXSYS_BUILD_USER_EXAMPLES)
     ADD_SUBDIRECTORY(user_examples)
 endif()

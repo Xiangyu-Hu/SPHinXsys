@@ -1,0 +1,8 @@
+started_at=2026-10-23T10:56:23+08:00
+out=/home/ubuntu/software/SPHinXsys-SPDB/docs/spdb/results/slot_hold_dt60_n120
+dp=0.001
+physical_dt=60
+hold_steps=120
+target_hold_s=7200
+bin=/home/ubuntu/software/SPHinXsys-SPDB/build-cpu-icpx/tests/extra_source_and_tests/3d_examples/test_3d_spdb_geometry/bin/test_3d_spdb_geometry
+note=NOT_claimed_complete_until_finished=1_in_hold_status.txt

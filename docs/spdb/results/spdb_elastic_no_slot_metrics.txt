@@ -1,0 +1,15 @@
+case=test_3d_spdb_geometry
+units=SI
+material_source=synthetic
+material_note=NOT_950C_20Cr13_prediction
+particle_spacing_m=0.001
+cylinder_radius_m=0.02
+cylinder_height_m=0.02
+slot_mode=0
+theoretical_slot_volume_m3=1e-06
+theoretical_lower_volume_m3=2.513274123e-05
+theoretical_upper_volume_m3=2.513274123e-05
+lower_particles=25280
+upper_particles=25280
+lower_discrete_volume_m3=2.528e-05
+upper_discrete_volume_m3=2.528e-05

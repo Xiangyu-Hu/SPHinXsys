@@ -1052,3 +1052,16 @@ build_wasm_debug
 # CodeQL
 _codeql_detected_source_root
 build_test/
+
+# SPDB local artifacts (keep source/docs; exclude bulky run products)
+/output/
+docs/spdb/**/*.vtp
+docs/spdb/**/*.zip
+docs/spdb/**/*.tar.gz
+docs/spdb/**/*.gif
+docs/spdb/**/*.png
+docs/spdb/results/**/output*/
+docs/spdb/results/**/vtk/
+docs/spdb/results/**/output_backup/
+docs/spdb/results/**/job.pid
+docs/spdb/results/**/hold_heartbeat

@@ -1,0 +1,14 @@
+updated_at=2026-11-19T22:03:53+0800
+phase=finished
+physical_s=1800
+end_s=1800
+progress_frac=1
+temperature_C=950
+gate=1
+ke_J=7.583552442e-15
+max_penetration_m=3.400733467e-07
+cavity_net_height_m=0.02099804552
+mean_inelastic_lower=3.961130287e-08
+mean_inelastic_upper=4.526961848e-08
+aborted=0
+finished=1

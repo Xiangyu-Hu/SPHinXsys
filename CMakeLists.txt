@@ -126,6 +126,11 @@ target_compile_definitions(sphinxsys_lib INTERFACE SPHINXSYS_USE_ONEDPL=$<BOOL:$
 if(SPHINXSYS_USE_SYCL)
     set(SPHINXSYS_USE_SYCL ON)
 
+    # icpx SYCL device pass: long double stays 16 bytes but digits==53, so
+    # system libfmt 9 has no dragonbox::float_info match. Shadow header fixes it.
+    target_include_directories(sphinxsys_core INTERFACE
+        $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/cmake/fmt_sycl_fix>)
+
     if(${CMAKE_SYSTEM_NAME} MATCHES Windows)
         target_compile_options(sphinxsys_lib INTERFACE -Wno-ignored-attributes)
         target_compile_options(sphinxsys_lib INTERFACE -Wno-null-dereference)
