@@ -260,6 +260,28 @@ struct OphelieClientProbeDefinition
  * Nominal tip = lower end of thermocouple AABB (CAD vertical = Y).
  * NOT confirmed as the true RTD/junction location.
  */
+/**
+ * Doc248: engineering mid-radius virtual probe (NOT the CAD thermocouple AABB tip).
+ * r = 0.5 * R_glass, depth = 0.12 m below free surface; azimuth +X (avoids client paddle
+ * axis eccentricity near −X). Mark ASSUMED until client confirms theta.
+ */
+inline OphelieClientProbeDefinition makeClientMidradiusDepth12cmProbe(Real melt_radius_m, Real melt_bottom_z_m,
+                                                                      Real melt_height_m,
+                                                                      Real target_temperature_k = Real(1273.15))
+{
+    OphelieClientProbeDefinition p;
+    p.probe_id = "client_midradius_probe";
+    p.status = "engineering_assumed_midradius_depth12cm";
+    const Real z_surface = melt_bottom_z_m + melt_height_m;
+    const Real z_probe = z_surface - Real(0.12);
+    const Real r = Real(0.5) * melt_radius_m;
+    p.solver_m = {r, Real(0), z_probe};
+    p.cad_tip_mm_raw = {r * Real(1.0e3), z_probe * Real(1.0e3), Real(0)};
+    p.target_temperature_k = target_temperature_k;
+    p.target_meaning = "Doc248 NC ~1000C / stir trend ~1400C at midradius; not a Dirichlet BC";
+    return p;
+}
+
 inline OphelieClientProbeDefinition makeClientNominalThermocoupleProbe(const OphelieClientAssemblyCatalog &cat)
 {
     OphelieClientProbeDefinition p;

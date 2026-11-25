@@ -28,4 +28,4 @@
 
 ## 复跑命令
 
-见同目录 `COMPILE_AND_RUN.sh` 与下方用户消息中的分步命令。完整物理说明：`docs/ophelie/230_CLIENT_CASE_PHYSICS_LANDING_2026-11-20.md`。
+见同目录 `COMPILE_AND_RUN.sh` 与下方用户消息中的分步命令。完整物理说明：`docs/ophelie/archive/DOCS_201_250_MERGED.md`（Doc230）。

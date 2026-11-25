@@ -1,8 +1,8 @@
 {
   "schema_version": "ophelie-case-2026-11-21",
-  "case_id": "client_nc_dev_frozen_mu_sigma16",
-  "project_name": "甲方自然对流（开发短跑）",
-  "purpose": "function_verification_dev_params",
+  "case_id": "client_nc_flat_slip_assumed15kW_1s",
+  "project_name": "甲方自然对流（固定域 + ASSUMED 15kW 短跑）",
+  "purpose": "linux_entry_engineering_default",
   "stirring": {
     "enabled": false,
     "mechanics_mode": "none"
@@ -17,7 +17,9 @@
     }
   },
   "geometry": {
-    "melt_height_m": 0.180
+    "melt_height_m": 0.180,
+    "top_surface_model": "paper_flat_slip_top",
+    "top_surface_identity": "CLIENT_NC_FLAT_SLIP_ENGINEERING"
   },
   "material": {
     "material_id": "french_table1_sigma16_borrowed",
@@ -33,22 +35,35 @@
     "t_initial_status": "provisional"
   },
   "heating": {
-    "mode": "none",
+    "mode": "fixed_absorbed_power",
+    "target_absorbed_power_W": 15000,
+    "power_status": "ASSUMED",
     "generator_input_power_W": 30000,
-    "coil_current_A": 0,
+    "coil_current_A": null,
     "current_status": "unknown",
-    "note": "30 kW generator input; current unknown; no online EM in this preset"
+    "em_control": "fixed-power",
+    "em_update_interval_s": 0.1,
+    "aind": "off",
+    "note": "ASSUMED glass absorbed 15 kW; generator 30 kW ≠ efficiency 50%; current is solved/unknown, not given_current"
   },
   "numerics": {
     "dp_m": 0.010
   },
   "run": {
-    "profile": "isothermal_hydro",
-    "end_time_s": 0.50,
+    "profile": "fixed_absorbed_power_em",
+    "end_time_s": 1.0,
+    "state_record_interval_s": 0.25,
     "backend": "nvidia_sycl_gpu"
   },
   "acceptance_scope": {
-    "allows": ["isothermal hydro short run", "optional dT20 buoyancy smoke"],
-    "forbids": ["claim 1000C probe quantitative PASS", "claim full EM heating verified"]
+    "allows": [
+      "EM_THERMAL_WIRING short run under CLIENT_NC_FLAT_SLIP_ENGINEERING",
+      "ASSUMED 15 kW absorbed power control chain"
+    ],
+    "forbids": [
+      "claim experimental NC validation",
+      "claim generator 30 kW equals melt absorbed",
+      "silently fall back to zero-q / isothermal"
+    ]
   }
 }

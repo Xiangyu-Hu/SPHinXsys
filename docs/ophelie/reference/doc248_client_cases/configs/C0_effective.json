@@ -1,0 +1,29 @@
+{
+  "case_id": "doc248_C0_client_nc",
+  "role": "client natural convection baseline (no paddle)",
+  "geometry": {
+    "flags": "--client-nc-geometry --client-nc-material",
+    "dp_m": 0.010,
+    "melt_height_m": 0.180,
+    "top": "--doc223-paper-flat-slip-top"
+  },
+  "heating": {
+    "em_control": "fixed-power",
+    "target_absorbed_power_W": 15000,
+    "status": "ASSUMED",
+    "generator_input_power_W": 30000,
+    "em_update_interval_s": 0.5,
+    "aind": "off"
+  },
+  "thermal": {
+    "t_initial_k": 1273.15,
+    "note": "uniform ~1000C development IC; midradius probe constrained loosely; not Dirichlet"
+  },
+  "probes": ["client_midradius_probe", "legacy_centerline_probes_tip_proxy"],
+  "run_default": {
+    "end_time_s": 60,
+    "state_record_interval_s": 5,
+    "max_wall_hours_via_timeout": 10
+  },
+  "particles": "regenerate via 01_generate_particles.sh (NC relax); no pre-shipped Reload"
+}

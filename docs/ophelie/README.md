@@ -23,10 +23,9 @@
 | [`archive/DOCS_051_100_MERGED.md`](archive/DOCS_051_100_MERGED.md) | Docs 51–100 combined archive |
 | [`archive/DOCS_101_150_MERGED.md`](archive/DOCS_101_150_MERGED.md) | Docs 101–150 combined archive |
 | [`archive/DOCS_151_200_MERGED.md`](archive/DOCS_151_200_MERGED.md) | Docs 151–200 combined archive |
-| [`archive/DOCS_201_250_MERGED.md`](archive/DOCS_201_250_MERGED.md) | Docs 201–227 combined archive (through Doc227 plan) |
+| [`archive/DOCS_201_250_MERGED.md`](archive/DOCS_201_250_MERGED.md) | Docs 201–247 combined archive (plans through Doc247; standalone removed) |
 | [`archive/README_MERGED_DOCS.md`](archive/README_MERGED_DOCS.md) | Merge policy / volume index |
 | [`OPHELIE_BRANCH_STATUS_2026-11-20.md`](OPHELIE_BRANCH_STATUS_2026-11-20.md) | Branch snapshot: natural / stirring done vs gaps (2026-11-20) |
-| [`230_CLIENT_CASE_PHYSICS_LANDING_2026-11-20.md`](230_CLIENT_CASE_PHYSICS_LANDING_2026-11-20.md) | Client materials/geometry/presets landing (Doc229) |
 | [OPHELIE_CURRENT_CODE_AUDIT.md](OPHELIE_CURRENT_CODE_AUDIT.md) | 2026-08 code audit vs Jacoutot papers |
 | [OPHELIE_STAGE3_4_CLOSEOUT_AND_FRENCH_NATURAL_NEXT_PLAN_2026-08-11.md](OPHELIE_STAGE3_4_CLOSEOUT_AND_FRENCH_NATURAL_NEXT_PLAN_2026-08-11.md) | Binding plan: φ dual gate, σ_nat, Stage 3.5 → Natural thermal / Stage 4.x |
 
@@ -46,11 +45,12 @@
 
 | Doc | Role |
 |-----|------|
-| [`archive/DOCS_201_250_MERGED.md`](archive/DOCS_201_250_MERGED.md) | Docs 201–227 plans/summaries (standalone files removed) |
-| [`reference/standard_data/`](reference/standard_data/) | Fig.7/8 literature PNG+CSV + Fig.8 ASSUMED T input |
+| [`archive/DOCS_201_250_MERGED.md`](archive/DOCS_201_250_MERGED.md) | Docs 201–247 plans/summaries (standalone files removed) |
+| [`reference/standard_data/`](reference/standard_data/) | Fig.7/8 literature PNG+CSV；Doc247 seeds + digitization keepers |
 | [`reference/jacoutot_sigma_t/`](reference/jacoutot_sigma_t/) | Thesis σ(T) digitization CSVs |
+| [`reference/doc247_longrun_four_cases/`](reference/doc247_longrun_four_cases/) | Overnight recipe scripts / locked decisions (no run dumps) |
 
-`reference/doc*_runs/` and `DOC*_ROUND_PACK*` are **local-only** (gitignored); use your local packs for run evidence.
+`reference/doc*_runs/`、`OPHELIE_Doc*_round_handoff_*`、`*.zip`/`*.tar.gz`、overnight 输出、`*.vtp`/`*.log` 均为 **local-only**（已 gitignore）。源码只放在 `tests/.../extra_src` 与对应 case 目录，不要放进 `docs/`。
 
 **Geometry freeze:** glass Ø **500 mm** (thesis; user-confirmed 2026-09-30). Crucible Ø650 mm ≠ melt diameter.
 

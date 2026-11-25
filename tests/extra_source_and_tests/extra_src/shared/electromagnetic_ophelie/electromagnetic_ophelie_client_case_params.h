@@ -119,7 +119,7 @@ struct OphelieClientCaseParams
     /** Parametric melt fill height [m]; provisional until client confirms liquid depth. */
     Real melt_height_m = Real(0.180);
     OphelieClientConfirmation melt_height_status = OphelieClientConfirmation::Provisional;
-    Real particle_spacing_m = Real(0.010); // coarse development default
+    Real particle_spacing_m = Real(0.005); // match client case.json default; override via --dp=
 };
 
 inline OphelieClientCaseParams makeClientNaturalConvectionDevelopmentParams()

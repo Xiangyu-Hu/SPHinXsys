@@ -67,6 +67,7 @@ struct SkinLocalCli
     OphelieCylinderReferenceMode reference_mode = OphelieCylinderReferenceMode::FullSkin;
     std::string dump_radial_csv;            // Doc197: mid-plane radial J/Q vs analytic
     std::string dump_midplane_particle_csv; // Doc197: per-particle mid-plane for lattice audit
+    std::string dump_full_particle_csv;     // Doc237 F1: all particles + complex J + production Q
     // Doc198 E1: 0=off; 2=phi0 recon-only; 3=full phi+recon (implies --no-self + prescribed ref)
     int e1_layer = 0;
     std::string dump_e1_csv;
@@ -232,6 +233,10 @@ inline void applyLocalCli(int ac, char *av[], SkinLocalCli &cli)
         else if (std::strncmp(av[i], "--dump-midplane-particles-csv=", 30) == 0)
         {
             cli.dump_midplane_particle_csv = av[i] + 30;
+        }
+        else if (std::strncmp(av[i], "--dump-full-particles-csv=", 26) == 0)
+        {
+            cli.dump_full_particle_csv = av[i] + 26;
         }
         else if (std::strcmp(av[i], "--no-self-induction") == 0)
         {
@@ -2022,6 +2027,14 @@ int main(int ac, char *av[])
         hostOphelieCylinderDumpMidplaneParticleCsv(pos, vol, jr, ji, n, center, local.radius, z_band, local.b0,
                                                    omega, params.mu0_, params.sigma_glass_,
                                                    local.dump_midplane_particle_csv, local.reference_mode);
+    }
+    if (!local.dump_full_particle_csv.empty())
+    {
+        syncVariableToHost<UnsignedInt>(particles, "OriginalID");
+        const UnsignedInt *oid = particles.getVariableDataByName<UnsignedInt>("OriginalID");
+        hostOphelieCylinderDumpFullParticleCsv(oid, pos, vol, jr, ji, q, n, center, local.radius, local.b0, omega,
+                                               params.mu0_, params.sigma_glass_, local.dump_full_particle_csv,
+                                               local.reference_mode);
     }
     if (!local.doc215_e1d_zone_csv.empty())
     {

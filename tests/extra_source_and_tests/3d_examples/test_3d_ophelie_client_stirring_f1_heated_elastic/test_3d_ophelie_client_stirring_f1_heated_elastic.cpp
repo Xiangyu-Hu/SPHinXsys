@@ -13,6 +13,7 @@
 #include "electromagnetic_ophelie_client_geometry.h"
 #include "electromagnetic_ophelie_client_stirring_geometry.h"
 #include "electromagnetic_ophelie_device_sync.h"
+#include "electromagnetic_ophelie_fixed_space_probe.h"
 #include "electromagnetic_ophelie_french_material_laws.h"
 #include "electromagnetic_ophelie_joule_to_heat_one_way.h"
 #include "io_environment.h"
@@ -481,9 +482,12 @@ int main(int ac, char *av[])
     hostAssignUniformJouleHeat(glass_particles, q_uniform);
     glass_particles.addVariableToWrite<Real>("JouleHeat");
 
-    // Client thermocouple tip (thermal-couple-1.STL AABB lower end → solver m); probe-only.
+    // Legacy CAD tip (AABB) + Doc248 midradius virtual probe (r=0.5R, depth 0.12 m).
     const OphelieClientProbeDefinition thermo_probe_def = clientStirringThermocoupleProbe();
     const Vecd thermo_probe_pos = clientStirringThermocoupleProbePosition();
+    const OphelieClientProbeDefinition mid_probe_def = makeClientMidradiusDepth12cmProbe(
+        g_case.melt_radius_m, g_case.melt_bottom_z_m, g_case.melt_height_m, Real(1673.15));
+    const Vecd mid_probe_pos = Vecd(mid_probe_def.solver_m.x, mid_probe_def.solver_m.y, mid_probe_def.solver_m.z);
     ObserverBody thermocouple_probe(sph_system, "ThermocoupleProbe");
     thermocouple_probe.getSPHAdaptation().resetAdaptationRatios(1.15, 2.0);
     thermocouple_probe.generateParticles<ObserverParticles>(StdVec<Vecd>{thermo_probe_pos});
@@ -648,8 +652,26 @@ int main(int ac, char *av[])
     std::ofstream monitor("./output/client_f1_heated_elastic_monitor.csv");
     monitor << "advection_step,physical_time_s,omega,theta,acoustic_dt_s,solid_dt_s,solid_substeps,"
                "u_max_mps,r_tip_m,tip_mps,f_visc_N,f_pres_N,torque_z_Nm,elastic_offset_m,"
-               "T_mean_K,probe_T_K,probe_u_mps,probe_p_Pa,E_heat_J,wall_clock_s\n";
+               "T_mean_K,probe_T_K,probe_u_mps,probe_p_Pa,"
+               "T_glass_virtual_midradius_K,midradius_n_neighbors,midradius_valid,"
+               "E_heat_J,wall_clock_s\n";
     monitor << std::setprecision(10);
+    {
+        std::ofstream map(fs::path(cli.out_dir) / "geometry_and_probe_mapping.json");
+        map << std::setprecision(10) << "{\n"
+            << "  \"case\": \"doc248_C2_client_stir_f1\",\n"
+            << "  \"melt_radius_m\": " << g_case.melt_radius_m << ",\n"
+            << "  \"melt_height_m\": " << g_case.melt_height_m << ",\n"
+            << "  \"melt_bottom_z_m\": " << g_case.melt_bottom_z_m << ",\n"
+            << "  \"paddle_axis_x_m\": " << g_case.paddle_axis_x_m << ",\n"
+            << "  \"legacy_thermocouple_tip_m\": [" << thermo_probe_pos[0] << "," << thermo_probe_pos[1] << ","
+            << thermo_probe_pos[2] << "],\n"
+            << "  \"client_midradius_probe_m\": [" << mid_probe_pos[0] << "," << mid_probe_pos[1] << ","
+            << mid_probe_pos[2] << "],\n"
+            << "  \"client_midradius_status\": \"" << mid_probe_def.status << "\",\n"
+            << "  \"note\": \"midradius = 0.5R, depth 0.12 m below free surface, +X azimuth ASSUMED\"\n"
+            << "}\n";
+    }
 
     write_probe_temperature.writeToFile(0);
     write_probe_velocity.writeToFile(0);
@@ -680,7 +702,9 @@ int main(int ac, char *av[])
               << " status=" << thermo_probe_def.status
               << " pos_m=[" << thermo_probe_pos[0] << "," << thermo_probe_pos[1] << "," << thermo_probe_pos[2]
               << "] T0=" << t0 << " K\n"
-              << "  NOT EM-computed Q; no Boussinesq; no solid thermal strain; gravity on\n";
+              << "  doc248 midradius id=" << mid_probe_def.probe_id << " status=" << mid_probe_def.status
+              << " pos_m=[" << mid_probe_pos[0] << "," << mid_probe_pos[1] << "," << mid_probe_pos[2] << "]\n"
+              << "  volumetric heat on; no Boussinesq; no solid thermal strain; gravity on\n";
 
     const auto wall_clock_start = std::chrono::steady_clock::now();
     const double wall_clock_budget_s = static_cast<double>(cli.max_wall_hours) * 3600.0;
@@ -801,6 +825,9 @@ int main(int ac, char *av[])
                 Real probe_u = 0;
                 Real probe_p = 0;
                 hostSampleFluidAtProbe(glass_particles, thermo_probe_pos, probe_T, probe_u, probe_p);
+                const Real h_probe = Real(1.3) * dp;
+                const auto mid_s =
+                    hostSampleFixedSpaceTemperature(glass_particles, mid_probe_pos, h_probe, kOphelieTemperatureField);
                 last_T_mean = hostVolumeMeanTemperature(glass_particles);
                 last_probe_T = probe_T;
                 write_probe_temperature.writeToFile(advection_steps);
@@ -814,6 +841,7 @@ int main(int ac, char *av[])
                             << last_load.r_tip << "," << last_load.tip_speed << "," << last_load.f_visc << ","
                             << last_load.f_pres << "," << last_load.torque_z << "," << last_elastic << ","
                             << last_T_mean << "," << probe_T << "," << probe_u << "," << probe_p << ","
+                            << mid_s.T << "," << mid_s.n_neighbors << "," << (mid_s.valid ? 1 : 0) << ","
                             << E_heat_applied << "," << wall_now << "\n";
                     monitor.flush();
                 }
@@ -823,8 +851,8 @@ int main(int ac, char *av[])
                               << " dt=" << dt << " solid_sub=" << n_sub << " u_max=" << last_u_max
                               << " tip=" << last_load.tip_speed << " Tq=" << last_torque
                               << " e_off=" << last_elastic << " T_mean=" << last_T_mean
-                              << " probe_T=" << probe_T << " E_heat=" << E_heat_applied
-                              << " wall_s=" << wall_now << "\n";
+                              << " probe_T=" << probe_T << " mid_T=" << mid_s.T
+                              << " E_heat=" << E_heat_applied << " wall_s=" << wall_now << "\n";
                 }
                 if (!std::isfinite(last_u_max) || !std::isfinite(last_elastic) || last_u_max > Real(50))
                 {

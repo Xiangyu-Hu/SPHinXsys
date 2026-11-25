@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <exception>
 #include <fstream>
 #include <iomanip>
 #include <limits>
@@ -281,11 +282,20 @@ inline bool loadOphelieTemperatureLawFromCsv(OphelieTemperatureLaw &law, const s
         std::string a, b;
         if (!std::getline(ss, a, ',') || !std::getline(ss, b, ','))
             continue;
-        const Real T = static_cast<Real>(std::stod(a));
-        const Real v = static_cast<Real>(std::stod(b));
-        if (!(std::isfinite(T) && std::isfinite(v) && v > TinyReal))
+        // Skip residual header / non-numeric rows (Doc239 solver tables may have
+        // comment lines before the CSV header; first getline alone is not enough).
+        try
+        {
+            const Real T = static_cast<Real>(std::stod(a));
+            const Real v = static_cast<Real>(std::stod(b));
+            if (!(std::isfinite(T) && std::isfinite(v) && v > TinyReal))
+                continue;
+            nodes.push_back({T, v});
+        }
+        catch (const std::exception &)
+        {
             continue;
-        nodes.push_back({T, v});
+        }
     }
     if (nodes.empty())
     {

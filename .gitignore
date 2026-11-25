@@ -10,6 +10,10 @@
 !docs/ophelie/reference/client_case_audit_2026-11-20/**/*.json
 !docs/ophelie/reference/client_software_handoff_2026-11-21/**/*.json
 !docs/ophelie/reference/elastic_paddle_runs_2026-11-21/**/*.json
+!docs/ophelie/reference/doc248_client_cases/configs/**/*.json
+# Keep dense seed grids local (rebuild on demand); track ≤101² keepers only
+docs/ophelie/reference/standard_data/doc247_seeds/*_dense*.csv
+docs/ophelie/reference/standard_data/**/*_INITIAL_GUESS*.csv
 
 ##### Windows
 # Windows thumbnail cache files
@@ -1078,11 +1082,44 @@ RH200_OPHELIE_CLIENT_PROGRESS_REPORT.toc
 
 ##### OPHELIE round packs / run dumps under docs (keep local; never track)
 # Literature/standard CSV+PNG live in docs/ophelie/reference/standard_data/ and jacoutot_sigma_t/
+# Source of truth for code is tests/.../extra_src and case folders — never store .cpp/.h/.patch under docs/.
 docs/ophelie/reference/DOC*_ROUND_PACK*/
 docs/ophelie/reference/DOC*_ROUND_PACK*.tar.gz
 docs/ophelie/reference/DOC*_ROUND_PACK*.tar.gz.sha256
 docs/ophelie/reference/doc*_runs/
 docs/ophelie/reference/doc*_literature/
+docs/ophelie/reference/doc*_french_theses/
+docs/ophelie/reference/doc*_extracted/
+docs/ophelie/reference/client_physics_handoff_doc*/
+docs/ophelie/reference/client_physics_handoff_doc*.tar.gz
+docs/ophelie/reference/client_physics_handoff_doc*.tar.gz.sha256
+# Unpacked round handoffs + archives (keep on disk; do not track)
+docs/ophelie/reference/OPHELIE_Doc*_round_handoff_*/
+docs/ophelie/reference/OPHELIE_Doc*_*.tar.gz
+docs/ophelie/reference/OPHELIE_Doc*_*.tar.gz.sha256
+docs/ophelie/reference/OPHELIE_Doc*_*.sha256
+docs/ophelie/reference/OPHELIE_Doc*_round_handoff_*_README.md
+docs/ophelie/reference/OPHELIE_Doc*_WORK_SUMMARY_ZH.md
+# Full digitization kits (large grids/figures); keepers live under standard_data/doc247_*
+docs/ophelie/reference/doc247_french_digitization_kit/
+docs/ophelie/reference/doc247_longrun_four_cases/overnight_6h/
+docs/ophelie/reference/doc247_longrun_four_cases/**/out/
+docs/ophelie/reference/doc247_longrun_four_cases/**/trz_snaps/
+docs/ophelie/reference/doc247_longrun_four_cases/**/run.log
+docs/ophelie/reference/doc247_longrun_four_cases/**/summary.json
+docs/ophelie/reference/doc248_client_cases/runs/
+# Archives / binary dumps anywhere under docs/ophelie
+docs/ophelie/*.zip
+docs/ophelie/**/*.zip
+docs/ophelie/**/*.tar.gz
+docs/ophelie/**/*.tar.gz.sha256
+# Simulation outputs under docs (never track)
+docs/ophelie/**/*.vtp
+docs/ophelie/**/*.vtk
+docs/ophelie/**/*.log
+docs/ophelie/**/run.log
+docs/ophelie/**/output/
+docs/ophelie/**/output_backup/
 docs/ophelie/welding/**/gate*_smoke/
 docs/ophelie/welding/**/*_vtp/
 docs/ophelie/welding/**/*.vtp
@@ -1097,6 +1134,7 @@ tests/extra_source_and_tests/3d_examples/*/lib/
 # Heavy run dumps under docs (keep summary JSON via exceptions above; skip VTP/log)
 docs/ophelie/reference/elastic_paddle_runs_*/**/*.vtp
 docs/ophelie/reference/elastic_paddle_runs_*/**/*.log
+docs/ophelie/reference/elastic_paddle_runs_*/**/out/
 # Client proprietary Office blobs under software/ (keep the md plan only)
 docs/ophelie/software/*.docx
 docs/ophelie/software/*.DOCX

@@ -1,0 +1,24 @@
+{
+  "schema": "RECONSTRUCTED_ASSUMED_INPUT",
+  "NOT_literature_absolute_T": true,
+  "source_contours": "/home/ubuntu/SPHinXsys/docs/ophelie/reference/standard_data/fig7_fig8_literature/Doc204/reference/fig8_labelled_contour_points.csv",
+  "n_contour_points": 4928,
+  "grid": "201x201",
+  "R_m": 0.25,
+  "H_m": 0.185,
+  "Tstar_observed_band": [
+    0.5,
+    0.9
+  ],
+  "absolute_map": "linear T*[0.5,0.9] -> T_K[1400.0,1550.0]",
+  "FORBIDDEN": "Do NOT use T=T*/Tmax product yielding ~750K cold shell",
+  "T_K_min": 1400.0,
+  "T_K_max": 1550.0,
+  "T_K_mean": 1476.6346027124314,
+  "frac_linear_in_hull": 0.7541397490161135,
+  "n_rows": 40401,
+  "notes": [
+    "Hot-melt seed for NC Fig8 IC + comparison; ASSUMED absolute scale.",
+    "Denser than prior 101x101; still reconstructed, not author field data."
+  ]
+}

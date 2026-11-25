@@ -1,0 +1,8 @@
+{
+  "schema": "RECONSTRUCTED_ASSUMED_INPUT",
+  "grid": "101x101",
+  "T_K_band": [1400.0, 1550.0],
+  "source": "Downsampled from local dense201 rebuild of Doc204 labelled contours",
+  "NOT_literature_absolute_T": true,
+  "FORBIDDEN_cold_shell": "fig8_T_rz_Tmax1500_ASSUMED.csv maps to ~750K — do not use"
+}

@@ -10,6 +10,7 @@
 #include "electromagnetic_ophelie_boussinesq.h"
 #include "electromagnetic_ophelie_client_case_params.h"
 #include "electromagnetic_ophelie_client_geometry.h"
+#include "electromagnetic_ophelie_doc245_material_dataset.h"
 #include "electromagnetic_ophelie_french_literature.h"
 #include "electromagnetic_ophelie_french_literature_parameters.h"
 #include "electromagnetic_ophelie_french_material_laws.h"
@@ -30,6 +31,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
@@ -375,7 +377,23 @@ struct LocalCli
     Real gravity_g = 9.81;
     Real wall_thickness_factor = 4.0; // still-water / stirring dummy-wall width; 2 dp leaks through the floor
     Real wall_rim_height = -1.0;   // <0 -> 6*dp splash guard above the melt (still open top)
-    Real hydro_settle_time = 0.15; // gravity-only settle before Q / Boussinesq
+    Real hydro_settle_time = 0.15; // gravity-only settle before Q / Boussinesq (max physical time)
+    /**
+     * Doc245: physics-based settle exit (GUI hangs when acoustic dt collapses under pure time gate).
+     * Exit early when U_max < u_quiet for quiet_steps consecutive advection steps after min_time.
+     * u_quiet<=0 disables quiet exit (pure --hydro-settle-time). After exit, velocity is still zeroed.
+     */
+    Real hydro_settle_u_quiet = 5.0e-3;
+    size_t hydro_settle_quiet_steps = 20;
+    Real hydro_settle_min_time = 0.01;
+    /** Hard cap on advection steps during settle (0 = disabled). Guards infinite tiny-dt loops. */
+    size_t hydro_settle_max_adv_steps = 100000;
+    /**
+     * If acoustic_dt < floor for collapse_steps consecutive acoustic calls, end settle with WARNING.
+     * floor<=0 → auto 1e-3 * nominal dt_ac after hydro setup.
+     */
+    Real hydro_settle_dt_floor = 0.0;
+    size_t hydro_settle_dt_collapse_steps = 50;
     Real escaped_frac_max = 0.01;
     Real state_record_interval = 0.0; // 0 -> no VTP
     /** Start time-averaged meridional (r,z) sampling after this physical time (post-settle clock). */
@@ -705,6 +723,14 @@ struct LocalCli
     bool doc224_ablate_acoustic_freeslip = false;
     bool doc224_ablate_acoustic_freeslip_user_set = false;
     /**
+     * Doc224 U_max blowup gate override (m/s). <0 → auto:
+     *   zero-q / prescribed-heat → 0.05·c0 (Doc230 soft);
+     *   heated French NC → absolute 0.05 (legacy red-line).
+     * Client long demos pass an explicit value (e.g. 50) so early acoustic
+     * spikes do not abort before useful flow time; non-finite U/T still aborts.
+     */
+    Real doc224_u_blowup_gate = Real(-1);
+    /**
      * Doc223 E2: after paper-top settle+arm, impose uniform tangential U=(U0,0,0),
      * measure wall-only ViscousForce in lid-core vs side/bot; OpenCup (slip) vs
      * ClosedCrucible (no-slip lid) contrast. Snapshot/restore; early return.
@@ -833,6 +859,22 @@ struct LocalCli
      * no Robin/radiation/diffusion, no fluid keep (thermal-only time advance).
      */
     bool doc232_adiabatic_heat = false;
+    /**
+     * Desktop / client thermal wall BC (orthogonal to Doc232 C gate).
+     *   french-natural | adiabatic | isothermal-wall
+     * Optional --h-side=/--h-bottom=/--h-free=/--emissivity=/--t-cool= for french-natural.
+     */
+    std::string thermal_bc_mode = "french-natural";
+    bool thermal_h_side_set = false;
+    bool thermal_h_bottom_set = false;
+    bool thermal_h_free_set = false;
+    bool thermal_emissivity_set = false;
+    bool thermal_t_cool_set = false;
+    Real thermal_h_side = Real(300);
+    Real thermal_h_bottom = Real(35);
+    Real thermal_h_free = Real(20);
+    Real thermal_emissivity = Real(0.8);
+    Real thermal_t_cool = Real(300);
     /** Doc232 D: face-by-face boundary audit on production BC operator; exit after. */
     bool doc232_boundary_face_audit = false;
     bool doc232_boundary_face_audit_exit = false;
@@ -886,6 +928,23 @@ struct LocalCli
     bool client_nc_material = false;
     /** Optional override when --client-nc-geometry; NaN => development 0.180 m. */
     Real client_melt_height_m = std::numeric_limits<Real>::quiet_NaN();
+    /**
+     * Doc245: independent μ/k/cp dataset switch (does not change ρ/β/σ/power/geometry).
+     * LEGACY_APPROX_TABLE | JAC_THESIS_RAW_BORROWED | JAC_THESIS_SHAPE_CEP_ANCHORED
+     * Empty = leave whatever literature currently holds (usually CES Fig.2 via french default).
+     */
+    std::string material_dataset;
+    /** Solver tables dir for JAC_THESIS_* (same CSVs as Doc239). */
+    std::string material_tables_dir = "docs/ophelie/reference/doc239_runs/solver_tables";
+    /** Directory for material_effective.json / material_probe.csv / curve compare (optional). */
+    std::string material_evidence_dir;
+    /**
+     * Doc246 Q1_UPPER: after EM→fluid Q sample, apply
+     *   Q_ctrl = C * Q_EM * exp[kappa*(z/H−0.5)]
+     * with C from volume integral so ΣQ_ctrl V = target absorbed power.
+     * kappa<=0 disables (default). Diagnostic only — not paper EM source.
+     */
+    Real doc246_q_upper_kappa = Real(0);
     FrenchLiteratureParameters literature = makeFrenchNaturalLiteratureParameters();
     FrenchSkullResistanceParams skull;
     FrenchFreeCrustParams free_crust;
@@ -907,6 +966,22 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
         else if (std::strcmp(av[i], "--client-nc-material") == 0)
         {
             cli.client_nc_material = true;
+        }
+        else if (std::strncmp(av[i], "--material-dataset=", 19) == 0)
+        {
+            cli.material_dataset = std::string(av[i] + 19);
+        }
+        else if (std::strncmp(av[i], "--material-tables-dir=", 22) == 0)
+        {
+            cli.material_tables_dir = std::string(av[i] + 22);
+        }
+        else if (std::strncmp(av[i], "--material-evidence-dir=", 24) == 0)
+        {
+            cli.material_evidence_dir = std::string(av[i] + 24);
+        }
+        else if (std::strncmp(av[i], "--doc246-q-upper-kappa=", 23) == 0)
+        {
+            cli.doc246_q_upper_kappa = static_cast<Real>(std::atof(av[i] + 23));
         }
         else if (std::strncmp(av[i], "--melt-height=", 14) == 0)
         {
@@ -1019,6 +1094,30 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
         else if (std::strncmp(av[i], "--hydro-settle-time=", 20) == 0)
         {
             cli.hydro_settle_time = static_cast<Real>(std::atof(av[i] + 20));
+        }
+        else if (std::strncmp(av[i], "--hydro-settle-u-quiet=", 23) == 0)
+        {
+            cli.hydro_settle_u_quiet = static_cast<Real>(std::atof(av[i] + 23));
+        }
+        else if (std::strncmp(av[i], "--hydro-settle-quiet-steps=", 27) == 0)
+        {
+            cli.hydro_settle_quiet_steps = static_cast<size_t>(std::strtoull(av[i] + 27, nullptr, 10));
+        }
+        else if (std::strncmp(av[i], "--hydro-settle-min-time=", 24) == 0)
+        {
+            cli.hydro_settle_min_time = static_cast<Real>(std::atof(av[i] + 24));
+        }
+        else if (std::strncmp(av[i], "--hydro-settle-max-adv-steps=", 29) == 0)
+        {
+            cli.hydro_settle_max_adv_steps = static_cast<size_t>(std::strtoull(av[i] + 29, nullptr, 10));
+        }
+        else if (std::strncmp(av[i], "--hydro-settle-dt-floor=", 24) == 0)
+        {
+            cli.hydro_settle_dt_floor = static_cast<Real>(std::atof(av[i] + 24));
+        }
+        else if (std::strncmp(av[i], "--hydro-settle-dt-collapse-steps=", 33) == 0)
+        {
+            cli.hydro_settle_dt_collapse_steps = static_cast<size_t>(std::strtoull(av[i] + 33, nullptr, 10));
         }
         else if (std::strncmp(av[i], "--escaped-frac-max=", 19) == 0)
         {
@@ -1310,6 +1409,15 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
             // Legacy Doc223 P2: tag AcousticWallFreeSlip (known lid penetration under F2).
             cli.doc224_ablate_acoustic_freeslip = false;
             cli.doc224_ablate_acoustic_freeslip_user_set = true;
+        }
+        else if (std::strncmp(av[i], "--doc224-u-blowup-gate=", 23) == 0)
+        {
+            char *end = nullptr;
+            const double parsed = std::strtod(av[i] + 23, &end);
+            if (end != av[i] + 23 && std::isfinite(parsed) && parsed > 0.0)
+            {
+                cli.doc224_u_blowup_gate = static_cast<Real>(parsed);
+            }
         }
         else if (std::strcmp(av[i], "--doc223-e2-lid-slip-probe") == 0)
         {
@@ -1667,6 +1775,35 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
         else if (std::strcmp(av[i], "--doc232-adiabatic-heat") == 0)
         {
             cli.doc232_adiabatic_heat = true;
+        }
+        else if (std::strncmp(av[i], "--thermal-bc=", 13) == 0)
+        {
+            cli.thermal_bc_mode = std::string(av[i] + 13);
+        }
+        else if (std::strncmp(av[i], "--h-side=", 9) == 0)
+        {
+            cli.thermal_h_side_set = true;
+            cli.thermal_h_side = static_cast<Real>(std::atof(av[i] + 9));
+        }
+        else if (std::strncmp(av[i], "--h-bottom=", 11) == 0)
+        {
+            cli.thermal_h_bottom_set = true;
+            cli.thermal_h_bottom = static_cast<Real>(std::atof(av[i] + 11));
+        }
+        else if (std::strncmp(av[i], "--h-free=", 9) == 0)
+        {
+            cli.thermal_h_free_set = true;
+            cli.thermal_h_free = static_cast<Real>(std::atof(av[i] + 9));
+        }
+        else if (std::strncmp(av[i], "--emissivity=", 13) == 0)
+        {
+            cli.thermal_emissivity_set = true;
+            cli.thermal_emissivity = static_cast<Real>(std::atof(av[i] + 13));
+        }
+        else if (std::strncmp(av[i], "--t-cool=", 9) == 0)
+        {
+            cli.thermal_t_cool_set = true;
+            cli.thermal_t_cool = static_cast<Real>(std::atof(av[i] + 9));
         }
         else if (std::strcmp(av[i], "--doc232-boundary-face-audit") == 0)
         {
@@ -4663,6 +4800,66 @@ inline void hostSampleEulerQOntoParticles(BaseParticles &particles, const rh200:
     syncVariableToDevice<Real>(particles, "JouleHeat");
 }
 
+/**
+ * Doc246 Q1_UPPER diagnostic: keep raw EM Q in JouleHeatEM; write controlled Q to JouleHeat.
+ * z measured from glass bottom; H = melt height. Does not modify EM solver.
+ */
+inline void applyDoc246QUpperControlled(BaseParticles &particles, Real kappa, Real glass_bottom_z, Real melt_h,
+                                        Real target_power_w, bool verbose = true)
+{
+    if (!(kappa > TinyReal) || !(melt_h > TinyReal) || !(target_power_w > TinyReal))
+        return;
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Real>(particles, "VolumetricMeasure");
+    syncVariableToHost<Real>(particles, "JouleHeat");
+    syncVariableToHost<Real>(particles, "JouleHeatEM");
+    Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    Real *vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+    Real *q = particles.getVariableDataByName<Real>("JouleHeat");
+    Real *q_em = particles.getVariableDataByName<Real>("JouleHeatEM");
+    const size_t n = particles.TotalRealParticles();
+    Real p_em = Real(0), mom_z_em = Real(0), p_w = Real(0), p_upper_em = Real(0);
+    const Real z_mid = glass_bottom_z + Real(0.5) * melt_h;
+    for (size_t i = 0; i < n; ++i)
+    {
+        q_em[i] = q[i];
+        const Real z = pos[i][2];
+        const Real zi = (z - glass_bottom_z) / melt_h; // 0 at bottom, 1 at top
+        const Real w = std::exp(kappa * (zi - Real(0.5)));
+        p_em += q_em[i] * vol[i];
+        mom_z_em += q_em[i] * vol[i] * z;
+        p_w += q_em[i] * w * vol[i];
+        if (z >= z_mid)
+            p_upper_em += q_em[i] * vol[i];
+    }
+    const Real C = (p_w > TinyReal) ? (target_power_w / p_w) : Real(0);
+    Real p_ctrl = Real(0), mom_z_ctrl = Real(0), p_upper_ctrl = Real(0);
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real z = pos[i][2];
+        const Real zi = (z - glass_bottom_z) / melt_h;
+        const Real w = std::exp(kappa * (zi - Real(0.5)));
+        q[i] = C * q_em[i] * w;
+        p_ctrl += q[i] * vol[i];
+        mom_z_ctrl += q[i] * vol[i] * z;
+        if (z >= z_mid)
+            p_upper_ctrl += q[i] * vol[i];
+    }
+    syncVariableToDevice<Real>(particles, "JouleHeat");
+    syncVariableToDevice<Real>(particles, "JouleHeatEM");
+    if (verbose)
+    {
+        const Real zq_em = (p_em > TinyReal) ? mom_z_em / p_em : Real(0);
+        const Real zq_c = (p_ctrl > TinyReal) ? mom_z_ctrl / p_ctrl : Real(0);
+        std::cout << "[ophelie][doc246][Q1_UPPER] kappa=" << kappa << " C=" << C
+                  << " P_EM=" << p_em << " P_ctrl=" << p_ctrl << " target=" << target_power_w
+                  << " zQ_EM=" << zq_em << " zQ_ctrl=" << zq_c
+                  << " upper_frac_EM=" << ((p_em > TinyReal) ? p_upper_em / p_em : Real(0))
+                  << " upper_frac_ctrl=" << ((p_ctrl > TinyReal) ? p_upper_ctrl / p_ctrl : Real(0))
+                  << " (controlled_EM_shape; NOT paper Maxwell source)\n";
+    }
+}
+
 /** Doc219 E: re-sample spatial Q; optionally renormalize ΣViQ to target (diagnostic protocol). */
 inline Real hostSampleSpatialFrozenQ(BaseParticles &particles, const rh200::Rh200ScalarEulerianGrid &grid,
                                      Real target_power_w, bool renormalize, size_t &n_uncovered,
@@ -5123,7 +5320,7 @@ inline bool depositEmQAndRecord(BaseParticles &em_particles, const OphelieGlassF
     return true;
 }
 
-/** Doc232 B: fixed-space NC probes (thermocouple unconfirmed + development interiors). */
+/** Doc232 B + Doc248: fixed-space NC probes (legacy tip + midradius depth-12cm + interiors). */
 inline StdVec<OphelieFixedSpaceProbeDef> makeDoc232ClientNcProbes(const OphelieFrenchReducedCaseParams &french)
 {
     StdVec<OphelieFixedSpaceProbeDef> probes;
@@ -5133,12 +5330,16 @@ inline StdVec<OphelieFixedSpaceProbeDef> makeDoc232ClientNcProbes(const OphelieF
     const Real R = french.glass_radius;
     const OphelieClientProbeDefinition thermo =
         makeClientNominalThermocoupleProbe(makeClientNaturalConvectionAssemblyCatalog());
-    probes.push_back({"thermocouple_nominal_tip",
+    probes.push_back({"legacy_centerline_probes_tip_proxy",
                       Vecd(thermo.solver_m.x, thermo.solver_m.y, thermo.solver_m.z), thermo.status, true,
-                      "CAD AABB tip candidate; not confirmed junction"});
+                      "CAD AABB tip; isolate from Doc248 midradius (legacy naming)"});
+    const OphelieClientProbeDefinition mid =
+        makeClientMidradiusDepth12cmProbe(R, z_bot, H, Real(1273.15));
+    probes.push_back({"client_midradius_probe", Vecd(mid.solver_m.x, mid.solver_m.y, mid.solver_m.z), mid.status,
+                      true, "Doc248 r=0.5R depth=0.12m below free surface; +X azimuth ASSUMED"});
     probes.push_back({"dev_axis_mid", Vecd(0, 0, z_mid), "development", true, "axis mid-height"});
     probes.push_back(
-        {"dev_r_half_mid", Vecd(Real(0.5) * R, 0, z_mid), "development", true, "mid-radius interior"});
+        {"dev_r_half_mid", Vecd(Real(0.5) * R, 0, z_mid), "development", true, "mid-radius mid-height"});
     probes.push_back({"dev_near_wall_mid", Vecd(std::max(R - Real(2) * french.dp, Real(0.5) * R), 0, z_mid),
                       "development", true, "near-wall diagnostic (not surface T)"});
     probes.push_back({"dev_axis_lower_quartile", Vecd(0, 0, z_bot + Real(0.25) * H), "development", true,
@@ -5922,6 +6123,49 @@ int main(int ac, char *av[])
                   << " boussinesq=" << (local_cli.literature.enable_boussinesq ? 1 : 0)
                   << " generator_input_W=" << local_cli.literature.generator_power_w << "\n";
     }
+    // Doc245: material dataset AFTER case identity so μ/k/cp can be swapped without
+    // rewriting 50 kW / β / ρ. Missing JAC thesis CSV → hard fail (no CES fallback).
+    if (!local_cli.material_dataset.empty())
+    {
+        if (local_cli.client_nc_material)
+        {
+            std::cerr << "[ophelie][doc245] FATAL: --material-dataset= cannot combine with "
+                         "--client-nc-material\n";
+            return 2;
+        }
+        const Real power_for_check =
+            local_cli.enable_target_power
+                ? local_cli.target_power_w
+                : local_cli.literature.target_glass_absorbed_power_w;
+        const auto mat = applyDoc245MaterialDataset(local_cli.material_dataset, local_cli.literature.material,
+                                                    power_for_check, local_cli.material_tables_dir,
+                                                    /*apply_cep1473_anchors=*/false);
+        if (!mat.ok)
+            return 2;
+        // Force particle-local thermal rheology when thesis/legacy tables are explicitly selected.
+        local_cli.literature.constant_thermal_rheology = false;
+        std::string ev_dir = local_cli.material_evidence_dir;
+        if (ev_dir.empty() && !local_cli.summary_json.empty())
+        {
+            const auto p = fs::path(local_cli.summary_json).parent_path();
+            if (!p.empty())
+                ev_dir = p.string();
+        }
+        if (!ev_dir.empty())
+        {
+            fs::create_directories(ev_dir);
+            OphelieFrenchGlassMaterialLaws legacy_snapshot;
+            installJacoutotCes2008Fig2ThermalRheology(legacy_snapshot);
+            writeDoc245MaterialEffectiveJson(ev_dir + "/material_effective.json", mat,
+                                             local_cli.literature.material, local_cli.literature.t_initial_k);
+            writeDoc245MaterialProbeCsv(ev_dir + "/material_probe.csv", mat.dataset_id,
+                                        local_cli.literature.material, &legacy_snapshot);
+            writeDoc245MaterialCurveCompareCsv(ev_dir + "/material_curve_compare.csv",
+                                               local_cli.literature.material, legacy_snapshot);
+            std::cout << "[ophelie][doc245][material] evidence_dir=" << ev_dir
+                      << " wrote material_effective.json material_probe.csv material_curve_compare.csv\n";
+        }
+    }
     if (local_cli.prescribed_heat_mode)
     {
         // client-nc material zeroes target_glass_absorbed_power_w; restore prescribed identity.
@@ -6321,14 +6565,23 @@ int main(int ac, char *av[])
     }
     if (local_cli.enable_target_power)
     {
+        // Must update french.target_joule_power too: syncFrenchReducedToParameters copies
+        // french → params and would otherwise wipe CLI P35/P65 back to the 50 kW default.
+        french.target_joule_power = local_cli.target_power_w;
         params.target_joule_power_ = local_cli.target_power_w;
-        params.enable_power_scaling_ = false;
+        params.enable_power_scaling_ = false; // French NC uses coil-I calibration, not field scaling
     }
     if (params.self_induction_phi_eq_res_tolerance_ > Real(1.0e-3))
     {
         params.self_induction_phi_eq_res_tolerance_ = Real(2.0e-4);
     }
     syncFrenchReducedToParameters(french, params);
+    if (local_cli.enable_target_power)
+    {
+        // Re-assert after sync (and before calibrate) so FixedAbsorbedPower hits CLI watts.
+        french.target_joule_power = local_cli.target_power_w;
+        params.target_joule_power_ = local_cli.target_power_w;
+    }
     applyOphelieCoilCurrentScale(french, params);
     logOphelieFinalParams(params, cli_options);
 
@@ -6748,6 +7001,9 @@ int main(int ac, char *av[])
         }
     }
     glass_particles.registerStateVariable<Real>("JouleHeat", Real(0));
+    // Doc246 Q1: raw EM deposit kept separately when upper-kappa weighting is enabled.
+    if (local_cli.doc246_q_upper_kappa > TinyReal)
+        glass_particles.registerStateVariable<Real>("JouleHeatEM", Real(0));
     {
         Real *q_host = glass_particles.getVariableDataByName<Real>("JouleHeat");
         const size_t n = glass_particles.TotalRealParticles();
@@ -6819,6 +7075,14 @@ int main(int ac, char *av[])
                 std::cout << "[ophelie][doc219][spatial-q] WARNING q_L2_rel>" << Real(0.01)
                           << " (Euler deposit/sample vs particle-ID; power gate still held)\n";
             }
+            // Doc246 Q1_UPPER: reshape fluid Q after EM/Euler sample (keeps JouleHeatEM = raw).
+            if (local_cli.doc246_q_upper_kappa > TinyReal)
+            {
+                const Real melt_h = Real(2) * french.glass_half_height;
+                const Real z_bot = french.glass_center[2] - french.glass_half_height;
+                applyDoc246QUpperControlled(glass_particles, local_cli.doc246_q_upper_kappa, z_bot, melt_h,
+                                            local_cli.target_power_w);
+            }
             recordFrenchFluidHeatPower(coupling_state, glass_particles);
             if (periodic_coupling)
             {
@@ -6829,6 +7093,13 @@ int main(int ac, char *av[])
         }
         else
         {
+            if (local_cli.doc246_q_upper_kappa > TinyReal)
+            {
+                const Real melt_h = Real(2) * french.glass_half_height;
+                const Real z_bot = french.glass_center[2] - french.glass_half_height;
+                applyDoc246QUpperControlled(glass_particles, local_cli.doc246_q_upper_kappa, z_bot, melt_h,
+                                            local_cli.target_power_w);
+            }
             recordFrenchFluidHeatPower(coupling_state, glass_particles);
         }
     }
@@ -6846,6 +7117,60 @@ int main(int ac, char *av[])
     thermal_bc.t_cool = Real(300);
     thermal_bc.t_ambient = Real(300);
     thermal_bc.t_rad_ambient = Real(300);
+    // Desktop --thermal-bc= (keeps EM/flow). Doc232 C gate still wins when armed.
+    if (!local_cli.doc232_adiabatic_heat)
+    {
+        auto norm_bc = [](std::string s) {
+            for (char &c : s)
+                if (c == '_')
+                    c = '-';
+            return s;
+        };
+        const std::string bc_mode = norm_bc(local_cli.thermal_bc_mode);
+        if (bc_mode == "adiabatic" || bc_mode == "adiabatic-walls")
+        {
+            thermal_bc.enable_french_natural_bc = false;
+            thermal_bc.enable_cold_wall_dirichlet = false;
+            thermal_bc.h_side = Real(0);
+            thermal_bc.h_bottom = Real(0);
+            thermal_bc.h_free = Real(0);
+            thermal_bc.emissivity = Real(0);
+            std::cout << "[ophelie][thermal-bc] mode=adiabatic (no Robin/radiation; EM/diffusion kept)\n";
+        }
+        else if (bc_mode == "isothermal-wall" || bc_mode == "isothermal" || bc_mode == "dirichlet-wall")
+        {
+            thermal_bc.enable_french_natural_bc = false;
+            thermal_bc.enable_cold_wall_dirichlet = true;
+            thermal_bc.h_side = Real(0);
+            thermal_bc.h_bottom = Real(0);
+            thermal_bc.h_free = Real(0);
+            thermal_bc.emissivity = Real(0);
+            std::cout << "[ophelie][thermal-bc] mode=isothermal-wall (Dirichlet boundary T→T0)\n";
+        }
+        else
+        {
+            thermal_bc.enable_french_natural_bc = true;
+            thermal_bc.enable_cold_wall_dirichlet = false;
+            if (local_cli.thermal_h_side_set)
+                thermal_bc.h_side = local_cli.thermal_h_side;
+            if (local_cli.thermal_h_bottom_set)
+                thermal_bc.h_bottom = local_cli.thermal_h_bottom;
+            if (local_cli.thermal_h_free_set)
+                thermal_bc.h_free = local_cli.thermal_h_free;
+            if (local_cli.thermal_emissivity_set)
+                thermal_bc.emissivity = local_cli.thermal_emissivity;
+            if (local_cli.thermal_t_cool_set)
+            {
+                thermal_bc.t_cool = local_cli.thermal_t_cool;
+                thermal_bc.t_ambient = local_cli.thermal_t_cool;
+                thermal_bc.t_rad_ambient = local_cli.thermal_t_cool;
+            }
+            std::cout << "[ophelie][thermal-bc] mode=french-natural"
+                      << " h_side/bottom/free=" << thermal_bc.h_side << "/" << thermal_bc.h_bottom << "/"
+                      << thermal_bc.h_free << " eps=" << thermal_bc.emissivity
+                      << " Tcool=" << thermal_bc.t_cool << "\n";
+        }
+    }
     if (local_cli.doc232_adiabatic_heat)
     {
         std::cout << "[ophelie][doc232][C] french natural BC disabled (adiabatic production heat)\n";
@@ -7685,9 +8010,39 @@ int main(int ac, char *av[])
                                         gc, french.glass_radius, z_bottom, z_free, french.dp);
     }
 
+    // Client GUI: settle was silent for minutes → looked "stuck after EM".
+    // Doc245: exit on U_quiet / dt collapse / max adv steps, not only max physical time
+    // (tiny acoustic dt can make a fixed settle_time take wall-clock forever).
+    size_t settle_heartbeat_last = 0;
+    size_t settle_quiet_streak = 0;
+    size_t settle_dt_collapse_streak = 0;
+    std::string settle_exit_reason = "max_time";
+    Real settle_dt_floor = local_cli.hydro_settle_dt_floor;
+    if (settle_dt_floor <= TinyReal && dt_ac_est > TinyReal)
+        settle_dt_floor = Real(1.0e-3) * dt_ac_est;
+    std::cout << "[ophelie][doc245][settle] criteria: max_t=" << local_cli.hydro_settle_time
+              << " min_t=" << local_cli.hydro_settle_min_time
+              << " U_quiet=" << local_cli.hydro_settle_u_quiet
+              << " quiet_steps=" << local_cli.hydro_settle_quiet_steps
+              << " max_adv_steps=" << local_cli.hydro_settle_max_adv_steps
+              << " dt_floor=" << settle_dt_floor
+              << " dt_collapse_steps=" << local_cli.hydro_settle_dt_collapse_steps << std::endl;
     while (time_stepper.getPhysicalTime() + TinyReal < local_cli.hydro_settle_time)
     {
         const Real acoustic_dt = time_stepper.incrementPhysicalTime(acoustic_time_step);
+        if (settle_dt_floor > TinyReal && acoustic_dt + TinyReal < settle_dt_floor)
+            ++settle_dt_collapse_streak;
+        else
+            settle_dt_collapse_streak = 0;
+        if (local_cli.hydro_settle_dt_collapse_steps > 0 &&
+            settle_dt_collapse_streak >= local_cli.hydro_settle_dt_collapse_steps)
+        {
+            settle_exit_reason = "dt_ac_collapse";
+            std::cout << "[ophelie][doc245][settle] WARNING acoustic_dt collapsed: dt_ac=" << acoustic_dt
+                      << " floor=" << settle_dt_floor << " streak=" << settle_dt_collapse_streak
+                      << " → end settle early (will zero-U and continue)\n";
+            break;
+        }
         run_acoustic(acoustic_dt);
         if (advection_step(advection_time_step))
         {
@@ -7712,6 +8067,47 @@ int main(int ac, char *av[])
                 kernel_grad_integral.exec();
                 transport_correction.exec();
             }
+
+            const Real t_settle = time_stepper.getPhysicalTime();
+            const Real u_settle_now = u_max_reduce.exec();
+            if (local_cli.hydro_settle_u_quiet > TinyReal &&
+                t_settle + TinyReal >= local_cli.hydro_settle_min_time)
+            {
+                if (u_settle_now < local_cli.hydro_settle_u_quiet)
+                    ++settle_quiet_streak;
+                else
+                    settle_quiet_streak = 0;
+                if (local_cli.hydro_settle_quiet_steps > 0 &&
+                    settle_quiet_streak >= local_cli.hydro_settle_quiet_steps)
+                {
+                    settle_exit_reason = "u_quiet";
+                    std::cout << "[ophelie][doc245][settle] U_quiet reached: U_max=" << u_settle_now
+                              << " < " << local_cli.hydro_settle_u_quiet << " for "
+                              << settle_quiet_streak << " adv steps at t=" << t_settle << std::endl;
+                    break;
+                }
+            }
+            if (local_cli.hydro_settle_max_adv_steps > 0 &&
+                advection_steps >= local_cli.hydro_settle_max_adv_steps)
+            {
+                settle_exit_reason = "max_adv_steps";
+                std::cout << "[ophelie][doc245][settle] WARNING hit max_adv_steps="
+                          << local_cli.hydro_settle_max_adv_steps << " at t=" << t_settle
+                          << " U_max=" << u_settle_now << " dt_ac~" << acoustic_dt
+                          << " → end settle early\n";
+                break;
+            }
+
+            if (advection_steps == 1 || advection_steps - settle_heartbeat_last >= 100)
+            {
+                settle_heartbeat_last = advection_steps;
+                const Real t_target = local_cli.hydro_settle_time;
+                const Real pct = t_target > TinyReal ? Real(100) * t_settle / t_target : Real(100);
+                std::cout << "[ophelie][stage4.1] hydro settle: N=" << advection_steps
+                          << " t=" << t_settle << " / " << t_target << " (" << pct << "%)"
+                          << " U_max=" << u_settle_now << " dt_ac=" << acoustic_dt
+                          << " quiet_streak=" << settle_quiet_streak << std::endl;
+            }
         }
     }
     if (local_cli.hydro_settle_time > TinyReal)
@@ -7719,7 +8115,8 @@ int main(int ac, char *av[])
         const Real u_settle = u_max_reduce.exec();
         const GlassEscapeCensus settle_escape = hostCountEscapedGlassParticles(
             glass_particles, gc, french.glass_radius, z_bottom, z_rim, french.dp);
-        std::cout << "[ophelie][stage4.1] hydro settle done: t=" << time_stepper.getPhysicalTime()
+        std::cout << "[ophelie][stage4.1] hydro settle done: reason=" << settle_exit_reason
+                  << " t=" << time_stepper.getPhysicalTime()
                   << " U_max=" << u_settle << " escaped=" << settle_escape.escaped << "/" << settle_escape.total
                   << " r_max=" << settle_escape.r_max << " z=[" << settle_escape.z_min << "," << settle_escape.z_max
                   << "]" << std::endl;
@@ -10897,6 +11294,13 @@ int main(int ac, char *av[])
             if (periodic_coupling && !local_cli.prescribed_heat_mode)
             {
                 hostSampleEulerQOntoParticles(glass_particles, q_grid);
+                if (local_cli.doc246_q_upper_kappa > TinyReal)
+                {
+                    const Real melt_h = Real(2) * french.glass_half_height;
+                    const Real z_bot = french.glass_center[2] - french.glass_half_height;
+                    applyDoc246QUpperControlled(glass_particles, local_cli.doc246_q_upper_kappa, z_bot, melt_h,
+                                                local_cli.target_power_w, /*verbose=*/false);
+                }
                 recordFrenchFluidHeatPower(coupling_state, glass_particles);
                 const Real t_now = time_stepper.getPhysicalTime();
                 if (shouldUpdateEM(t_now, local_cli.literature.em_update_interval_s, coupling_state.next_due_time))
@@ -10941,6 +11345,13 @@ int main(int ac, char *av[])
                     depositEmQAndRecord(em_particles, glass_em_names, params, cyl_frame, local_cli.literature, q_grid,
                                         coupling_state, p_joule);
                     hostSampleEulerQOntoParticles(glass_particles, q_grid);
+                    if (local_cli.doc246_q_upper_kappa > TinyReal)
+                    {
+                        const Real melt_h = Real(2) * french.glass_half_height;
+                        const Real z_bot = french.glass_center[2] - french.glass_half_height;
+                        applyDoc246QUpperControlled(glass_particles, local_cli.doc246_q_upper_kappa, z_bot, melt_h,
+                                                    local_cli.target_power_w);
+                    }
                     recordFrenchFluidHeatPower(coupling_state, glass_particles);
                     const bool refresh_solver_ok =
                         std::isfinite(phi_eq) && phi_eq < Real(1.0e-2) && std::isfinite(p_joule) && p_joule > TinyReal;
@@ -11008,6 +11419,12 @@ int main(int ac, char *av[])
                 appendFrenchSpatialStatsCsv("output/french_spatial_stats.csv", t_now, spatial);
                 writeFluidTemperatureRzCsv("output/french_T_rz.csv", glass_particles, cyl_frame,
                                            kOphelieTemperatureField);
+                {
+                    char snap[128];
+                    std::snprintf(snap, sizeof(snap), "output/french_T_rz_t%07.2f.csv",
+                                  static_cast<double>(t_now));
+                    writeFluidTemperatureRzCsv(snap, glass_particles, cyl_frame, kOphelieTemperatureField);
+                }
                 if (t_now + TinyReal >= local_cli.meridional_average_start)
                 {
                     hostAccumulateFrenchMeridionalFlow(meridional, glass_particles, t_now);
@@ -11079,9 +11496,14 @@ int main(int ac, char *av[])
                 // Doc224 heated French NC: absolute U_max≫0.05 m/s was a red-line for quiet smokes.
                 // Doc230 isothermal (--zero-q) and Doc231 prescribed-heat client warm NC: use Ma-style
                 // gate vs c0 (settle/acoustic residual ~0.05–0.2 m/s is not heated French runaway).
+                // Explicit --doc224-u-blowup-gate= overrides both (client long demos).
                 const bool soft_u_blowup =
                     local_cli.literature.zero_q || local_cli.prescribed_heat_mode;
-                const Real u_blowup_gate = soft_u_blowup ? Real(0.05) * local_cli.c0 : Real(0.05);
+                const bool gate_overridden = local_cli.doc224_u_blowup_gate > Real(0);
+                const Real u_blowup_gate =
+                    gate_overridden
+                        ? local_cli.doc224_u_blowup_gate
+                        : (soft_u_blowup ? Real(0.05) * local_cli.c0 : Real(0.05));
                 if (!std::isfinite(u_now) || !std::isfinite(spatial.u_rms) || !std::isfinite(t_mean_now) ||
                     u_now > u_blowup_gate)
                 {
@@ -11089,8 +11511,10 @@ int main(int ac, char *av[])
                     numerical_abort_reason = !std::isfinite(u_now) || !std::isfinite(spatial.u_rms) ||
                                                     !std::isfinite(t_mean_now)
                                                 ? "non_finite_U_or_T_at_monitor"
-                                                : (soft_u_blowup ? "U_max_above_0p05_c0_blowup_gate"
-                                                                 : "U_max_above_0p05_blowup_gate");
+                                                : (gate_overridden ? "U_max_above_doc224_u_blowup_gate"
+                                                                   : (soft_u_blowup
+                                                                          ? "U_max_above_0p05_c0_blowup_gate"
+                                                                          : "U_max_above_0p05_blowup_gate"));
                     std::cerr << "[ophelie][doc224][numerical-abort] " << numerical_abort_reason
                               << " t=" << t_now << " U_max=" << u_now << " U_rms=" << spatial.u_rms
                               << " gate=" << u_blowup_gate << std::endl;
@@ -11327,7 +11751,18 @@ int main(int ac, char *av[])
               << " residual_rho0V_J=" << residual_rho0V_J << " residual_rho0V_rel=" << residual_rho0V_rel
               << " residual_norm=max(|E_source|,|E_boundary|,1)"
               << " legacy_ledger_residualH_rel=" << coupling_state.ledger.residualHRel(energy_end) << "\n";
-    const bool periodic_coupling_end = periodic_coupling;
+    // Doc246 §2.2: residual_mass_J above ignores H0 (IC enthalpy after prescribe). Correct gate uses H0.
+    {
+        const Real H0_ic = static_cast<Real>(coupling_state.ledger.h0);
+        const Real dH_from_H0 = energy_end - H0_ic;
+        const Real residual_vs_H0 = coupling_state.ledger.residualH(energy_end);
+        std::cout << "[ophelie][doc246][energy] H0_set=" << (coupling_state.ledger.h0_set ? 1 : 0)
+                  << " H0=" << H0_ic << " H_end=" << energy_end << " dH_from_H0=" << dH_from_H0
+                  << " E_Q=" << E_source_J << " E_boundary_out=" << E_boundary_out_J
+                  << " residual_vs_H0=" << residual_vs_H0
+                  << " residual_vs_H0_rel=" << coupling_state.ledger.residualHRel(energy_end)
+                  << " (doc234 residual_mass_J ignores H0 — do not treat as operator failure)\n";
+    }    const bool periodic_coupling_end = periodic_coupling;
     FrenchCouplingGateInputs gate_in;
     gate_in.periodic_coupling = periodic_coupling_end && !local_cli.prescribed_heat_mode;
     gate_in.zero_q = local_cli.literature.zero_q;

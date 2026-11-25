@@ -1,6 +1,7 @@
 # OPHELIE Docs 201–250 (merged archive)
 
 Generated for GitHub hygiene. Original per-doc filenames listed in TOC.
+Coverage: Docs 201–247 (incl. 239A; Doc241–245 plans; Doc246 calibration plan; Doc247 execution plan + Doc241–243 work summaries). Standalone `201_`–`247_` plan files removed after merge.
 
 ## Table of contents
 
@@ -33,6 +34,30 @@ Generated for GitHub hygiene. Original per-doc filenames listed in TOC.
 - [225_OPHELIE_ABSOLUTE_TEMPERATURE_SLIP_AUDIT_AND_WARM_RESTART_CURSOR_PLAN_2026-11-18.md](#225-ophelie-absolute-temperature-slip-audit-and-warm-restart-cursor-plan-2026-11-18-md)
 - [226_OPHELIE_TOP_SLIP_FIG8_AND_LOCAL_VISCOSITY_CURSOR_PLAN_2026-11-19.md](#226-ophelie-top-slip-fig8-and-local-viscosity-cursor-plan-2026-11-19-md)
 - [227_OPHELIE_ACTUAL_TIMESTEP_PERIODIC_NEIGHBORS_AND_VISCOSITY_REPAIR_CURSOR_PLAN_2026-11-19.md](#227-ophelie-actual-timestep-periodic-neighbors-and-viscosity-repair-cursor-plan-2026-11-19-md)
+- [228_OPHELIE_LINUX_ELASTIC_PADDLE_SOFTWARE_ADDENDUM_2026-11-20.md](#228-ophelie-linux-elastic-paddle-software-addendum-2026-11-20-md)
+- [229_CLIENT_MATERIAL_AUDIT_AND_CURSOR_INPUT_RULES_2026-11-20.md](#229-client-material-audit-and-cursor-input-rules-2026-11-20-md)
+- [230_CLIENT_CASE_PHYSICS_LANDING_2026-11-20.md](#230-client-case-physics-landing-2026-11-20-md)
+- [231_OPHELIE_PHYSICS_NC_THERMAL_BALANCE_EM_AND_ELASTIC_PADDLE_CURSOR_PLAN_2026-11-21.md](#231-ophelie-physics-nc-thermal-balance-em-and-elastic-paddle-cursor-plan-2026-11-21-md)
+- [232_OPHELIE_PRODUCTION_THERMAL_PROBES_BOUNDARY_AUDIT_AND_EM_REPAIR_PLAN_2026-11-22.md](#232-ophelie-production-thermal-probes-boundary-audit-and-em-repair-plan-2026-11-22-md)
+- [233_OPHELIE_BUOYANCY_CAUSALITY_BOUNDARY_SCOPE_TIMESTEP_AND_EM_CONVERGENCE_CURSOR_PLAN_2026-11-22.md](#233-ophelie-buoyancy-causality-boundary-scope-timestep-and-em-convergence-cursor-plan-2026-11-22-md)
+- [234_OPHELIE_FORCE_PRECISION_FIXED_T_RESPONSE_AND_EM_SPATIAL_REPAIR_CURSOR_PLAN_2026-11-22.md](#234-ophelie-force-precision-fixed-t-response-and-em-spatial-repair-cursor-plan-2026-11-22-md)
+- [235_OPHELIE_OFF_FLOW_EM_GEOMETRY_AND_DIAGNOSTIC_CLOSURE_CURSOR_PLAN_2026-11-22.md](#235-ophelie-off-flow-em-geometry-and-diagnostic-closure-cursor-plan-2026-11-22-md)
+- [236_OPHELIE_HYDROSTATIC_SUPPORT_AND_EM_GEOMETRIC_QUADRATURE_CURSOR_PLAN_2026-11-23.md](#236-ophelie-hydrostatic-support-and-em-geometric-quadrature-cursor-plan-2026-11-23-md)
+- [237_OPHELIE_LOCAL_BACKGROUND_AND_EM_QUADRATURE_CLOSURE_CURSOR_PLAN_2026-11-23.md](#237-ophelie-local-background-and-em-quadrature-closure-cursor-plan-2026-11-23-md)
+- [238_OPHELIE_OFF_DECAY_DISCRETE_WORK_AND_VALIDATION_CLOSEOUT_CURSOR_PLAN_2026-11-23.md](#238-ophelie-off-decay-discrete-work-and-validation-closeout-cursor-plan-2026-11-23-md)
+- [239_FRENCH_THESES_EXTRACTION_AND_CURSOR_PLAN.md](#239-french-theses-extraction-and-cursor-plan-md)
+- [239A_CLIENT_AND_FRENCH_CASE_SCOPE_ADDENDUM_2026-11-24.md](#239a-client-and-french-case-scope-addendum-2026-11-24-md)
+- [240_OPHELIE_FLOW_THERMAL_CLIENT_HANDOFF_AND_LINUX_BRANCH_CURSOR_PLAN_2026-11-24.md](#240-ophelie-flow-thermal-client-handoff-and-linux-branch-cursor-plan-2026-11-24-md)
+- [241_OPHELIE_FRENCH_TEMPERATURE_FLOW_AND_CLIENT_ELASTIC_RELEASE_CURSOR_PLAN_2026-11-24.md](#241-ophelie-french-temperature-flow-and-client-elastic-release-cursor-plan-2026-11-24.md)
+- [242_OPHELIE_FINAL_PHYSICS_PREPARATION_AND_LINUX_ENTRY_CURSOR_PLAN_2026-11-24.md](#242-ophelie-final-physics-preparation-and-linux-entry-cursor-plan-2026-11-24.md)
+- [243_OPHELIE_72H_PHYSICS_CLOSEOUT_AND_FRENCH_REPRODUCTION_CURSOR_PLAN_2026-11-24.md](#243-ophelie-72h-physics-closeout-and-french-reproduction-cursor-plan-2026-11-24.md)
+- [244_OPHELIE_TARGETED_PHYSICS_DEVELOPMENT_AND_TEST_PLAN_2026-11-24.md](#244-ophelie-targeted-physics-development-and-test-plan-2026-11-24.md)
+- [245_OPHELIE_THESIS_PROPERTIES_AND_PAPER_COMPARISON_PLAN.md](#245-ophelie-thesis-properties-and-paper-comparison-plan.md)
+- [246_OPHELIE_ORDERED_CALIBRATION_AND_STIRRING_METRICS_PLAN.md](#246-ophelie-ordered-calibration-and-stirring-metrics-plan.md)
+- [247_CURSOR_EXECUTION_PLAN.md](#247-cursor-execution-plan.md)
+- [OPHELIE_Doc241_round_handoff_20261124_WORK_SUMMARY_ZH.md](#ophelie-doc241-round-handoff-20261124-work-summary-zh.md)
+- [OPHELIE_Doc242_round_handoff_lean_20261124_WORK_SUMMARY_ZH.md](#ophelie-doc242-round-handoff-lean-20261124-work-summary-zh.md)
+- [OPHELIE_Doc243_round_handoff_lean_20261124_WORK_SUMMARY_ZH.md](#ophelie-doc243-round-handoff-lean-20261124-work-summary-zh.md)
 
 ---
 
@@ -10359,3 +10384,7192 @@ doc227_runs/
 <!-- ===== END 227_OPHELIE_ACTUAL_TIMESTEP_PERIODIC_NEIGHBORS_AND_VISCOSITY_REPAIR_CURSOR_PLAN_2026-11-19.md ===== -->
 
 ---
+---
+
+
+<!-- ===== BEGIN 228_OPHELIE_LINUX_ELASTIC_PADDLE_SOFTWARE_ADDENDUM_2026-11-20.md ===== -->
+
+# 228｜OPHELIE Linux 软件开发补充任务书：不锈钢弹性搅拌桨与接入前测试
+
+日期：2026-11-20  
+执行对象：Cursor / OPHELIE 开发人员  
+配套文件：`OPHELIE_DESKTOP_IMPLEMENTATION_CURSOR_PLAN_2026-11-19(1).md`、甲方几何与物性原包、`OPHELIE_BRANCH_STATUS_2026-11-20.md`。
+
+## 0. 本补充件的优先级和本轮目标
+
+本文件补充原软件任务书；冲突处以本文件及用户最新指示为准。不要重新创建一套软件架构。
+
+用户已明确：
+
+1. 最近只交付 **Linux 软件**。暂停 Windows 移植、SYCL CPU Windows 后端和 Windows 安装包任务。
+2. **先将甲方机械搅拌项目中的桨改为真正参与力学求解的不锈钢弹性体，完成粗分辨率测试，再接入该项目的软件运行功能。** 可以提前搭建不依赖求解结果的 GUI、装配预览和文件接口。
+3. 软件仍为一个程序、两个示例项目；自然对流不含桨，机械搅拌含弹性桨。
+4. 当前按用户与甲方讨论口径，固体力学和传热学分别独立验证。不要在本轮追加疲劳寿命、完整热应力或全面强耦合验收任务。
+5. 原始运行证据已由用户在本机保存各轮 round pack。整理证据索引即可；不要因此要求重跑全部历史测试。
+6. TEAM7 尚无完整通过证据，仍标记待完成。软件可开发，不得写成电磁模块已全面达到合同 10% 指标。
+
+本轮完成目标：**甲方真实桨几何 → 弹性体粒子 → 不锈钢材料 → 轴端驱动 → 流体载荷双向交换 → 真实固体积分 → 可复跑短测 → Linux 软件项目接入**。
+
+不得以“材料字段改成 stainless steel，但仍整桨刚体旋转”作为完成。
+
+## 1. 开工检查与版本固定
+
+先检查实际工作树，不根据状态摘要推断代码已实现。
+
+记录：分支、Git SHA、工作区改动、编译器和构建目标、SYCL 设备、固体/流体精度、实际配置及几何校验和。保留用户已有改动；不硬重置、不强推、不删除旧结果。
+
+优先沿用 `feature/EM-Biot-Savart`，可在隔离工作树/功能分支实施后集成。保持独立 A-phi/Laplace 研究分支不受影响。
+
+本轮需要查明并记录：
+
+| 内容 | 必须确认的实际实现 |
+|---|---|
+| 甲方项目入口 | 当前甲方装配在哪个目标；若尚无，沿现有工程入口接入，不假定法国尺寸就是甲方尺寸 |
+| 原桨运动 | 哪个类覆盖 Position / Velocity / Normal；Simbody 或运动学约束在哪里执行 |
+| 弹性固体 | 已有材料、本构、应力积分、参考构形修正、固体时间步和约束类 |
+| FSI | 压力和黏性载荷传递、壁面平均速度/加速度、接触邻域更新的已有成熟算例 |
+| GPU 支持 | 上述每个环节实际是 GPU、CPU 还是混合；不能仅由 SYCL 主程序推断 |
+| 近期修复 | ForcePrior 生命周期、真实时间步约束在机械搅拌入口是否生效 |
+
+提交 `BASELINE_AND_CAPABILITY.md`，列出采用的成熟参考算例和源码路径。先看可复用实现，再作局部改造，不重写通用 FSI 框架。
+
+## 2. 改造范围：轴端规定运动，桨体弹性响应
+
+### 2.1 必须实现的物理含义
+
+- 桨采用三维弹性固体，内部粒子的运动来自应力积分、流体作用力及已启用的外力。
+- 电机驱动通过**轴端夹持区/明确的驱动区域**施加；该区域作给定轴旋转。
+- 非夹持区域允许真实弹性变形，流体边界使用实际变形后的桨位置、速度和法向。
+- 旋转角度由角速度时间积分得到；启动阶段使用平滑斜坡，不能把变转速过程写成 `theta = omega(t) * t`。
+- 区分材料点位移与相对刚体旋转的弹性偏移。旋转产生的大位移不能直接显示为“大变形”。
+
+不要同时用整桨刚体运动类和固体应力积分更新同一批自由粒子。约束只覆盖选定夹持区域；禁止每步把所有固体位置重置到解析旋转位置。
+
+### 2.2 推荐实现路线
+
+首选已有经过验证的 SPHinXsys 弹性 FSI 与规定运动约束组合。复用能正确处理有限转动的本构与应力更新，避免使用仅适合全局小转角的线性应变实现进行整圈旋转。
+
+若采用旋转参考系，必须完整处理所需惯性项和载荷/速度变换，并给出成熟依据。本轮不为赶工引入未经测试的新旋转坐标算法。
+
+保留旧刚性桨为显式的回归配置，例如 `paddle.mechanics=rigid_prescribed`。新甲方搅拌预设必须选择 `elastic_driven`。该字段是建议接口名，可适配现有命名；必须只有一个生效来源。
+
+### 2.3 轴、夹持区和装配
+
+沿用原任务书的统一 STL 变换。机械轴以甲方装配为准，不能将偏心桨强行移至坩埚中心。历史估计偏心约 -67 mm 仅供核查，不是未经检查的硬编码。
+
+驱动区优先选轴顶部明确的一段实体截面。输出驱动区粒子数、包围盒、轴向范围、轴点和单位轴向量；导出与装配叠加截图。驱动区不能为空，也不能误选整个桨。若 STL 不含完整夹持段，选择现有轴上可解释的驱动区域并记录近似。
+
+各计算环节统一坐标，不要让 CAD +Y 轴、求解器 +Z 轴和扭矩取矩轴混用。
+
+## 3. 不锈钢材料默认值与配置
+
+用户尚未指定牌号时，采用 **304/1.4301 室温常物性开发预设**，允许后续替换。不是高温寿命或实际桨材料认证。
+
+| 参数 | 开发默认值 | 单位与说明 |
+|---|---:|---|
+| 密度 rho_s | 7900 | kg/m³ |
+| 杨氏模量 E | 2.00e11 | Pa；输入 200 GPa 只转换一次 |
+| 泊松比 nu | 0.30 | 本轮工程假设，需在来源中注明 |
+| 导热系数 k_s | 15 | W/(m·K)；仅在开启固体热模块时读取 |
+| 比热 cp_s | 500 | J/(kg·K)；同上 |
+| 线膨胀系数 alpha_s | 16e-6 | 1/K；预留，不代表已实现热应变 |
+| 弹性应力参考态 | 初始无应力构形 | 在求解坐标中构建，不能把初始装配旋转当作应变 |
+
+rho、E、k、cp、alpha 的参考：Outokumpu Core range，Core 304/4301，物性表。
+https://www.outokumpu.com/-/media/files/products/core/outokumpu-core-range-datasheet.pdf
+
+材料标记：`source_status=development_assumption`；保存原始值、SI 值、参考温度和常量/温变模式。
+
+第一轮采用等温力学，固体与流体可统一为 293.15 K，浮力与热源关闭。流体采用当前已有可用常物性预设并记录，不能误读法国高温玻璃参数为室温实验实物性质；这是功能短测。
+
+后续暖态测试如沿用室温 E，必须注明“常 E 功能测试，非高温材料预测”。不自动外推室温钢材参数到 1400 K 以上作为工程强度结论。
+
+不要因为钢有导电性就自动把桨加入 EM 导体域；首版保持原有电磁模型范围，是否计算钢桨涡流另列任务。导电性、热膨胀、塑性、疲劳不因填写材料名而默认启用。
+
+## 4. 粒子生成与粗分辨率约束
+
+使用用户提供的真实桨 STL；采用实体粒子，不能用仅供展示的线圈或表面采样粒子替代。
+
+1. 检查连通性、封闭性、最薄叶片厚度、轴径、叶片与轴连接、初始浸没和整圈扫掠。
+2. 尽量使最薄承载厚度至少具有约 3–4 层实体粒子。这是本轮可解析性准入检查，不代表应力已经收敛。
+3. 粗分辨率不能让叶片断开、消失或只剩一层却仍宣称弹性计算有效。若不满足，优先局部/固体加密，使用框架已有多分辨率接触能力；没有成熟支持则采用可接受的统一间距，不临时发明耦合算法。
+4. 原任务书约 9.3 mm 的桨壁间隙需要按实际装配重新计算。约 5 mm 流体间距只能用于受限运动冒烟，不能据此授予近壁流场或扭矩精度通过。
+5. 流体初始体积应扣除桨的真实浸入体积；自然对流项目仍不生成桨求解体。
+6. 输出固体/流体/壁面粒子数、质量体积、厚度层数、最小间隙与 dp 比、夹持区及流固接触支持诊断。
+
+若原始薄片在可承受粒子数下不可解析，标记 `BLOCKED_UNDERRESOLVED_SOLID` 并交最小修正建议；不得擅自加厚叶片、换成壳模型、降低 E 或退回刚体并标 PASS。
+
+## 5. 流固耦合和时间推进：必须核对的实现点
+
+### 5.1 真实双向载荷
+
+复用已有压力/黏性流体作用力到固体的路径，并用于固体动量推进；自由固体粒子的实际运动返回流体接触边界。
+
+- 压力与黏性载荷分别可追踪；禁止只输出“估计载荷”而未作用于固体。
+- 说明固体采用的应力张量，以及流固力是否已经进入总力，避免 ForcePrior 或外力重复计入/被清零。
+- 固体亚步完成后，按成熟 FSI 算例更新给流体使用的平均壁速度/加速度和法向。
+- 粒子移动后，在需要使用新邻域之前更新对应 cell 与接触邻域；固体参考构形邻域与当前流固邻域分开管理，不能全部随意重建或全部冻结。
+- 排序必须保持材料、应力、参考位置、夹持标记及热字段的对应关系。
+
+### 5.2 固体亚步与计算成本
+
+真实不锈钢 E 会引入远小于流体步长的弹性时间步。不能把流体时间步直接用于固体，也不能通过降低 E 冒充真实不锈钢来提速。
+
+按已有 FSI 调度，在每个流体耦合区间内对固体作亚循环：实际固体步长不超过固体稳定限制和该区间剩余时间，最后一步截断，累计时间精确覆盖耦合区间。约束、载荷施加、应力半步和速度/位置更新顺序沿用已验证实现。
+
+记录流体实际 dt、固体 dt 最小/最大、每个区间固体亚步数、步长越界次数、真实物理时间和墙钟耗时。第 227 轮实际步长修复不能只在自然对流打开；机械搅拌需单独确认。
+
+GPU 优先；若成熟固体/FSI 环节目前只能在 CPU 执行，允许先完成准确的 CPU/GPU 混合短测，明确显示各段后端与同步成本。不得假称全 GPU，也不在本轮为此重写固体 GPU 后端。
+
+## 6. 测试顺序和判定：先单模块，再甲方几何
+
+以下阈值为本轮开发验收，不替代合同中双方确认的正式指标。每个测试保存命令、配置、生效参数、日志和原始结果。
+
+### S0：固体力学独立验证
+
+先复跑一个已有成熟弹性基准，例如小变形悬臂梁静挠度。优先复用现有算例和参考，不重复造测试框架。
+
+若采用端部合力 F 的细长矩形梁，参考挠度 delta=F*L³/(3*E*I)，I=b*t³/12。载荷实际分布、有效长度及边界须与解析假设匹配；不能将不同加载方式混用。施加平滑载荷，确认已稳定后比较，不用任意瞬时值代替静挠度。
+
+本轮要求：挠度相对误差 ≤10%，结果有限、约束明确、非零加载产生非零响应。应力若比较，应远离夹持和加载奇异区；不要求奇异点峰值满足 10%。已有同版本证据可复用，但须核对确实使用本轮所选材料/算子路径。
+
+### T0：传热独立验证
+
+按用户口径独立验证，不要求先把热应变并入桨。优先复用已通过的导热解析基准。可选均匀材料一维平板瞬态导热、其他面绝热：
+
+`T(x,t)=T0+A*sin(pi*x/L)*exp[-alpha*(pi/L)^2*t]`，alpha=k/(rho*cp)，两端固定 T0，初态同式 t=0。
+
+采用同一独立热模块路径、匹配边界与材料，比较非零时刻温度扰动的相对 L2，而非用巨大绝对温度掩盖误差。至少一个有明显衰减的时刻误差 ≤10%，附合理分辨率检查。已有对应证据可复用。
+
+T0 可与桨机械测试独立开展，不阻塞无热力学的 E0/E1。GUI 不得据此显示桨热应力或热疲劳已完成。
+
+### E0：真实桨静止保持，先隔离固体初始化
+
+真实桨、选定夹持区、等温、零转速、无流体载荷、重力等外力关闭。跑至少 100 个有效固体步，检查无 NaN、无翻转/负 Jacobian、初始应力近零、无自发显著运动。记录无量纲应力 sigma/E 与位移/dp 的范围；不要把任意单精度残差当结构失效。
+
+### E1：真实桨非零载荷测试，证明没有被锁成刚体
+
+保持夹持区，给叶片指定小幅平滑已知载荷，运行卸载或响应窗口。至少两个非零载荷级，报告载荷和弹性偏移响应；小变形范围内应体现合理的近似比例关系。
+
+要求：自由区确实由固体求解器积分、存在可分辨的非零弹性响应、应力和内力实际更新、无整体位置覆盖。若单精度下响应过小，使用独立加载测试调整测试力至可分辨但仍小应变；不偷偷降低 E。该项不是实际运行强度工况。
+
+### E2：真实桨规定旋转，无流体或关闭流体作用
+
+对夹持区施加平滑转速斜坡，先作 0.05–0.1 s 冒烟。检查旋转轴、符号、约束及固体亚步正确后，再作至多一轮有明确时长的延长测试。
+
+整圈测试时长按 `integral omega(t) dt` 达到 2*pi 判定，不能只用含斜坡情况下的 `60/rpm` 代替。可先报告短角度通过，再补整圈；未跑满不能标整圈 PASS。不得为了缩短墙钟时间任意提高转速。
+
+检查弹性偏移（相对驱动刚体参考轨迹）、应变、应力、粒子支持和稳定性。实际旋转有惯性载荷，不能要求有转速时所有应力严格为零。若大转角阶段出现伪应变，先修本构/约束客观性，不用大阻尼掩盖。
+
+### F0：甲方搅拌项目，等温弹性 FSI 粗分辨率短跑
+
+使用真实坩埚与弹性桨装配、开发常物性流体、已确认或明确标记的开发转速、平滑启动；关闭 EM、热源和浮力，先隔离机械耦合。
+
+先跑 0.05–0.1 s；通过后按实测墙钟预算选择一个延长窗口。要求：
+
+- 流体实际受到桨运动驱动，固体实际接收压力和黏性载荷；
+- 固体内部积分次数和有效自由粒子数非零，夹持区确实仅占一部分；
+- 无 NaN、无应变/Jacobian 异常，质量和推进时间有效；
+- 检查几何穿透与数值近壁重叠的区别，输出最大越界量及数量；明确穿透容差的几何定义，不直接沿用任意 0.5dp 放行；
+- 扭矩绕真实偏心轴计算，压力、黏性、驱动反力分项区分；驱动反力包含固体惯性，不能直接当作流体扭矩；
+- 同一配置能重复运行，结果在相同精度及并行容差内一致。
+
+可对照一次同装配、同流体条件的刚性桨短跑。若弹性偏移较小，应有相近整体流动响应；这是辅助一致性检查，不能强制要求两者完全相同，也不能用相似云图替代 E1。
+
+### F1：恢复热/电磁路径的集成短测
+
+F0 通过后才恢复现有稳定热源路径。先用常流体黏度和既有空间 Q，核对温度、入热和输出，再考虑温变黏度；不要同时开启未验证的局部高黏度、自感和 sigma(T) 反馈排错。
+
+明确选择：真实 EM 计算得到的固定空间 Q、规定热源、固定温场诊断三者之一。只有前者能描述为“已计算 EM 热源”；固定 Q 也不等于 sigma(T) 动态反馈。
+
+弹性体首轮不强制开启热应变。若实际启用固体导热/流固换热，须检查界面热交换与能量收支；若未启用，结果和界面明确说明，不伪造桨温度场。
+
+## 7. 输出字段、文件与通过标签
+
+固体至少输出：Position、Velocity、参考位置或可恢复参考构形、夹持区标记、实际可用应力张量、von Mises、弹性偏移及其定义。若现有实现不提供应变，明确字段不可用，不随意从速度替代。
+
+von Mises 由物理 Cauchy 应力的偏应力计算；若求解器存储 Piola 应力，需用现有正确转换后再显示。不能把任意应力分量或应力范数命名为 von Mises。
+
+驱动 CSV：物理时间、theta、omega、转轴、流体压力/黏性作用力和绕轴扭矩、可用驱动反力、固体 dt 与亚步数、最大应变/弹性偏移、固体求解耗时。
+
+建议交付目录：
+
+- `elastic_paddle_runs/S0_solid_reference/`
+- `elastic_paddle_runs/T0_thermal_reference/`
+- `elastic_paddle_runs/E0_hold/`
+- `elastic_paddle_runs/E1_load_response/`
+- `elastic_paddle_runs/E2_driven_rotation/`
+- `elastic_paddle_runs/F0_isothermal_fsi/`
+- `elastic_paddle_runs/F1_heated_integration/`
+
+每项含 `effective-case.json`、`summary.json`、日志、原始 CSV、少量实际 VTP、复跑命令。事件/索引与原软件接口保持一致。
+
+| 标签 | 授予条件 |
+|---|---|
+| SOLID_REFERENCE_PASS | S0 定量通过 |
+| THERMAL_REFERENCE_PASS | T0 定量通过或同路径有效历史证据 |
+| ELASTIC_PADDLE_ACTIVE | E0/E1 通过，实际本构和自由区积分接通 |
+| DRIVEN_ELASTIC_ROTATION_SHORT_PASS | E2 短窗通过；整圈单列 |
+| ELASTIC_FSI_SHORT_PASS | F0 真实双向短跑通过 |
+| HEATED_ELASTIC_INTEGRATION_PASS | F1 通过，明确已开启的热/EM 范围 |
+| LINUX_GUI_WORKFLOW_PASS | 安装包实际启动求解、显示并重开真实结果 |
+
+严禁使用一个 `passed=true` 替代以上范围。粗分辨率功能通过不等于应力精度、扭矩精度、论文复现或合同全部通过。
+
+## 8. 对原软件任务书的具体修改
+
+| 原任务 | 本补充件后的执行方式 |
+|---|---|
+| M0 双平台 | 改为 Linux 基线及 Qt/VTK 试编；Windows 暂停 |
+| M2 规定运动刚性桨 | 改为轴端驱动弹性桨；先通过 E0/E1/E2/F0，再接软件机械项目 |
+| M1 自然对流 | 保留，可独立先接入；不得因无桨项目改动破坏回归 |
+| M3 四环源 | 优先使用已有可用源，保证与 STL 元数据一致；新的有限截面算法不阻塞弹性桨和 GUI |
+| M4 桌面工作流 | 沿用一个软件两个项目，加入材料及 mechanics 类型和真实固体字段 |
+| M5 Linux 打包 | 近期发行主线，必须在目标机器实际试测 |
+| M6 Windows | 本轮取消执行，保留后续规划 |
+
+项目粒子缓存指纹增加：桨力学模式、固体分辨率、参考构形/预处理版本、夹持区选择。材料 E 改变通常不要求重生成几何粒子，但必须更新运行快照及固体初始算子，不得复用过时运行状态。
+
+装配 STL 仅作初始预览。结果页用实际弹性粒子或其正确重建表面显示变形；不能把初始 STL 刚体动画当成弹性结果。显示放大变形时明确倍率。
+
+机械项目缺少有效桨、材料、夹持区或可用固体后端时，校验阻止启动；不静默退回刚体。自然对流开关关闭搅拌时，按原任务书移除求解桨。
+
+## 9. 本轮暂缓事项与遗留问题
+
+- 暂缓 Windows、疲劳寿命、塑性、损伤、大规模细分辨率应力计算及钢桨 EM 涡流。
+- 暂缓为对齐法国 Fig7/8 开新一轮大范围参数扫描。
+- 显式局部 mu 在法国几何约 2.69 s 的尖峰仍未定位；隐式在另一入口越过该时刻，不作为所有路径已解决的证明。
+- TEAM7 尚未完整通过，解析柱场精度亦需依据原始结果逐量签字。守恒、残差和总功率归一不替代场精度。
+- 合同验证本轮按固体力学、传热分别整理；记录用户此口径，不自行扩写成疲劳或完整热应力验收。
+
+## 10. 执行顺序、停止条件及最终交付
+
+顺序：版本固定/能力盘点 → S0 与 E0/E1 → E2 → F0 → F1 → 机械项目软件接入 → Linux 包现场复测。T0 独立整理/补测；自然对流 GUI 和通用接口可在依赖满足时同步推进。
+
+一项失败先给具体数值、首次异常时间、粒子/区域、实际步长及最小复现命令，再修一个主因后复测。禁止无限增开材料/阻尼/分辨率/转速扫描。
+
+若遇到薄片不可解析、已有本构不能处理整圈转动、缺失真实流固载荷接口等阻塞，提交明确 BLOCKED 与最小修复范围。不得为了“赶完成”把全桨锁住、降 E、关闭载荷或仅放动画。
+
+最终提交：
+
+1. 可复建提交 SHA、依赖及构建命令；
+2. 两套甲方项目配置和几何校验和；
+3. 固体力学与传热独立验证结果/有效历史证据索引；
+4. 弹性桨 E0/E1/E2、FSI F0、热集成 F1 的实际结果及标签；
+5. Linux 软件包、启动方式、依赖、实际设备与已知限制；
+6. 一页中文状态表，明确“弹性体已接通”“短跑通过”“整圈通过”“合同精度通过”各自状态。
+
+**本轮最重要的判据：桨的自由区域确实在求解弹性力学、流固作用确实生效，然后由同一 Linux 软件调用真实项目完成计算与结果回放。**
+
+
+<!-- ===== END 228_OPHELIE_LINUX_ELASTIC_PADDLE_SOFTWARE_ADDENDUM_2026-11-20.md ===== -->
+
+
+<!-- ===== BEGIN 229_CLIENT_MATERIAL_AUDIT_AND_CURSOR_INPUT_RULES_2026-11-20.md ===== -->
+
+# 229｜甲方回复后的物性、自然对流温度目标与双机开发补充规则
+
+更新日期：2026-11-20  
+原编号保留。本文件是第 228 轮及原软件计划的补充，不是新的独立开发轮次。
+
+## 0. 资料与优先级
+
+依据：甲方原文件 `实验中粘度和电导率(1).docx`、最新 `回复.docx`（包括两张内嵌图片），以及用户转述的补充消息。
+
+**本版替代旧 229 的物性解释和待确认列表。** 与 228 或原软件任务书存在冲突时，按本版更新的甲方数据和排期执行。Linux 软件、真实弹性桨及独立固体/传热验证要求仍保留。
+
+本版主要变化：
+
+- 黏度原图错误已由甲方确认，公式为准，温区 1050–1800 K。
+- 回复中的新图片明确电导率为自然指数，旧版按 log10 计算的甲方电导率及相关倍率不再作为当前配置依据。
+- 转速 10 rpm，开发频率 100 kHz，30 kW 为电源输入功率。
+- 当前定量重点为甲方自然对流热电偶温度约 1000℃；机械搅拌定性，约 1400℃仅为待补全时间与测点定义的实验趋势信息。
+- 两机同时开展软件和物理验证；自然对流温度工作不等待弹性桨全部完成。
+
+## 1. 已收到的甲方答复及配置状态
+
+| 条目 | 甲方答复 | 当前处理 |
+|---|---|---|
+| 黏度 | 原图有问题，以公式和数值表为准，提供修正版图 | 以公式直接计算；修正版图趋势一致，旧图作废用于拟合 |
+| 温度范围 | 1050 K–1800 K，无其他数据 | 作为甲方本轮指定使用窗口；不是已提供原始测点的声明 |
+| 电导率底数 | 新图写 lnσ=4.5−8500/T，提醒使用 exp | 当前甲方公式按自然指数实现 |
+| 电导率可信度 | 可能有问题，问题较大可用法国文献数值 | 允许有来源的法国替代预设；不伪称实测 |
+| 转速 | 10 转/分钟 | 10 rpm，角速度约 1.04719755 rad/s；旋向仍待确认 |
+| 频率 | 先设 100 kHz | 两个甲方项目使用 100000 Hz；保留“暂定”来源 |
+| 功率 | 电源输入 30 kW | 记录 generator_input_power_W=30000；不是 absorbed_power_W=30000 |
+| 电流、电压 | 千安量级，明天提供准确数字 | 未确认；不把 1000 A 当作已确认值；峰值/RMS、各环馈电也待确认 |
+| 密度 | “2.7” | 暂按 2.7 g/cm³=2700 kg/m³解释，单位需补确认；不得输入成 2.7 kg/m³ |
+| cp、k、beta | 参考法国文献 | 可先采用已追溯的法国表1常值，见第 4 节 |
+| 自然对流温度 | 未开搅拌，热电偶处约 1000℃ | 1273.15 K；测点目标，不是全域平均值/最大值或初温 |
+| 搅拌温度 | 开搅拌后最高可到 1400℃，搅拌定性即可 | 1673.15 K；峰值位置/时刻待确认，不强制做定量验收 |
+
+## 2. 黏度与电导率：修正后的公式
+
+内部温度统一为 K。
+
+动态黏度（Pa·s）：
+
+`mu(T)=exp(-4.0+8500.0/T)`
+
+电导率（暂按 S/m）：
+
+`sigma_client(T)=exp(4.5-8500.0/T)`
+
+新图给出的等价十进对数为：
+
+`log10(sigma) = (4.5-8500/T)/ln(10)`
+
+**不能写成 `pow(10,4.5-8500/T)`。** 旧文件中该写法是基于旧曲线的暂时推断，现被甲方新图替代。旧版 1473 K 的 0.0536 S/m、1800 K 的 0.599 S/m 及相应倍率不得继续用作当前材料参数。
+
+公式复算值（不是实验原始点）：
+
+| T/K | 对应℃ | mu/(Pa·s) | sigma_client/(S/m) |
+|---:|---:|---:|---:|
+| 1050 | 776.85 | 60.05363594 | 0.02745415 |
+| 1273.15 | 1000 | 14.53201178 | 0.11345444 |
+| 1473 | 1199.85 | 5.87400286 | 0.28068105 |
+| 1673.15 | 1400 | 2.94538010 | 0.55976520 |
+| 1800 | 1526.85 | 2.05900369 | 0.80073740 |
+
+两公式按数值计算满足 `mu*sigma=exp(0.5)`。这只能作为底数和实现一致性的快检，不能证明材料关联式物理正确。
+
+动态/运动黏度、S/m 与 S/cm 的区别继续检查；电导率单位仍需补确认。T<=0、非有限值必须拒绝。排序和温度刷新后材料字段需正确同步。
+
+窗口外禁止无标记外推。开发用端点保持必须明确开启并记录受影响数量/体积分数；冷区大范围越出窗口时不能称该材料已适用。室温弹性 FSI 功能测试继续用独立常黏度开发流体，不把熔体关联式外推到 300 K。
+
+## 3. 法国电导率替代的选择规则
+
+甲方已允许在电导率存在较大问题时采用法国文献数值，但未指定是哪一条。保持三个可区分的来源：
+
+1. `client_ln_sigma_provisional`：本版修正的 exp 公式，甲方声明仍可能有问题。
+2. `french_table1_sigma16_borrowed`：此前使用的法国表1常量 16 S/m。作为可追溯的工程替代候选，不声称是甲方实测。
+3. `french_sigma_T_verified_source`：只有查清现有曲线对应哪篇文献、单位与温标后才启用；不能把表1常量16、约43的关联式值及图片随意拼接成新曲线。
+
+建议先保留现有稳定的法国 sigma16 工程替代路径，另以修正甲方公式作一次同条件对照，再记录选定的软件开发预设。每次切换均输出 material_id、来源和使用值，不按“哪个更贴近1000℃”静默选材料。
+
+给定电流模式必须重新求 EM 和原始吸收功率；固定吸收功率模式必须保留归一前功率、归一系数及实际流体入热。总功率归一不能验证局部 Q 和峰值。
+
+本轮不强制同时增加 sigma(T) 反馈、自感新算法和新线圈有限截面算法；优先沿用已验证路径，增量测试。
+
+## 4. 其他材料与目标温度的意义
+
+密度暂定 2700 kg/m³；cp=1150 J/(kg·K)、k=4 W/(m·K)、beta=1e-5 K⁻¹可作为法国表1借用常值开发基线。与法国原 rho2750 区分；不得悄悄修改法国回归配置。
+
+这些常值是已授权参考来源的工程借用，不代表甲方材料已测量，也不代表已启用全温区温变物性。温变 cp/k/beta 后续仅使用来源明确、实际算子确实读取的路径。
+
+自然对流测点 1000℃时黏度约14.53 Pa·s，而不是历史常值4；1400℃时约2.95 Pa·s。同一几何下它们会改变流动响应，不能继续把全部熔体视为 mu4 并声称采用甲方物性。
+
+测点从约1000℃升到约1400℃可能涉及热量输运/温场重新分布，也可能伴随功率和运行阶段变化；现有答复不足以确定原因。不得把搅拌本身当作凭空新增400℃的热源，也不得要求自然对流全域最高温必须为1000℃。
+
+## 5. 功率口径：30 kW 不能直接替代历史吸收功率
+
+配置必须区分：
+
+- `generator_input_power_W=30000`：甲方提供。
+- `coil_current_A`、`current_convention`、各环相位：待确认。
+- `P_em_absorbed_raw_W`：给定电流计算所得熔体吸收功率。
+- `absorbed_power_target_W`：如采用规定吸收功率开发模式，独立设定并标明假设。
+- `coupling_efficiency`：如需估计，定义为熔体吸收/电源输入，不是现有测量值。
+
+不能把历史法国50kW或搅拌60kW吸收预设直接复制到30kW输入的甲方项目。
+
+若开发时用 P_abs=eta*30000，eta 在0至1之间，且明确说明是同一口径下对直接电磁入热的估计；上游功率测量、其他散热与其他热输入分别记账。没有其他能量来源时，不能让直接电磁吸收平均功率超过电源输入。
+
+准确电流到达前，可以独立进行界面、弹性桨、规定空间热源和热边界测试；不得以随意试一个千安电流后归一功率，声称已得到真实电源预测。电流若用于敏感性计算，需少量、明确标记的取值，不扫描至“凑中温度”。
+
+## 6. 当前验收重点与排期修正
+
+### A. 自然对流：近期首要定量任务
+
+目标是在甲方几何、测点和已确认实验条件下计算热电偶位置温度，与约1273.15 K对照。法国Fig7/8保留研究/模块回归价值，不再作为甲方新几何交接前必须完全一致的条件。
+
+- 核对真实感温点，不能仅把热电偶STL末端当成已确认位置。
+- 采用稳定的邻域插值/采样；输出采样坐标、覆盖、温度和物理时间，不用单个最近粒子编号长期代替固定测点。
+- 输出该点温度时间序列、截面温度、全域平均/极值、热输入、各边界损失和能量账本。
+- 约1000℃目前缺少测量时间、稳定窗口、误差条和初态。只能作为目标量级；不能仅凭某一时刻碰到1000℃授予定量PASS。
+- 不把1273.15 K直接钉在测点当边界或设为全域初温后，用初始时刻声称达标。
+- 若用目标温度校准未知等效换热或吸收效率，明确CALIBRATED，参数来源与允许范围固定；同一数据不能再称独立预测验证。
+- 误差口径由双方固定。先报告摄氏度差/开尔文差（数值相同）及温度曲线误差，不自行选择绝对K分母或℃分母宣布合同10%通过。
+- 短跑只验证功能和能量路径。长期/稳态对比按温度、能量与流动收敛判断，不能把几秒短跑直接当实际实验稳态。
+
+### B. 搅拌：近期定性，弹性桨任务保留
+
+甲方转速10 rpm：匀速一圈需6 s，含启动斜坡总时间更长。保留228的小时间窗冒烟，再按实测成本延长；不要提高转速冒充目标工况，也不要求现场短跑必须等一圈算完。
+
+真实弹性桨、轴端驱动、力学短测与双向流固作用仍需实现。输出桨旁流动、热量输运和测点趋势；约1400℃暂不作为强制精度门槛。
+
+不强制为了达到1400℃提高输入功率或替换材料。不因“定性即可”而用刚体动画冒充弹性响应。
+
+### C. 两个项目的独立交接
+
+自然对流不含桨，不应等待弹性桨完成才推进其温度测试或GUI接入。机械项目按228完成弹性/FSI门控后交接。两项目分别就绪、分别接入同一Linux软件，软件框架开发可同步开展。
+
+## 7. Cursor 下一步有限执行清单
+
+1. 替换旧甲方pow10电导率解释为新ln/exp公式，保留资料版本记录；不要修改法国材料ID。
+2. 更新甲方预设：rho暂定2700、10rpm、100kHz、输入30kW、公式温区1050–1800K。分别标记确认、暂定、借用和未知，输出effective配置。
+3. 对第2节各点做公式复算检查；1473K应为 mu≈5.874、sigma≈0.280681，浮点相对误差目标1e-4。检查用户输入℃只转换一次。
+4. 先跑无桨自然对流的静态几何/测点与热账本检查；初态、冷却边界如未知采用明确开发配置，不将测量温度强制写为场约束。
+5. 电流到达前，做一次法国sigma16与修正甲方sigma的同电流、同频率、同几何原始Q对照，前提是已有EM路径可用。保存未归一功率，不同时扫描多个物性/电流/边界。
+6. 新实验温度主线先用可靠流体路径，常mu取实际测试参考温度下的公式值并明确“冻结mu”；局部mu(T)随后单独接入并检查实际步长/稳定性，不能宣称常mu已经是温变材料。
+7. 弹性桨负责方继续228测试；温度目标主线不因该项等待。机械项目以10rpm作最终配置，暖态材料与室温力学测试配置分别保存。
+8. 补全实验时刻与电流后，固定一套自然对流定量配置，再决定必要的物理时长或成熟稳态加速路线。不要先启动无边界依据的超长GPU计算。
+9. 提交更新参数表、公式复算CSV、测点定义、功率口径、短测日志、通过范围及尚缺信息；无需重跑全部历史验证。
+
+## 8. 本版仍需甲方补充的最少信息
+
+1. 电流/电压准确值、峰值还是RMS、频率是否最终100kHz、线圈连接与各环电流关系；30kW实际测量位置/读数方式。
+2. 自然对流1000℃是哪个时刻/是否稳定值，初温、加热持续时间、液深及准确感温点。
+3. 搅拌1400℃是否同一热电偶峰值，开启搅拌前后的功率是否相同、转向及达到该值的时间。
+4. 密度2.7的单位是否为g/cm³；电导率是否仍按S/m；冷却水/环境温度及能提供的热边界信息。
+
+不再询问“黏度旧图还是公式为准”；该项已经答复。电导率底数按新图片采用ln，不再默认log10。
+
+## 9. 两台电脑并行：Linux 软件与物理验证的分工及同步
+
+本节为用户最新安排，替代此前“整体暂停物理验证”的排期建议：**软件机优先交付，物理机可继续验证；未经回归的新物理实现不自动进入软件审查版。** 第 228 号中弹性桨作为机械项目正式接入前置的要求仍然保留。
+
+### 9.1 Git 对另一台电脑的实际影响
+
+- 两台电脑各自 clone，拥有独立工作区、HEAD 和本地分支。分支名称相同不代表共享本地目录。
+- A 机修改、commit：只改变 A 的本地仓库。push：更新远程分支，也不自动改 B 的源文件。
+- B 执行 fetch：更新远程跟踪信息，不改变当前检出的源文件。
+- B 执行 pull、merge、rebase、cherry-pick、switch/checkout 等，才可能改变当前源文件；B 的 IDE 若配置自动拉取或自动切换也要核查。自动 fetch 本身可以保留。
+- 上述隔离前提是两个独立本地目录，不是共用网络盘、双向自动同步源码目录或两个编辑器连接同一个服务器工作区。
+- Git 不会主动改已启动进程的内存，但重建/覆盖正在使用的程序、运行中读取的材料或输入文件仍会干扰计算。每次运行固定可执行文件、配置和输入副本。
+
+### 9.2 推荐分支安排
+
+从同一已记录且可构建的提交开始，继续使用同一个 OPHELIE 仓库，无需迁入 SPHinXsim 或主分支。
+
+| 工作区 | 推荐本地/远程工作分支 | 职责 |
+|---|---|---|
+| 软件机 | `ophelie-software-linux` | Qt/VTK、CLI/JSON/事件、项目/装配、粒子和结果显示、Linux 打包；使用固定求解器版本 |
+| 物理机 | `ophelie-physics-validation` | 本文件材料审核、场精度、TEAM7 等已有缺口、必要的物理修复与验证 |
+| 原集成分支 | `feature/EM-Biot-Savart` | 集成经过验证的改动；记录审查版 SHA/标签 |
+
+各工作分支在各自独立工作区提交。跨机器需要传递已提交代码时，再按项目已有授权的私有远程或 Git bundle 流程同步；本任务书不要求发布到公开仓库。
+
+弹性桨只指定一个实现负责方。建议物理机承担核心弹性/FSI实现并尽早交付最小通过提交，软件机同时完成通用界面和自然对流项目；不要两台分别重写同一弹性桨入口。若已有软件机在做该实现，则沿用其所有权，物理机只协助测试，不重复开发。
+
+采用不同工作分支后，双方仍可独立 commit 和 push。软件机只接收明确选定且通过测试的物理提交，不自动跟随物理分支最新状态。
+
+### 9.3 如果坚持两台都使用同名集成分支
+
+也可以独立本地 commit，但两边都向同一个远程分支 push 会出现分叉和非快进拒绝，需要整合；不能保证无冲突。不要用强推解决。
+
+推荐同名集成分支只由一方维护，另一方有源码改动时建立工作分支再提交。仅运行验证不修改源码时可以保持固定 SHA，但不要把测试输入和必要脚本也全部丢弃为临时文件。
+
+### 9.4 文件所有权和集成顺序
+
+软件机主要修改 UI、配置解析/校验、适配层和打包目录；物理机主要修改算子、材料和验证项目。公共 CMake、共享头、机械项目入口、参数默认值和输出字段是潜在冲突区，修改前由任务记录明确所有者。
+
+合并没有文本冲突也不等于兼容：物理代码可能改变材料默认值、字段单位、输出目录或数值调度。软件必须通过有版本的契约读取生效能力。
+
+物理机交接每项修复至少包括：
+
+1. 基于哪个 SHA、对应提交及所需前置提交；
+2. 变动文件和是否改变配置/输出语义；
+3. 一条最小复现命令和原始结果；
+4. 实际设备、求解器构建配置和通过范围。
+
+软件机在独立集成/试测目录合并或 cherry-pick（仅适用于可独立提取的提交），完成构建、受影响算例及 GUI 接口短回归后，才更新软件发行基线。不要在主构建或现场演示中途 pull 后继续沿用旧可执行文件。
+
+两机独立 build、运行、预处理和安装目录；材料文件按版本随项目存放，不用网络共享文件实时覆盖。证据包由用户本机继续保存，新增结果记录 SHA 与配置校验和。
+
+明后天审查版固定一个 SHA/版本号。物理机可继续推进，完成的新结果先进入物理分支；只有明确需要的修复经复测才纳入审查版。
+
+
+## 10. 给甲方的简短后续确认文字
+
+老师您好，收到。黏度我们按公式采用，温区1050–1800K；电导率按您新图中的自然指数exp实现，并保留法国文献参数作为可追溯替代。转速按10rpm、频率先按100kHz。30kW我们记为电源输入功率，不直接等同于熔体吸收功率。
+
+为优先对齐自然对流测点约1000℃，还想确认：该温度是加热多久后的稳定值，还是过程中的某一时刻？初温、液深和热电偶实际感温点分别是什么？搅拌后1400℃是否为同一测点的峰值，开搅拌前后功率是否保持不变？密度2.7我们先按g/cm³换算为2700kg/m³，电导率单位先按S/m，请您确认。准确电流电压提供时，也请注明峰值/RMS和线圈连接方式。
+
+
+<!-- ===== END 229_CLIENT_MATERIAL_AUDIT_AND_CURSOR_INPUT_RULES_2026-11-20.md ===== -->
+
+
+<!-- ===== BEGIN 230_CLIENT_CASE_PHYSICS_LANDING_2026-11-20.md ===== -->
+
+# 230｜甲方算例物理落地（材料 / 几何 / 预设）
+
+日期：2026-11-20  
+依据：Doc228、Doc229、软件任务书、甲方几何（已放入对应 relax `data/`）与回复。  
+本轮**不包含** Linux GUI、Windows、弹性桨 E0–F1 完成声明。
+
+## 1. 已落地代码
+
+| 文件 | 作用 |
+|------|------|
+| `electromagnetic_ophelie_client_material_laws.h` | 甲方 `mu=exp(-4+8500/T)`、`sigma=exp(4.5-8500/T)`；冻结 μ；法国 σ=16 借用路径；公式复算 CSV |
+| `electromagnetic_ophelie_client_geometry.h` | 两套 STL 角色、AABB、线圈四环、名义热电偶、CAD→求解器变换说明 |
+| `electromagnetic_ophelie_client_case_params.h` | NC/搅拌 development 预设；30 kW **电源输入**账本；effective JSON |
+| `test_3d_ophelie_client_case_audit` | 主机审计入口：公式门控 + STL 清单 + geometry/effective JSON |
+| `OphelieClientNcGlassCylinderShape` / `OphelieClientNcCrucibleWallShape` | 甲方 NC **参数化**液腔与数值壁（不用壳 STL 填流体） |
+| `test_3d_ophelie_client_nc_glass_relax` | 甲方 NC 液腔粒子生成 + SYCL-CK relax + Reload；写出测点/材料 meta |
+| `applyClientNcMeltToFrenchReduced` / `applyClientNcDevelopmentToLiterature` | 把甲方熔体/材料映射进现有 French-reduced knobs |
+| `frozen_q` CLI `--client-nc-geometry` / `--client-nc-material` / `--zero-q` skip-EM | 甲方 Reload 等温静水入口 |
+
+## 2. 材料口径（已编码）
+
+- **作废**：`pow(10, 4.5-8500/T)` 旧电导率读法及 1473 K≈0.0536 / 1800 K≈0.599 旧表。
+- **现行甲方公式**：自然指数；1473 K → μ≈5.874、σ≈0.280681（相对误差门 1e-4）。
+- **NC 开发默认**：`french_table1_sigma16_borrowed` + **冻结** μ(1000℃)≈14.532 Pa·s。
+- **对照预设**：同几何 / 同频率的 `client_ln_sigma_provisional`（供后续同电流未归一功率对照；电流仍未知，本轮不跑假 kA）。
+- ρ=2700 暂定；cp/k/β 借用法国表1并标记 borrowed。
+- **不改**法国回归材料 ID / 法国算例默认值。
+
+## 3. 几何口径（已编码）
+
+- STL 单位 mm；CAD 竖直 +Y；推荐变换：坩埚外底轴心→原点后 `(x,y,z)→(x,-z,y)/1000`。
+- 自然对流无桨；搅拌桨偏心历史值约 −67 mm（须复核后才硬编码驱动轴）。
+- 热电偶尖端 = AABB 下端名义点，`status=unconfirmed_sensor_location`。
+- 水冷管 / 线圈展示；零面积三角形保留原件并记入说明。
+
+## 4. 功率口径（已编码）
+
+- `generator_input_power_W=30000`（confirmed）。
+- `coil_current_A` / peak-vs-RMS = **unknown**（不填 1000 A）。
+- 禁止把法国 50/60 kW 吸收功率直接复制为甲方预设。
+
+## 5. 如何复跑审计
+
+已跑通一次，产物在：
+
+`docs/ophelie/reference/client_case_audit_2026-11-20/`
+
+```bash
+# 配置并编译 test_3d_ophelie_client_case_audit 后：
+./test_3d_ophelie_client_case_audit \
+  --repo-root /path/to/SPHinXsys \
+  --output-dir docs/ophelie/reference/client_case_audit_2026-11-20
+```
+
+期望：`client_formula_check.csv`、两套 `*_geometry.json` / `*_stl_manifest.csv`、三份 `effective_*.json`、`AUDIT_SUMMARY.md`；进程退出码 0。
+
+## 6. 编译与运行（请本机执行）
+
+### 6.1 材料/几何审计（无需 GPU 长跑）
+
+```bash
+cd /home/ubuntu/SPHinXsys/build
+cmake --build . --target test_3d_ophelie_client_case_audit -j$(nproc)
+
+./tests/extra_source_and_tests/3d_examples/test_3d_ophelie_client_case_audit/bin/test_3d_ophelie_client_case_audit \
+  --repo-root /home/ubuntu/SPHinXsys \
+  --output-dir /home/ubuntu/SPHinXsys/docs/ophelie/reference/client_case_audit_2026-11-20
+```
+
+### 6.2 甲方 NC 液腔 relax（需 SYCL/GPU 构建）
+
+```bash
+cd /home/ubuntu/SPHinXsys/build
+cmake --build . --target test_3d_ophelie_client_nc_glass_relax -j$(nproc)
+
+cd tests/extra_source_and_tests/3d_examples/test_3d_ophelie_client_nc_glass_relax/bin
+./test_3d_ophelie_client_nc_glass_relax \
+  --dp=0.010 \
+  --melt-height=0.180 \
+  --relax-steps=1000 \
+  --relax-vtp-every=100 \
+  --output-meta-dir=./client_nc_relax_meta
+```
+
+可选：`--client-ln-sigma` 切换甲方 ln-σ 对照材料；默认法国 σ=16 借用 + 冻结 μ(1000℃)。
+
+检查：`client_nc_relax_meta/{melt_geometry.json,effective-case.json,probe_nominal.csv,README.md}`，以及 Reload / VTP。
+
+液深 `0.180 m` 为开发暂定，甲方确认后改 `--melt-height=`。
+
+## 7. 等温静水短跑（Reload → frozen_q）
+
+`test_3d_ophelie_french_natural_convection_frozen_q` 已接：
+
+- `--client-nc-geometry`：甲方 NC 参数化液腔（R≈0.1415、H 默认 0.180、底 z≈0.001、4 匝线圈、100 kHz）
+- `--client-nc-material`：冻结 μ(1000℃) + σ16 借用；关闭浮力；**不要**用法 50 kW 标定
+- `--zero-q`：**跳过 EM Phase A**，`frozen_q=0`（等温静水）
+- `--melt-height=`：与 relax 同口径（仅配合 `--client-nc-geometry`）
+
+不要单独用 `--glass-height=`（会把 center 重置为 H/2，与甲方底面 z=0.001 冲突）；需要改高度用 `--melt-height=` 或同时设 `--glass-center=`。
+
+```bash
+cd /home/ubuntu/SPHinXsys/build
+# 若刚改过源码，先 reconfigure 再编（未知 target 时）：cmake .
+cmake --build . --target test_3d_ophelie_french_natural_convection_frozen_q -j$(nproc)
+
+FROZEN_BIN=tests/extra_source_and_tests/3d_examples/test_3d_ophelie_french_natural_convection_frozen_q/bin
+RELOAD=../test_3d_ophelie_client_nc_glass_relax/bin/reload   # 相对 FROZEN_BIN
+
+cd "$FROZEN_BIN"
+./test_3d_ophelie_french_natural_convection_frozen_q \
+  --client-nc-geometry \
+  --client-nc-material \
+  --zero-q \
+  --zero-buoyancy \
+  --dp=0.010 \
+  --melt-height=0.180 \
+  --reload-dir="$RELOAD" \
+  --end-time=0.50 \
+  --hydro-settle-time=0.15 \
+  --state-record-interval=0.05 \
+  --summary-json=./client_nc_isothermal_hydro_summary.json
+```
+
+绝对路径也可：`--reload-dir=/home/ubuntu/SPHinXsys/build/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_client_nc_glass_relax/bin/reload`（目录内须有 `Reload.xml`）。
+
+期望日志含：`[ophelie][client-nc] geometry`、`[ophelie][client-nc] material`、`[ophelie][stage4.1] zero_q: skip EM`；静水后 `escaped≈0`、`U_max ≪ c0`。
+
+短冒烟可用 `--end-time=0.05`；正式静水验收用上面的 `0.50`。未显式 `--reload-dir=` 且带 `--client-nc-geometry` 时，会优先找 `../test_3d_ophelie_client_nc_glass_relax/bin/reload`。
+
+**已知坑（已修）**：
+1. `--zero-q` 跳过 Doc219 spatial-q coverage abort（否则 `n_uncovered=N`）。
+2. `--zero-q` 在 settle 后补清 `DensityChangeRate/Force/Displacement`；Doc224 blowup 门改为 `0.05·c0`（约 0.66 m/s），避免静水残速 ~0.05 误杀。
+3. `material_check passed=0` 在甲方冻结 μ 路径上是预期日志，不中止。
+
+### 7.1 本机结果（2026-11-21，exit 0）
+
+| 量 | 值 |
+|----|----|
+| `passed` / `smoke_passed` | 1 / 1 |
+| `escaped` | 0/11232 |
+| end `U_max` / `U_rms` | 0.0135 / 0.0038（settle 后衰减） |
+| `P_joule` / `em_updates` | 0 / 0 |
+| `boussinesq` | 0（`--zero-buoyancy`） |
+| 备注 | Robin 冷却使 `dT` 缓增到 ~3.7 K（无扩散、无 Q）；等温静水门看 escaped + U 衰减，不钉绝对 T |
+
+产物：`bin/client_nc_isothermal_hydro_summary.json`、`output/GlassBody_ite_*.vtp`。
+
+## 8. 受控温差短冒烟（已跑）
+
+冻结 μ≈14.5 下 Ra 被埋；本步只验：**温差场可施加 + 有/无浮力对照不炸**，**不**宣称可观测自然对流。
+
+### 8.1 本机结果（2026-11-21，两跑均 exit 0）
+
+| 跑 | boussinesq | dT | U_max | U_rms | escaped | passed |
+|----|------------|-----|-------|-------|---------|--------|
+| A `client_nc_dT20_boussinesq_summary.json` | 1（β=1e-5） | 19.82 | 0.01350 | 0.00381 | 0 | 1 |
+| B `client_nc_dT20_zero_buoyancy_summary.json` | 0 | 19.82 | 0.01350 | 0.00379 | 0 | 1 |
+
+结论：冻结径向 ΔT=20 K 稳定；A/B 速度几乎相同 → **在冻结 μ 开发预设下浮力信号不可分辨**（与 `buried_defer_finer_mesh` 一致）。等温静水 + 受控温差冒烟均 PASS。
+
+## 9. Doc228 S0/T0：用仓库现成算例写报告（不自造通用力学 case）
+
+用户口径（2026-11-21）：**纯模块独立验证**不必新写悬臂/导热 case；用 SPHinXsys 自带固体/流体/传热算例即可。自写的 `test_3d_ophelie_doc228_s0_cantilever` **作废**（且 `DistributingPointForces` 要壳 `Thickness`，体积梁会 `Thickness is nullptr`）。
+
+S0/T0 报告证据（本机为 **SYCL 构建**：上游 `tests/3d_examples` 在 SYCL 下不编入；用 `extra_source` 里已有算例）：
+
+```bash
+cd /home/ubuntu/SPHinXsys/build
+
+# S0 固体：现成 LG 被动悬臂（extra，可 SYCL 编）
+cmake --build . --target test_3d_passive_cantilever_LG -j$(nproc)
+cd tests/extra_source_and_tests/3d_examples/test_3d_passive_cantilever_LG/bin
+./test_3d_passive_cantilever_LG
+
+# T0 传热：OPHELIE 已有 1D 导热解析门（不是新造框架）
+cd /home/ubuntu/SPHinXsys/build
+cmake --build . --target test_3d_ophelie_thermal_1d_conduction -j$(nproc)
+cd tests/extra_source_and_tests/3d_examples/test_3d_ophelie_thermal_1d_conduction/bin
+./test_3d_ophelie_thermal_1d_conduction --summary-json=./t0_thermal_summary.json
+```
+
+非 SYCL 构建还可补跑上游 `test_3d_mr_cantilever_beam` / `test_3d_passive_cantilever`。  
+不锈钢 304 预设头 `electromagnetic_ophelie_client_stainless_steel.h` 留给 **甲方桨 E0+**。
+
+## 10. 甲方搅拌路线（对齐法国搅拌 case 结构）
+
+用户口径（2026-11-21）：**按法国搅拌 case 装配甲方电磁+搅拌**；桨改为弹性力学；材料用开发说明书（Doc228/229）。不是另起一套通用力学玩具。
+
+| 层 | 法国参考 | 甲方目标 |
+|----|----------|----------|
+| Relax | `french_stirring_glass_relax` → Glass/Rotor/Wall Reload | 同结构；熔体参数化液腔−桨；桨=甲方 STL |
+| EM+流动 | `french_stirring_em`（host-spin 刚桨） | 同 Phase A/B；桨=`elastic_driven` + 304 |
+| 材料 | 法国表1 / 60 kW | Doc229 冻结μ/σ预设；30 kW **电源输入**；电流 unknown |
+
+头文件：`electromagnetic_ophelie_client_stirring_geometry.h`（脚手架）。  
+E0（桨单独 hold）是接入全案前的 Doc228 固体隔离步，**不是**最终交付形态。
+
+### 10.1 E0 桨 hold（源码树路径；先修 BoundingBox 后再跑）
+
+```bash
+SRC=/home/ubuntu/SPHinXsys
+cd "$SRC/build"
+cmake .
+cmake --build . --target test_3d_ophelie_doc228_e0_paddle_hold -j$(nproc)
+
+ST_RELAX=$SRC/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_client_stirring_glass_relax
+# CAD + 预处理桨在 stirring relax/data/（CMake 会拷到 E0 bin/data）
+python3 "$ST_RELAX/preprocess_client_paddle_stl.py"
+BINE0=$SRC/build/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_doc228_e0_paddle_hold/bin
+
+OUT=$SRC/docs/ophelie/reference/elastic_paddle_runs_2026-11-21/E0_hold
+mkdir -p "$OUT"
+cd "$BINE0"
+./test_3d_ophelie_doc228_e0_paddle_hold \
+  --stl=./data/client_stir_paddle_solver_m.stl \
+  --dp=0.004 --solid-steps=100 \
+  --out-dir="$OUT" --summary-json=summary.json
+```
+
+甲方 CAD：`client_nc_glass_relax/data/`、`client_stirring_glass_relax/data/`（已从 `docs/ophelie/software/*stl` 迁入）。  
+其后：client stirring relax → F0 等温弹性 FSI。
+
+### 10.2 E0 本机结果（2026-11-21，exit 0）
+
+| 量 | 值 |
+|----|-----|
+| `PADDLE_HOLD_PASS` | 1 |
+| n / n_clamp | 10119 / 649（夹持约 6.4%，非整桨） |
+| E | 2e11 Pa（304，未降 E） |
+| max_disp / vonMises | 0 / 0（无载等温 hold） |
+| WARN | `dp=0.004` 叶片可能欠分辨；E1 应力前加密 |
+
+产物：`docs/ophelie/reference/elastic_paddle_runs_2026-11-21/E0_hold/summary.json`
+
+### 10.3 F0 等温弹性 FSI 短跑（编译 + 运行；本机 GPU 跑）
+
+前置：`test_3d_ophelie_client_stirring_glass_relax --bodies=all` 已写出 Reload（`n_rotor≈4332`，`dp≈0.005`）。
+
+```bash
+SRC=/home/ubuntu/SPHinXsys
+cd "$SRC/build"
+cmake .
+cmake --build . --target test_3d_ophelie_client_stirring_f0_elastic_fsi -j$(nproc)
+
+RELAX_RELOAD=$SRC/build/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_client_stirring_glass_relax/bin/reload
+BINF0=$SRC/build/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_client_stirring_f0_elastic_fsi/bin
+# CMake 已从 stirring relax/data 拷贝 client_stir_paddle_solver_m.stl → bin/data
+mkdir -p "$BINF0/output"
+
+OUT=$SRC/docs/ophelie/reference/elastic_paddle_runs_2026-11-21/F0_isothermal_fsi
+mkdir -p "$OUT"
+cd "$BINF0"
+./test_3d_ophelie_client_stirring_f0_elastic_fsi \
+  --reload-dir="$RELAX_RELOAD" \
+  --rotor-stl=./data/client_stir_paddle_solver_m.stl \
+  --end-time=0.05 --omega-ramp=0.05 --c0=8 \
+  --clamp-top-band=0.05 \
+  --max-wall-hours=2 \
+  --out-dir="$OUT" --summary-json=summary.json
+```
+
+要点：桨=`elastic_driven` + 304（E=2e11，不降 E）；关 EM / Q / Boussinesq；重力保留；夹持=桨顶 50 mm 暂定带；监控 CSV=`output/client_f0_elastic_fsi_monitor.csv`。不锈钢固体声速高 → 固体亚步多，墙钟可能较长。
+
+### 10.4 F0 本机结果（2026-11-21，exit 0）
+
+| 量 | 值 |
+|----|-----|
+| `ELASTIC_FSI_SHORT_PASS` | 1 |
+| t / wall | 0.050 s / ≈41 s |
+| n_glass / n_rotor / n_clamp | 43917 / 4332 / 278（夹持≠整桨） |
+| E | 2e11 Pa（未降） |
+| f_pres / f_visc / Tq | ≈1.79 N / 0.44 N / −0.012 Nm（双向载荷非零） |
+| tip / e_off | ≈0.071 m/s / ≈0.22 mm |
+| solid_steps | 70759 |
+
+产物：`docs/ophelie/reference/elastic_paddle_runs_2026-11-21/F0_isothermal_fsi/summary.json`
+
+### 10.5 F1 加热弹性 FSI（规定体积热源；非 EM）
+
+Doc228：F0 后恢复稳定热源路径；本轮选 **规定体积热**（电流未知，不得标成“已算 EM”）。常黏度、无浮力、无桨热应变；热电偶 Observer 采样 T。
+
+```bash
+SRC=/home/ubuntu/SPHinXsys
+cd "$SRC/build"
+cmake .
+cmake --build . --target test_3d_ophelie_client_stirring_f1_heated_elastic -j$(nproc)
+
+RELAX_RELOAD=$SRC/build/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_client_stirring_glass_relax/bin/reload
+BINF1=$SRC/build/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_client_stirring_f1_heated_elastic/bin
+OUT=$SRC/docs/ophelie/reference/elastic_paddle_runs_2026-11-21/F1_heated_integration
+mkdir -p "$OUT" "$BINF1/output"
+cd "$BINF1"
+./test_3d_ophelie_client_stirring_f1_heated_elastic \
+  --reload-dir="$RELAX_RELOAD" \
+  --rotor-stl=./data/client_stir_paddle_solver_m.stl \
+  --end-time=0.2 --omega-ramp=0.05 --c0=8 \
+  --heat-power=1e5 \
+  --clamp-top-band=0.05 \
+  --max-wall-hours=2 \
+  --out-dir="$OUT" --summary-json=summary.json
+```
+
+默认 `P=1e5 W` 为短窗可见 ΔT 的开发热功率（非 30 kW 电源输入）。看 `HEATED_ELASTIC_INTEGRATION_PASS`、`energy_rel_err`、`probe_T_K`。
+
+### 10.6 E1 非零载荷响应（无流体；不锈钢 E）
+
+Doc228：夹持保留，对自由区施加两级已知总力（质量加权写入 `ForcePrior`），检查可分辨弹性偏移、应力更新、夹持静止及近似比例关系。不降低 E。
+
+```bash
+SRC=/home/ubuntu/SPHinXsys
+cd "$SRC/build"
+cmake .
+cmake --build . --target test_3d_ophelie_doc228_e1_paddle_load -j$(nproc)
+
+BINE1=$SRC/build/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_doc228_e1_paddle_load/bin
+OUT=$SRC/docs/ophelie/reference/elastic_paddle_runs_2026-11-21/E1_load_response
+mkdir -p "$OUT" "$BINE1/output"
+cd "$BINE1"
+./test_3d_ophelie_doc228_e1_paddle_load \
+  --dp=0.004 --solid-steps=5000 --clamp-top-band=0.05 \
+  --force1=1.5e4 --force2=3e4 \
+  --out-dir="$OUT" --summary-json=summary.json
+```
+
+看 `LOAD_RESPONSE_PASS`、`ELASTIC_PADDLE_ACTIVE`、`e_off_ratio` / `ratio_rel_err`。粗 `dp` 下不宣称应力精度。
+
+### 10.7 E1 本机结果（2026-11-21，exit 0）
+
+| 字段 | 值 |
+|------|-----|
+| `LOAD_RESPONSE_PASS` | 1 |
+| `ELASTIC_PADDLE_ACTIVE` | 1 |
+| F1 / F2 | 1.5e4 / 3.0e4 N（+Y，自由区质量加权） |
+| e_off_free 1/2 | ≈17.3 / 34.5 mm |
+| e_off_ratio / force_ratio | ≈1.991 / 2（rel_err≈0.45%） |
+| sigma/E 1/2 | ≈0.0043 / 0.0086 |
+| clamp_e_off | 0 |
+| wall_s | ≈48 |
+
+产物：`docs/ophelie/reference/elastic_paddle_runs_2026-11-21/E1_load_response/summary.json`
+
+### 10.8 E2 规定旋转短窗（无流体；10 rpm）
+
+Doc228：夹持区平滑转速斜坡，先 0.05–0.1 s 冒烟。检查轴、符号、约束与固体亚步；弹性偏移相对刚体参考轨迹。整圈 2π 不在本短窗宣称。
+
+```bash
+SRC=/home/ubuntu/SPHinXsys
+cd "$SRC/build"
+cmake .
+cmake --build . --target test_3d_ophelie_doc228_e2_paddle_spin -j$(nproc)
+
+BINE2=$SRC/build/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_doc228_e2_paddle_spin/bin
+OUT=$SRC/docs/ophelie/reference/elastic_paddle_runs_2026-11-21/E2_driven_rotation
+mkdir -p "$OUT" "$BINE2/output"
+cd "$BINE2"
+./test_3d_ophelie_doc228_e2_paddle_spin \
+  --dp=0.004 --end-time=0.05 --omega-ramp=0.05 --clamp-top-band=0.05 \
+  --out-dir="$OUT" --summary-json=summary.json
+```
+
+看 `DRIVEN_ELASTIC_ROTATION_SHORT_PASS`、`theta_rad`、`sign_ok`、`max_clamp_err_m`。
+
+### 10.9 E2 本机结果（2026-11-21，exit 0）
+
+| 字段 | 值 |
+|------|-----|
+| `DRIVEN_ELASTIC_ROTATION_SHORT_PASS` | 1 |
+| `full_revolution_pass` | 0（短窗不宣称） |
+| t / θ / ω | 0.05 s / ≈0.026 rad / ≈1.047 rad/s（10 rpm） |
+| max_e_off / clamp_err | ≈0.33 mm / 0 |
+| tip_u / sign_ok | ≈0.068 m/s / 1 |
+| solid_steps / wall_s | 73645 / ≈346 |
+
+产物：`docs/ophelie/reference/elastic_paddle_runs_2026-11-21/E2_driven_rotation/summary.json`
+
+## 11. 仍未做
+
+1. 电流到位后：σ16 vs ln-σ 未归一 Q 对照；再换真实 EM Q。  
+2. Doc228 E2 整圈（∫ω dt = 2π；本短窗不宣称）。  
+3. 测点时间序列 + 1000℃ 窗口（不得钉测点温度冒充 PASS）。  
+4. ~~两案软件交接包~~ → 见 `docs/ophelie/reference/client_software_handoff_2026-11-21/`（HANDOFF.md + COMPILE_AND_RUN.sh）。整圈 / EM Q / 1000℃ 定量仍开放。
+
+## 12. 给软件机的契约提示
+
+读取 `effective_*.json` 的 `material_id`、`power.generator_input_power_W`、`mechanics_mode`。  
+自然对流短跑与搅拌 Doc228 门控（E0/E1/E2 短窗、F0、F1）本机已过；软件机可接两案预设，但不得把短窗标成整圈 PASS，也不得把规定体积热标成已算 EM。
+
+
+<!-- ===== END 230_CLIENT_CASE_PHYSICS_LANDING_2026-11-20.md ===== -->
+
+
+<!-- ===== BEGIN 231_OPHELIE_PHYSICS_NC_THERMAL_BALANCE_EM_AND_ELASTIC_PADDLE_CURSOR_PLAN_2026-11-21.md ===== -->
+
+# 231｜物理机下一轮：甲方自然对流测温与热平衡、电磁缺口及弹性桨延长测试
+
+日期：2026-11-21  
+执行对象：原 OPHELIE 物理开发电脑上的 Cursor。  
+软件机执行230，使用已交接版本。本轮物理修改不自动进入软件审查版。
+
+## 0. 本轮目标及范围
+
+第一优先：在甲方无桨几何上，建立可信的“实际入热—散热—储热—测点温度”链，判断约1000℃目标是否可达到，以及还缺哪些实验条件。
+
+第二优先：从现有解析柱、TEAM7证据中明确电磁尚未通过的量，围绕一个具体问题推进。
+
+第三优先：对已接通的10rpm不锈钢弹性桨延长测试，补真实旋转与流固稳定性证据。
+
+禁止把法国Fig7/8完全对齐、Windows、重做GUI或迁入SPHinXsim作为本轮前置。不要重新实现已经交接的弹性桨，也不重新开展全框架改造。
+
+本文件基于用户转述的交接摘要：NC静水/ΔT20、弹性桨E0–E2短窗/F0/F1已有首轮通过。**开始前必须核对实际交接包与源码；这些不是本任务书重新授予的PASS。**
+
+本轮交付至少应形成：实际代码身份、输入状态表、无桨热账本及测点检查结果、有限暖态试跑结论、电磁缺口表、软件机可选择接收的修复提交。若条件不足，给明确BLOCKED/NOT_RUN及最小缺项，不用“还需继续长跑”代替分析。
+
+## 1. 版本隔离与开工盘点 A
+
+保留软件已接收的基线SHA/配置/binary哈希。物理机用独立工作分支，例如 `ophelie-physics-validation`，与软件机独立构建和运行目录。
+
+先列明：
+
+- 当前SHA、dirty状态、目标与源码入口、实际后端与精度；
+- 两个甲方案例预处理与运行命令、effective及summary；
+- 新弹性桨与旧刚性路径如何区分；
+- 真实时间步约束、ForcePrior及材料字段绑定在哪些入口生效；
+- 交接F1实际采用固定温场、规定热源、冻结EM空间Q还是在线EM。
+
+保存 `A_BASELINE_AND_OPEN_ITEMS.md`。对照源码核查，不凭旧轮号猜测；若交接已解决旧缺口，登记证据而不重复开发。
+
+用户本机已有历史round pack，不要求另建重复备份体系。验收表索引到具体包/文件/配置；新结果仍完整保存。
+
+## 2. 输入条件：沿用最新版229，禁止旧值回流
+
+| 输入 | 本轮依据与约束 |
+|---|---|
+| 几何 | 甲方NC STL及现有装配；不可复制法国R0.25/H0.185代替；液深沿实际已记录值并标来源 |
+| 黏度 | mu=exp(-4+8500/T)，Pa·s，甲方指定1050–1800K |
+| 电导率 | 新回复为sigma=exp(4.5−8500/T)，暂按S/m；不是旧pow10公式 |
+| 法国sigma替代 | 允许借用；现有sigma16路径可作工程基线，来源独立，不伪称实测 |
+| 密度 | 暂按2700kg/m³解释甲方“2.7”，单位待确认 |
+| cp/k/beta | 可用已追溯法国表1常值1150/4/1e-5，标借用 |
+| 供电 | 暂定100kHz；30kW是电源输入；电流/电压如有最新答复，先核对幅值/RMS、单位、各环关系 |
+| 温度目标 | NC热电偶约1000℃=1273.15K，初态/时刻/稳态待确认 |
+| 搅拌 | 10rpm，旋向按已确认值或明确假设；约1400℃为定性参考 |
+
+快检：1273.15K下mu≈14.532Pa·s，sigma≈0.113454S/m；1473K下mu≈5.874、sigma≈0.280681。旧甲方sigma0.0536不是最新公式值。
+
+运行前分别给出“已确认、甲方暂定、法国借用、开发假设、未知”。未知不填成看似真实的默认实验值。
+
+## 3. B：先验证固定测点和热账本，再加长计算
+
+### B1 固定热电偶采样
+
+核对CAD到求解坐标变换、单位、液深和实际感温点。热电偶STL末端仅是候选位置，未经确认不能当实测点。若缺准确位置，暂用明确命名的开发测点；不在事后移动测点凑温度。
+
+采用已有稳定插值在固定空间位置采样，记录邻居数、覆盖权重及是否落在流体有效域。不要长期跟踪某一个最近粒子编号作为固定测点。
+
+做两个小检查，可采用现有后处理脚本，不强迫写新框架：
+
+1. 均匀温场，测点应返回该值；
+2. 已知线性温场，检查内部测点插值误差。开发目标：误差≤温度变化幅值的1%；界面附近若不满足，记录支持不足，先修采样而非改热源。
+
+提供坐标表、与装配/粒子叠加剖面和 `probe_sampling_check.csv`。未确认物理感温点与插值算法通过分开记录。
+
+### B2 能量收支：统计实际施加的量
+
+对封闭玻璃域定义：
+
+`DeltaH = E_Q - E_side - E_bottom - E_top_conv - E_top_rad + E_other + R_E`
+
+各边界向外为正；反向热通量允许为负，不能截零。若包含机械耗散等其他能量，明确是否真的进入热方程，不能只由力学功率推断已加热。
+
+H使用实际cp模式：常cp用同一参考态；cp(T)用焓积分。初场加载/重置后建立热账本基线；不能把初始化温度替换造成的DeltaH当时间推进能量误差。
+
+- Q对实际流体体积积分，并与热推进中实际能量增量一致；
+- 侧、底、顶面通量分项累计，对角区不重复计面积；
+- 辐射使用K与正确T^4，参数来源明确；
+- 冷却管显示、等效侧底边界不重复施加损失；
+- 不额外扣除一项“维持玻璃温度能耗”；内部导热和对流是输运，不是全域额外散热；
+- 固定温场诊断不能参与热平衡验收。
+
+每个输出区间用累计能量差除以真实Delta t求平均功率，不能算不等时间间隔日志行的算术平均。
+
+定义开发检查：`eps_E=abs(R_E)/max(abs(E_Q)+sum(abs(E_boundary_terms))+abs(E_other),1J)`。同时报告原始J、DeltaH及参考区间，防止小输入/大抵消时比例失真。
+
+### B3 有限热模块检查
+
+先检索同一算子/参数路径的既有证据。证据有效则引用，不重新跑全套。
+
+若接入甲方新配置后缺必要证据，仅补：
+
+- 均匀绝热、规定体热源：短窗平均升温与DeltaT=P*dt/(M*cp)一致；本测试关闭流动，检查能量入口；
+- 各启用边界的静态温场瞬时功率：与独立面面积积分比较；侧/底/顶面对流/顶面辐射分项，不用初始诊断结果冒充长时验证。
+
+开发目标：短窗能量eps_E≤1%，分项功率与独立积分差≤2%。超过时定位单位、面积、角区、施加/监控不一致或时间累计问题，先修复再跑耦合。阈值是本轮开发检查，不是合同温度误差定义。
+
+## 4. C：无桨暖态热流动的有限推进
+
+### C0 模式与起点
+
+基于交接已稳定流体路径，只改变本项需要的开关。必须解除固定温场，让热扩散、Q、热边界与浮力实际生效。
+
+起点可用均匀1273.15K作为**接近目标的数值初猜**，不可把它当已知实验初温；也可用交接已有暖态场。始终记录initial_guess，不用初始测点接近1000℃作为通过。
+
+先采用冻结mu=14.532Pa·s及明确来源的常cp/k；标记冻结物性。浮力参考温度按现有一致方案固定，不随时重置绝对温标或人为消除真实温差。
+
+### C1 热源的两种条件，不能混用
+
+**准确电流已知且EM路径可靠时：**使用确认电流/频率及选定材料重算原始Q。记录原始EM功率、映射功率与实际施加功率，检查给定电流模式未被目标功率归一悄悄覆盖。
+
+**电流仍未知或EM精度未闭合时：**使用单独命名的规定空间热源开发模式，明确Q来源。若借用EM形状，注明生成条件不同，不当作已确认实验Q。
+
+不得自动把30kW电源输入当熔体吸收功率，也不得复制法国50kW/旧搅拌60kW。若缺已记录P_abs基线，用`P_abs=eta*30000`及显式声明的eta作诊断；选择依据与未知状态保留，不能为“看起来像实验”隐去假设。若无选择依据，先以B项单位功率归一检查推进，实验温度标签保持BLOCKED_INPUT，不无休止等待也不伪造物理输入。
+
+### C2 时间窗口与运行预算
+
+先0.1–1s功能检查；通过后5s；再决定是否到20s。已有同配置有效证据可跳过重复短窗。每次延长必须在报告说明将解决什么不确定性。
+
+记录物理秒/墙钟秒、最小dt、限制来源、Urms/Umax、测点温度、温度范围、mu使用值、越界/数值异常。先按实测性能估算加长成本，再启动。
+
+20s不是稳态证明。若短窗已经显著温漂，先用功率账本解释方向，不盲目加长。总功率净差给出近似热容温漂预测，与实际平均温漂比较。
+
+### C3 稳态/统计稳定判据
+
+输出三个相互独立的判断：全域热量、固定空间温场、流动状态。
+
+开发用建议门限（固定在运行前，不能看到结果后放宽）：
+
+- 窗口平均`abs(P_in-P_out)/max(abs(P_in),abs(P_out),1W)≤2%`；
+- 窗口内独立能量闭合eps_E≤1%；
+- 测点及体积平均温度趋势绝对值≤0.01K/s，窗口首末温度差≤1K；
+- 固定空间网格上温度场变化的归一L2≤1%，分母采用约定温差尺度并给下限，不能用绝对温度掩盖温差误差；
+- Urms和环流/截面统计不再持续漂移，允许真实波动但应报告统计量。
+
+至少连续三个非重叠窗口通过。初始窗口可用10s作诊断；若热/流动特征时间更长，必须延长窗口并说明依据。仅初始几秒满足上述小漂移，仍不足以证明长期稳态。
+
+若初猜恰好接近热平衡，条件允许时从相差50K的另一暖态初猜作有限交叉检查，验证向相同候选场收敛；不要求本轮强行完成两条超长计算。未完成则标候选稳态/尚未检查初态依赖。
+
+短跑完成、数值稳定、热平衡、实验对齐四个状态分别记录。
+
+### C4 不长跑也要给出有用判断
+
+稳态未达时，至少说明：净功率正/负、温漂是否与热容匹配、主要散热项、当前瓶颈是物理时间不足还是数值不稳定/输入不全。
+
+若成本过大，可提出复用已有成熟稳态热或分区耦合方法；新伪时间加速若改cp/惯性等，必须另作算法验证并以原物理方程复核，不能把加速时间当真实实验时间。本轮不默认开发新稳态求解器。
+
+## 5. D：物性与边界的一次受控升级，不做无目的调参
+
+C路径稳定后才接局部mu(T)，保持其他输入不变。检查每粒子读值、温度刷新/排序、真实黏性步长、显式/隐式路径及截断比例。
+
+1050–1800K内mu约60.05至2.059Pa·s，不直接照搬法国cap400配置。窗口外的端点保持或其他政策必须显式记录，不把截断当真实冷区模型。
+
+出现此前类似局部尖峰时，导出首次异常粒子的坐标、T、mu、密度/压力、邻域支持及各力项；不只保留Umax超过门槛。先用同配置常mu对照隔离，不立即扫多组cap和阻尼。
+
+热边界按甲方水冷条件建立。法国h只能作借用假设，不能因主线不匹配随意调所有面。需要校准时，先固定输入功率口径，只动一个有物理意义的未知参数；最多一个基线加两个有界对照，依据灵敏度决定下一步。
+
+单个测点不足以同时辨识吸收效率、侧壁h、顶面发射率和sigma。用1000℃校准的结果标CALIBRATED；独立预测验收需另有数据。合同误差分母/窗口由双方确认，本轮不自行宣布10%通过。
+
+## 6. E：电磁验证的有限任务
+
+### E0 先清账，不沿用模糊PASS
+
+整理现有解析柱、TEAM7的原始参考、配置、场误差和未通过项。最近交接可能已有新结果，以实际证据为准。
+
+表中分开：源场、复电流、磁场、边界法向电流、守恒、积分功率、局部Q/峰值、迭代残差、分辨率与运行后端。内部残差/功率归一不是外部场精度验证。
+
+### E1 解析柱优先
+
+核对参考解对应无限/有限长、外场方向、频率、sigma、自感和边界，不拿不一致模型强比。沿已有门控找出最主要失败量，仅修一个原因并用原指标复测。
+
+源场幅值、相位/RMS约定必须先一致。保留未归一Q与损耗。解析解附近零值用有物理尺度的范数，不用逐点相对误差除零。
+
+### E2 TEAM7只攻一个已有明确缺口
+
+先选择当前失败最集中的一项，如边界邻域/法向电流/电流闭合，附失败位置图与误差分布。构造最小对照区分边界、源场和自感迭代，不同时更换所有phi算法。
+
+修复后同输入同指标比较；若模块误差目标为≤10%，预先说明比较的量、位置、范数、频率与采样，不删去不利点再授PASS。未达标继续FAIL/PARTIAL，不阻塞软件现有功能。
+
+低电导玻璃测试不能替代高导铝板TEAM7；TEAM7未过也不自动证明全部玻璃加热不可用，需按模型范围和误差类型判断。
+
+### E3 甲方电流到达后
+
+固定100kHz及实际四环数据，确认各环电流幅相、峰值/RMS。比较修正甲方sigma与已选法国替代的一次同条件结果，输出原始P_abs和Q；不能各自归一到相同功率后只比较总功率。
+
+如P_abs超过同口径电源输入，或非常小，先排查安匝/电流分配、单位、幅相、重复积分和模型适用性，不直接归一消掉问题。
+
+## 7. F：10rpm弹性桨延长测试
+
+先沿交接已通过的等温F0延长，暂不叠加新的mu(T)、EM反馈或热应变。保持真实不锈钢E和密度、轴端驱动与自由区积分；不得为速度降E或锁死整桨。
+
+顺序：已有短窗 → 0.5s → 根据性能决定一次1–2s或整圈。达到整圈必须满足积分theta≥2pi；10rpm含斜坡时不等同固定6s。记录actual_angle、full_revolution_pass及最大弹性偏移/应变/应力、Jacobian、实际solid dt和亚步数。
+
+检查压力/黏性载荷与驱动反力区别、流体实际响应和桨壁间隙。固体真实后端CPU或混合如实说明，不强制本轮重写GPU固体。
+
+稳定后复用原F1热集成作一次短测。搅拌1400℃暂不设硬性门槛，不能为达标人为追加热源。
+
+## 8. 优先级、预算及停止条件
+
+| 顺序 | 执行内容 | 转下一项条件 |
+|---|---|---|
+| P0 | A版本/输入，B测点与热账本 | 数据可追溯、实际能量链可解释 |
+| P1 | C无桨暖态有限试跑 | 可给出温漂/热平衡判断，不强制本轮达到最终稳态 |
+| P2 | D局部mu接入或一个边界敏感性 | 仅在C有必要且输入足够时做；不同时调两类因素 |
+| P3 | E电磁缺口表与一项修复 | 有具体前后误差证据；失败也说明原因 |
+| P4 | F弹性桨延长 | 资源允许，优先保留可靠性；不阻塞P1 |
+
+同机可用空闲GPU独立跑已固定的测试，但明确设备、显存及输出目录，避免互抢影响判断；不要因有多GPU就无控制发起扫描。
+
+任何阶段：NaN/越界步长/能量异常/明显非物理失稳即停止加长。保存首次异常状态。输入未知则标BLOCKED_INPUT，继续独立基础检查。超预算先汇报成本与将解决的问题，不用无限长跑代替定位。
+
+## 9. 目录、状态与交付
+
+建议 `doc231_runs/` 下按A/B/C/D/E/F分组；大结果不必进Git，但必要配置、分析脚本、参考索引和任务书应可追踪。
+
+必须产出：
+
+- `ROUND231_REVIEW.md`：已解决的问题、证据、未解决原因、下一最高优先项；
+- `ACCEPTANCE_TABLE.csv`：PASS/FAIL/BLOCKED/NOT_RUN及配置/文件索引；
+- `INPUT_STATUS.csv`：确认、借用、假设、未知；
+- `thermal_ledger.csv`、`probes.csv`、关键截面图和有限原始场；
+- `EM_VALIDATION_GAPS.md`及本轮选定缺口的修复前后结果；
+- 弹性桨测试如执行，保留角度、固体步长及真实力学状态；
+- `SOFTWARE_HANDOFF_DELTA.md`：是否建议软件机接收、提交SHA/前置依赖、接口/参数变化和短回归命令。
+
+标签至少区分：PROBE_SAMPLING_PASS、THERMAL_LEDGER_PASS、NC_WARM_SHORT_PASS、NC_THERMAL_BALANCE_CANDIDATE、NC_STEADY_STATE_CHECKED、NC_EXPERIMENT_COMPARISON、EM_FIELD_VALIDATION、ELASTIC_ROTATION_EXTENDED。
+
+未提供实验时刻/稳态/测点等条件时，NC_EXPERIMENT_COMPARISON不得标正式PASS。软件机只接收确有必要且复测通过的修复，不自动更新整条物理分支。
+
+## 10. 本轮必须回答的六个问题
+
+1. 测点取值是否可信，位置是否已由甲方确认？
+2. 实际吸收/施加热量是多少，30kW输入是否被错误当成吸收功率？
+3. 当前温度升降能否由实际能量收支解释，主要损失来自哪里？
+4. 距热平衡是物理时间不足、边界/功率未知，还是数值实现有错？
+5. 电磁剩余失败具体在哪个量/区域，本轮是否减少了该误差？
+6. 哪些修复可交给软件机，哪些仅限诊断，哪些仍未通过？
+
+**本轮以能解释的测温和能量证据推进交付，不以云图像不像、短窗没崩或任意一时刻碰到1000℃作为完成。**
+
+
+<!-- ===== END 231_OPHELIE_PHYSICS_NC_THERMAL_BALANCE_EM_AND_ELASTIC_PADDLE_CURSOR_PLAN_2026-11-21.md ===== -->
+
+
+<!-- ===== BEGIN 232_OPHELIE_PRODUCTION_THERMAL_PROBES_BOUNDARY_AUDIT_AND_EM_REPAIR_PLAN_2026-11-22.md ===== -->
+
+# 232｜物理机研究计划：生产测点、真实热算子、冷却层演化及电磁单项修复
+
+日期：2026-11-22  
+执行对象：OPHELIE物理开发机上的Cursor。  
+基线：`client_physics_handoff_doc231_2026-11-22.tar.gz`及其源码/配置；软件机仍执行230，固定已经接收的版本。
+
+## 0. 本轮要解决的问题与结论边界
+
+本轮不换计算框架，不重新实现弹性桨，不用调参代替验证。先把231的独立检查接到实际生产路径，再判断是否需要延长计算或调整边界。
+
+231已经证明：开发均匀10kW热源能驱动温度演化；本组初态1秒内平均降温约1.36K，与累计热收支量级一致。
+
+231尚未证明：
+
+1. 生产求解中固定热电偶的温度曲线可信——交付的`probes.csv`是独立均匀/线性场测试，不是暖态时间序列；
+2. 生产GPU热源算子通过绝热验证——B3使用自写CPU加热循环；
+3. 实际散热边界的面积、温度采样与通量正确——分项独立检查未完成；
+4. 当前启动运动已可解释为自然对流——存在明显初始声学/静水残余运动；
+5. 测点1000℃稳态不可达到——57kW为近均匀1000℃初场下的瞬态散热，不是已知最终稳态损失；
+6. TEAM7已通过——本轮仅历史清账，无新修复证据。
+
+**本轮最小成功成果：真实测点时间序列 + 生产热源检查 + 生产边界独立核对 + 一组受控暖态延长/浮力对照 + 一项电磁误差的前后证据。**
+
+物理精度、数值稳定、短跑完成和实验对齐继续分开记录。软件机不自动拉取本轮代码。
+
+## 1. A｜版本与231结论更正
+
+### A1 固定身份
+
+记录实际SHA、dirty文件、补丁/新文件、编译目标、实际GPU/CPU路径及精度。231包的基线为`832dbc782...`，但部分修改尚未提交，不能只检出该SHA就声称复现了231。
+
+保留源码、配置和小型必要输入；大型Reload/结果可单独保存并记录校验和。禁止覆盖用户旧成果或使用整个源文件复制破坏软件机修改。
+
+### A2 修订报告口径
+
+提交`A_ERRATA_231.md`，明确：
+
+- B1仅为独立插值小测试通过，生产测点尚未接通；
+- B3为CPU显式加热与账本自洽检查，不是生产GPU热算子已验证；
+- 热账本闭合不等于边界模型/离散正确；
+- 57kW瞬态散热不足以推出内部测点1000℃稳态不可能；
+- 甲方电流未知只阻塞甲方给定电流预测，不阻塞有指定激励的标准电磁验证。
+
+保留原始结果，不篡改旧日志。新报告引用本更正，不延续过宽PASS标签。
+
+## 2. 全轮固定输入与有限变更原则
+
+主热流动试验继续使用231甲方几何：R约0.1415m，开发液深0.180m，dp0.010m，以实际Reload元数据为准。液深和热电偶感温点未确认状态保留。
+
+固定暖态初猜1273.15K，rho暂2700、cp1150、k4、beta1e-5；冻结mu约14.532Pa·s。它们的来源沿229，不修改法国回归配置。
+
+规定10kW均匀吸收热只作为开发热源，**不是真实EM，不是甲方确认吸收功率**。30kW仍为电源输入。甲方电流若新到达，单独版本接收，不中途替换本轮对照输入。
+
+热边界先保留231值：侧300、底35、顶面对流20 W/(m²·K)，发射率0.8，参考环境/水温300K。全部标借用/假设。本轮先核对实现，不先调h。
+
+暂不叠加局部mu(T)、sigma(T)反馈、自感新算法、skull新模型、Marangoni或新壁面方案。各独立制造场测试可采用专门温场，但必须复用生产算子和几何，测试后不污染正式初态。
+
+## 3. B｜把固定测点接进真实生产运行（最高优先）
+
+### B1 生产接入
+
+复用231独立采样函数或现有成熟Observer，提取为共享调用路径；生产和验证调用同一采样实现。若改用另一种插值，不可直接沿用旧B1的PASS。
+
+固定空间坐标采样当前粒子位置与温度，随流体运动和排序正确刷新。不能追踪固定粒子ID代替固定空间测点。
+
+至少包含：名义热电偶点、轴线中部、内部半径点及靠壁诊断点。热电偶候选约(0,0,0.130)m，位置仍标`unconfirmed_sensor_location`；坐标变换/基准按实际CAD确认。不得为了贴近目标温度事后移动。
+
+输出真实`probes_timeseries.csv`：time_s、probe_id、solver坐标、T_K、T_C、有效邻居数、支持半径、权重和、覆盖/无效状态、配置/位置确认标记。
+
+区分界面最近粒子数据、带宽平均和严格表面温度。支持不足时输出null/invalid及原因，不回填目标温度或上一时刻伪造有效数据。
+
+采样应在明确的完整热/流体更新阶段执行，文件记录真实时间。无需每个声学子步强制同步；使用固定采样间隔即可。
+
+### B2 同路径验证
+
+均匀场、内部线性温场各测一次，直接调用生产采样入口。均匀误差目标≤0.001K，线性场误差≤场变化幅值1%；记录实际浮点容差和覆盖。
+
+再在真实暖态短跑中保存一个时刻的当前粒子Position/Temperature，由离线脚本独立复算至少一个测点，与在线结果比较。确认不读初始温度或过期host数据。
+
+**通过条件：** 同路径制造场与在线/离线一致性通过，并产生至少两个不同非零物理时刻的有效样本。物理感温点未确认不阻塞算法通过，但实验标签不授PASS。
+
+## 4. C｜真实热源算子的绝热验证
+
+### C1 必须复用生产路径
+
+在甲方NC入口加入明确诊断配置，或复用已有入口：关闭热边界、流体运动和EM，开启与正式运行相同的热源算子、温度同步、热子步调度和字段存储。
+
+不能再调用独立的`hostApplyUniformHeat`作为生产热算子验证。若正式路径本来就是CPU，必须如实说明；不以程序编译启用SYCL等同热算子在GPU执行。
+
+优先复用已有源接口，新增边界关闭开关时限定诊断范围，默认工况不受影响。
+
+### C2 独立参考
+
+参考质量来自真实粒子Mass求和，参考cp来自实际材料配置，规定功率使用用户输入P；不能只拿源内同一个归一因子回算作为独立参考。
+
+常cp绝热参考：`DeltaT_exact=P*t/(M*cp)`。
+
+独立计算：`DeltaH=sum(m_i*cp*DeltaT_i)`，用增量温度避免约1273K绝对温标的float32消减；同时检查可视化Temperature与参考温度+DeltaT一致。
+
+先10kW、0.2s；必要时一次0.4s或半热步长检查，不无限扫描。验证实际P、dt累计、终点截断和热源是否重复施加。
+
+**开发门限：** 质量加权平均升温相对误差≤1%，累计能量误差≤1%，时间与实际执行一致、无重复入热。低输入导致近零量时同时输出绝对误差，不用不合理分母授PASS。
+
+## 5. D｜生产热边界的分项独立核对
+
+### D1 面积、分区与符号
+
+使用真实NC粒子和实际边界算子。输出各面作用粒子、离壁距离、所分配面积、角区归属及总面积；侧/底/顶不要重复计算。
+
+解析圆柱参考：A_side=2*pi*R*H；A_bottom=A_top=pi*R²。参考R/H来自本轮实际液域，不从旧法国几何取值。
+
+面积归一后总面积相等只是检查之一。还需看面积分布和温度取样：20mm厚边界带的粒子温度不自动等于真实壁面温度，须说明采用的近似。
+
+每个边界热流以向外为正；若T低于环境应可为负。对流和辐射不应无理由截零。辐射使用K与正确T⁴。
+
+### D2 同状态两个温场
+
+不先做长时计算。选择：
+
+1. 均匀1273.15K；
+2. 一个明确可复算的非均匀温场，例如仅沿z线性变化，温区选1100–1300K。
+
+依次只开启侧、底、顶面对流、顶面辐射；计算生产算子实际能量变化或实际热率。对显式算子可用单步冻结初场诊断，若使用隐式边界，按其实际离散时刻匹配参考，不混用步前/步后值。
+
+独立脚本对解析表面作独立积分或解析计算，不复用生产粒子面积权重生成“独立参考”。
+
+**开发门限：** 各分项总功率差≤2%，实际热方程变化与对应边界能量记账差≤1%；失败时同时给原始面积、功率及误差位置。总面积正确但非均匀温场失败，应先定位离壁取样和权重，不改h凑总功率。
+
+### D3 通过与失败后的动作
+
+通过：只能说明该分辨率下这组边界离散检查通过，不能说明借用h是甲方真实h。
+
+失败：先修一个直接原因，再跑同一对照。若仅靠壁温度分辨率不足，记录最小必要分辨率对照方案，不立即重建框架或开启多参数扫描。
+
+完成B/C/D后，才恢复有流动、有入热和全部边界的主测试。
+
+## 6. E｜启动扰动与浮力的匹配对照
+
+231速度中止门从0.05m/s改为0.05*c0，约0.664m/s；日志早期Umax约0.188m/s，不能只因没触新门而称浮力准确。
+
+### E1 两组主对照
+
+使用同一初态、粒子、压力/重力路径、热源、边界、步长和输出：
+
+- E_ON：beta=1e-5；
+- E_OFF：只关闭Boussinesq增量，保留真实重力和静水支撑。
+
+不得把E_OFF写成关闭所有重力，也不要同时换平顶/自由面/压力方案。
+
+两组先1s；如果仍主要是启动衰减，可将有效组延长至后续F窗口，不另开大量分辨率测试。
+
+输出Umax/Urms、动能、密度偏差、液面变化、测点温度、热功率及截面速度，使用固定时间窗口比较。信号与噪声无法区分时标`BUOYANCY_SIGNAL_UNRESOLVED`，不凭流线或颜色授PASS。
+
+### E2 实际步长检查
+
+日志显示231主跑`doc227_actual_timestep=0`。本轮先输出真实声学dt、外层实际跨度、黏性力刷新年龄、热子步dt及其限制；常mu不代表可以省略约束检查。
+
+若发现跨预算，按已有231之前的成熟修复接入，所有匹配对照统一使用修后的调度；不要同时改压力和边界。未越界则保留当前路径并登记证据，不只为打开某个轮号开关而改代码。
+
+数值硬中止和物理可信度分开：保留非有限值、实际步长越界、显著粒子失效及Ma检查。速度超过0.05m/s可作诊断警告，不自动等同崩溃；低于0.05*c0也不自动等同可信。
+
+## 7. F｜冷却层演化：一组有限延长，不先调边界
+
+### F1 固定配置
+
+在前述生产验证通过后，用E_ON配置从相同初态跑到5s；可用1s结果续算仅当restart包含所有必要状态且已验证，否则重跑到5s。
+
+保持10kW开发源、原h和冻结mu；输出每0.1–0.5s测点/热账本，每1s左右少量截面。具体频率按实际成本选择，记录真实保存时间。
+
+必须输出：
+
+- 名义热电偶、中心及靠壁温度曲线；
+- 各面边界带面积加权温度，注明它是离散取样温度；
+- z中面径向温度剖面、轴向剖面与冷区变化；
+- 各边界损失功率及累计能量；
+- 全域质量加权温度、极值、动能/速度、粒子有效性。
+
+### F2 5s后只作一次延长决策
+
+若边界损失开始下降、冷区形成且数值/能量检查正常，说明初始57kW不是稳态常量，可进一步到20s观察；不要求本轮20s内稳态。
+
+若散热几乎不变，检查墙带温度是否实际更新、热扩散/输运是否正确、时间尺度与边界带厚度，不能仅凭“不变”宣布物理错误。
+
+若出现非物理失稳/步长越界/热账本失败，停止加长，导出首次异常状态。若5s成本已不合理，报告性能与主要同步/亚步成本，提供最小改进，不盲跑。
+
+### F3 最终判断
+
+本轮允许结论为“冷却层演化中，尚未稳态”。候选热平衡需输入/输出功率近似平衡、固定空间温度与流动统计不再持续漂移；不能只看总能量或一个点。
+
+1000℃是测点目标，不是必须维持整个熔体均匀1000℃。禁止用初场瞬时损失比较电源功率后证明目标不可能；也禁止为了达标提高P_abs超过30kW输入或任意降低h。
+
+窗口外mu(T)、skull或真实电磁形状会影响以后稳态，但本轮先完成冻结mu/开发源下的可信演化，不同时引入。
+
+## 8. G｜电磁独立支线：本轮必须推进一项，而非只登记
+
+优先复现现有解析柱中部复电流场约5%–6%误差。使用标准算例自带激励，甲方电流未知不阻塞。
+
+1. 找到真实原始参考、条件、指标与运行命令；无限/有限长、频率、sigma、自感及幅值/RMS一致。
+2. 固定一个基线复跑，输出复数J分量/幅相、区域定义、误差及未归一损耗。
+3. 依据空间误差形态与残差，选一个主假设：源输入、离散/边界、场重构或自感收敛。最多一个受控修复/对照，不同时更换所有phi方案。
+4. 用同一参考和指标比较前后值；无改善就报告假设被否定，不另造新的PASS口径。
+
+若解析柱所需输入在当前工作树缺失，先恢复已知输入。确有外部阻塞可选TEAM7最小边界/诱导场对照，但必须说明原因、运行证据与具体变化；禁止再次只交历史缺口表。
+
+没有修复成功也可以形成有效研究结果：明确误差不随某因素变化、排除一个原因。但不能称精度缺口已关闭。
+
+独立参考场误差、边残差、守恒和功率归一继续分开。解析柱某区域低于10%不等于TEAM7或局部Q峰值整体通过。
+
+## 9. H｜软件可接收代码的必要防护
+
+规定热源接口可作为开发功能，但接收前必须：
+
+- 用显式“参数已出现”标记处理模式，不以P>0唯一判定来源；
+- 拒绝负值、NaN、Inf和非法字符串；零功率支持与否明确，不允许输入无效后自动退回未知电流EM；
+- 与zero-q、固定温场、给定电流/目标功率等冲突在完整解析后统一检查，交换命令顺序仍给相同结果；
+- 规定源模式中EM状态为NOT_RUN/disabled，不能用phi_residual=0或em_solver_ok=1伪装EM收敛；
+- 日志/summary/effective统一显示规定入热、实际入热、generator30kW及实际源模式，清理遗留target50kW等误导性最终参数输出；
+- 规定源与在线EM更新互斥，除非存在已定义且验证过的组合；禁止运行中又被旧EM刷新覆盖。
+
+最小软件回归：合法10kW、非法值、冲突参数两种顺序、源模式输出一致性。不要将放宽速度中止门独立包装成“物理修复”。
+
+仅交小提交/补丁及必要前置依赖，不整文件覆盖软件工作区。物理新诊断默认不改变软件示例。
+
+## 10. 本轮不作为前置的事项
+
+- 弹性桨整圈：本轮可以暂缓。先解决无桨温度主线；上一轮0.05s约346s成本已记录，不无条件启动长跑。
+- 全部法国Fig7/8对齐、Windows、GUI、疲劳、钢桨EM涡流、全温变强耦合继续留在其他任务。
+- 不为已有有效短测重复造验证；本轮新增检查必须对应已识别的生产接入缺口。
+
+## 11. 验收标签及停止条件
+
+| 标签 | 条件 |
+|---|---|
+| PRODUCTION_PROBE_CONNECTED | B生产时间序列及在线/离线检查通过；位置确认独立 |
+| PRODUCTION_HEAT_SOURCE_VERIFIED | C使用真实生产算子通过，不是CPU替代式 |
+| BOUNDARY_FLUX_AUDITED | D四类边界的均匀/非均匀积分通过 |
+| ACTUAL_SCHEDULE_AUDITED | E实际步长与刷新时间检查完成，无违规或修复后通过 |
+| BUOYANCY_RESPONSE_STATUS | 记录可分辨/未分辨/异常及ON-OFF数据，不强制授PASS |
+| COOLING_LAYER_EVOLUTION_OBSERVED | F真实壁带/中心/测点与分项散热时间证据 |
+| NC_STEADY_STATE | 本轮默认OPEN，只有实际充分收敛证据才更新 |
+| NC_EXPERIMENT_MATCH | 缺实验位置/时间/吸收条件时保持BLOCKED_INPUT |
+| EM_ONE_HYPOTHESIS_TESTED | G真实基线与一次受控对照，给出排除或改善结论 |
+| SOFTWARE_DELTA_READY | H参数/状态回归通过，提交身份完整 |
+
+失稳/非有限值/调度越界立即停止加长，保存首次异常位置与字段。边界检查未过，不用调h补偿。输入缺失不阻塞无关标准验证。所有NOT_RUN给原因，不把它写成已解决。
+
+## 12. 产物与本轮必须回答的问题
+
+使用`doc232_runs/A...H`独立目录，避免覆盖231。交付：
+
+- `ROUND232_REVIEW.md`、`ACCEPTANCE_TABLE.csv`、版本与输入身份；
+- 231结论更正；真实测点CSV与采样核对；
+- 生产热源绝热结果、边界独立积分原始值/误差；
+- 真实累计热账本，标明区间能量与瞬时功率的区别；
+- ON/OFF匹配对照、5s及条件性20s温度/速度/壁带曲线；
+- 电磁基线及一个假设的修复前后数据；
+- `SOFTWARE_HANDOFF_DELTA.md`，列源码提交、前置条件、复跑命令及不能声明的能力。
+
+必须回答：
+
+1. 真实生产测点温度能否被离线数据复算？
+2. 生产热源与各边界的误差分别是多少，独立参考来自哪里？
+3. 壁带温度和57kW散热如何随时间变化，而非仅全域均温如何变化？
+4. 开/关浮力差异是否可从启动残余运动中分辨？
+5. 原“1000℃不可达”推断应如何修正，当前还缺哪一条证据？
+6. 电磁本轮排除了哪个原因或改善了哪个量？
+7. 哪些改动值得交给软件机，哪些仅为诊断？
+
+**完成标准是补齐真实生产链的证据，并收窄一个电磁问题；不是增加更多测试名称，也不是把短跑完成改名为稳态或实验通过。**
+
+
+<!-- ===== END 232_OPHELIE_PRODUCTION_THERMAL_PROBES_BOUNDARY_AUDIT_AND_EM_REPAIR_PLAN_2026-11-22.md ===== -->
+
+
+<!-- ===== BEGIN 233_OPHELIE_BUOYANCY_CAUSALITY_BOUNDARY_SCOPE_TIMESTEP_AND_EM_CONVERGENCE_CURSOR_PLAN_2026-11-22.md ===== -->
+
+# 233｜物理机任务书：浮力归因、边界适用性、实际步长与电磁收敛
+
+日期：2026-11-22  
+执行对象：原OPHELIE物理开发机Cursor。  
+依据：第232号任务书、`client_physics_handoff_doc232_2026-11-22.tar.gz`及本轮审核。
+
+## 0. 总目标：收窄四个问题，不继续泛化排障
+
+本轮只集中推进：
+
+1. 同配置20秒开/关浮力对照，确认生产工况中浮力是否真正影响流场；
+2. 检验232新增的全域竖向温度梯度外推是否适用于非线性/径向温场；
+3. 用真实执行时间记录审计流体、黏性力刷新与热子步，不能用“未中止”授PASS；
+4. 解析柱先查自感收敛与误差定义，再决定是否需要一次加密。
+
+保留232已完成的生产测点、真实热源绝热验证和20秒瞬态证据，不再重造这几项。暂不启动几百秒热平衡计算，不改框架、不引入新自然对流论文方案、不在本轮重做弹性桨整圈或GUI。
+
+本轮结束应能回答：**甲方自然对流入口的浮力链是否有效，当前热边界修正是否可用于工程，时间调度是否满足实际限制，电磁误差是否由迭代未充分收敛或参考比较口径造成。**
+
+## 1. A｜身份、已有结论与本轮输入固定
+
+### A1 代码身份先固定
+
+232包记录HEAD=`832dbc782...`，源码dirty；主要运行结果与最新H接口修改未必来自同一次构建。
+
+先检查实际工作区，整理必要源码与配置，形成可重建的本地提交或明确父SHA+补丁哈希。用户已授权持续开发，常规本地提交属于必要版本管理；不再仅以“未要求commit”长期保留不可追溯状态。不自行公开推送、不强推、不覆盖用户改动。
+
+记录可执行文件SHA256、构建命令、实际设备/精度、Reload校验和、完整argv、effective配置和结果目录。若必须保留未提交文件，明确列出，不能只填HEAD代表实际执行版本。
+
+物理机继续使用独立工作分支，软件机保持固定版本。优先把不同功能拆为可择收提交：测点/CLI、边界诊断、调度审计、实际物理修复。
+
+### A2 已确认与需收窄的结论
+
+| 232成果 | 本轮采用的准确口径 |
+|---|---|
+| 生产测点与离线复算 | 算法/数据路径已通过；名义感温点仍未确认 |
+| 生产SYCL热源 | 10kW绝热0.2s升温/能量误差约0.5%，满足原1%开发门限 |
+| 边界均匀/竖向线性场 | 该两类制造场通过，不代表任意边界层已验证 |
+| 20s热演化 | 均温约1247K、名义热电偶约1257K、散热约53.7kW；未稳态，非真实EM |
+| 1s浮力ON/OFF | 信号未分辨，不能授浮力PASS，也不能直接证明浮力公式错 |
+| 实际步长审计 | 仍缺真实力年龄/外层跨度证据；估计步长和未中止不足 |
+| 电磁柱长对照 | H翻倍无改善，有限柱长不是当前主要误差来源；精度缺口未关闭 |
+
+### A3 固定主配置
+
+采用232甲方NC几何、dp=0.010m、开发液深0.180m、同一Reload；初始均匀1273.15K，rho暂2700、cp1150、k4、冻结mu约14.532Pa·s。
+
+规定10kW均匀开发入热；侧300/底35/顶对流20 W/(m²·K)、发射率0.8、环境/水温300K，来源均按229记录。30kW只是电源输入。
+
+不同时开启mu(T)、sigma(T)反馈、新skull模型或修改h。准确甲方电流如已到达，登记为后续配置版本，不中途污染本轮匹配对照。
+
+## 2. B｜真实时间调度审计（长对照前完成）
+
+### B1 必须记录的实际量
+
+审计写到CSV，至少包含：
+
+- 声学子步开始/结束物理时间及实际dt；
+- dt声学候选、惯性/黏性限制、当前mu及估计采用的尺度；
+- 最近一次黏性力刷新时间、当前力保持年龄、位置/邻域更新次数；
+- 外层实际跨度及相关限制；
+- 热步实际dt、最近温度刷新时间和累计热推进时间；
+- 结束时间截断及声学/外层/热步累计时间的对应关系。
+
+需覆盖**当前实际生效的旧调度路径**，不能只在`doc227_actual_timestep=1`时生成审计然后给另一条路径授PASS。允许先在0.2–1s检查；若后续速度/限制变化明显，20s保留稀疏审计和最差值。
+
+### B2 判断与修复
+
+逐项检查声学dt是否超自身限制、黏性力保持区间是否超采用的显式稳定限制、热积分是否漏/重复、实际时长是否越过目标。浮点误差给明确小容差，不能以大容差掩盖一个完整子步越界。
+
+若存在越界，复用已有成熟匹配外层预算方案，最后子步截断；修复后ON/OFF都用相同新调度。若无越界，保留当前路径，不为打开某个历史开关而强改代码。
+
+不得同时改变压力、壁面和时间调度来“修复稳定性”。输出审计最差值与违规计数；没有记录时标签为NOT_AUDITED，而非PASS。
+
+## 3. C｜20秒浮力匹配对照与归因（本轮主任务）
+
+### C1 对照身份
+
+两组只改变Boussinesq增量：
+
+- C_ON：beta=1e-5；
+- C_OFF：关闭浮力增量，保留重力与原静水支撑。
+
+几何、粒子、初始化、settle、边界修正模式、Q、材料、时间推进、输出阶段完全相同。不能同时切换总压力/扰动压力、自由面/平顶或kernel correction。
+
+优先复用232的20s ON数据，但只有在二进制、源码、参数、边界和调度均能对应时才可复用；否则在固定版本重跑两组，不拿最新OFF比较无法确认版本的ON。
+
+先做0.2s一致性检查，再到20s；已有相同固定版本有效短测可省略重复。热/流动差异比较至少使用后段窗口[5,10]、[10,20]秒，不能把启动平均掩盖后期差异。
+
+### C2 比较场，而不是只相减最大速度
+
+输出两个运行的实际速度、温度、压力/密度及固定空间剖面。粒子运动不同后，按共同有效域映射到同一固定网格；提供插值覆盖掩码。不能按排序后的数组下标直接逐粒子相减。
+
+至少给出：
+
+- 场差`R_u=||u_ON-u_OFF||₂ / max(||u_ON||₂,||u_OFF||₂,u_floor)`，同时报告绝对场差和参考速度下限；
+- Urms/Umax、竖向/径向分量、动能和可用环流统计；
+- 固定测点温差、截面温差、全域温度/各边界功率差；
+- 后段矢量图，统一坐标/色标，区分瞬时与时间平均。
+
+ON/OFF的RMS数值相近不代表两流场相同。差异存在也不能仅凭很小相对差自动认为具有物理意义。
+
+先用确定性快照重放或一组必要的重复短测估计实现/并行波动尺度；本轮不要求无限重复。以高于该尺度、时间上持续且方向合理的响应作为可分辨证据，不预先规定“必须超过10%”以免漏掉真实弱响应。
+
+### C3 不论长窗结果如何，确认实际浮力力场
+
+在本轮生产入口选一个有明确非均匀温场的状态，导出：T、实际T_force_ref、beta、重力方向、粒子质量、浮力专用力、ForcePrior及前一力历史。
+
+独立参考`a_b=-beta*(T-T_force_ref)*g_vector`，具体正负约定与实际g一致；检查热上升/冷下降的方向。T_force_ref固定且可追溯，不得通过移动绝对温标制造温差。
+
+在**同一个冻结状态**比较开启/关闭浮力时的总力差，保存/恢复所有有关字段和历史，不让诊断污染后续运行。检查专用力正确、确实进入总力、重复执行不累加、下一次黏性/重力更新不清掉它、声学动量步读取了有效总力。
+
+优先复用已存在ForcePrior诊断，沿本轮入口验证；不重新造另一套力学框架。独立参考与力增量在合理浮点容差内一致，原有1e-5相对门限可在有足够非零尺度时采用；接近零值用绝对门限并报告，不除零。
+
+### C4 结果分支与停止条件
+
+1. **力链正确，20s场响应可分辨：** 该工况浮力机制通过归因检查；尚不代表实验温度或法国流线对齐。
+2. **力链错误：** 先修具体丢力/温度/参数/调度问题；短测和同配置复测后再延长，不另扫材料或h。
+3. **力链正确，但响应仍弱或未分辨：** 补一个有限诊断，使用已有非均匀温场（含水平温差）驱动同一入口，关闭热演化以隔离热场生成；只说明该机制能否响应，不算甲方热过程已验证。不能仅增大beta凑环流。
+
+若需要减小启动噪声，只选一个有理由的静水初始化或settle方案做对照；改变后ON/OFF共同采用。不要同时更换整个求解器。
+
+## 4. D｜全域温度梯度外推的适用范围与隔离
+
+232当前实现对全域粒子拟合单一dT/dz，并默认用于顶/底面外推。它对竖向线性场成立，但不保证适用于局部边界层；侧壁也缺少对应径向处理。
+
+### D1 先变为明确模式，保留旧行为
+
+给边界表面温度估计一个有来源的显式模式：旧边界带取样、232全域竖向拟合、其他已验证局部方案。具体字段名适配现有CLI，不新增多重冲突开关。
+
+232全域拟合在完成本节前视为实验性，不静默改变软件示例。无需立即开发新局部重构，先测现状和旧方案。
+
+### D2 两个有判别力的制造场
+
+复用真实生产边界与独立几何积分，固定粒子状态和材料：
+
+- 径向场：`T=1200+100*(r/R)^2` K；检验侧壁表面温度与内部带温度差，以及顶底径向非均匀辐射积分。
+- 局部竖向非线性场：`T=1200+100*(2*(z-zb)/H-1)^2` K；对称时全域拟合梯度接近零，但顶/底附近真实梯度非零，检验全域外推是否失效。
+
+两者都在甲方指定温区内，测试不涉及低温物性外推。参考直接在解析几何面计算T并积分，不用生产粒子权重生成参考。
+
+逐项给出四类边界功率与单步真实能量变化。沿用原开发门限：各分项功率差≤2%，实际能量对账≤1%；同时报告原始误差，不能只改能量口径以获得PASS。
+
+### D3 若失败，按原因做最小修正
+
+- 全域拟合无法表示局部梯度：限定其用途，不直接在工程中默认启用。
+- 若已有成熟局部重构/壁面温度方案，复用并对同一测试复测。
+- 若确为粗边界带空间分辨率误差，可做一次有依据的厚度/dp检查，不通过任意修改h补偿。
+
+不因旧模式也不够准就默认新模式正确。工程模式使用范围、误差和临时近似应明确登记。
+
+**边界模式一旦改变，不能把新20s结果直接与旧232曲线混为同一配置。** 浮力对照在同一选定模式内进行；不强制把每个实验模式都跑20s。
+
+## 5. E｜质量焓与算子能量口径并列检查
+
+232绝热生产源约0.5%误差已满足原开发阈值，本轮先解释，不强迫无依据追零。
+
+同一实际状态记录：
+
+- 固定粒子质量`sum(m_i)`；当前`sum(V_i)`、密度范围及`rho0*sum(V_i)`；
+- 质量焓`DeltaH_m=sum(m_i*cp*DeltaT_i)`；
+- 算子口径`DeltaH_rhoV=sum(rho0*V_i*cp*DeltaT_i)`；
+- 实际热源/边界累计能量、热子步跨度。
+
+温变cp未启用时先按常cp。初场/参考态初始化后建立基线，不把换初场计为能量不闭合。
+
+正式运动结果以固定质量焓为主要物理账本，rho0V作辅助离散诊断。如果因WCSPH密度/体积变化出现差异，要量化其规模与时间增长趋势；不能只把门改为更容易闭合的口径并宣布问题消失。
+
+若差异在约定≤1%且不增长，记录限制即可；若持续增长或解释不了，定位质量、体积、源归一和温度积分链。不要顺带改变cp/rho/h去掩盖。
+
+## 6. F｜解析柱：先收敛与指标，后分辨率
+
+### F1 更正指标含义
+
+232的`L2_rel_J_mid≈0.00042`与平均电流误差4.18%、中部功率误差17.8%同时存在。先检查实际指标源码/后处理，确认是否经过幅值归一、最优比例拟合、分箱或区域重定义。
+
+新增/明确未经幅值拟合的比较：
+
+`E_J = sqrt(sum(V_i*|J_i-J_ref(x_i)|²) / sum(V_i*|J_ref(x_i)|²))`
+
+复数场比较真实复分量；若只能比较幅值，另命名，不冒充复数相位精度。参考在相同粒子坐标求值，区域与体积权重固定。
+
+径向分箱时解析参考也对同一采样集合/同一权重平均，不能把bin中心解析值直接当稀疏粒子的均值参考。
+
+功率并列报告：数值Q的离散积分、相同粒子采样上的解析Q积分、解析几何体积分。这样区分场误差和体积积分误差，不能删除不利区域。
+
+### F2 一次严格收敛对照
+
+保持232基线dp=0.025m、R0.1m、H0.6m、sigma16、300kHz及相同源输入。日志原固定点残差约0.0396、最终一致性残差约0.0276；它们与真实场误差不同，但需要检查其影响。
+
+先仅收紧迭代容差，使真实固定点/一致性残差达到约1e-3或当前可可靠达到的更低值，迭代上限设有限预算；记录未松弛残差、松弛步长及各物理指标随迭代变化。不要只看较小的relaxed_step宣称收敛。
+
+若达不到容差，报告停滞原因和残差历史，不降低目标后标严格收敛PASS。必要时一个中间容差对照可帮助判断，但不展开多维扫描。
+
+比较未经归一的J误差、径向误差、全柱/中部功率与232基线；不得用目标功率重新标定电流掩盖误差。
+
+### F3 是否加密的决策
+
+- 严格收敛后误差明显下降：先固定收敛设置，不同时加密。
+- 误差基本不变、指标采样已澄清：允许一次径向分辨率加密，其他条件固定；检查内核稀疏采样和源/自感离散。
+- 不再继续增加柱长；232已显示该因素不是主因。
+
+本轮不以甲方电流未知为由暂停标准算例。TEAM7不要求同时重跑全套，保留明确未通过状态；解析柱一项通过不能替代TEAM7/峰值Q的验证。
+
+## 7. G｜提交后的真实短跑与软件交接
+
+232最新H源码包含`em_status=NOT_RUN`、规定热源身份和空EM结果字段，但部分20s日志仍是旧`em_solver_ok=1`口径。属于源码/运行证据版本差异，不能只用CLI自检盖过真实运行。
+
+在整理后的提交上至少做一次0.2s实际规定热源短跑，检查：
+
+- effective/运行事件/终端最终摘要/summary对热源模式含义一致；
+- EM未执行时明确NOT_RUN，`em_solver_ok=null`或等价不可用状态，不是假成功；
+- 生成器输入与规定吸收功率分开，实际热输入与配置一致；
+- 固定测点在实际输出中可读；
+- 非法输入和冲突顺序防护沿用232有效回归，不重复造接口。
+
+软件机优先接收测点、CLI防护、状态一致性等通过提交。边界实验性外推和未确认物理修复暂不默认合入。提供父SHA、提交、必要前置依赖、配置/格式变化和复跑命令；禁止整文件覆盖软件修改。
+
+## 8. 执行顺序、预算和停止条件
+
+| 优先级 | 内容 | 依赖及限制 |
+|---|---|---|
+| P0 | A身份、B实际步长短审计 | 长运行前；若越界先修 |
+| P1 | C力链快照和20s浮力对照 | 同版本同边界；尽量复用可核验ON |
+| P2 | D边界制造场、E双口径能量 | 静态/短步即可，不用每项都长跑 |
+| P3 | F电磁指标+严格收敛对照 | 可用空闲设备独立推进，目录/设备隔离 |
+| P4 | G固定提交真实短跑与交接 | 只交已测功能，不整分支自动同步 |
+
+可先快速做静态D判定边界模式风险，再安排C长对照；保持每组对照内部一致。不要同时测试多种压力、h、beta、dp、阻尼和材料。
+
+出现非有限值、实际步长违规、粒子明显失效或能量持续异常时停止延长，保存首次状态。输入不足标BLOCKED，继续不依赖该输入的任务。
+
+本轮无必要不跑超过20s，不追求立即热平衡或1000℃误差达标。现在的初态就是约1000℃，短时接近目标不能作为预测验证。
+
+## 9. 文件与状态交付
+
+建议`doc233_runs/A...G`，不得覆盖232结果。必要源码、分析脚本和小型配置可追踪；大场/Reload单独保存校验和。
+
+交付：
+
+1. `ROUND233_REVIEW.md`、`ACCEPTANCE_TABLE.csv`、版本与运行身份；
+2. 实际步长/力刷新年龄审计CSV及最大违规表；
+3. 20s ON/OFF速度/温度场差、后段统计、固定测点曲线与力链快照验证；
+4. 两个新边界制造场的独立参考、原始误差及模式选择；
+5. 固定质量焓与rho0V口径差异；
+6. 电磁指标定义、严格收敛前后值、如有则一次加密对照；
+7. 提交后真实短跑的schema/EM身份核查和软件择收说明。
+
+状态明确区分：ACTUAL_TIMESTEP_AUDITED、BUOYANCY_FORCE_CHAIN_VERIFIED、BUOYANCY_FLOW_RESPONSE、BOUNDARY_RECONSTRUCTION_SCOPE、MASS_ENTHALPY_ACCOUNTING、EM_ITERATION_SENSITIVITY、SOFTWARE_RUNTIME_IDENTITY。
+
+本轮必须回答：
+
+- 浮力是否实际进入生产动量推进，20s场响应是否可分辨？
+- 232全域梯度外推在哪些温场有效、哪些无效，软件是否可默认使用？
+- 当前实际推进是否跨过黏性/声学/热预算？
+- 约0.5%的绝热能量差来自何处，运动后是否增长？
+- 电磁4%左右幅值和17.8%中部功率误差中，有多少来自收敛或参考采样？
+- 哪些提交适合软件接收，哪些仍是诊断？
+
+**禁止用“跑完”“曲线相似”“内部残差小”替代以上因果与误差证据；也不因结果未通过而临时更换指标或删除不利区域。**
+
+
+<!-- ===== END 233_OPHELIE_BUOYANCY_CAUSALITY_BOUNDARY_SCOPE_TIMESTEP_AND_EM_CONVERGENCE_CURSOR_PLAN_2026-11-22.md ===== -->
+
+
+<!-- ===== BEGIN 234_OPHELIE_FORCE_PRECISION_FIXED_T_RESPONSE_AND_EM_SPATIAL_REPAIR_CURSOR_PLAN_2026-11-22.md ===== -->
+
+# 234｜OPHELIE 浮力归因收口、热边界修复与电磁空间误差定位执行任务书
+
+- 日期：2026-11-22
+- 执行对象：物理开发机上的 Cursor。
+- 上轮基线：第233轮交接，分支 `ophelie-physics-doc233`，报告 HEAD `e84f3c3bc`，父 tip `832dbc782`。
+- 本轮建议分支：从实际核实的233物理提交新建 `ophelie-physics-doc234`。
+- 软件机继续独立开发。物理改动经明确验证和选择性移交后接收，不要求软件机立即整体合并。
+- 本文是执行计划，下面的候选原因均不是已查明的代码缺陷。
+
+## 0. 本轮必须回答的问题
+
+本轮目标不是增加更多 PASS/FAIL 标签，而是用少量有区分力的试验查明：
+
+1. 0.163%的浮力总力差，是单精度消减误差、诊断位置不对，还是浮力被覆盖/重复/没有被实际动量推进读取？
+2. 黏性力“年龄违规”是真正超出了更新预算，还是时间戳、比较尺度或计数逻辑有误？
+3. 在固定、非均匀温度场下，当前工程流体路径能否产生与浮力对应的速度场变化？
+4. 上下热边界对非线性温度场的误差，能否用有限范围的局部处理降低？
+5. 电磁解析柱的中部功率17.8%误差，多少来自场离散，多少来自采样积分及参考定义？
+
+完成这些工作后，再决定是否恢复客户温度演化以及法国自然对流复现。不要在未回答前重新铺开长时计算或多参数扫描。
+
+### 0.1 第233轮应保留的事实
+
+| 项目 | 已有结果 | 本轮正确处理 |
+|---|---|---|
+| 专用浮力通道 | 公式对比误差约4.06e-8 | 保留，不重做公式推导 |
+| 总力 ON−OFF | 相对专用浮力约1.63e-3 | 未达到旧门限，但原因未定 |
+| 20 s ON/OFF | 速度统计量相近 | 不能等价为真实矢量场差小 |
+| 步长审计 | 声学未报告越界；黏性年龄计数与比值待解释 | 先审计测量代码，再改调度 |
+| 热时间累计 | 为0 | 说明记录缺失，不能说没有热推进 |
+| 全域梯度外推 | 抛物竖向温场失败 | 保持实验模式 |
+| 质量焓 | 20 s残差约0.4%，按累计散热归一 | 不能标成1e-4量级 |
+| 电磁严格收敛 | 固定点约7.1e-4，但物理误差几乎不降 | 查指标和空间误差，不继续主要调迭代 |
+| 软件规定热身份 | EM NOT_RUN已明确 | 保留，避免规定热伪装成真实EM |
+
+### 0.2 不在本轮扩展的内容
+
+- 不替换整个流体框架，不重新混合2024论文算子、黎曼压力、密度稳定等多个方案。
+- 不修改独立 A-phi/Laplace 研究分支。
+- 不引入新壁面 ghost 粒子布置框架。
+- 不同时开启 μ(T)、σ(T)、新水冷模型、导电坩埚或底板。
+- 不通过增大β、降低μ、重调散热系数制造“更好看的环流”。
+- 不重跑标准方腔全套；若修改公共流体内核，才补与修改直接相关的既有回归。
+- 不要求搅拌整圈或重做弹性桨；本轮不改变已交接的不锈钢弹性桨设置。
+- 不把1000℃作为当前工况已通过实验匹配的证据。
+
+## 1. A｜版本、文件及结论身份
+
+### A1 开工核对
+
+1. 记录实际分支、HEAD、工作树状态、编译配置、Real类型、GPU和二进制SHA256。
+2. 如果工作树有未提交代码，先明确哪些构成233结果，哪些是后续改动；不得覆盖或清理用户文件。
+3. 本轮所有匹配对照使用相同二进制、Reload和有效参数。需要修改代码后，重新生成版本记录。
+4. 不使用未记录的环境变量静默改变边界、精度、调度或材料参数。
+5. 确认软件机当前固定版本；本轮只准备可选择接收的补丁，不直接影响其工作树。
+
+### A2 本轮目录与提交建议
+
+代码优先放在既有 OPHELIE case/diagnostics 内。公共库修改必须有直接证据支持。
+
+产物统一放到 `docs/ophelie/reference/doc234_runs/`：
+
+| 子目录 | 内容 |
+|---|---|
+| A_identity | 版本、构建、参数、运行清单 |
+| B_force_precision | 同一快照力链、舍入分析、实际动量读取 |
+| C_schedule | 审计定义、真实时间跨度、必要修复前后 |
+| D_fixed_T | 冻结温场、短时速度场、Python矢量图 |
+| E_boundary_energy | 制造温场、局部边界验证、双能量口径 |
+| F_em | 指标定义、解析参考采样、一次加密 |
+| G_handoff | 有效配置、验收表、软件接收建议 |
+
+按功能拆分提交：诊断、必要物理修复、后处理、报告分开。不得把大量运行产物全部提交进Git。
+
+## 2. B｜先查浮力力链：区分浮点误差与真实覆盖
+
+### B1 旧判定不能直接继承
+
+233的总力差相对误差约0.163%，构建为Float。在含重力的总力上做ON−OFF，可能丢失小浮力的有效数字。
+
+估算只用于选诊断：β=1e-5、ΔT=10 K时，浮力约为重力的1e-4。单精度大力相减的相对浮力误差可能显著放大。但最终是否由此造成，必须用实际每粒子力尺度验证。
+
+禁止两种做法：
+- 未检查舍入与通道，就断言“浮力没有进入动量”；
+- 仅把1e-5门限改宽，然后宣布已解决。
+
+### B2 同一粒子快照，先做不积分的检查
+
+固定相同的Position、Temperature、Mass、Density、Pressure、邻域、时间和所有既有力通道；从同一快照分支计算ON/OFF，禁止先积分ON再拿变化后的状态算OFF。
+
+独立参考使用：
+`a_b_ref = -beta * (T - T_force_ref) * gravity_vector`
+`F_b_ref = mass * a_b_ref`
+
+在代码中明确gravity向量的符号以及Force/Acceleration单位。T_force_ref必须读实际有效值，不能一边用当前质量均温、一边用初始温度。
+
+每粒子导出至少：
+- 稳定粒子ID、位置、T、T_force_ref、mass；
+- gravity、独立a_b_ref、专用F_b；
+- 加浮力前ForcePrior、加后ForcePrior；
+- ON/OFF差；
+- 浮力之后其他动力学修改的ForcePrior；
+- 进入声学动量更新前真正读取的力或加速度；
+- host/device同步位置与数据类型。
+
+如果实际API的力通道名称不同，使用真实名称，报告映射关系；不要创建一个无人读取的新变量来“验证通过”。
+
+### B3 舍入分析与必要的双精度对照
+
+1. 在host用double独立计算同一已导出的Float快照参考。double重算参考本身不能证明Float总力相减准确。
+2. 对生产Float的加法和减法，给出与该位置实际大力大小相关的ULP或舍入尺度估计。不要仅用全局平均力。
+3. 双精度对照优先局限到诊断算术/独立诊断目标；若条件允许可用小规模CPU double参考，不要求重编整套软件或全量FP64 GPU。
+4. 确认专用Fb是否被加入一次、是否被后续初始化/重置覆盖、是否有前一子步残留。
+5. 记录“诊断前后读取到host”的同步是否正确，排除只比较了旧设备数据。
+
+误差同时报告绝对量与相对量。对接近零的粒子，禁止直接除以接近零的Fb后取最大相对误差。报告全场体积/质量权重L2以及非零浮力粒子分组统计；零温差粒子另报绝对误差。
+
+### B4 最少三种制造温场
+
+只做同一几何快照，无须完整流动：
+- 均匀温度：若T_force_ref取同一均温，应得到近零浮力增量；
+- 原有制造非均匀温场：复现233的0.163%；
+- 有正负温差的非均匀温场：检查冷热粒子的方向与符号。
+
+这些是力链单元诊断，不是自然对流拓扑验收。
+
+### B5 实际动量通道检查
+
+至少跟踪一个真实声学子步，证明Boussinesq执行后的有效力被生产动量更新读取，并记录其后是否被其他动力学改写。
+
+不能要求完成压力响应后的速度逐粒子严格等于a_b*dt：压力、黏性和约束会共同作用。要检查的是实际离散更新中浮力项被读入的贡献，以及必要的力/质量换算是否正确。
+
+### B6 结论分支
+
+| 结果 | 后续 |
+|---|---|
+| 专用Fb正确、动量确实读取、Float差异被舍入尺度解释且double诊断显著改善 | 记为精度受限的诊断，不修改物理力链 |
+| 存在覆盖、漏读、重复累加、错单位或错误参考温度 | 只修具体链路，重做同一快照与短时响应 |
+| 误差明显超出舍入解释、来源仍不清 | 保持OPEN，报告残差粒子分布与具体调用位置，禁止继续堆长跑 |
+
+验收不依赖单个硬相对门限；必须同时具备独立公式、实际读入力、绝对误差和精度解释。不能仅做host数学演示。
+
+## 3. C｜修正实际调度审计，查明“年龄违规”
+
+### C1 先核对定义
+
+233记录：max_viscous_age约0.00238 s，max_age_over_visc约2.1e-4，却几乎每步计数违规。
+
+必须在报告中列出：
+- force_age的起止事件；
+- age_over_visc的确切分子、分母、单位；
+- 允许的年龄预算来自哪个生产调度公式；
+- 违规计数的确切布尔表达式；
+- 每次计数发生在刷新之前还是之后。
+
+如果比值不是“年龄/允许黏性跨度”，更名并说明，不沿用误导名称。
+
+### C2 每个外层/力刷新区间记录
+
+至少记录：
+- 物理t起止、实际外层跨度；
+- 每个声学dt及实际累计；
+- 黏性力刷新时刻、当前年龄、该刷新所对应的允许保持预算；
+- 实际使用的声学、平流、黏性、热限制及其来源；
+- 粒子位置、cell、邻域更新的事件次序和计数；
+- 热模块实际执行的子步dt和累计热时间。
+
+黏性力年龄不能直接与一个无关的声学dt比较。显式黏性、隐式黏性与冻结力外层保持的限制也不能混为同一公式。先识别本case实际采用的路径。
+
+### C3 修复热累计记录
+
+在真正调用温度更新的路径中累积其物理dt，记录是否分裂积分、是否多次调用。若采用分裂子步，按完整时间区间解释累计，不能因重复计数误报为推进两倍时间。
+
+验收：
+- 实际热推进覆盖与物理时间一致，误差在端点对齐及可解释舍入范围内；
+- 没有热路径时明确NOT_RUN，不用0伪装通过；
+- 记录值可由短跑原始行重新累计。
+
+### C4 运行与修复预算
+
+先0.2 s；如果事件样本不足，最多延至1 s。
+- 如果只是审计错误：修审计，保持物理调度不变。
+- 如果证实真实预算违规：按现有框架兼容方式修正外层跨度/刷新位置，重做相同短跑。
+- 未证实前禁止直接翻转旧CFL开关、全面改变声学顺序或更换黏性算子。
+
+输出至少一段可读事件轨迹，解释一次完整外层及子步。不要只给累计PASS/FAIL。
+
+## 4. D｜固定温度场短测：直接确认浮力驱动
+
+### D1 先复用已有数据，不先重跑20 s
+
+检查233原始产物是否含指定时刻速度矢量、粒子坐标或足够重建的网格场。只有速度RMS、单个环流代理或PNG不算完整矢量场证据。
+
+如果缺场，明确写MISSING_FIELD_DATA，不继续声称“场差只有1%”。233窗口统计差只能作为统计量差。
+
+### D2 固定物理设置
+
+仍用客户NC圆柱、dp=0.010 m、H=0.180 m、相同Reload；冻结μ约14.532 Pa·s、ρ2700、β1e-5，保留同一重力、压力、壁面、自由面设置。
+
+本项关闭热源推进、热扩散和热边界温度更新，直接施加固定Eulerian非均匀温场：
+`T(r,z) = T0 + 20 K * (r^2/R^2 - 1/2)`
+其中T0=1273.15 K，R为本case实际液体半径。
+
+该函数具有径向温差；不同高度在同一半径温度相同。面积均值为T0，离散均值仍按生产T_force_ref机制记录。它不是法国论文温度重建，仅用于验证浮力响应。
+
+每次生产浮力读取之前按当前粒子位置更新规定T，避免粒子携带初始标签后温场已变。ON/OFF共用完全相同的温度定义。
+
+为什么不用纯竖向线性温场作为唯一测试：它可能对应静力平衡或稳定分层，不能保证产生目标环流。径向温差用于避免把“无环流”误读成力链错误。
+
+### D3 最小运行矩阵
+
+| 运行 | 温度 | 浮力 | 时间 |
+|---|---|---|---|
+| D_ON | 上述固定场 | β=1e-5 | 先1 s |
+| D_OFF | 相同固定场 | 仅关闭Boussinesq | 同1 s |
+
+关闭浮力只关闭浮力增量，保留重力和所有其他设置。若需要静水预处理，两次使用相同经过核实的预处理状态及温度施加时刻，预处理时长另记。
+
+先通过B/C，再执行本项。如果1 s响应太弱，结合实际力尺度与数值噪声确定是否延至5 s；不得无条件再跑20 s。温差不放大，μ不降低。
+
+### D4 场保存与Python检查
+
+至少保存温场施加起点及0.1、0.5、1 s；若延长，补2、5 s。输出粒子ID、位置、速度、T和必要权重，不必每步写VTP。
+
+生产速度是原始证据。后处理可将ON/OFF插值到相同Eulerian网格，并导出：
+1. ON、OFF和差值的同色标速度剖面；
+2. ON/OFF原始矢量图及差值矢量图；
+3. 若计算流线，说明插值、有效区域、积分设置；
+4. 质量/体积加权的矢量差L2与其绝对m/s数值；
+5. 竖向速度径向剖面，以及内部上升/下降区域；
+6. 末时刻及时间演化，不能只挑一张最佳图。
+
+粒子移动后不能把同一粒子ID直接当作同一空间坐标。可附Lagrangian差，但与Eulerian场差分开命名。
+
+圆柱轴对称平均时，用真实r与z、旋转投影后的u_r与u_z；轴附近u_r方向不适定，需正确处理。报告周向离散/非轴对称程度，避免平均抹去真实结构。
+
+有效网格必须ON/OFF都有支持，记录覆盖率；容器外不补零。流函数是后处理派生量，若连续性不足，不以闭合流函数图替代原始速度证据。
+
+### D5 判据与分支
+
+- B证实浮力进入动量，且D出现与冷热位置相符、时间上可解释的ON/OFF矢量响应：可记“固定温场浮力响应验证通过”；不等于法国双环流通过。
+- 差异接近插值或运行波动尺度：只增加一次有针对性的重复或更直接的内部粒子比较，估计误差底；不能仅按ON/OFF统计差给噪声标签。
+- 力链正确而流动响应弱：检查实际温差、黏性、压力平衡、边界约束及静水背景，量化竞争尺度，再决定延长至5 s是否有意义。
+- 若OFF背景持续主导，先定位OFF的静水/自由面/边界残余流；不要把它命名为温度驱动自然对流。
+
+不强制要求短时间内达到闭合大环流，也不要求速度严格随时间线性增长。
+
+## 5. E｜上下热边界的有限修复及能量口径纠正
+
+### E1 更正既有能量结论
+
+233 ON 20 s摘要：
+- E_Q=199976 J；
+- E_boundary=1105680 J；
+- 输入减散热=-905704 J；
+- H_mass=-910047 J；
+- 固定质量焓残差约-4343 J，按累计散热归一约0.393%。
+
+原报告约1e-4的残差更接近rho0V口径，不能称作固定质量焓残差。本轮必须由原始日志完整精度重新计算；上述数值只用于指出口径问题。
+
+新增明确字段：
+`deltaH_mass_J`、`deltaH_rho0V_J`、`E_source_J`、`E_boundary_out_J`、
+`residual_mass_J`、`residual_rho0V_J`、各自归一分母及相对值。
+
+固定质量焓计算用起止温度差：
+`DeltaH_mass = sum(m_i * cp * (T_i(t)-T_i(0)))`
+本轮cp固定。使用绝对焓时参考温度必须固定；不得把每步变化的质量均温当作焓零点，消去真实能量变化。
+
+相对残差给统一、公开的分母，例如max(|E_source|,|E_boundary|,能量数值下限)。低输入低散热时同时给绝对J，不用极小分母制造巨大相对值。
+
+### E2 保留两种边界模式身份
+
+- band：旧带取样基线；
+- global_dt_dz：实验全域梯度外推。
+
+不能只修改日志名称而实际仍默认使用实验外推。effective配置、命令、summary和算子实际路径必须一致。
+
+233的抛物场失败说明全域梯度不能代表局部边界梯度；不证明所有局部边界都需重写。
+
+### E3 局部修复的实施顺序
+
+1. 审查当前换热面面积权重、作用带厚度、表面温度估计、热通量和能量注入是否一致。
+2. 在固定粒子快照上复现均匀、linear_z、radial_quad、parabolic_z四种制造场。
+3. 若主要误差来自表面T取样，优先在上下表面使用已有邻域支持的局部重构；沿局部法向取内侧粒子，检查支持量与拟合条件。
+4. 若没有可复用的稳定局部实现，先做一次dp减半的制造场对照，区分带取样阶数误差和代码错误；不要立刻创建新通用边界框架。
+5. 局部重构增加明确实验模式，报告支持不足时的回退。拟合失败不能输出未定义温度或静默大幅限幅。
+6. 若为通过抛物场选择二次局部拟合，必须额外保留一个不同形式的光滑温场或独立交叉验证；不能用制造场解析公式直接填回生产表面温度。
+
+### E4 边界验收
+
+本轮沿用制造场功率误差≤2%、能量注入误差≤1%的内部目标，并分别列每一面，不能只报总散热抵消后的误差。
+
+解析参考必须对实际几何面温度独立积分。辐射项用T^4及一致绝对温标，不把平均T的四次方冒充四次方的平均值。明确辐射环境温度和对流环境温度。
+
+区分：
+- 表面温度重构误差；
+- 面积/通量离散误差；
+- 已算出的通量是否正确更新温度；
+- 全局固定质量能量残差。
+
+通过并不证明强边界层已收敛；失败也不能直接归因浮力公式。
+
+本项以静态制造温场为主，不要求每一种边界模式再跑20 s。
+
+## 6. F｜电磁：先把误差定义查清，再做一次空间加密
+
+### F1 基线固定
+
+继承233解析圆柱：
+R=0.10 m、总高0.60 m、dp=0.025 m、B0=0.01 T、
+sigma=16 S/m、f=300000 Hz，源定义及相位约定不变。
+
+使用已达到约1e-3真实固定点残差的严格收敛配置，记录真实残差、松弛步长、phi残差以及最终一致性检查。不得只凭converged字段。
+
+本轮不继续增加柱长；232柱长对照已显示该调整没有明显改善主要指标，但不要将其写成排除了所有三维边缘效应。
+
+### F2 指标必须追溯源码与参考
+
+逐项列出L2_rel_J_mid、mean_rel_J、rel_P_mid、rel_P的：
+- 精确数学定义与实际代码位置；
+- 数据区域；
+- 粒子/网格/径向bin支持；
+- 权重与归一；
+- 是否幅值拟合；
+- 是复数场、向量幅值还是某个分量；
+- peak/RMS约定。
+
+新增未经幅值拟合的复数场误差：
+`E_J_complex = sqrt(sum(V_i*|J_i-J_ref(x_i)|^2) / sum(V_i*|J_ref(x_i)|^2))`
+
+如果只能比较幅值，另报E_J_amplitude，不冒充相位验证。参考在相同粒子坐标上计算。用同一体积权重及区域，保留绝对量。
+
+径向bin参考也在同一组粒子坐标采样并加权，不能把bin中心解析值当整组粒子参考。
+
+### F3 功率拆成三个量
+
+针对全柱和明确中部切片分别计算：
+1. P_num_discrete：数值J/Q在粒子体积上的积分；
+2. P_ref_discrete：同一粒子集合、同一权重上的解析Q积分；
+3. P_ref_geometric：同一几何区域的解析积分。
+
+给出：
+- 数值场相对同采样参考的功率差；
+- 解析离散采样相对解析几何积分的差；
+- 最终数值功率相对几何参考的差。
+
+若粒子代表体积与切片边界相交，明确采用点选权重还是截断权重；解析几何区域必须与定义匹配。检查有效切片体积及其相对几何体积误差。
+
+Joule项明确峰值复幅值下的1/2约定或RMS约定。禁止用目标总功率归一掩盖标准例误差，也不能删掉内圈不利数据。
+
+### F4 一次加密，禁止再停在“迭代误差不敏感”
+
+指标采样已澄清后，从dp=0.025 m加密到dp=0.0125 m，其他物理设置不变。先检查显存、相互作用复杂度及最大迭代成本；若预计超出可用预算，选择一个更温和的中间分辨率并提前记录理由，不改物理输入。
+
+这是一次空间误差对照，不是要求证明严格收敛阶。记录：
+- 粒子数、区域体积；
+- 严格迭代的最终残差；
+- 时间与显存；
+- 同采样复场误差、径向J/Q、三种功率；
+- 内圈支持数与自项/近邻处理。
+
+若加密后迭代残差未达到相同量级，先注明无法干净归因，不把结果直接当空间收敛。
+
+### F5 依据结果决定修复对象
+
+| 结果 | 下一步 |
+|---|---|
+| P_ref_discrete与几何参考差明显，加密后缩小 | 优先查体积、切片和积分采样 |
+| 同采样J/Q误差随加密明显下降 | 空间离散为重要因素，记录工程分辨率限制 |
+| 体积和采样正确，但同采样场误差不降 | 定位自项、近邻核、源幅相、实际边界设定；只选证据最强的一处修 |
+| 功率约定有固定因子错误 | 修peak/RMS或1/2约定并重做基线，不与分辨率收益混算 |
+| 指标定义仍不清 | 保持OPEN，不用较小L2宣称电磁精度通过 |
+
+本轮无需等待甲方电流参数才能跑解析标准例。TEAM7、局部峰值Q仍是独立验证缺口；解析柱结果不能替它们背书。
+
+## 7. G｜恢复温度演化与法国复现的进入条件
+
+只有以下条件具备，才恢复一个短的客户热演化回归：
+- 浮力进入生产动量的证据已明确；
+- 固定温场ON/OFF矢量响应可解释；
+- 实际调度审计的口径矛盾已解决；
+- 本次使用的热边界模式已明确，残差字段口径正确。
+
+恢复时只跑一个已选定配置，先1 s，必要时5 s；不展开所有模式的20 s矩阵。规定10 kW保持为诊断热源，记录EM NOT_RUN。
+
+客户温度定量与法国文献的自然对流拓扑不是同一个验收：
+- 客户几何、输入电流、测点位置/时间尚需对应实验；
+- 法国NC几何与热条件需另用明确配置；
+- 不要求客户短跑复制法国论文的双环流；
+- 不因短跑均温接近1000℃就标实验通过。
+
+当前输入10 kW、短窗散热约54 kW，说明此时净冷却。它不是整个模型在所有时间都无法达到稳态的证明；也不能把当前瞬态散热直接当最终所需吸收功率。
+
+本轮不重开μ(T)/σ(T)。待上述链路明确后，再单独安排真实EM热源与温度反馈。客户暂借sigma=16的状态仍需显式标注，不能称甲方材料已经核定。
+
+## 8. 执行顺序、运行预算和停止规则
+
+### 8.1 推荐顺序
+
+1. A：身份及233原始数据核对。
+2. B/C：源码级诊断审查与0.2 s短跑，优先纠正误判。
+3. D：冻结温场1 s匹配对照，保存原始场并出Python图。
+4. E：静态边界制造场、必要局部修复及能量账本纠正。
+5. F：电磁指标和采样核对，再执行一次加密。
+6. G：满足条件后做一次短回归，整理可交接内容。
+
+电磁与静态制造场可在独立目录执行；共享GPU要避免资源争抢。共用bin/output的流体运行必须串行或显式独立输出目录，不能互相覆盖。
+
+### 8.2 本轮运行上限
+
+- 力链：静态制造场及至多一个真实子步轨迹；
+- 调度：0.2 s，必要时1 s；
+- 固定温场：ON/OFF各1 s，仅有必要时各延至5 s；
+- 边界：静态制造场；必要时一次分辨率对照；
+- 电磁：严格基线证据充分则复用，加一次分辨率；
+- 恢复热演化：有条件的单配置1–5 s。
+
+这些是默认预算，出现明确错误时先修错误，不机械跑完全部矩阵。不要以还没跑完矩阵为由拖延已经定位的修复。
+
+### 8.3 停止与转向规则
+
+- 诊断误差被舍入解释：停止追求不合理Float相对门限，转到实际动量响应。
+- 调度只是计数错误：停止改流体顺序。
+- 固定温场无清晰响应：停止耦合长跑，保留场与实际力证据定位。
+- 严格EM容差无改善：停止继续主要调容差，转采样/空间离散。
+- 局部边界支持不足：保持实验模式，报告支持问题，不静默回退后称全部通过。
+- 本轮未触及的TEAM7和整圈搅拌，列遗留，不写成新近失败或已解决。
+
+## 9. 交付文件与报告要求
+
+这次不能只回传摘要。交接至少包含：
+
+1. ROUND234_REVIEW.md：按“问题→证据→归因→修复→剩余影响”撰写。
+2. ACCEPTANCE_TABLE.csv：区分PASS、OPEN、FAIL、NOT_RUN和受限适用。
+3. RUN_COMMANDS.md：实际运行命令、执行顺序、工作目录、产物路径及退出码；示例命令与已执行命令分开。
+4. effective配置及版本、二进制、Reload校验信息。
+5. 本轮源码补丁/提交差异，包含力链审计、调度计数、边界和EM指标定义。
+6. 力链每粒子关键CSV与实际读入力事件轨迹。
+7. 实际调度CSV原始行、热dt累计、统计脚本。
+8. 固定温场指定时刻粒子场/剖面CSV、共同网格、Python脚本及ON/OFF/差值矢量图。
+9. 每个边界制造场逐面功率、能量、独立参考计算，以及局部支持失败统计。
+10. 双口径焓账本CSV与明确的残差分母。
+11. 电磁原始日志、径向数据、复场误差、三种功率及一次加密对照。
+12. SOFTWARE_HANDOFF_DELTA.md：可以择收什么、什么仍不能进入工程默认。
+
+完整大场可外置，但包内必须有稳定索引及SHA256；关键稀疏场、CSV、脚本、补丁和足够核对的日志片段应直接打包。不只写一个审核者访问不到的本机路径。
+
+### 9.1 验收表建议字段
+
+`item,status,scope,metric,absolute_error,relative_error,normalization,config_sha,evidence,limitation`
+
+建议项目：
+- FORCE_FORMULA_VERIFIED；
+- FORCE_CHANNEL_AND_MOMENTUM_READ_VERIFIED；
+- FLOAT_CANCELLATION_EXPLAINED；
+- ACTUAL_SCHEDULE_AUDITED；
+- THERMAL_TIME_ACCOUNTED；
+- FIXED_T_BUOYANCY_RESPONSE；
+- BOUNDARY_FACE_POWER_SCOPE；
+- MASS_ENTHALPY_ACCOUNTING；
+- EM_METRIC_DEFINITION_VERIFIED；
+- EM_SPATIAL_COMPARISON_COMPLETED；
+- SOFTWARE_SELECTIVE_DELTA_READY。
+
+不要让一个顶层passed=1覆盖尚未通过的物理项。既有passed/smoke_passed如仅表示程序结束，要明确其作用域。
+
+### 9.2 最终必须回答的六句话
+
+1. 0.163%力链差异到底由什么造成，是否影响真实动量输入？
+2. 黏性年龄是否真的违规，热子步是否完整覆盖物理时间？
+3. 固定温场的实际速度场是否显示可解释的浮力贡献？
+4. 非线性表面温度下的热通量是否改进，在哪些范围仍有限制？
+5. 电磁17.8%中部功率缺口主要落在场、采样还是尚未定位？
+6. 下一轮应进入温度驱动耦合，还是只剩哪个明确缺陷需要修？
+
+## 10. 发给Cursor的执行约束
+
+请按本任务书自行完成已明确授权的诊断、局部修复和有限测试，不要在允许的一次电磁加密前再次等待一般性确认。
+
+涉及真实预算不可承受、缺关键源文件、或与本机用户明确约束冲突时，记录具体阻塞及已完成证据。不要凭猜测填补数据或把OPEN改PASS。
+
+允许准确的CPU诊断和小规模双精度参考；生产GPU路径尽量保留。不要为了全GPU名义放弃必要验证，也不要因此将整个项目切换求解框架。
+
+本轮成功标准：用可信测量查明最关键的因果链，完成最小必要修复，并使下一步只面对明确、有限的物理问题。
+
+
+<!-- ===== END 234_OPHELIE_FORCE_PRECISION_FIXED_T_RESPONSE_AND_EM_SPATIAL_REPAIR_CURSOR_PLAN_2026-11-22.md ===== -->
+
+
+<!-- ===== BEGIN 235_OPHELIE_OFF_FLOW_EM_GEOMETRY_AND_DIAGNOSTIC_CLOSURE_CURSOR_PLAN_2026-11-22.md ===== -->
+
+# 235｜OPHELIE 无浮力背景流归因、电磁积分域修正与验证收口任务书
+
+- 日期：2026-11-22。
+- 执行对象：物理开发机上的 Cursor。
+- 基线：第234轮交接包，报告提交 `15a4f7c6b`，实际工作分支为 `feature/EM-Biot-Savart`。
+- 本轮范围：静水初态与重置、固定温场浮力响应、电磁几何积分、诊断一致性，以及一个有限的热边界补充检查。
+- 本文给出授权执行的开发和测试内容，不要求再就常规局部修复及明确列出的短测逐项确认。
+
+## 0. 本轮目标与执行原则
+
+本轮集中解决两个会直接影响后续复现的障碍：
+
+1. 关闭浮力后仍有明显背景流动，使真实浮力响应难以判别；
+2. 电磁解析柱的粒子积分域与连续几何域不一致，导致同采样场精度很好，却仍存在较大的几何总功率差。
+
+另修正力链误差输出和验收标签，避免继续根据不准确的PASS/FAIL决定开发方向。
+
+本轮不追求把所有误差消到机器精度，不增加新的大范围参数扫描。已有结果应复用，代码修复必须与具体证据对应。
+
+### 0.1 第234轮必须保留的有效进展
+
+| 项目 | 已有证据 | 正确结论 |
+|---|---|---|
+| 浮力公式 | 专用Fb与独立参考误差约4.06e-8 | 公式实现有较好证据 |
+| 固定温场 | 冷轴/热缘，ON−OFF出现轴相对下沉、缘相对上升 | 浮力已产生方向合理的响应 |
+| 电磁复场 | dp减半后误差约0.462%降到0.131% | 同坐标场误差呈下降趋势 |
+| 匹配外层调度 | 短跑无年龄违规，G热累计1 s | 该配置的审计通过 |
+| 上下边界 | local_dt_dz改善竖向抛物制造场 | 有限范围有效，不能泛化到任意二维温场 |
+| 固定质量焓 | G残差约0.392% | 当前短跑规模可接受，不是首要阻塞 |
+
+### 0.2 必须纠正的234结论
+
+- CSV重算的力链相对误差约2.88e-4，即0.0288%，不是零。
+- 233的0.163%与234的0.0288%不是同一数值；不得未经复现把历史差异全部归为浮点消减。
+- `50 × expected_rel_floor`本轮约等于10.1%的相对容许误差，不能作为可靠的自动解释/通过门。
+- 实际动量读取在分项笔记为PARTIAL，顶层表却为PASS，必须统一。
+- 电磁几何功率差不能因被归为采样误差而直接关闭。
+- 旧功率误差按解析参考归一，新指标按两者最大值归一；17.8%和15.1%不能作为改善前后比较。
+
+## 1. A｜固定身份、参数与改动范围
+
+### A1 开工检查
+
+记录实际HEAD、工作树、编译器与选项、Real类型、二进制SHA256、Reload校验、运行配置。检查233/234补丁是否完整进入本机代码。
+
+沿用用户当前分支工作安排；需要隔离时可使用独立worktree或任务分支，但不得自动切换有未提交改动的工作树，不得清理用户文件。软件机保持其已选版本。
+
+代码提交至少分成：
+1. 诊断与后处理；
+2. 有证据支持的初态/重置修复；
+3. EM积分定义及必要实现；
+4. 边界补充检查与报告。
+
+### A2 浮力测试固定参数
+
+保持234客户NC几何：
+- dp=0.010 m，液体高度0.180 m，液体半径按effective记录，当前参考约0.1415 m；
+- rho=2700 kg/m³，mu约14.532 Pa·s，beta=1e-5 K^-1；
+- 同一Reload、重力、压力路径、壁面和自由面模型；
+- 使用234已验证的匹配外层调度，显式记录开关及effective路径；
+- 固定温场测试关闭热源、扩散和热边界推进，仅保留规定温度对浮力的作用。
+
+不得通过改beta、mu、声速、重力或强加速度抑制来获得更安静的图。若具体证据指向某一数值配置，先报告原因，再做单因素诊断，不展开多维组合。
+
+### A3 不在本轮进行
+
+- 不更换整套黎曼流体求解器，不重开δ-SPH/WCSPH方案混搭。
+- 不引入新的工程壁面ghost粒子框架。
+- 不改独立A-phi/Laplace研究分支。
+- 不重做不锈钢弹性桨、整圈搅拌和TEAM7全套。
+- 不加入μ(T)、σ(T)、导电底板、水冷壁电磁或新的skull模型。
+- 不跑百秒级客户工况，不以长时间掩盖启动问题。
+- 不把本轮客户几何测试称为法国500 mm自然对流复现。
+
+## 2. B｜无浮力背景流：查清它从哪里产生
+
+### B1 已有数据与待检验假设
+
+234 OFF结果：
+- 输出初态速度为0；
+- 0.1 s速度RMS约0.0756 m/s；
+- 0.5 s约0.00502 m/s；
+- 1 s约0.00354 m/s。
+
+同轮1 s的浮力ON−OFF矢量差约5.5e-5 m/s，明显小于背景。
+
+日志还显示，静水预处理结束时Umax约0.115 m/s，随后进行了状态清理。候选原因是预处理不充分或重置后压力、密度、位置、自由面与力通道不一致，但这些只是待检验假设。
+
+不可仅凭“没有粒子穿墙”认定静水平衡，也不可仅凭“启动后会衰减”就忽略持续背景流。
+
+### B2 先检查源码与保存事件快照
+
+逐项列出以下操作的实际调用次序与字段读写：
+- 静水初始化与预处理；
+- 密度/压力更新；
+- 自由面标记和大气压处理；
+- 重力、黏性及其他ForcePrior通道；
+- 速度、位移、密度变化率、Force等清理；
+- cell/邻域刷新；
+- 时间归零及首次生产声学子步。
+
+同一条OFF短跑至少保存：
+1. 预处理结束、清理之前；
+2. 每个会改变力学状态的清理阶段之后；
+3. 首个生产声学子步前后；
+4. 0.01、0.05、0.1 s；
+5. 必要时0.5和1 s。
+
+导出粒子稳定ID、Position、Velocity、Mass、Density、Pressure、自由面标记、压力作用项、Gravity、Viscous及ForcePrior。字段名称用真实实现；缺少分项时添加只读诊断，不制造无人使用的伪通道。
+
+大场仅保存上述时刻；事件顺序和规约量可每步记录。
+
+### B3 力平衡按实际离散更新核对
+
+对内部、近壁、近底、自由面分区统计：
+- 速度RMS、Umax、质心速度和动能；
+- 密度偏离、压力范围；
+- 实际离散压力作用与重力/其他项的合力或等效加速度；
+- 每个清理操作前后的字段跳变；
+- 自由面高度、质心高度及粒子代表体积变化。
+
+必须先明确各字段是力还是加速度，以及其在声学分步中的位置。若压力通道不能直接独立导出，可在实际更新内加只读记录。不能从不同时间层取压力、质量和ForcePrior后称不平衡。
+
+不要求边界粒子逐个满足连续静水公式；重点查是否存在区域性、持续性或由某个重置步骤突然引入的残差。
+
+### B4 有限对照与修复路线
+
+先复用234的OFF作为已有基线；对当前代码重现只需0.2 s。根据B2/B3证据最多选择两种候选，不遍历全部组合。
+
+| 证据 | 候选处理 |
+|---|---|
+| 清理前较平衡、清理后明显失衡 | 修正具体字段重置及更新次序，保持与生产方案一致 |
+| 清理前已有较大残差且仍衰减 | 有限延长无浮力预处理，按力平衡与速度共同选初态 |
+| 自由面/边界更新引入压力跳变 | 定位该调用，做最小范围修复，不立即改全局边界算法 |
+| 力链残留或重复加入 | 只修对应通道生命周期，重跑同一OFF |
+| 初态安静但生产持续生成背景流 | 检查实际压力/密度/位置/邻域推进一致性，再选一处修复 |
+
+预处理延长是诊断手段，不是保证成功的默认方案。若延长到5 s仍存在非衰减背景，应停止继续加时，转向已记录的力/边界残差。
+
+禁止做法：
+- 每步将速度归零；
+- 在正式结果阶段增加未说明的强阻尼；
+- 给ON和OFF不同的初始化；
+- 清零压力或统一密度而不核查EOS、重力及自由面一致性；
+- 通过改变液面约束让图“安静”，却称仍是原工程模型。
+
+预处理阶段如采用已有松弛，必须标注并在正式观测前关闭；关闭后需要验证不会立即重新激发较大流动。
+
+### B5 背景治理的判定
+
+以下是本轮内部工程判据，不是文献精度标准：
+
+1. 相同1 s观测下，OFF背景RMS若比234约3.54e-3 m/s降低至少一个数量级，可记为明确改善；仅此不能记浮力完整通过。
+2. 必须同时检查启动峰值、分区残差和后段趋势，不能只挑速度最低的一帧。
+3. 若未降低一个数量级，但已查明背景来源且可可靠分离浮力信号，可记PARTIAL_WITH_CAUSE；不能因此无限扫参数。
+4. 只有在背景和诊断误差足够受控后，才解释ON总流场的环流形态。
+
+本项最终交付必须指出：具体哪个操作/区域产生背景、修复改变了什么、修复后残差还剩多少。只给“延长后好一些”不算完整归因。
+
+## 3. C｜用共同初态确认固定温场的浮力贡献
+
+### C1 温场保持234定义
+
+固定Eulerian温场：
+`T(r,z)=1273.15 + 20*((r/R)^2-0.5) K`。
+
+按当前粒子位置在实际浮力读取前施加，记录实际T_force_ref。温度恒定的是空间函数，不是初始粒子的温度标签。
+
+先生成一个完整、可重用的共同初态，再分支ON/OFF。若当前重启只保存Position而不保存压力、密度、速度和相关状态，不能称“相同力学快照”；可改为同进程快照恢复或确定性的完整初始化，并核对差异。
+
+### C2 最小运行矩阵
+
+| 工况 | 浮力 | 其余设置 | 时间 |
+|---|---|---|---|
+| C_OFF | 仅关闭Boussinesq增量 | 共同初态、固定温场 | 1 s |
+| C_ON | beta=1e-5 | 完全相同 | 1 s |
+
+不能关闭总重力代替关闭浮力。ON/OFF正式观测的起点和温场施加时刻相同。
+
+只有1 s结果显示响应正在演化、且背景不再明显污染判断时，允许将同一对照延至5 s。不要直接恢复20 s矩阵。
+
+### C3 修正234后处理
+
+234脚本对ON和OFF分别用r的99分位数以及各自z范围生成网格，存在网格并不完全相同的问题。本轮必须：
+
+- 网格边界从固定几何定义一次，ON/OFF共用；
+- 同一权重、同一有效支持掩码；
+- 导出每个bin支持量、体积和覆盖率；
+- 不将容器外、空bin或缺数据补零后参与差值；
+- 轴对称投影使用实际轴心，正确计算u_r、u_z；
+- 不把移动后的相同粒子ID等同于相同空间位置；
+- 区分三维原始场、轴对称平均场及其差异，报告非轴对称残余。
+
+径向bin体积不同，不用等权bin平均冒充体积加权L2。可附等权结果，但必须另名。
+
+正式时刻读取CSV头部真实t_s，不只看文件名。匹配时间有偏差时，报告偏差并以可接受的共同时间采样，不用模糊文件名glob误选时刻。
+
+### C4 Python输出
+
+至少输出0、0.1、0.5、1 s的：
+- 温度剖面；
+- ON/OFF速度模剖面，共同色标；
+- ON/OFF/差值矢量图；
+- 中高处u_z(r)曲线；
+- 体积加权矢量差绝对RMS及相对L2；
+- 启动与后段的背景、信号演化。
+
+ON和OFF矢量使用相同箭头缩放。差值如为可见性使用另一比例，图中明确标出，不能让独立自动缩放造成同强度错觉。
+
+若画流线，必须保留原始矢量图。不要用经过连续性投影的流函数图替代对原始速度的核查。
+
+### C5 验收分级
+
+- RESPONSE_SIGNED：轴/缘差值方向正确，已有234证据，本轮核实其持续性。
+- RESPONSE_RESOLVED：矢量差在共同网格、合理重分箱和必要误差估计下稳定，且与实际浮力读取对应。
+- FLOW_BUOYANCY_DOMINATED：总流场主要环流不再由OFF背景解释。
+- FRENCH_TOPOLOGY_MATCH：另行文献专用配置验证，本轮不授予。
+
+不得把前三者合并成一个“自然对流全部PASS”。若响应接近测量底，仅做一次有针对性的分箱稳健性或OFF重复检查；不无条件重跑所有工况。
+
+## 4. D｜纠正力链误差规约与过宽自动判据
+
+### D1 复算同一份234 CSV
+
+先使用原始数据做独立double后处理，结果应能复现：
+- 相对误差约2.88e-4；
+- 最大z向绝对残差约9.31e-10 N；
+- Fp_pre与Fp_off在该CSV中一致。
+
+上述值是审核基准，不是需要硬编码达到的答案。全矢量字段若比CSV z分量更完整，要单独说明。
+
+对比运行内规约、CSV规约、summary、日志和退出码，查明为什么运行结果为0。检查类型转换时机、平方与累加精度、编译浮点选项、实际运行版本和同步；目前不预设某一个因素是根因。
+
+特别注意：将Float的squaredNorm结果再转换到double，不等同于先将每个分量转double再平方累加。诊断应明确每一步精度。
+
+### D2 修正验收逻辑
+
+删除或禁用“50倍全局估计舍入尺度即可自动解释”的正式验收用途。保留估计值作为诊断信息，不把它当作已证明的误差地板；实际舍入误差不必恰好达到该尺度。
+
+采用以下独立证据：
+1. 专用浮力与独立公式的误差；
+2. 同快照加入前后/ON−OFF的实际绝对残差；
+3. 按实际操作与力尺度估计的舍入范围；
+4. 生命周期与实际动量读取；
+5. 同状态重复调用无额外累加。
+
+若设置自动容限，必须基于具体算术操作的误差界或明确验证过的数值容限，报告其推导，不能另换一个任意放大系数。
+
+接近零Fb的粒子用绝对误差。禁止把小分母加大常数后自动得到漂亮相对误差。
+
+### D3 实际动量读取的最小验证
+
+不再把“完整声学Δv与ForcePrior*dt不同但不为零”当作读取已证实。优先在真实更新位置记录实际读取的ForcePrior及其对更新式的贡献，并核对实际单位、质量换算和子步系数。
+
+可用同一冻结状态的一个声学子步ON/OFF对照辅助判断，但必须恢复所有会被子步修改的状态。包含压力反馈后的速度差不能强行要求逐点等于a_b*dt。
+
+分项笔记、顶层报告、验收表使用同一作用域和状态。仍只完成通道验证时写CHANNEL_VERIFIED，动量读取保持PARTIAL。
+
+本项只做快照与短子步，不重开整轮长时浮力测试。
+
+## 5. E｜电磁：修正积分域，保留已有场精度成果
+
+### E1 固定已验证的场比较
+
+继续使用234解析柱：
+R=0.10 m，总高0.60 m，B0=0.01 T，sigma=16 S/m，f=300 kHz；
+dp=0.025和0.0125 m，严格迭代残差约1e-3或更低。
+
+保留同坐标、同权重、未经幅值拟合的复数场误差。现有结果分别约0.462%、0.131%，不因几何功率问题否定这项成果。
+
+本轮优先离线核对积分，不继续加密，不继续主要调Picard容差，不增加柱长。
+
+### E2 从已有粒子数据检查几何矩
+
+对全柱与中部切片分别比较：
+
+`V_discrete=sum(V_i)`
+`V_geometry=pi*R^2*H_region`
+`M_r2_discrete=sum(V_i*r_i^2)`
+`M_r2_geometry=pi*R^4*H_region/2`
+
+常数场检查域体积，r²场检查与弱趋肤焦耳热分布相关的径向积分矩。另用实际解析Q积分，不能用r²近似替代本工况完整参考。
+
+234中部示例：
+- 解析参考厚度约0.09 m，必须从实际参数确认；
+- 粒子代表体积约0.003250 m³；
+- 对应连续几何体积约0.002827 m³；
+- 体积相对几何约大14.95%，两档几乎相同。
+
+逐项核对：
+- 轴心与柱体z上下限；
+- 切片上下界及是否包含端点；
+- 选中粒子中心层数及每层代表厚度；
+- 径向筛选与粒子代表体积是否跨出R；
+- 中部切片边缘粒子的体积是否需要截断；
+- 总高/半高是否混用；
+- V的来源及是否与实际粒子布置一致。
+
+不能仅将参考高度改成“选中层数×dp”后称原0.09 m切片通过。改变区域可作为另一个显式比较，但原定义的误差需保留。
+
+### E3 先独立积分，再决定是否改生产数据
+
+推荐两步：
+
+1. 建立独立的连续几何积分参考，检查解析Q径向积分的数值收敛。
+2. 对规则粒子格点，离线估计其代表单元与圆柱/切片的交体积，构造几何截断积分权重；可用可收敛的子单元积分，不要求引入新CAD库。
+
+若实际粒子布局不是规则格点，不能套用dp立方体交体积；先明确代表体积定义，再选与其一致的独立几何求积。
+
+必须区分：
+- 原生产体积权重；
+- 仅用于几何域验证的截断求积权重；
+- 解析Q在粒子中心的近似；
+- 解析Q在代表单元内的积分。
+
+截断权重仍可能保留场内采样误差，不能保证粗分辨率立刻机器精度闭合。用求积细化或解析几何矩检查其可信度。
+
+### E4 禁止用重归一掩盖问题
+
+不得：
+- 为让总功率正确而整体乘一个经验比例；
+- 改目标功率、电流、sigma或B0来抵消积分误差；
+- 未检查影响就把所有流体Mass/Vol改成修正值；
+- 将后处理截断权重自动用于EM源/自感离散；
+- 删除不利中部区域或只报同采样功率。
+
+如果发现生产粒子体积本身与几何域代表关系有系统问题，应单独报告其对EM源积分、焦耳热和能量传递的影响，另做最小修复与回归。不能把诊断权重修复当作生产积分已修复。
+
+### E5 统一功率误差口径
+
+主报告统一使用：
+`e_ref=(P_num-P_ref)/P_ref`
+同时给有符号差、绝对差和绝对相对误差。接近零参考另给绝对值。
+
+原max分母指标可保留但改名，禁止与上述指标混用比较。
+
+每档分辨率分别列：
+1. 原数值离散功率；
+2. 同采样解析离散功率；
+3. 连续几何解析功率；
+4. 几何截断/修正求积后的数值功率；
+5. 相同修正权重下解析功率；
+6. 原/修正体积与r²矩。
+
+明确peak/RMS及1/2约定保持不变。旧17.8%与新15.1%的差异需用同一组功率数值、两个分母直接解释。
+
+### E6 本轮验收
+
+- GEOMETRY_MOMENTS_EXPLAINED：体积和r²矩差异能由域、选层和权重解释；
+- GEOMETRIC_QUADRATURE_VERIFIED：独立几何求积经过自收敛和已知积分检查；
+- FIELD_ACCURACY：保留复场指标及分辨率趋势；
+- PHYSICAL_POWER_ACCURACY：必须对同一连续几何域、固定参考口径评价，不能由同采样闭合替代。
+
+内部目标：独立几何求积的常数/r²矩误差优先做到≤1%；若用于判断百分之一级功率差，应进一步证明求积不确定度足够小。此目标是求积检查，不是修改场数据使其达标。
+
+若原功率差被修正求积显著消除，可关闭相应后处理积分缺口，并清楚标注生产权重是否改变。若仍有较大残差，直接用已拆分结果确定剩余误差，禁止再泛称“采样问题”。
+
+TEAM7和局部峰值Q仍为独立遗留，本轮不因此升级为EM全模块验证完成。
+
+## 6. F｜热边界只补一个交叉检查，避免喧宾夺主
+
+### F1 认识当前local_dt_dz范围
+
+234实现是整个底部带一个斜率、整个顶部带一个斜率，不是每个表面位置的局部重构。不得在软件或报告中将其描述为一般二维局部边界算法。
+
+保留已通过的uniform、linear_z、radial_quad、parabolic_z结果。
+
+### F2 一个同时随r、z变化的制造场
+
+建议：
+`T(r,z)=1200 + 100*(1+0.5*(r/R)^2)*(2*(z-z_bot)/H-1)^2 K`。
+
+这是诊断场，不是法国文献温度。其竖向梯度随半径变化，可检查每面单斜率的局限。表面参考通量独立积分，辐射使用局部T^4。
+
+仅检查已有候选local_dt_dz，必要时附band对照。沿用逐面功率≤2%、温度更新能量≤1%的内部门限，并同时报告连续误差。
+
+若失败，先记录误差与适用范围。本轮不因此全面开发逐点局部边界，除非已明确是极小的实现缺陷且可直接修复。
+
+### F3 修正拟合有效性
+
+当前只以粒子数量判断ok不足。补检查：
+- 加权z方差/拟合分母；
+- 有效高度层与条件性；
+- 温度和斜率有限性；
+- 回退次数、原因及模式。
+
+拟合退化后返回0，不能同时标ok=1。回退必须显式记录，不能静默通过。
+
+固定质量焓继续使用约0.4%的真实口径并监测，不将其列为本轮首要精度攻关。
+
+## 7. G｜何时恢复热演化与真实EM耦合
+
+本轮优先完成B/C与E。满足下列条件后，才做一次规定热回归：
+- OFF背景来源已经明确，改善或剩余限制有量化；
+- 固定温场响应可分辨，力链诊断与字段一致；
+- 匹配外层调度和热时间记录正确；
+- 热边界模式身份明确。
+
+回归仍采用10 kW规定热，EM明确NOT_RUN，先1 s，必要时5 s。只选一个已固定配置，不展开多个边界/材料组合。
+
+真实EM热源留到积分问题明确之后。若只是离线积分修复而未影响生产热源，必须说明现有生产热源还需要什么检查，不能自动接入后称全链通过。
+
+法国文献几何/温场与客户热电偶定量需求分别记录。当前sigma=16仍是借用值；30 kW电源输入不等于玻璃吸收功率。不得通过设置初始1000℃宣称测点验证。
+
+## 8. 运行顺序、预算与停止条件
+
+### 8.1 推荐顺序
+
+1. 身份核对及D力链离线重算；
+2. B初始化事件审查、OFF短测；
+3. E电磁已有数据离线积分，可独立推进；
+4. B只选证据支持的一至两种修复；
+5. C共同初态ON/OFF；
+6. F一个边界交叉场；
+7. 满足条件才做G规定热短回归；
+8. 汇总报告、补丁与软件接收清单。
+
+### 8.2 默认预算
+
+| 工作 | 默认预算 |
+|---|---|
+| 力链一致性 | 既有CSV离线复算，加一次快照/单子步验证 |
+| OFF基线复现 | 0.2 s，已有1 s结果复用 |
+| 背景候选 | 最多两种，各先0.2 s；选定者到1 s |
+| 延长预处理 | 有证据时一次，最高5 s；非衰减则停止 |
+| 修复后固定T | ON/OFF各1 s；必要时延至5 s |
+| EM积分 | 复用两档现有场，优先零新增EM求解 |
+| 边界交叉场 | 一个静态制造场 |
+| 规定热回归 | 有条件的单配置1–5 s |
+
+只有代码修改实际影响EM场时，才重跑相关两档；不能因为报告更新而机械重跑全部。
+
+### 8.3 停止规则
+
+- 无明确证据，不增加第三种背景修复组合。
+- 背景不衰减，不继续单纯延长预处理或正式运行。
+- EM体积/几何矩尚不一致，不继续主要调求解器容差。
+- 只是指标规约错误，不改浮力公式。
+- 只完成离线求积，不称生产EM积分已修。
+- 边界交叉场失败，记录限制，不让支线阻塞背景主因定位。
+- 时间不足时优先交付已查明原因和可复核数据，不以伪PASS收口。
+
+## 9. 目录、原始证据与软件移交
+
+统一产物根：
+`docs/ophelie/reference/doc235_runs/`。
+
+建议子目录：
+- A_identity；
+- B_off_background；
+- C_fixed_T_response；
+- D_force_gate；
+- E_em_geometry；
+- F_boundary_crosscheck；
+- G_thermal_regression；
+- H_handoff。
+
+必须交付：
+1. ROUND235_REVIEW.md与ACCEPTANCE_TABLE.csv；
+2. 真实执行命令、参数、退出码、版本与文件校验；
+3. 初态/清理/首次子步事件表、关键粒子快照、力平衡统计；
+4. 修复前后OFF背景与启动峰值曲线；
+5. ON/OFF同网格场、支持权重、CSV头真实时刻及Python图；
+6. 力链CSV独立重算脚本、规约修复、判据推导和一致性检查；
+7. EM体积/r²矩/三种功率/修正求积对照，独立积分脚本及误差预算；
+8. 边界交叉温场逐面功率与拟合有效性统计；
+9. 源码补丁，包含实际修改，不只给本机路径；
+10. SOFTWARE_HANDOFF_DELTA.md。
+
+Python脚本与报告JSON必须对应同一实际运行版本。234包中脚本与结果字段并不完全对应，本轮禁止把后来临时生成的摘要与旧脚本混装。
+
+运行输出按工况隔离，避免同一个bin/output被后续运行覆盖。大场可外置，但审核必需的稀疏场、CSV、脚本、补丁和日志片段直接打包。
+
+### 9.1 软件机可以选择接收
+
+- 准确命名的误差、能量与运行身份字段；
+- 经验证的匹配调度路径及配置说明；
+- 已完成回归的具体初态/重置修复；
+- 明确区分原权重与几何验证求积的报告功能；
+- 边界有效性与回退信息。
+
+### 9.2 不得直接移交为默认
+
+- 未完成实际动量读取验证的“完整浮力PASS”；
+- 高达约10%的浮点解释自动门；
+- 任意几何均适用的local_dt_dz声明；
+- 为凑功率而重归一生产质量/体积；
+- 法国双环流、客户1000℃匹配、TEAM7或峰值Q已通过的标签。
+
+## 10. 本轮收口必须回答的五个问题
+
+1. OFF流动主要在预处理、状态清理还是生产推进的哪个环节产生？证据是什么？
+2. 修复后背景下降多少，浮力响应是否稳定可辨，是否已能解释总环流？
+3. 力链CSV与运行规约为什么不一致，新的判据是否避免误放行？
+4. 电磁几何功率缺口中多少被域/体积修正解释，生产积分是否仍受影响？
+5. 下一轮是否能进入有明确温场与热源身份的自然对流推进？若不能，只剩哪个具体阻塞？
+
+本轮完成标准是查明并处理上述因果关系，使后续开发进入明确的热源—温度—流动验证；不以增加测试数量或扩大PASS标签作为进展。
+
+
+<!-- ===== END 235_OPHELIE_OFF_FLOW_EM_GEOMETRY_AND_DIAGNOSTIC_CLOSURE_CURSOR_PLAN_2026-11-22.md ===== -->
+
+
+<!-- ===== BEGIN 236_OPHELIE_HYDROSTATIC_SUPPORT_AND_EM_GEOMETRIC_QUADRATURE_CURSOR_PLAN_2026-11-23.md ===== -->
+
+# 236｜OPHELIE 静水压力支撑修复与电磁几何功率验证执行计划
+
+- 日期：2026-11-23。
+- 执行对象：物理开发机 Cursor。
+- 输入基线：第235轮交接包。报告提交为 `e4c4ad963`，同时包含未提交WIP；必须先核实实际源码与二进制，不能仅凭HEAD代表全部结果。
+- 当前分支：尊重用户现有 `feature/EM-Biot-Savart` 工作安排，不自动切换或清理工作树。
+- 本轮编号：236。本文替代235中尚未完成事项的执行安排，保留235历史记录，不改写旧报告。
+- 本轮主目标：完成静水启动的具体归因/最小修复，以及电磁连续几何域的独立功率验证。
+- 本轮暂缓：新增规定热演化短跑、真实EM—热—流耦合、长时计算。
+
+## 0. 必须先理解的任务范围
+
+本轮不是再增加一轮泛化审计，也不是换求解器。已有证据表明浮力公式具有较好精度、固定温场有方向合理的响应、电磁解析场随加密改善。
+
+当前两个具体障碍：
+1. 无浮力时存在强的整体上下运动，影响总环流解释；
+2. 电磁同采样场误差小，但粒子积分与连续几何域未匹配，功率验证尚未闭合。
+
+不能以“已经解释了原因”“程序passed=1”代替完成修复与验证。不能把未实施的截断求积再次仅列为下一轮。
+
+### 0.1 本轮审核基准
+
+| 事实 | 已有数值/证据 | 不能推出的结论 |
+|---|---|---|
+| 235 fix2预处理结束 | 平均u_z约−0.0446 m/s，RMS约0.0550 m/s | 预处理已达静水平衡 |
+| 235 fix2首声学步 | 平均u_z约−0.00329 m/s | 清零速度后的状态已平衡 |
+| 约0.01 s | 平均u_z约−0.0739 m/s，RMS约0.0790 m/s | 只是少量局部数值涡 |
+| 约0.2 s | 平均u_z约+0.0264 m/s | 流动已经是温差驱动 |
+| 0.01 s平均运动动能占比 | 约87.5% | 背景主要是局部环流 |
+| 力链double复算 | 相对误差约2.88e-4 | 浮力完全没有加入 |
+| 电磁中部体积 | 比连续几何域大约14.95% | 将功率差改名即可通过 |
+| 边界交叉温场 | local_dt_dz逐面误差约≤1.2% | 已成为任意二维局部边界算法 |
+
+“清理后速度为零”不证明清理未破坏平衡；它只表示没有立即写入非零速度。压力、密度、位置和力通道仍可能不相容。
+
+### 0.2 本轮不可变约束
+
+- 不调大beta、不降低mu，不用经验电流/功率比例掩盖误差。
+- 不修改独立A-phi/Laplace研究分支。
+- 不换整个黎曼流体框架，不重新混合多篇论文算子。
+- 不新建工程壁面ghost粒子布置框架。
+- 不在正式计算阶段每步归零速度或添加未说明的强阻尼。
+- 不将离线几何求积权重自动用于生产Mass、Vol或EM源积分。
+- 不重做搅拌桨、TEAM7全套、温变物性、导电底板等支线。
+- 不要求软件机整体合并物理分支；移交必须择收并有回归。
+
+## 1. A｜冻结版本与完成最小的初始化解耦
+
+### A1 冻结真实基线
+
+1. 核对235已提交代码、WIP补丁和实际运行二进制。
+2. 保留用户文件，不执行清理或丢弃改动。
+3. 将本轮实际使用的物理代码形成可追溯提交或明确的HEAD+补丁校验；优先正式提交功能完整的基线。
+4. 记录构建选项、Real类型、设备、二进制SHA256、Reload、有效配置。
+5. 分开提交：初始化解耦、诊断、必要修复、EM求积、报告。不要把未经验证的默认行为与诊断混在一起。
+
+### A2 消除热源开关控制力学启动的隐含差异
+
+235源码在 `paper_flat_slip_top || zero_q` 条件下执行特定清理，又依据zero_q决定是否刷新密度。固定温场与非零热源可能因此进入不同机械初始化路径。
+
+要求：
+- 将初始化/清理行为整理为明确的力学策略；
+- 热源模式只决定热源，浮力开关只决定Boussinesq增量；
+- 保留旧行为为有名的兼容策略，便于复现235；
+- 不在解耦时悄悄更换密度、压力、自由面或黏性方案。
+
+可增加一个case局部参数，例如 `mechanics_initialization_mode`；具体名称由现有CLI风格确定。本文建议名称不是已经存在的命令，必须实现、帮助说明和配置落盘后才能在RUN_COMMANDS中使用。
+
+### A3 无需推进的初始化一致性检查
+
+使用相同初温、Reload、力学策略、预处理和浮力关闭状态，分别选择zero_q与规定热模式，在正式热更新之前比较：
+- Position、Velocity、Density、Pressure；
+- 重力、黏性及ForcePrior状态；
+- 自由面标记、邻域更新计数；
+- 物理时间、外层预算和首步dt。
+
+此检查只到t0，不执行热演化。非零源的Q可不同，热更新之前的力学状态不应因热源标签而改变。
+
+记录逐字段差异与来源。GPU规约小量差异按实际精度解释，不能只给初始化相同的布尔值。
+
+## 2. B｜静水支撑：查真正的不平衡力，不再只查速度
+
+### B1 固定工况
+
+使用235客户NC几何：
+- dp=0.010 m，H=0.180 m，R取实际effective，约0.1415 m；
+- rho=2700 kg/m³，mu约14.532 Pa·s；
+- beta=0，仅关闭浮力增量，保留真实重力；
+- 温度均匀固定，热源/扩散/换热温度推进关闭；
+- 匹配外层调度，壁面、自由面、压力路径与235相同；
+- 不因无热源而隐式改变力学初始化。
+
+本项是静水保持测试，不是自然对流测试。
+
+### B2 先用已有数据确认整体运动
+
+离线复算235三个候选的：
+- 质量加权平均速度向量；
+- 总动能；
+- 平均平移动能 `0.5*M*|U_mean|^2`；
+- 扣除平均平移后的剩余动能；
+- 质心位置与速度随时间；
+- 液面高度和体积。
+
+“扣除平均速度”仅用于诊断分解，不得把这样处理后的速度作为正式流场，或用来抹掉整体动量问题。
+
+预计能复现fix2在0.01 s约87.5%的平均运动动能占比。不能把这一结果硬编码为答案。
+
+### B3 在真实动量更新位置增加只读诊断
+
+先读清实际分步更新式，列出：
+- 压力力/加速度从何处产生；
+- Gravity与黏性等ForcePrior的单位和时间层；
+- 壁面压力作用包含在哪一通道；
+- 速度与位置分别在哪个子步更新；
+- 黎曼耗散/边界修正是否另有贡献；
+- 实际力到加速度的质量换算及dt系数。
+
+在实际读取位置记录压力、重力、黏性及其他有效贡献，特别是声学第一/第二半步。不要把第二半步结束后名为Force的字段直接当作第一半步压力力。
+
+如果不能以字段直接拆分，可在实际更新函数加诊断记录；通过case选项启用，正式计算关闭时不改变结果。不得新建一个无人读取的力变量后用它证明生产链正确。
+
+### B4 必须做全局竖向动量预算
+
+由真实离散更新构造：
+`DeltaPz_observed = sum(m_i * (u_z_after-u_z_before))`。
+
+独立累计本步各通道实际积分的竖向冲量，核对：
+`DeltaPz_observed = I_gravity + I_pressure_inner + I_pressure_wall + I_viscous + I_other + residual`。
+
+说明分步时间系数、固定质量假设和其他直接速度修正。若某个算子直接写速度，也必须进入预算，不能当作无来源残差。
+
+内部压力作用不预设严格成对守恒；先按当前离散实测其全局贡献。壁面作用不能遗漏。若压力内外无法完全拆分，先闭合总压力贡献，再局部分解。
+
+静水情况下重力约为M*g，当前M约30.3264 kg，对应约297.5 N。该数只用于数量级核查。正式参考由实际Mass和gravity求得。
+
+目标：解释首步和0.01 s整体向下动量从何而来，而不是仅给相对连续静水公式的误差。
+
+### B5 空间分区与阶段
+
+分区：深内部、侧壁、底部、自由面、底角/顶角。使用几何带或现有标记，明确带宽和粒子重叠关系。
+
+至少记录：
+1. 预处理末尾、清理前；
+2. 速度归零后；
+3. 其他机械字段清理后；
+4. 正式t0；
+5. 首步真实读入力与子步结束；
+6. 0.01、0.05、0.1、0.2 s。
+
+保存Pressure、Density、Position、Mass、Velocity、自由面标记和力贡献。常规压力剖面可与连续静水尺度比较，但离散动量预算是主要证据。
+
+若某次重置使合力明显改变，指出具体字段；若t0已不平衡但重置没有改善，不能说“清理未引入速度，所以清理无关”。
+
+## 3. C｜只选择一个有证据的修复路径
+
+### C1 先完成B，再选择
+
+不得同时尝试一堆边界/密度/压力组合。根据预算选择最强证据对应的一条路径：
+
+| 诊断结果 | 最小处理 |
+|---|---|
+| 已有完整状态较平衡，特定清理后失衡 | 修正该清理的字段生命周期，保持生产方案一致 |
+| 预处理阶段整体仍振荡、支撑逐渐趋稳 | 一次有限延长预处理；保持完整状态进入观测，避免重新破坏平衡 |
+| 离散壁面压力支撑明显不足/方向错误 | 定位具体壁面调用、法向/状态/邻域或系数，只修实证缺陷 |
+| 内部压力/密度更新引入明显非物理净力 | 检查实际时间层与邻域一致性，不先更换离散框架 |
+| ForcePrior残留、漏读或重复 | 只修通道生命周期与读取 |
+| 有直接速度修正产生未计冲量 | 显式纳入预算并检查作用范围 |
+
+保持完整状态不等于把较大残余速度称为静止。必须量化残余与后续趋势，避免仅保留一个“比较好看的时刻”。
+
+### C2 一次有限的预处理延长对照
+
+只有预算和已有轨迹支持“未充分松弛”时，授权一次延长：
+- 先到1 s；
+- 若动量残差、动能包络均明确衰减，可延至最高5 s；
+- 若持续振荡或残差不下降，停止加时，转向B定位到的支撑缺口。
+
+松弛阶段如使用既有阻尼，必须记录，并在正式保持前关闭；关闭后观察是否反弹。不得在正式结果阶段靠新增阻尼压住流动。
+
+不要每隔若干步反复归零速度来伪造平衡。预处理和正式阶段的物理时间分别记录。
+
+### C3 修复后同配置静水保持
+
+先0.2 s，若预算和启动明显改善，延至1 s。比较：
+- 早期峰值；
+- 0.5–1 s后段的平均速度、RMS、剩余动能；
+- 全局动量预算及分区支撑；
+- 密度、液面与体积趋势。
+
+内部改善目标：1 s OFF RMS相对235约3.54e-3 m/s至少下降一个数量级，同时整体竖向运动不再反复主导。这是改善目标，不是精度认证。
+
+若未达到，但根因和有限修复已明确，记录实际差距；不要调低判据后写完全通过。若仍无法定位，列出预算中哪个未解释通道阻塞，而不是泛称自由面噪声。
+
+## 4. D｜补齐真实浮力动量读取，并有限确认响应
+
+### D1 用B的只读诊断完成此前未完成的读取验证
+
+对固定状态记录专用Fb、ForcePrior加入前后，以及真实动量更新读取的该项贡献。核对只加入一次、没有被覆盖、质量换算和子步系数正确。
+
+保留235已修正的double分量提升后规约。禁止恢复50倍全局舍入尺度放行。
+
+现有0.1%通道相对门限应说明用途与依据；它不能独立证明动量读取。接近零浮力粒子继续使用绝对误差。
+
+验收字段分开：
+- FORCE_FORMULA_VERIFIED；
+- FORCE_CHANNEL_VERIFIED；
+- FORCE_MOMENTUM_READ_VERIFIED。
+
+实际读取证据未完成时，第三项继续PARTIAL，不以常量true或程序退出0替代。
+
+### D2 是否做固定温场ON/OFF
+
+只有C的静水保持改善、或B已建立可可靠分离背景的证据后，再跑一对1 s固定温场：
+`T=1273.15+20*((r/R)^2-0.5) K`。
+
+使用相同完整初态/机械初始化，温场施加时刻相同；OFF仅关闭Boussinesq。初态比较包括压力、密度及相关状态，不只比较位置和速度。
+
+继续使用共同几何网格、有效支持、体积权重和真实输出时刻；Python出ON、OFF、差值矢量及u_z(r)。区分方向正确、响应可分辨、总流场由浮力主导三个状态。
+
+若静水背景仍未受控，本轮不必重复这组试验；保留235方向证据，不把它降级成浮力公式错误。
+
+## 5. E｜电磁截断求积：本轮必须实施，不能只重复体积差
+
+### E1 固定物理输入与已知场结果
+
+沿用234/235解析柱：
+R=0.10 m，总高0.60 m，B0=0.01 T，sigma=16 S/m，f=300 kHz。
+两档dp=0.025和0.0125 m，真实迭代残差相近。
+
+保留：
+- 同坐标复场误差约0.462%与0.131%；
+- 同采样功率差远小于几何域功率差；
+- 中部全粒子体积相对0.09 m参考切片约大14.95%。
+
+不再主要调迭代容差，不增加第三档分辨率，不加柱长。
+
+### E2 首先固定实际几何域
+
+由effective/源码确认：
+- 柱轴心、上下界；
+- 中部切片上下界，参考厚度是否确为0.09 m；
+- 粒子中心筛选条件与端点；
+- 每个粒子的代表单元与体积来源。
+
+主指标固定：
+`e_ref=(P_num-P_ref)/P_ref`。
+同时给绝对W、有符号差和绝对相对误差。max分母指标可附加，但必须另名。
+
+不能把参考高度改成选中层数乘dp，然后称原切片通过。
+
+### E3 独立连续几何参考
+
+用独立脚本计算：
+- 体积：pi*R²*H_region；
+- r²矩：pi*R⁴*H_region/2；
+- 完整趋肤解析Q的连续积分：沿r积分2*pi*r*Q_ref(r)，再乘对应高度。
+
+明确解析复幅值、sigma与1/2约定。用求积细化检查独立参考收敛；参考积分相邻精度档变化优先控制在0.1%以内。该数值是本轮求积预算，不是修改物理结果的理由。
+
+用常数、r²及完整解析Q分别检查，不能只用最容易闭合的常数场。
+
+### E4 实施粒子代表单元与几何域的交体积
+
+对规则格点粒子，可按实际生成方式重建代表单元，计算其与圆柱/切片的交体积。可用可细化的子单元采样或解析截断，不要求引入CAD库。
+
+必须先检查一个容易漏掉的问题：
+
+> 只保留中心在圆柱内的粒子时，这些代表单元的并集未必完整覆盖真实圆柱。仅截掉伸出域外的部分，可能同时留下边界缺口。
+
+因此要求：
+- 导出单元并集覆盖情况；
+- 量化未覆盖、重叠和超出体积；
+- 不把“所有截断权重之和”天然当成完整几何体积；
+- 不能为补缺口而整体归一权重。
+
+若只有中部CSV，不足以计算跨切片单元或完整几何求积，先查既有完整产物。确实缺数据时，允许仅重跑原两档EM目标以导出Position、V、复J向量、Q和输入元数据；这属于补齐必要数据，不是新增参数扫描。
+
+### E5 完整域验证求积：覆盖不足时的明确处理
+
+优先保留E4的原粒子权重对照。如其并集不覆盖域，则额外建立覆盖完整圆柱的独立积分点集：
+- 在完整几何域生成可细化求积点；
+- 从数值场重构复J或Q，明确方法、支持和边界外推；
+- 不新增求解器粒子，不赋予虚构物理质量；
+- 不用解析解给缺失的数值场直接补值。
+
+重构可采用局部最小二乘或既有可靠插值，但必须检查条件性与支持，并用独立制造场核对其积分误差。J向量重构与J_theta标量重构要明确轴心处理；相位不能丢失。
+
+如果重构不可靠或边界支持不足，报告该区域与求积不确定度，保留几何功率验证OPEN。不能因时间限制用解析值填空后宣布数值解通过。
+
+本轮必须至少完成E3/E4的实际求积和覆盖检查；若需E5，实施一个有限、可复核的完整域方案，或明确给出无法完成的具体数据/支持阻塞。不能再只交原14.95%复算。
+
+### E6 对照表必须包含
+
+针对全柱和中部切片、两档分辨率，分别列：
+1. 原生产粒子权重的数值功率；
+2. 同原权重的解析采样功率；
+3. 连续几何解析功率；
+4. 截断交体积下数值功率；
+5. 相同截断权重下解析功率；
+6. 如实施，完整域独立求积的数值与解析功率；
+7. 原/截断/完整域的体积与r²矩、覆盖缺口；
+8. 场误差、插值误差与求积不确定度。
+
+单元内Q在中心近似与单元内积分不是同一件事；报告各自误差来源。粗档没有立刻达到百分之一级，不等于求积方案无效，要看误差拆分和细档趋势。
+
+### E7 验收及对生产积分的影响
+
+分开判定：
+- FIELD_ACCURACY：既有复场精度；
+- GEOMETRY_COVERAGE：域覆盖是否完整；
+- GEOMETRIC_QUADRATURE：独立求积是否可信；
+- GEOMETRIC_POWER_ACCURACY：同一连续域总功率差；
+- PRODUCTION_INTEGRAL_STATUS：生产权重是否改变、是否仍有偏差。
+
+几何求积的常数与r²矩优先做到≤1%；涉及百分之一级功率判断时，进一步记录其不确定度。物理功率误差如未达到原项目期望，原样保留，不修改容限凑PASS。
+
+离线求积验证通过不自动等于生产源积分修复。若原Mass/Vol影响自感源或热输入，单独列出影响链与下一步所需修复；不擅自统一修改生产质量/体积。
+
+TEAM7与局部峰值Q仍未被解析柱替代验证。
+
+## 6. F｜本轮暂停与保留事项
+
+### F1 暂停新增热耦合运行
+
+不重复235的规定热1 s smoke，也不新增真实EM—热—流短跑。它们不能解决本轮的静水支撑与积分缺口。
+
+这不表示停止软件开发。软件机继续既定GUI与封装；物理标签保持真实状态。
+
+### F2 保留已有热边界结果
+
+local_dt_dz的uniform、linear_z、radial_quad、parabolic_z、rz_quad结果及拟合退化检查保留。本轮不追加更多制造场，不改成通用逐点二维边界。
+
+固定质量焓约0.4%的短跑误差继续记录，不作为本轮首要攻关。
+
+### F3 恢复耦合的条件
+
+本轮完成后再决定：
+- 静水整体动量预算明确；
+- 初始化与热源标签解耦；
+- 浮力实际读取有证据；
+- EM几何功率误差与生产积分影响有明确结论。
+
+满足后下一轮先恢复规定热的温度—流动，再按独立门接入真实EM。客户几何/测点定量与法国文献环流拓扑分开评价。
+
+## 7. 执行顺序、预算与停止条件
+
+### 7.1 执行顺序
+
+1. A：冻结WIP身份，完成初始化解耦及t0对照。
+2. B：用已有事件数据复算整体动量；添加实际读入力与预算。
+3. E：复用EM现有数据推进独立几何求积，可与流体诊断分目录执行。
+4. C：只选择一个有证据的静水修复路线。
+5. D：补齐浮力读取；有条件做一对1 s固定温场。
+6. 汇总证据与软件移交建议，不重跑热耦合。
+
+### 7.2 运行预算
+
+| 任务 | 本轮预算 |
+|---|---|
+| 初始化解耦检查 | t0，不做热推进 |
+| 静水力预算 | 一个基线0.2 s |
+| 最小修复 | 一个主要候选，先0.2 s，必要时到1 s |
+| 延长预处理 | 有证据的一次，先1 s，明确衰减才到5 s |
+| 浮力读取 | 快照/单子步 |
+| 固定温场响应 | 条件满足才ON/OFF各1 s |
+| EM | 优先零新增求解；缺完整场时补导出原两档 |
+| 热耦合/其他case | 本轮不新增 |
+
+### 7.3 停止条件
+
+- 预算未闭合，不用速度图替代因果解释。
+- 一条修复无效，回到已记录的通道预算，不自动扫描第三、第四种组合。
+- 预处理不衰减，停止加时。
+- 求积覆盖不完整，停止用截断体积直接代表连续域。
+- 只是离线权重改进，不宣称生产EM积分已修。
+- 一项阻塞不影响另一项独立工作时，继续完成另一项；不把整轮停在缺少甲方电流上。
+
+## 8. 产物与交接要求
+
+产物根：`docs/ophelie/reference/doc236_runs/`。
+
+建议目录：
+- A_identity_and_init；
+- B_hydro_momentum；
+- C_hydro_fix；
+- D_buoyancy_read；
+- E_em_quadrature；
+- F_handoff。
+
+必须包含：
+1. ROUND236_REVIEW.md、ACCEPTANCE_TABLE.csv、RUN_COMMANDS.md；
+2. 初始化策略与热源解耦的源码补丁及t0逐字段对照；
+3. 真实动量更新式说明、调用位置与每通道冲量CSV；
+4. 预处理/清理/首步事件数据，以及整体/分区动量预算；
+5. 修复前后OFF质心速度、动能、液面及预算图；
+6. 浮力实际读取证据，未完成时明确PARTIAL；
+7. EM几何参考、截断权重、覆盖检查、求积收敛和功率对照脚本；
+8. 必要的原始EM场与稳定索引，不能只给已有库外路径；
+9. 所有新增脚本与摘要JSON对应同一代码版本；
+10. 软件机可择收的补丁及不可宣称的物理结果。
+
+原始稀疏场、关键CSV、日志片段和补丁直接入包。大场可外置并给校验，但不能只提供审核者无法访问的本机路径。
+
+### 8.1 验收表建议项目
+
+- INIT_INDEPENDENT_OF_HEAT_MODE；
+- HYDRO_MOMENTUM_BUDGET_CLOSED；
+- OFF_BACKGROUND_CAUSE_IDENTIFIED；
+- OFF_BACKGROUND_REDUCED；
+- FORCE_MOMENTUM_READ_VERIFIED；
+- FIXED_T_RESPONSE_STATUS；
+- EM_GEOMETRY_COVERAGE；
+- EM_GEOMETRIC_QUADRATURE_VERIFIED；
+- EM_GEOMETRIC_POWER_ACCURACY；
+- PRODUCTION_EM_INTEGRAL_STATUS。
+
+标签可用PASS、PARTIAL、FAIL、OPEN、NOT_RUN，必须附作用域和证据。程序smoke_passed不能覆盖这些物理项。
+
+## 9. 最终收口报告必须回答
+
+1. 启动时整体向下的净冲量主要由哪个离散通道/状态不平衡造成？
+2. 清理、预处理与正式推进各自贡献是什么？修改后改善多少？
+3. zero_q与非零热源是否已经共用同一力学初始化？
+4. 专用浮力是否被真实动量更新读取，证据在哪里？
+5. EM截断/完整域求积实际实现了什么，功率缺口减少多少，未覆盖区域还有多少？
+6. 生产EM积分是否仍需修复？下一轮应继续哪个具体问题，还是可以恢复热耦合？
+
+本轮成功标准是完成具体因果链和实际求积，不是再写一份“基本解释清楚，下一步继续”的总结。不能完成时要指出明确的未完成步骤、原因和已有证据，避免误判项目已收口。
+
+
+<!-- ===== END 236_OPHELIE_HYDROSTATIC_SUPPORT_AND_EM_GEOMETRIC_QUADRATURE_CURSOR_PLAN_2026-11-23.md ===== -->
+
+
+<!-- ===== BEGIN 237_OPHELIE_LOCAL_BACKGROUND_AND_EM_QUADRATURE_CLOSURE_CURSOR_PLAN_2026-11-23.md ===== -->
+
+# 237｜OPHELIE 局部背景流定位与电磁几何求积收口开发任务书
+
+- 日期：2026-11-23。
+- 执行对象：物理开发机 Cursor。
+- 本轮输入：第236轮交接包；报告基线 `845e580de` 加未提交物理WIP。先冻结真实版本，不能将该HEAD直接等同于本轮全部运行代码。
+- 当前分支沿用用户安排，不自动切换有未提交改动的工作树。
+- 本轮目标：定位剩余局部背景流、完成可信的全柱与中部几何功率验证，并给出是否恢复热演化的明确决策。
+- 本文是237轮执行计划；236历史记录保留。
+
+## 0. 开工先读：哪些已解决，哪些不能再重复
+
+### 0.1 保留236的有效成果
+
+1. 延长静水预处理至1 s后，启动阶段整体下沉/回弹显著改善。
+2. 当前几何中，首步Force与ForcePrior的反向抵消比例从约0.295改善到约1.036。
+3. 0.01 s时整体平均运动动能占比从约87.5%降到约2.1%。
+4. 浮力公式、专用通道、真实声学第一半步动量读取已有证据；读取相对残差约5.05e-4。
+5. 热边界local_dt_dz的有限制造场验证已通过，暂不扩展支线。
+6. 电磁同坐标复场误差从粗档约0.462%降到细档约0.131%，保留该成果。
+
+本轮不再重开浮力公式和力链单元测试全套。只有修改实际影响该链路时，才做针对性回归。
+
+### 0.2 当前两个主缺口
+
+| 缺口 | 现状 | 本轮必须完成 |
+|---|---|---|
+| 局部无浮力背景流 | 1 s OFF RMS仍约3.41e-3 m/s；整体平移已弱，但局部运动仍强于浮力差 | 空间定位、平均/波动分解、选一个有证据的处理 |
+| EM几何功率 | 中部截断已有初步结果，但对子采样数敏感，完整域/全柱未完成 | 统一参考、独立收敛求积、域覆盖与实际生产Q验证 |
+
+不将“背景仍存在”重新解释为浮力公式错误；不将“同采样场很准”解释为连续几何总功率已经通过。
+
+### 0.3 本轮禁止事项
+
+- 不盲目继续延长预处理，不新增多个预处理时长扫描。
+- 不同时修改beta、mu、声速、压力、连续性、自由面与黏性。
+- 不将总速度扣除平均值后作为正式流场。
+- 不通过投影、滤波或强阻尼制造漂亮环流再当作生产结果。
+- 不通过电流/功率/体积整体归一掩盖标准例误差。
+- 不将离线求积权重直接改写生产Mass/Vol。
+- 不改A-phi/Laplace独立研究分支。
+- 不换流体框架、不加新的工程壁面ghost布置。
+- 不重做TEAM7全套、弹性桨、温变物性和导电底板支线。
+- 不把客户几何固定温场测试称为法国自然对流复现。
+
+## 1. A｜冻结版本、配置与证据身份
+
+### A1 实际源码冻结
+
+1. 读取236补丁与当前工作树，明确WIP进入了哪些运行。
+2. 保存用户文件，不清理、不丢弃改动。
+3. 将本轮使用的源码形成可追溯提交；如确有不能提交项，记录HEAD+完整补丁SHA256。
+4. 记录编译器、Real类型、浮点选项、设备、二进制SHA256、Reload、有效参数。
+5. 功能提交拆分：证据修正、流场后处理、必要物理修复、EM求积及报告。
+
+### A2 正式对比显式固定初始化
+
+236的auto仍兼容旧行为，会按zero_q等热标签选择不同初始化。
+
+本轮正式流体比较必须显式使用同一已测机械策略，例如已有的：
+`--mechanics-initialization-mode=skip_dens_fp`。
+
+同时固定：
+- hydro_settle_time=1.0 s；
+- 匹配外层实际推进路径；
+- 同一Reload和有效物性；
+- 同一热源/浮力开关作用域。
+
+不要只把默认预处理改成1 s，而让auto再次引入不同机械清理。软件机示例配置也应在接收时显式指定策略，不要求修改所有历史默认。
+
+初始化不同入口的t0字段比较已做过，本轮无需完整重跑；如修改初始化实现，再补相关对照。
+
+### A3 修正矛盾JSON
+
+236的 `D_fixed_T/D2_DIFF_SUMMARY.json` 与正式报告冲突：
+- direction_correct=false；
+- buoyancy_dominated=true；
+而正式结论为方向正确、尚未由浮力主导。
+
+追溯该文件使用的源数据、脚本和比较空间。若来自移动后的粒子ID直接配对：
+- 标注为Lagrangian诊断，禁止作为Eulerian空间流场验收；
+- 放入明确的历史/无效证据目录并附原因；
+- 不删除历史原始数据；
+- 正式结果由唯一的共享网格后处理生成。
+
+顶层报告、验收表、JSON、图和脚本必须一致。不能仅手工改JSON布尔值。
+
+## 2. B｜优先后处理已有场，定位局部背景
+
+### B1 数据来源与时窗
+
+优先使用236预处理1 s后的OFF/ON原始场，保留0.1、0.5、1 s输出以及动量、能量日志。
+
+先确认是否有足够时间采样：
+- 两帧只能作瞬时比较，不能据此声称稳定时间均值或随机波动；
+- 若缺足够场，补一次OFF保持到1 s的运行；
+- 后段0.5–1 s建议保存至少6个共同时间场；
+- 轻量U、动能、质心、分区量按真实推进dt累计，使用时间权重。
+
+不因做平均而默认延长到10/20 s。稀疏场不能用于判断声学高频谱；本轮不开展频谱研究。
+
+### B2 原始流场必须保留的分解
+
+在固定Eulerian几何网格上做：
+
+1. 质量加权全域平均速度与平均平移动能；
+2. 相对平均平移的剩余运动，仅作诊断；
+3. 轴对称平均u_r、u_z、u_theta；
+4. 三维场偏离轴对称平均的部分；
+5. 后段时间平均流与时间变化量。
+
+必须说明每个平均的顺序、权重与有效掩码。不要把周向平均后的弱流速称作原始三维背景已经降低。
+
+平均流也可能是非物理持续回流；波动也不天然等于无影响噪声。需要与OFF条件、力学预算和浮力信号共同解释。
+
+### B3 几何分区
+
+建议用与dp相联系的固定带：
+- 侧壁带；
+- 底部带；
+- 自由面附近；
+- 顶/底角；
+- 深内部。
+
+使用互斥分区，或明确重叠统计不能相加。导出每区粒子数/代表体积、质量、动能占比、速度RMS、平均u_z、u_r和Umax。
+
+除总动能占比外，也报告该区占总质量/体积的比例，避免小区域高速度被平均掩盖。
+
+同时给近壁距离和高度上的剖面，找出是某一层局部运动，还是穿过内部的有组织回流。
+
+### B4 与实际力学贡献对应
+
+复用236声学第一半步的实际读入力诊断。
+
+注意：
+- Force/ForcePrior是聚合通道，不能直接称为已拆清的内部压力/壁面压力；
+- 粒子位于底部，不代表它的Force只来自底壁；
+- 总动量闭合不代表局部离散准确。
+
+先在已定位的高背景区记录压力/黏性/重力及可分离的壁面作用。只对该区域添加必要诊断，避免重建一整套新审计系统。
+
+检查背景是否在以下事件后系统变化：
+- 密度重整；
+- 自由面标记/大气压处理；
+- 位置与邻域刷新；
+- 压力梯度或核修正；
+- 黏性力刷新。
+
+本轮必须给出一张“区域—事件—有效力—速度响应”的对应表。不能只把全部剩余问题叫作自由面噪声。
+
+### B5 Python图与数据
+
+至少交付：
+- OFF原始速度模、矢量图及分区能量；
+- OFF后段平均矢量与时间变化量；
+- ON/OFF同网格、同色标、同箭头缩放对照；
+- ON−OFF矢量图与u_z(r)；
+- 支持量、覆盖率和真实输出时刻。
+
+差值图可独立放大，但必须标注放大比例。流线是辅助，原始矢量与数值不可省略。
+
+容器外与缺支持区域不补零。网格范围来自固定几何，ON/OFF共用。相同粒子ID不等于相同空间位置。
+
+## 3. C｜只做一个有证据的局部修复或诊断对照
+
+### C1 根据B结果选择，不预设答案
+
+| B的结果 | 本轮允许的下一步 |
+|---|---|
+| 背景主要是初始化后仍衰减的短暂波动 | 选择明确的观测起点，记录初态与衰减；不无限加预处理 |
+| 某个近壁/自由面事件持续生成速度 | 定位对应调用或状态一致性，做最小范围修复 |
+| 深内部也持续存在有组织OFF回流 | 检查局部离散力平衡，不能仅靠平均滤波处理 |
+| 原始三维背景较强但主要为非轴对称变化 | 量化其对轴对称平均与温度输运的影响，不直接宣布可忽略 |
+| 后处理插值/配对制造了较大差值 | 只修后处理，保持生产求解器不变 |
+
+最多选择一个主要候选。其他候选列依据和优先级，不全部并行扫描。
+
+若证据指向某个已有开关，可做单因素诊断，但必须注明改变了哪项数值/边界处理，不能把模型变化当作同一物理工况的直接修复。
+
+### C2 修复后最小运行
+
+同几何、物性、初始化、预处理和调度：
+- OFF先0.2 s；
+- 无异常且背景指标改善，再到1 s；
+- 若需对浮力响应判断，ON配对到同1 s。
+
+现有固定温场保持：
+`T=1273.15+20*((r/R)^2-0.5) K`，
+每次生产浮力读取前按当前位置施加。OFF仅关闭Boussinesq，保留重力。
+
+如果没有物理修复，仅补齐时间采样，不机械再跑第二组ON/OFF。
+
+### C3 不能只用“RMS下降多少”验收
+
+分别回答：
+1. 背景空间来源是否查明？
+2. 总三维背景、轴对称背景、时间平均回流、波动各是多少？
+3. ON−OFF信号对共同网格与合理重分箱是否稳健？
+4. 背景是否显著改变规定温场下的环流判读？
+5. 修复是否保持质量、动量与初始化一致性？
+
+可设置“OFF RMS下降一个数量级”为工程改善目标，但不能达不到就不断调参，也不能达到就直接称法国复现通过。
+
+若信号比后处理差异或重复运行变化还小，保持RESPONSE_SIGNED，不授RESPONSE_RESOLVED。误差底只在必要时增加一次有针对性的重分箱/重复测试，不展开新的矩阵。
+
+“总流场由浮力主导”必须有空间和时间证据，不凭ON/OFF RMS接近或不接近单独判定。
+
+## 4. D｜EM参考统一：不再混用弱极限与完整趋肤解
+
+### D1 固定案例
+
+R=0.10 m，总高0.60 m，B0=0.01 T，sigma=16 S/m，f=300 kHz；
+dp=0.025和0.0125 m，使用已达到相近严格迭代残差的配置。
+
+本轮不加第三档、不增加柱长、不继续主要调Picard容差。现有同坐标复场精度成果保留。
+
+### D2 主参考必须一致
+
+正式功率对照使用与求解场比较一致的完整趋肤解析Q，计算：
+`P_ref = H_region * integral_0^R(2*pi*r*Q_full_skin(r) dr)`。
+
+中部参考区域明确为实际配置的上下界；236使用z∈[0.255,0.345]、厚0.09 m，需核对源码/effective。
+
+弱反馈极限只作辅助校验，不与full_skin混用。约0.4%的参考差对百分之一级精度判断不可忽略。
+
+主相对误差统一：
+`e_ref=(P_num-P_ref)/P_ref`；
+同时给绝对W和有符号差。旧max分母指标另名，不用来表示前后改善。
+
+### D3 独立参考积分验证
+
+用独立脚本、double精度积分完整解析Q：
+- 比较至少两档积分精度；
+- 相邻精度变化优先≤0.1%；
+- 核查peak/RMS和1/2约定；
+- 用弱极限作趋向或量级校验，不替换本工况主参考。
+
+独立脚本不要调用生产求积后又拿相同结果做参考。
+
+## 5. E｜EM截断权重：先消除采样假象，再谈功率精度
+
+### E1 236的结果为何尚不能PASS
+
+细档截断功率误差（当时对弱极限参考）：
+- nsub=6：约−0.07%；
+- nsub=8：约−0.98%；
+- nsub=10：约−1.97%。
+
+该变化说明求积尚未稳定；不得挑nsub=8后标“约1%”。
+
+此外，截断单元之和只是现有粒子单元并集，可能不完整覆盖圆柱；求和接近几何体积也不能排除缺口与重叠相抵。
+
+### E2 轴向交叠必须改为精确计算
+
+规则立方单元的轴向交叠：
+`Lz=max(0,min(z_i+dp/2,z_hi)-max(z_i-dp/2,z_lo))`。
+
+不要再在z方向用6/8/10个点做粗布尔采样。0.09 m切片与粒子层不整除时，该采样会造成明显跳变。
+
+先确认代表单元的方向、大小和坐标来自真实生成方式；非规则粒子不能无依据套用dp立方体。
+
+### E3 横向圆—矩形交面积独立求积
+
+可用解析方法、稳定一维积分或可细化二维采样。若采用采样，建议32/128/256等明确递增精度，利用相同xy列缓存，避免对每个z层重复算。
+
+每档输出：
+- 单元交面积与交体积；
+- 总体积；
+- 数值/解析中心Q乘权重的功率；
+- 相邻精度变化；
+- 覆盖缺口与重叠检查。
+
+求积变化应小于要讨论的物理误差。百分之一级功率结论，优先要求求积细化变化≤0.1%；若未达，报告不确定度，不授精度PASS。
+
+### E4 审核复算的对照值
+
+用236所依赖的原中部粒子CSV，轴向精确交叠、横向细化，并仍以中心Q乘交体积，离线复核大致得到：
+
+| 档位 | 现有单元并集体积误差 | 功率相对full_skin参考 |
+|---|---:|---:|
+| dp=0.025 | 约−2.55% | 约−4.59% |
+| dp=0.0125 | 约−0.90% | 约−1.55% |
+
+这里只是审核对照，不是硬编码目标，也不是完整圆柱功率的最终验证。真实值可能受源CSV截断精度影响，应按本机完整数据重算。
+
+如果不能接近上述量级，优先检查参考、轴心、切片界限、实际xy坐标和权重；禁止悄悄改区域匹配答案。
+
+### E5 中心取样误差与覆盖缺口分开
+
+至少用三种场检查：
+- 常数1：体积；
+- r²：径向矩；
+- 完整解析Q：实际工况积分。
+
+分别比较：
+1. 粒子中心值乘交体积；
+2. 对单元内部场函数真正积分；
+3. 连续完整几何积分。
+
+这能区分中心取样误差、单元覆盖缺口与求积误差。数值场未知时不能直接用解析函数代替；解析单元积分只作为参考拆分。
+
+不能整体归一权重，也不能因中心Q误差存在而宣布EM场错了同样多。
+
+## 6. F｜补齐完整域和全柱数据，完成实际生产Q检查
+
+### F1 不再以只有中部CSV为由延后
+
+先检查现有完整输出。若缺少，授权仅重跑原两档解析柱，导出：
+- 所有粒子Position、稳定ID、V；
+- 复J各向量分量；
+- 生产实际Q；
+- sigma、频率、B0、轴心、上下界、源和收敛身份。
+
+这属于必要数据导出，不是新增参数扫描。若字段读取接口缺失，做最小导出修改。
+
+特别注意：此前J_sph可能是J_theta幅值，`J_sph^2/(2*sigma)`不自动等于生产实际Q。必须并列导出与核查，不得只靠重构功率替代生产焦耳热验证。
+
+### F2 三条功率链分开
+
+1. 生产实际Q的积分；
+2. 完整数值复J向量重构的 `|J|²/(2*sigma)`；
+3. 仅J_theta重构的功率（如需保留旧指标）。
+
+说明它们的离散定义及差异；若edge-flux JouleHeat与重构J的定义不同，报告兼容性和影响，不为对上而强行设置相同。
+
+中部同坐标场精度好，不自动证明全柱、边缘或生产Q都同样准确。
+
+### F3 完整域覆盖方案
+
+现有粒子单元不完全覆盖时，实施一个覆盖真实圆柱的独立积分点集：
+- 求积点覆盖完整横截面及实际高度；
+- 使用数值场局部重构得到复J或实际Q；
+- 明确边界支持、外推比例及条件性；
+- 不新增物理求解粒子，不赋予新Mass；
+- 不用解析J/Q补填缺失的数值值。
+
+可以优先采用已有可靠插值/局部最小二乘，但须用已知常数、r²及独立光滑场验证其误差。轴心方向与复数相位正确处理。不要让拟合天然套用完整解析解形式而失去独立性。
+
+如果无法可靠重构，允许该项OPEN，但必须实际导出完整场、完成支持/覆盖诊断，并说明哪个区域或接口阻塞。不得再只重复“需要全柱数据”。
+
+### F4 完整域求积验收
+
+对全柱和中部、两档分辨率分别报告：
+- 原生产权重功率；
+- 相同采样解析功率；
+- 截断权重功率；
+- 完整域独立求积功率；
+- 连续full_skin解析参考；
+- 体积、r²矩、覆盖缺口/重叠；
+- 重构与求积不确定度；
+- 实际生产Q与两种J重构功率的差。
+
+独立求积的常数/r²矩内部目标≤1%；若要声称约1%的物理误差，需要更小且明确的数值不确定度，不能只满足1%体积门就直接通过。
+
+全柱对无限长解析解可能仍有模型差异；保持原几何，不通过加长柱体来回避。中部与全柱分别给结论。
+
+### F5 生产积分影响说明
+
+本轮默认不修改Mass/Vol。必须给出一张影响表：
+- 原V用于哪些EM源积分；
+- 用于哪些焦耳热积分；
+- 用于热源传递/归一的哪个环节；
+- 本轮修正仅改变报告，还是实际生产积分；
+- 若生产权重仍偏，剩余误差预计影响什么，证据是什么。
+
+离线功率改善不能直接标“生产积分已修”。TEAM7、局部峰值Q继续独立OPEN，不扩大解析柱结论。
+
+## 7. G｜明确本轮完成后如何推进，避免长期停在诊断
+
+### G1 三种可执行结论
+
+| 本轮结果 | 下一步 |
+|---|---|
+| 局部背景已定位/明显改善，固定T响应可信，EM功率证据完整 | 下一轮恢复一个规定热温度—流动工况，再门控接入真实EM |
+| EM已完成，局部背景仍主导但具体来源清楚 | 只修一个明确的局部力学缺陷，不重开浮力公式/EM扫描 |
+| 局部背景影响已可量化，EM完整域仍受支持不足阻塞 | 可独立准备规定热主线，但真实EM热源定量仍保持限制 |
+
+本轮不重复规定热1 s smoke。是否恢复热演化以B/C/F结果作决定，不机械等待所有报告标签变成PASS。
+
+### G2 不能无限增加验证
+
+如果局部背景暂时无法完全压低，报告其对目标观测的可量化影响与可用范围。不能既没有定位又用更多长跑拖延，也不能因未达到“背景绝对零”无限阻塞所有独立工作。
+
+客户自然对流温度定量、法国文献环流拓扑、软件审查分别列状态，不将其中一个目标代替另外两个。
+
+## 8. 执行顺序和预算
+
+1. A：冻结版本，清理矛盾证据身份。
+2. B：复用236场定位局部背景；不足时补一条OFF时间采样。
+3. D/E：独立参考与稳定截断求积，可与流体后处理分目录执行。
+4. F：必要时导出原两档全场，完成实际Q与完整域验证。
+5. C：依据B只选一个主要修复；需要才做一对1 s固定T。
+6. 汇总结果并选择G1路径。
+
+默认预算：
+- 流体已有数据优先复用；
+- 一条OFF补采样到1 s；
+- 一个主要候选，先0.2 s，必要时1 s；
+- ON/OFF配对最多一组1 s；
+- EM仅原两档必要导出，不增加物理参数；
+- 无新增长时热耦合、预处理扫描及其他标准例全套。
+
+停止条件：
+- 没有空间/事件证据，不继续增加修复组合；
+- 求积未收敛，不选择最有利采样数；
+- 完整域缺支持，不用解析值补洞；
+- 后处理权重变化，不自动修改生产粒子质量；
+- 数据身份矛盾，不授正式验收标签。
+
+## 9. 目录与交付标准
+
+产物根：
+`docs/ophelie/reference/doc237_runs/`。
+
+建议目录：
+- A_identity；
+- B_off_localization；
+- C_local_fix；
+- D_em_reference；
+- E_clip_convergence；
+- F_full_domain_power；
+- G_handoff。
+
+必须交付：
+1. ROUND237_REVIEW.md：具体发现、证据、修改、误差与限制；
+2. ACCEPTANCE_TABLE.csv：作用域、状态、指标、参考口径、证据；
+3. RUN_COMMANDS.md：真实执行命令、退出码、目录、参数与版本；
+4. 源码补丁、Python脚本、二进制/输入身份；
+5. 局部背景分区能量、平均/波动、原始矢量图及共同网格数据；
+6. 唯一有效的固定T摘要，历史错误JSON附失效说明；
+7. 完整趋肤参考积分及收敛表；
+8. 轴向精确交叠、横向求积细化、覆盖/重叠与功率表；
+9. 全柱/中部的实际Q、复J及对应积分，数据缺失时明确缺哪项；
+10. SOFTWARE_HANDOFF_DELTA.md：可以择收什么，哪些物理声明不能升级。
+
+大场可外置，但关键稀疏场、CSV、脚本、日志片段和补丁直接入包；不能仅给无法访问的本机路径。
+
+正式摘要由实际脚本生成，不手工改布尔值凑报告。顶层、分项笔记、JSON、图和CLI输出的状态必须一致。
+
+## 10. 本轮收口必须回答的六个问题
+
+1. 剩余局部背景集中在哪里，是持续平均回流还是时变运动？证据足够吗？
+2. 对应哪个实际事件/力学通道？本轮修改是否降低了它？
+3. 固定温场信号在修正后处理与背景评估下，究竟验证到哪一级？
+4. 电磁截断求积是否收敛，现有粒子单元还缺多少几何覆盖？
+5. 全柱/中部的实际生产Q功率误差分别是多少，是否与J重构功率一致？
+6. 下一轮具体进入规定热推进，还是只修哪个明确阻塞？不能再只写“继续优化”。
+
+本轮成功标准：不重复已完成的浮力公式验证，用有限工作量完成局部背景归因和可信几何功率证据，使下一轮能够作出具体推进决策。
+
+
+<!-- ===== END 237_OPHELIE_LOCAL_BACKGROUND_AND_EM_QUADRATURE_CLOSURE_CURSOR_PLAN_2026-11-23.md ===== -->
+
+
+<!-- ===== BEGIN 238_OPHELIE_OFF_DECAY_DISCRETE_WORK_AND_VALIDATION_CLOSEOUT_CURSOR_PLAN_2026-11-23.md ===== -->
+
+# 238｜OPHELIE 无浮力回流衰减、离散做功归因与电磁验证归档执行计划
+
+- 日期：2026-11-23。
+- 执行对象：物理开发机 Cursor。
+- 基线：第237轮交接；报告身份为 `845e580de` 加物理WIP，开工必须核实实际源码与二进制。
+- 本轮主线：一次3–5 s的无浮力保持测试，判断剩余回流是初态残余衰减还是由数值环节维持；据证据只做一个具体修复。
+- 本轮电磁工作：整理现有解析柱验证，不再反复扫描、继续追硬1%或擅自修改生产积分。
+- 本文为授权执行的开发与测试范围，不要求每个常规步骤再征求确认。
+
+## 0. 必须理解的现状与本轮边界
+
+### 0.1 不再重开的内容
+
+1. 浮力公式、专用通道和实际声学第一半步读取已在236得到证据。本轮不重做全套浮力单元验证。
+2. 1 s预处理显著改善了整体下沉/回弹。本轮固定该已测设置，不扫多个预处理时长。
+3. 热边界local_dt_dz有限制造场结果保留，不再扩展一般二维局部边界算法。
+4. 解析柱电磁场随加密改善，实际Q与复J重构在本例一致。不要因为流体背景未解决而重新怀疑整个电磁路线。
+
+### 0.2 当前必须回答的问题
+
+237发现OFF已有“芯部上升、近壁下降”：
+- OFF RMS约3.41e-3 m/s；
+- 侧壁带约20%质量，约45%动能；
+- t=1 s的轴对称分量约占动能53%；
+- 固定T的ON−OFF矢量差约5.5e-5 m/s。
+
+这些说明背景会干扰自然对流拓扑判读，但并未证明侧壁就是供能源。
+
+237所谓后段平均实际仅有0.5、1 s两帧。两帧不能可靠判定稳定平均、衰减包络或随机波动。
+
+本轮必须区分：
+- 尚未衰减的初始动能/压缩储能/重力势能；
+- 压力或其他离散环节维持的回流；
+- 特定事件产生的直接速度/位置修正；
+- 后处理造成的误判。
+
+### 0.3 禁止错误归因
+
+- 净动量/净冲量接近零，不等于没有做功或供能。
+- 动能集中在侧壁，不等于侧壁算子就是根因。
+- 压力做正功，不自动等于非物理供能；可能是压缩储能向动能的可逆交换。
+- 总动能不增长，不等于背景对温度输运可忽略。
+- 减去OFF流场或滤掉平均回流，仅是诊断，不是修复后的实际解。
+- 不能以程序passed、未穿墙或图形闭合代替物理归因。
+
+## 1. A｜冻结版本与明确机械配置
+
+### A1 版本
+
+核实237代码、WIP、二进制、Reload和effective配置。保存用户文件，不清理或丢弃改动。
+
+本轮实际运行源码应形成可追溯提交。确不能提交的项，记录HEAD+完整补丁SHA256。按诊断、修复、后处理、报告拆分提交。
+
+不自动合并软件分支，不改独立A-phi/Laplace分支。当前分支沿用用户安排。
+
+### A2 固定配置
+
+以237已测客户NC工况为主：
+- dp=0.010 m；
+- H=0.180 m；
+- R按实际effective，约0.1415 m；
+- rho=2700 kg/m³，mu约14.532 Pa·s；
+- beta=0，仅关闭Boussinesq增量，真实重力保留；
+- 均匀固定温度，关闭热源、热扩散及温度换热推进；
+- hydro_settle_time=1.0 s；
+- 显式使用已有 `--mechanics-initialization-mode=skip_dens_fp`；
+- 匹配外层实际步长路径；
+- 壁面、自由面、核修正、声速等保持237基线。
+
+正式比较不使用auto初始化策略。热源开关不能再次改变机械初始化。
+
+### A3 ID与数据身份修正
+
+检查 `particle_i` 是稳定ID还是排序后下标。此前“1 s配对位移0.27 m”与毫米每秒级流速不相称，必须核对是否存在排序错配。
+
+要求：
+- 跟踪使用真实稳定ID（例如实际实现的OriginalID）；
+- 逐帧检查ID唯一性、集合和排序映射；
+- 若没有稳定ID，不做逐粒子轨迹结论；
+- Eulerian场仍用共同网格，不以稳定ID替代空间插值。
+
+更正历史无效JSON的说明，区分“真实位移导致空间不对应”和“数组下标排序错配”。保留原文件与失效记录，不手工改布尔值掩盖问题。
+
+## 2. B｜实现与生产推进一致的离散做功测量
+
+### B1 先列出实际更新序列
+
+复用236的动量预算代码，明确：
+- 声学第一半步；
+- 声学第二半步；
+- 黏性力计算/保持；
+- 重力与其他ForcePrior；
+- 位置更新；
+- 密度重整、自由面处理；
+- transport/shifting（如实际启用）；
+- 排序与邻域刷新；
+- 任何直接改速度的限制或清理。
+
+不能只测第一半步，遗漏第二半步或外层直接写速度的操作。
+
+逐项列出字段单位、时间层与实际更新式。若ForcePrior混有黏性/重力，读取实际已有分项通道；没有时做最小只读诊断。
+
+### B2 动能基准
+
+对固定质量粒子：
+`K=sum(0.5*m_i*|v_i|²)`。
+
+分开报告：
+- 总K；
+- 平均平移动能；
+- 轴对称平均分量动能；
+- 三维偏离分量；
+- 几何分区动能。
+
+轴对称分解、空间粗粒化和时间平均不可混用。报告网格支持及分箱变化影响，不把高分辨率稀疏bin的拟合程度当作真实轴对称精度。
+
+### B3 每个实际速度更新子步的功
+
+对于实际冲量更新：
+`Delta(mv)=sum_k I_k`，
+
+用同一子步的平均速度：
+`v_mid=(v_before+v_after)/2`，
+
+计算每通道离散功：
+`W_k=sum_i(v_mid_i dot I_k_i)`。
+
+核对：
+`DeltaK_observed = sum_k W_k + R_K`。
+
+分项冲量必须来自实际更新使用的力、dt和子步系数，不能把事后DeltaK反推成某个分项功后自证闭合。
+
+如更新不是单纯显式kick，按真实离散式处理：
+- 隐式黏性可用该算子的实际速度改变量和对应动能变化，明确不能再与同一黏性力重复计数；
+- 任何直接速度投影/限幅/清理单独记为事件功；
+- 一个算子同时影响多个量时明确归属，避免重复累计。
+
+阶段中存在粒子排序时，前后数据必须用稳定ID对齐，不能按数组下标相减。
+
+### B4 最少分项
+
+- 重力功；
+- 黏性相关功/动能改变；
+- 内部压力相关功；
+- 壁面压力相关功（可可靠分离时）；
+- 其他实际力；
+- 直接速度修改的事件功；
+- 未解释残差。
+
+若无法可靠拆分内部/壁面压力，先报告聚合压力功，保留该归因限制；不能根据粒子所在区域把所有力命名为壁面力。
+
+固定壁面的无滑移黏性通常应有耗散作用，但以实际符号约定和离散式核对。若有局部正功，先检查分项/时间层，不立即修改黏性公式。
+
+### B5 重力势能、压缩储能与位置事件
+
+记录：
+`E_g=-sum(m_i * gravity_vector dot x_i)`，
+使用固定势能参考，并检查重力功与DeltaE_g的关系。
+
+若位置在外层单独更新，速度kick的重力功和位置势能变化未必逐步一致；按完整外层核对，残差单独列出。不能为了闭合而按不相容的位移重算力。
+
+若当前压力模型是已知barotropic EOS，可在确认实际EOS与压力路径后计算相应压缩储能。可参考一般关系：
+`e(rho)-e(rho_ref)=integral[p(s)/s² ds]`，
+但必须核对实际EOS、压力偏置和背景静水处理，不能直接套给扰动压力路径。
+
+若本轮无法可靠构造压缩储能，则：
+- 保留压力功和密度/压力变化；
+- 不把压力正功直接判为非物理能量注入；
+- 用时间演化和具体事件相关性缩小范围。
+
+热焓账本不参与本项闭合；本测试不推进温度。不要将声学储能误记为热输入。
+
+### B6 分区功与跨区输运
+
+全局动能账本是主依据。侧壁等Eulerian分区还存在粒子跨界和动能输运：
+- 分区功可以指出作用集中的区域；
+- 分区DeltaK不等于本区做功，除非同时计入输运；
+- 若不实现输运预算，明确标为定位统计，不授局部能量闭合PASS。
+
+需要逐粒子归因时可用稳定ID的固定粒子集合辅助，但与固定几何区域分开命名。
+
+### B7 仪器短测
+
+先0.02–0.05 s，只验证做功记录、单位、符号、子步与累计。
+- 记录实际dt，不能用候选dt代替；
+- 核对诊断开/关是否改变物理轨迹；
+- 优先double规约，生产Float可保留；
+- 不用1 J这种远大于本例动能的固定归一分母。
+
+建议归一尺度：
+`max(K_start,K_end,sum(abs(W_k)),E_floor)`，
+E_floor只处理接近零，记录其具体J值和选择理由；同时始终给绝对残差J。
+
+内部目标：可解释的累计动能规约残差≤1%上述尺度。未达时先修测量，不直接动流体模块。该门只检查预算，不证明物理正确。
+
+## 3. C｜一条有限的OFF衰减测试
+
+### C1 运行安排
+
+使用A2固定配置，先预处理1 s，再进入正式保持：
+- 保持先到3 s；
+- 若仍需区分衰减与平台，且未出现明确错误，允许同一路径继续到5 s；
+- 总保持上限5 s，本轮不再延长到10/20/100 s。
+
+优先同一连续运行在3 s检查。若框架不支持中途续跑，安排一次5 s运行并在3 s节点输出；不要把只有Position的Reload当完整状态续算。
+
+禁止每次分段重新归零速度或清理压力/密度来“接着跑”。
+
+### C2 输出频率
+
+轻量监测：
+- K、分项累计功、E_g、质心、U_rms、Umax；
+- 分区动能与速度；
+- 时间累计、实际调度、密度/压力范围。
+
+按实际子步/外层累计；物理监测输出间隔建议0.01–0.02 s。不要因输出间隔较粗漏累计做功。
+
+全粒子场稀疏输出：
+0、0.1、0.5、1、1.5、2、2.5、3 s；
+若到5 s，再输出3.5、4、4.5、5 s。
+
+同一时间窗至少有足够的共同网格场再做时间平均。对轻量监测按实际时间加权积分，不把非均匀时间点简单平均。
+
+### C3 分析窗口
+
+建议0.5–1、1–2、2–3、3–5 s分段。
+报告：
+- 窗口时间加权K与速度；
+- 轴对称回流强度；
+- 各分项功、平均功率；
+- 黏性耗散与压力/重力交换；
+- 液面、密度、压缩储能（如可靠）变化。
+
+比较窗口与误差，不用两帧相近直接定义稳态。不要假设K必须逐步单调：声学与势能交换可能使其振荡。
+
+### C4 结论分支
+
+| 观测 | 判定及行动 |
+|---|---|
+| K及轴对称回流包络持续下降，无未解释的维持功 | 初态残余衰减为主要解释；选择有依据的初态/观测起点 |
+| K维持平台，正功与耗散平衡且可定位到具体事件/通道 | 有维持机制；进入D的一个最小修复 |
+| K振荡，压力/势能储能交换可以解释 | 不称持续数值供能；检查衰减包络和观测时窗 |
+| 动能预算未闭合 | 先修测量，物理根因保持OPEN |
+| 仅侧壁动能高，但功/事件未定位 | 只能称空间定位，不能称边界根因已查明 |
+
+L²/nu约数秒仅作为本轮测试时长的量级依据，不是已知的精确指数衰减常数。禁止把观察曲线强行拟合到预设答案。
+
+## 4. D｜根据做功证据只选一个修复
+
+### D1 允许的最小处理
+
+- 如果初态残余衰减：保留完整的已松弛力学状态，避免重新破坏平衡；观测起点由真实残差与趋势选定。
+- 如果密度/压力重置造成重复激发：修正该状态/调用顺序。
+- 如果特定壁面/压力贡献维持背景：核对实际接触状态、法向、邻域、系数或时间层，只修有证据的缺陷。
+- 如果实际黏性作用异常：先核查力/加速度单位、刷新和分步，再决定是否修实现。
+- 如果直接速度/位置修正导致动能改变：显式记录并检查该事件，不能静默视为物理力。
+
+“流在侧壁较强”不足以授权任意修改壁面算子。
+
+本轮最多一个主要修复方案；无证据不展开多个开关组合。可保留一个有明确目的的诊断对照，注明改变的模型/离散，不能冒充同物理修复。
+
+### D2 禁止的处理
+
+- 正式段清零侧壁或全域速度；
+- 新加强阻尼压住流场；
+- 把OFF回流直接从ON解中扣除后称真实结果；
+- 调大beta、降低mu使浮力压过错误背景；
+- 同时更换压力、连续性、黏性和自由面；
+- 为通过测试整体归一力、质量或体积；
+- 修改独立A-phi分支。
+
+### D3 修复验证预算
+
+修复后先0.2 s查启动与预算，再到1 s查局部回流。
+若本轮主要结论是后段维持机制，允许只将该修复候选延至同3 s窗口一次；不得重新跑5 s多参数矩阵。
+
+对比相同物理时窗，不能拿基线1 s与修复3 s直接宣称改善。
+
+记录：
+- 原始三维背景；
+- 轴对称平均回流；
+- 动能/分项功；
+- 质量、密度、液面与实际调度；
+- 是否引入新的守恒或边界问题。
+
+## 5. E｜固定温场与恢复热演化的进入门
+
+### E1 不重做浮力公式证明
+
+236的公式、通道及动量读取证据继续有效。若本轮修改实际更新路径，做针对性回归；否则不再重复静态力链快照全套。
+
+背景已有明确解释/改善后，最多做一对1 s固定温场：
+`T=1273.15+20*((r/R)^2-0.5) K`。
+同一完整初态、机械策略和时钟起点，OFF仅关闭浮力。
+
+Eulerian温场按当前坐标施加。ON/OFF使用同一共同网格、权重、有效支持、真实输出时刻与稳定ID记录。
+
+### E2 状态分级
+
+- RESPONSE_SIGNED：方向合理；
+- RESPONSE_RESOLVED：差值超出后处理/运行误差底且空间时间结构可信；
+- FLOW_BUOYANCY_DOMINATED：总主要环流不能由OFF背景解释；
+- FRENCH_TOPOLOGY_MATCH：独立法国配置验证，不在本轮授予。
+
+不能只凭总RMS差小就判没有浮力，也不能只凭方向正确就判整体自然对流通过。
+
+### E3 恢复规定热的条件
+
+至少满足：
+1. 背景的时间演化与能量来源已能解释；
+2. 初始化策略显式固定，热源标签不改变力学启动；
+3. 诊断/后处理没有未解决的身份错误；
+4. 浮力响应可辨，背景对目标观测的限制已量化。
+
+本轮可以完成后续规定热运行配置和输出清单，但不机械再跑重复1 s smoke。实际恢复温度演化应依据上述结论在下一轮执行。
+
+若背景仍维持且根因未查清，保持阻塞，不带着未解释回流开始长时热输运。
+
+## 6. F｜电磁本轮以验证归档为主，不继续无休止追精度
+
+### F1 复用237成果
+
+| 指标 | dp=0.025 m | dp=0.0125 m |
+|---|---:|---:|
+| 原生产权重全柱功率误差 | +6.05% | +6.89% |
+| 截断权重全柱功率误差 | −4.55% | −1.50% |
+| 截断权重中部功率误差 | −4.59% | −1.55% |
+| 截断体积误差 | −2.55% | −0.90% |
+
+参考为相同完整趋肤解析解，e_ref=(P_num−P_ref)/P_ref。
+生产Q与复J重构在本例代数一致；这不是独立实验验证。
+
+以上数值使用已有完整CSV和求积收敛结果，无须再跑求解器。
+
+### F2 编写解析柱验证报告
+
+报告至少包含：
+- 物理模型、源与边界设定；
+- 参数、单位、峰值/RMS约定；
+- 解析参考、同点复场误差和分辨率趋势；
+- 原生产权重、截断权重与几何覆盖的区别；
+- 全柱/中部功率及实际Q三条链；
+- 求积收敛证据；
+- 适用范围与剩余验证项。
+
+明确写：
+- 当前生产权重细档仍约+6.89%；
+- 约1.5%是离线截断权重结果；
+- 现有单元并集仍有几何覆盖缺口；
+- 没有修改生产Mass/Vol；
+- 不能宣称电磁所有case或峰值Q已验证。
+
+不要追硬1%而新增第三档、继续调Picard或增加柱长。当前解析柱可以形成一项有限范围的验证证据，不要求为写报告消灭所有小误差。
+
+### F3 遗留项登记，不在本轮扩展
+
+- TEAM7；
+- 强趋肤范围；
+- 局部峰值Q；
+- 生产几何权重系统偏差；
+- 温变sigma与真实线圈工程热源。
+
+如原生产误差仍在项目内部容许范围内，按真实数字列入报告；不能把单例指标自动等同于整个合同电磁模块验收。
+
+本轮只保留明确的后续需求，不重跑这些支线。
+
+## 7. G｜可执行的运行与开发顺序
+
+1. A：冻结WIP身份，核查稳定ID和有效配置。
+2. B：做功诊断实现，0.02–0.05 s仪器短测。
+3. C：一次OFF保持到3 s，必要时同路径到5 s。
+4. 分析衰减/储能交换/维持机制，必须实际作出分支判断。
+5. D：只选一个有证据的修复，有限短回归。
+6. E：条件满足才做固定T一对1 s，准备恢复规定热的配置。
+7. F：并行整理电磁现有验证报告，不新增EM扫描。
+8. 提交本轮结论、补丁与下一轮唯一主要动作。
+
+### G1 本轮默认预算
+
+| 工作 | 上限/约束 |
+|---|---|
+| 做功仪器验证 | 一次0.02–0.05 s |
+| OFF衰减 | 一条运行3–5 s |
+| 修复候选 | 一个，先0.2再1 s；必要时同窗口到3 s |
+| 固定T响应 | 条件满足才ON/OFF各1 s |
+| 新EM求解 | 默认0次，复用237数据 |
+| 热耦合长跑 | 0次 |
+| 预处理时长扫描 | 0组 |
+
+本轮不是重新做所有标准例。若修改公共内核，补与改动直接相关的既有回归，范围由实际修改决定。
+
+### G2 停止条件
+
+- 动能预算不闭合，停止物理根因定论，先修测量。
+- 5 s仍无法区分趋势，不继续加时；报告未解释能量通道与所缺证据。
+- 一个修复无效，不能自动扫更多组合；回到实际预算定位。
+- 仅做了后处理平均，不声明背景已治理。
+- 电磁只写报告，不升级TEAM7或峰值Q状态。
+- 未达到进入门，不开展长时热源耦合。
+
+## 8. 产物、目录与验收
+
+产物根：
+`docs/ophelie/reference/doc238_runs/`。
+
+建议目录：
+- A_identity；
+- B_work_instrument；
+- C_off_decay；
+- D_single_fix；
+- E_fixed_T_gate；
+- F_em_validation_report；
+- G_handoff。
+
+必须交付：
+1. ROUND238_REVIEW.md：衰减还是维持，明确结论与证据；
+2. ACCEPTANCE_TABLE.csv，作用域/指标/参考/状态完整；
+3. RUN_COMMANDS.md，区分已执行与准备命令；
+4. 源码补丁、版本、有效配置、二进制与输入校验；
+5. 各子步/外层动能预算CSV和独立累计脚本；
+6. K、分项功、势能/压缩量、质心与分区趋势图；
+7. 至少两个真正包含多帧的共同网格时间窗，不用两帧假装稳定均值；
+8. 修复前后同窗口原始速度/矢量图；
+9. 固定T未运行时明确NOT_RUN，不沿用旧PASS冒充本轮；
+10. 电磁解析柱验证报告，生产与离线权重结果分开；
+11. 软件择收说明，避免把诊断功能默认用于正式生产。
+
+若计算压缩储能，附实际EOS推导与适用条件；未计算则明确限制。不要为了形式完整伪造储能闭合。
+
+大场可外置，但关键稀疏场、CSV、脚本、日志片段和补丁直接入包。正式JSON从对应脚本生成；历史无效JSON保留失效说明。
+
+### 8.1 建议验收项目
+
+- STABLE_PARTICLE_ID_VERIFIED；
+- DISCRETE_KINETIC_WORK_BUDGET；
+- OFF_DECAY_OR_MAINTENANCE_CLASSIFIED；
+- BACKGROUND_SOURCE_IDENTIFIED；
+- SINGLE_FIX_EFFECT；
+- FIXED_T_RESPONSE_SCOPE；
+- THERMAL_RESTART_READY；
+- EM_ANALYTIC_CYLINDER_REPORT_READY；
+- SOFTWARE_SELECTIVE_DELTA_READY。
+
+状态使用PASS/PARTIAL/FAIL/OPEN/NOT_RUN，不能让程序smoke_passed覆盖物理结论。
+
+## 9. 本轮最终必须回答的五个问题
+
+1. 现有无浮力回流在3–5 s尺度上究竟衰减、振荡交换，还是被持续维持？
+2. 哪项实际做功或状态/事件解释了它？净冲量与局部做功是否已经区分？
+3. 是否完成了一个具体修复，效果和剩余误差是多少？
+4. 当前是否能恢复规定热的温度—流动主线？如果不能，只剩哪个明确阻塞？
+5. 电磁哪些证据可以进入验证报告，哪些仍只是离线改进或独立遗留？
+
+本轮收口标准：用一次有限、有解释力的试验完成背景流分支判断，并推进一个具体处理；不再以“侧壁附近有流动”“需要继续优化”作为最终结论。
+
+
+<!-- ===== END 238_OPHELIE_OFF_DECAY_DISCRETE_WORK_AND_VALIDATION_CLOSEOUT_CURSOR_PLAN_2026-11-23.md ===== -->
+
+
+<!-- ===== BEGIN 239_FRENCH_THESES_EXTRACTION_AND_CURSOR_PLAN.md ===== -->
+
+# 239 法国博士论文物性提取成果及 Cursor 下一步实施记录
+
+日期：2026-11-24。范围：OPHELIE 法国自然对流复现；与 A-phi/Laplace 独立。
+
+## 0. 本文件的性质
+
+本轮已实际提取两篇博士论文共8条物性曲线，交付CSV、校准记录、脚本与原图叠加图。不是只给提取任务。原文参数、图像读数、拟合推断必须分开。
+
+已完成：Jacoutot 图III.8/III.9/III.10/III.12四条曲线，Sauvage 图2.1四条Num曲线；电导率A/B比较；图中电导率关系的拟合推断；几何、边界与参考结果表。
+
+未完成：完整二维温度场与速度场重建、一维温度/速度参考剖面的数字化、任何新的求解器仿真。reference中收录的结果图不是已数字化场。不得把这些标为完成。
+
+本文件连同数据包替代上一条聊天中“物性曲线全部待提取”的状态说明。Cursor不必重新从零提取这8条曲线。
+
+## 1. 文件与来源
+
+- J：Jacoutot，2006，原文件“法国博士论文(2).pdf”，190页。
+- S：Sauvage，2009，原文件“Sauvage博士论文.pdf”，174页。
+- metadata.json含两份原PDF的SHA256、校准、方法、有效范围与误差估计。
+- data/jac_III8_k_trace.csv：导热系数，W/(m K)，正文56/PDF69。
+- data/jac_III9_cp_trace.csv：比热，J/(kg K)，正文56/PDF69。
+- data/jac_III10_mu_trace.csv：动力黏度，Pa s，正文56/PDF69。
+- data/jac_III12_sigma_trace.csv：电导率，S/m，正文57/PDF70。
+- data/sauvage_fig2_1_{k,cp,mu,sigma}_vector.csv：S图2.1，PDF34。
+- data/property_checkpoints.csv：从提取曲线插值得到的检查点，不是原文数据表。
+- data/sigma_A_B_comparison.csv：印刷公式与图曲线的比较。
+- data/sigma_B_fit_WITH_EXTRAPOLATION.csv：由图曲线拟合并延伸的候选输入；外推行显式标注。
+- sigma_B_fit_inference.json：拟合系数、区间与残差。
+- qa/：原图叠加与比较图。
+- scripts/extract_properties.py：完整物性提取与再生脚本；从包含原PDF的项目工作目录执行。
+
+### 1.1 提取方法
+
+J的图是栅格图：直接提取原PDF嵌入图片，按坐标轴标定，人工引导黑像素跟踪，用5列中值抑制实验符号交叠与像素噪声。CSV保留原图像素坐标。mu按对数纵轴换算。虚线缺口不伪装成新增原始观测。
+
+S的图2.1是矢量图：直接读取Num路径折线顶点，排除图例线段，按轴刻度映射；CSV保留PDF坐标。矢量提取精度不等于原始物性测量精度。
+
+J图III.12的图内图例写EXP 1，图注称NUM；因此本包只称“图中曲线”，不声称已确认其就是最终代码输入。
+
+### 1.2 有效范围与限制
+
+| J曲线 | 提取温区约K | 点数 | 数字化误差估计 |
+|---|---:|---:|---|
+| k | 307–1795 | 270 | 约0.10 W/(m K)，另有约12K温标误差 |
+| cp | 311–1792 | 267 | 约30 J/(kg K)，温标约15K；陡变区误差更大 |
+| mu | 503–1789 | 378 | 约0.10 dex量级，实验符号交叠区可更大 |
+| sigma | 954–1568 | 187 | 约0.2 S/m并叠加约12K横轴误差；低值相对误差大 |
+
+这些是提取者的保守误差估计，不是统计置信区间。不得用CSV小数位推断高精度。表中点数不代表独立物理信息数量。
+
+sigma低温段贴近坐标轴，不能可靠恢复；高温段超过图中20 S/m上限，不能直接读出。没有把不可辨识低温值填成零，也没有把上边界当成电导率饱和。
+
+mu图中低温平台读数约8e4 Pa s，而正文上限写1e5 Pa s。两者分别保留，不擅自把提取平台改成1e5。主配置采用正文上限1e5作为上限约束；图中mu曲线本身仍作为图像提取数据。是否将低温平台替换为正文值，应明确配置并记录，不能静默处理。现阶段不为这一差异增加一轮大规模扫描。
+
+### 1.3 使用规则
+
+raw trace不能未经处理直接当高精度材料表。先检查叠加图，再生成稀疏或平滑的solver表；不得覆盖raw。处理时不得改变可分辨转折位置、平台、mu跨数量级趋势。对mu在log10空间处理图像噪声是数据整理选择，不代表原作者一定使用对数插值。其他参数可分段线性。输出明确插值规则。
+
+所有越界都要报告粒子数、温区与处理方式。禁止静默钳位、零值填充、无来源外推。只有数K端点缺口可作为明确记录的端点延伸；sigma缺失温区必须使用单独标记的拟合模型或保持未就绪。
+
+## 2. 原文几何与边界参数
+
+J正文51/PDF64表III.1：
+
+| 项目 | 值 |
+|---|---:|
+| 坩埚内径/外径/高度 | 500/530/350 mm |
+| 坩埚分瓣数/间隙角 | 60 / 2度 |
+| 计算玻璃半径/高度 | 250/185 mm |
+| 表中玻璃质量 | 102 kg |
+| 线圈直径/匝数/总高度 | 570 mm / 7 / 230 mm |
+| 频率 | 282 kHz |
+
+570mm直径的具体定义、每匝高度、导体截面、底部偏置尚未从本表确认。保留现有合理近似并记录；禁止补造“文献精确尺寸”。正文实验描述还有不同高度表述，计算几何按185mm及相应图核对，不混入装料高度。
+
+J第三章正文55：rho=2800 kg/m3，beta=3e-5 1/K，mu上限1e5 Pa s。mu>1e4 Pa s用于冷层分析，不能自动实施为冻结/删除粒子。
+
+J正文62–67：
+
+| 边界 | 数值 |
+|---|---:|
+| 顶面对流系数 | 20 W/(m2 K) |
+| 顶面对流参考温度 | 303 K |
+| 顶面辐射率 | 0.9 |
+| 顶面辐射参考温度 | 423 K |
+| 冷却水参考温度 | 303 K |
+| 第三章后续主要结果侧壁h | 300 W/(m2 K) |
+| 第三章后续主要结果底部h | 300 W/(m2 K) |
+
+向外为正：qtop=20*(Ts-303)+0.9*sigmaSB*(Ts^4-423^4)；qside/qbottom=300*(Tw-303)。辐射全部用K。不同参考温度分开输入。检查粒子表面积权重，不重复计入显式冷壁与等效h的同一热阻。
+
+期刊参数另保留：已核对的期刊表1rho=2750、beta=1e-5，底部h=35 W/(m2 K)，结果总吸收功率50kW。博士论文第三章55kW的边界与结果不能覆盖成“同一个法国case”。
+
+## 3. 电导率A/B：用户已授权两方案比较
+
+### A：印刷公式，明确以K代入
+
+sigmaA(T)=10**(3.7921-3179.8/T_K)，单位S/m。
+
+配置名：JAC_PRINTED_FORMULA_K。1473K校验值42.990877 S/m。这是忠实实现印刷表达式，不等于证明原计算使用此式。
+
+### B：图中曲线及其单独标记的延伸模型
+
+纯读图表：jac_III12_sigma_trace.csv。1473K插值约13.677 S/m。
+
+为使工程温区能运行，附带候选拟合：
+
+log10(sigmaB)=3.76180-3869.11/T_K。
+
+拟合使用图中1100–1550K区间；最大log10残差约0.00664，RMS约0.00212。系数小数是拟合结果，不代表原始材料精度。图外部分属于模型外推。先使用JSON完整系数再统一显示有效数字。
+
+有价值的交叉核对：该拟合外推至1660K得到约26.98 S/m，与J正文71和图III.41的场最大值约27 S/m相容。它支持“图中关系有内部一致性”，不证明该拟合是作者原式，也不能证明低温外推正确。
+
+配置名：JAC_GRAPH_FIT_EXTRAPOLATED。必须与纯读图数据身份区分。不要再擅自加入摄氏温标版或更换系数凑图；若以后新增解释，应单独列为假设。
+
+| T K | sigmaA S/m | 图曲线B S/m |
+|---|---:|---:|
+| 1000 | 4.095 | 0.819 |
+| 1200 | 13.876 | 3.426 |
+| 1400 | 33.175 | 9.947 |
+| 1473 | 42.991 | 13.677 |
+| 1500 | 47.015 | 15.276 |
+| 1550 | 55.032 | 18.506 |
+
+## 4. 结果参考与适用范围
+
+J第三章55kW、轴对称、包含Marangoni：正文70–73、图III.36–43、表III.5。
+
+| 指标 | 原文值 |
+|---|---:|
+| 吸收功率 | 55 kW |
+| Tmax | 1660 K |
+| Umax量级 | 1e-3 m/s |
+| Qmax | 1.2e7 W/m3 |
+| Bmax | 约0.007 T |
+| sigma场最大 | 约27 S/m |
+| 顶面/侧壁/底部散热 | 30.8/20.5/3.7 kW |
+
+流动：内部外围热区上升、主环流在轴线闭合、最外层冷壁下降形成较小外围环流。不是两个简单上下等大的涡。
+
+Marangoni：d(gamma_surface)/dT=-1e-4 N/(m K)。正文比较55kW gamma=0与-1e-4及30kW。无Marangoni分支必须比较gamma=0曲线，不要求硬凑到含Marangoni的速度峰值。若当前没有可信实现，先做纯浮力，不通过增大beta补偿缺失项。
+
+附录3：固定总吸收功率时，sigma整体±15%的该组结果变化<0.3%；低温k变化可导致局部约100K、轴线附近速度约100%差异。这是特定算例的敏感性，不证明sigma温变形式或热源分布不重要。
+
+S图2.1主要是Uox2，不能覆盖J第三章R7T7/Uox1。S第109–112页EREBUS算例引用J物性：45kW稳定；55kW三维失稳，含热电偶、由已有解初始化，该处电磁100s更新、流体1s。不要与期刊稳态或其他文章更新间隔混用。
+
+## 5. Cursor执行步骤：避免重复工作
+
+### P0 冻结与接入
+
+1. 记录当前commit、dirty diff、物理基线和软件交接版本。
+2. 导入本包reference_data目录，保留raw CSV和metadata；不要自动重提取。
+3. 读取所有CSV并检查温度递增、正值、单位及有效范围。重复温度、异常值必须报告。
+4. 新建数据表适配层，不改公共流体核、不影响原A-phi分支。
+5. 保存raw表与solver表两个层次；检查mu对数轴、cp陡变和k平台。
+6. 输出mu/k/cp/sigma随T的独立图，对照本包QA。图像噪声修整不能当物性标定。
+
+### P1 建立明确的配置
+
+保留PAPER_NC_BASELINE；新增JAC_CH3_55KW_NO_MARANGONI和JAC_CH3_55KW_WITH_MARANGONI。后者若无实现标NOT_READY。
+
+共同参数rho2800、beta3e-5、R0.25、H0.185、f282kHz、边界按本文件。J第三章mu/k/cp来自本包；S曲线单独存档，仅用于其材料及对照。
+
+mu低温延伸及上限采取正文1e5约束并明确标记；保持图像提取平台原值作证据。cp/k端点小缺口单列处理，禁止将sigma大范围缺口按同样方式钳位。
+
+sigmaA与sigmaB_fit各保存独立effective配置；B必须记录哪些温区为外推。禁止改其他参数帮助某一方案胜出。
+
+### P2 离线与固定温度电磁对照，立即可做
+
+1. 在共同温度网格比较A/B；1473K的A应42.99、图表B约13.7，允许数字化精度范围。
+2. 使用同一个固定温度场、同几何/粒径/求解设置分别求EM。
+3. 若温度场仍来自Tmax1500假设图，继续保留ASSUMED，不改称论文原始场。
+4. 两方案保存归一化前功率、归一化因子、归一化后功率、Qmax位置、径向/竖向功率分布、上中下/近壁区域功率占比、残差及连续性指标。
+5. 总吸收功率相同不等于空间分布正确。不能只比较总功率或最大值。
+6. 保持现有已验证EM开关、自感设置、底板/屏蔽开关相同；不得偷偷加入新结构。
+
+### P3 热模块与热平衡，可与背景流排查同时进行
+
+1. 以本包k(T)/cp(T)核对热扩散与边界能量；可以先不求流动或用轻量轴对称热模型。
+2. 检查q符号、辐射温标、不同参考温度、面积权重和重复热阻。
+3. 输出Pin、Ptop、Pside、Pbottom、dEth/dt；变cp使用与模型一致的焓积分。
+4. 检查Pin-Pout≈dEth/dt；稳态再比较Pin≈Pout。
+5. 纯导热场是初猜和热模块检查，不是法国自然对流复现通过。
+
+### P4 238轮背景流问题单独处理
+
+先完成实际EOS的离线能量核算，不再大扫初始化参数。确认重力势能、压缩能、黏性耗散、密度重求和/裁剪/压力重置的能量跳变。重置U不能清除全部能量储备。仅凭压力正功不宣布压力算子是唯一根因。
+
+根据能量账本选择单项修复，再做OFF对照。不要清零速度、加无来源阻尼或改beta来掩盖背景流。P0–P3不必等待此问题全部结束；完整NC可信度须保留此限制。
+
+### P5 流动与完整耦合
+
+顺序：固定温度流动→给定Q的热流动→EM+sigma(T)更新。按物理特征时间、热量与动量演化决定是否继续，不直接以一次短跑没有双环流否决。
+
+先gamma=0；有可信Marangoni实现后再gamma=-1e-4。比较温度场、轴线速度符号、内部上升带、外围下降带、涡分界与持续性。A/B比较首轮只改变sigma，不同时调mu/k/h。
+
+B若更接近文献，可作为复现配置选择；仍不能称已证实印刷错误。两者无法区分时如实报告。
+
+### P6 后处理
+
+Python生成T/U/Q/mu/k/sigma的r-z图和指定剖面。明确轴方向、周向平均方式、有效覆盖、插值及掩膜。禁止跨墙插值、无数据填零再画流线、用强平滑制造闭合涡。流函数和原始矢量方向必须交叉核查。
+
+完整二维文献场尚未提取，当前不能声称已有逐点二维误差。可先比较原图结构、原文量级与散热；一维参考剖面是下一项可独立补充的数据工作。
+
+## 6. 通过标准与下一轮打包
+
+- 数据接入通过：单位/轴/温区正确，来源不混用，越界有记录；不要求消除原图自相矛盾。
+- A/B实施通过：相同固定T输入，唯sigma模型不同，归一化前后功率都在。
+- 数值能量误差与文献误差分开。先报告真实偏差及时间/空间收敛证据，不根据图片临时发明统一10% PASS。
+- FULL_REFERENCE_REPRODUCTION不能由“出现涡”“功率归一化通过”“物性表已接入”自动触发。
+
+下轮包：commit/diff、effective配置、输入表及hash、运行命令、原始CSV/日志、图像QA、A/B比较、热平衡账本、背景流新增证据、未完成项。当前无需重做已通过的全部方腔/TEAM7；只有公共求解器有实质改变时才扩大回归。
+
+## 7. 仍未解决的资料项
+
+精确线圈截面与逐匝坐标；印刷sigma公式与图的真正原因；原始物性表及保密测量；一维剖面数字化；完整二维场；期刊与博士工况逐项最终映射。本包并未替作者补造这些信息。
+
+
+<!-- ===== END 239_FRENCH_THESES_EXTRACTION_AND_CURSOR_PLAN.md ===== -->
+
+
+<!-- ===== BEGIN 239A_CLIENT_AND_FRENCH_CASE_SCOPE_ADDENDUM_2026-11-24.md ===== -->
+
+# 239A：甲方算例与法国参考算例的执行范围补充
+
+日期：2026-11-24
+修订：法国自然对流复现优先版；替代此前239A的并列执行顺序。
+配套文件：239_FRENCH_THESES_EXTRACTION_AND_CURSOR_PLAN.md及239完整数据包。
+
+## 1. 必须先读的范围说明
+
+239轮所有工作均保留，但执行优先级改为：**法国自然对流复现优先，阻碍该复现的共用数值问题紧随其后；甲方独有问题与后续实验标定保留在任务清单中顺序推进。**
+
+- 近期主交付：在可重复运行的法国参考配置中，取得可解释的温度分布、环流方向/结构、速度量级和热平衡证据。
+- 法国期刊自然对流结果仍是主要目标；Jacoutot博士第三章55kW是补充参考，不因数据更全就悄悄替代期刊50kW目标。两者分别报告。
+- 甲方线：保护已交接配置、软件和弹性搅拌桨；238已有轨迹优先离线归因，法国独立任务不必等甲方几何全部问题解决。
+- 共用修复：根据是否影响法国参考工况决定优先级，不以“所有历史测试全部关闭”为进入法国耦合的前置条件。
+- 所有旧任务保留，改为“本轮优先/有条件继续/后续保留”；不删除、不得改成已通过。
+- 本轮不是两套case同时无计划长跑，也不是只整理数据。前置检查可用后应实际推进法国温度驱动流动与电磁热源耦合诊断。
+- “文献复现占主要验收工作量”是当前组织工作的依据，不自动等同于已满足合同各条款或算法已全部验证。
+
+若239正文中“共同参数”“新增配置”等文字存在歧义，按本补充执行：博士论文参数只对新建的对应法国参考配置生效，不适用于所有算例。
+
+## 2. 本轮任务矩阵
+
+| 对象 | 必须推进 | 本轮不自动启动 |
+|---|---|---|
+| 甲方自然对流case | 保存原基线；238轨迹离线归因；影响法国工况的共用修复优先，甲方独有修复后续保留 | 将全部法国材料和边界覆盖进去；重新大范围调参；长时实验温度拟合 |
+| 甲方搅拌case | 保留已交接弹性桨、材质、驱动、几何和生效配置；若共享代码被修改，做最小必要短测 | 重新开发弹性桨、完整整圈运行、搅拌与EM的长时全耦合 |
+| 法国期刊及博士参考case | 最高优先：配置接入、OFF/ON短测、sigma A/B、热收支，具备条件后实际温度驱动流动和耦合推进 | 无条件长时三维耦合；立即重写Marangoni或冷壁电磁模型 |
+| 标准验证case | 保留既有证据；共享模块实际改变时进行对应的针对性回归 | 无依据重做全部方腔、TEAM7及其他历史测试 |
+| 客户软件 | 本文件不改变软件机当前冻结基线 | 将物理试验分支自动合并进交付版本 |
+
+“保留”不是声称物理已经通过全部验证。尤其不得将TEAM7现有进度自动改成PASS。
+
+## 3. 甲方配置保护
+
+首次运行前记录本机已有甲方NC与搅拌配置、文件路径、commit及dirty diff，不根据聊天摘要重新创建一套猜测配置。
+
+必须保留：
+
+1. 甲方STL、坐标、尺寸、液位和线圈布局。
+2. 甲方已经确认的物性、边界和驱动信息。
+3. 当前材料借用项及其来源。例如甲方曾允许电导率存疑时借用法国数据，不等于所有物性都应替换。
+4. 搅拌的elastic_driven模式及已确认不锈钢和转速参数；不得退回刚体动画。
+5. 电源输入功率与玻璃实际吸收功率的区别；不得自动把30kW电源输入当成30kW焦耳热。
+
+239不要求将甲方NC改成直径500mm，不要求改用法国7匝570mm线圈，不要求统一55kW，更不要求将甲方实验目标改成1660K。
+
+未知电流、实验测点、散热等仍按现有未知状态记录，不用法国数据伪装成甲方已确认值。
+
+## 4. 法国参考配置身份
+
+至少在现有配置系统中明确区分以下身份，名字可以按项目风格调整：
+
+- CLIENT_NC_BASELINE：甲方自然对流。
+- CLIENT_STIRRING_BASELINE：甲方弹性搅拌桨。
+- FRENCH_PAPER_NC_BASELINE：原自然对流期刊参考。
+- JAC_CH3_55KW_NO_MARANGONI：博士第三章纯浮力分支。
+- JAC_CH3_55KW_WITH_MARANGONI：博士第三章含热毛细分支，未具备可信实现时标NOT_READY。
+
+不能把这些配置写成同一文件反复覆盖。可复用同一可执行程序，不强制新建多个C++ test目录或重写框架。
+
+博士第三章参考采用R=0.25m、H=0.185m、rho=2800kg/m3、beta=3e-5/K、f=282kHz及239列出的对应边界；这些只属于该参考身份。
+
+期刊50kW与博士55kW的结果不交叉作为硬性验收值。Sauvage Uox2曲线独立存档，不作为Jacoutot第三章R7T7/Uox1的默认物性。
+
+## 5. 电导率A/B本轮在哪做
+
+首先在法国参考身份下，使用同一固定温度场对比：
+
+- A：印刷公式，以开尔文代入。
+- B：图曲线对应的拟合候选；超出可读温区的部分显式标EXTRAPOLATED。
+
+首轮只改变sigma，保持几何、固定T、总吸收功率目标、离散分辨率、自感/屏蔽/底板开关与收敛设置相同。
+
+输出原始功率、归一化系数、归一化后功率、Q空间分布与峰值位置、区域功率占比、残差及连续性指标。
+
+甲方案例本轮不必再重复完整A/B矩阵。后续需要借用某一关系时，另存CLIENT_*_BORROWED_SIGMA配置，说明借用及外推；比较甲方实验，不能以法国环流图是否接近来决定甲方真实电导率。
+
+## 6. 238轮数值归因如何延续
+
+238轮原配置继续保留用于归因，不能一边改几何/物性，一边宣称旧问题已定位。优先离线核算已有轨迹：动能、重力势能、与实际EOS一致的压缩能、黏性耗散、密度重求和/裁剪/压力重置事件的能量变化。
+
+同时在法国参考几何及明确配置下做同类OFF检查，区分：
+
+1. **法国参考中也存在影响目标流动的背景运动**：优先定位及修复；温变物性接入、固定T电磁和离线热检查继续推进。未解决前不宣称真实环流已经通过。
+2. **问题主要局限于甲方几何/边界设置**：保留证据与待办，不把甲方该项彻底关闭作为法国流动试跑前置条件。
+3. **法国参考仅有较弱且衰减的初始化扰动**：记录量级和衰减，结合ON响应及时间窗评估污染，不要求速度机器零或无限延长静水预处理。
+
+OFF/ON比较必须注明温度、mu、重力、初始化和边界是否相同；若需要改变热边界以维持固定T，明确说明对照范围。至少输出速度范数/高分位值、轴向有向剖面、动能、质心变化、扰动空间位置和随时间演化。若信号无法从背景区分，结论是“暂不能归因于浮力”，不是通过。
+
+不要因出现流线就忽略背景；也不要在证据尚不能影响法国主线时无限抠甲方OFF细节。根据账本选择单项机制修复，不清零速度、不加无来源阻尼凑图。公共模块确有修改时做相应回归，软件冻结版不自动更新。
+
+## 7. 执行顺序与本轮终点：法国主线优先
+
+### 7.1 本轮优先执行
+
+1. 冻结甲方配置；核对法国期刊50kW与博士55kW两套身份。列出几何、物性、热边界、功率、Marangoni和对比图，不混用。物性未知项继续注明借用来源。
+2. 接入239已提取曲线并检查单位、温区和插值/外推。先使用Jacoutot相应物性，Sauvage曲线保留对应材料身份。不重新从零提取。
+3. 法国配置做OFF短测及固定T浮力ON响应；同时进行固定温度下电导率A/B、电磁空间热源与热边界检查。238已有轨迹离线归因作为辅助。
+4. 前述检查若未暴露明显实现错误，即实际推进法国给定Q的热流动，再进入EM+sigma(T)更新的耦合诊断；不要只交“接入成功”便结束本轮。
+5. 先比较纯浮力对应参考；已有可信Marangoni时再比较含热毛细参考。缺失项及适用范围写明，不能靠beta补偿。
+6. 根据温度场、热收支、热源位置和流动时间序列安排分段续跑或有依据的单项修复。没有持续异常且尚未形成目标热场时，可顺序延长；禁止默认时间越短越好，也不无检查直接长跑。
+7. Python输出同坐标温度、速度矢量、Q及物性图。优先判断热点位置、内部上升带、轴线回流、外围下降带，再判断速度量级与散热分配；标准算例准确性仍独立保留。
+
+运行时长由有效时间尺度及演化决定，不能把“需要物理时间”当作无进展，也不能以无限延时替代原因分析。每一段必须说明热场是否仍在变化、背景是否污染、为何继续或停止。
+
+### 7.2 有条件继续
+
+- 法国工况暴露共用数值缺陷时，优先修复并做必要回归。
+- 共用修复影响甲方交接算例时，补最小必要短测；不把全部甲方矩阵重新跑一遍。
+- 电导率A/B先用固定T区分输入影响；后续耦合若差异明显再逐项比较。不同时调mu、k、h和功率帮助某方案胜出。
+
+### 7.3 后续保留，未取消
+
+- 甲方几何独有的边界/背景流细节，以及实验温度标定。
+- 甲方完整整圈与长时电磁-热-搅拌耦合。
+- 法国搅拌对应工况的系统复现，优先级在自然对流主线之后。
+- 非当前阻塞项的TEAM7等遗留验证；保留真实未通过状态。
+- 文献一维剖面和二维场进一步数字化，未交付部分不得猜测补齐。
+
+甲方后续允许对不确定有效换热、吸收功率或存疑物性进行标定；需独立配置、记录依据、比较实验。已确认几何与测点不能为凑图随意改，标准验证算例不能这样标定。
+
+### 7.4 本轮必须给出的结论
+
+本轮重点是“法国复现推进到哪一步，以及下一项真正阻塞是什么”，不是仅交一批输入图。至少报告：
+
+- 法国OFF/ON对照是否能区分浮力响应，若不能，具体污染源与下一项单因素实验。
+- sigma A/B实际运行情况及Q空间差异。
+- 热边界是否生效、温度场和散热是否具有合理演化。
+- 法国流动/耦合是否已经运行；未运行必须说明具体实现阻塞，不能只说甲方待办未清完。
+- 环流方向/结构、热点与冷层、速度量级及收支的适用范围。
+- 甲方后续工作保留清单及共用代码影响范围。
+
+不要求本轮无论结果如何都宣称双环流复现，但也不允许在前置项可用后自行停止在数据接入阶段。
+
+## 8. 报告要求
+
+每个结果必须携带case_identity、geometry_id、material_source、thermal_bc_id、power_control_mode、Marangoni开关、commit/dirty状态与effective配置。
+
+报告分为：
+
+- CLIENT：238问题定位、修复及回归；搅拌原配置保护状态。
+- FRENCH：输入接入、sigma A/B、热收支及图像对照。
+- SHARED：实际修改的通用代码及影响范围。
+- OPEN：尚未解决项及下一步单项实验。
+
+物性数据、固定T电磁、热平衡、OFF背景流、环流趋势、完整复现分别给状态。某项完成不自动证明其他项通过。
+
+文献一维剖面与完整二维场目前未完成数字化。本轮可用已有原图、方向、量级和热功率表做明确范围的比较；不得声称已有完整逐点二维误差，不要求Cursor用猜测填满数据。
+
+## 9. 给Cursor的一句话指令
+
+按239执行，239A修订版优先约束执行顺序：法国自然对流复现优先，接入数据后实际推进法国OFF/ON、电磁A/B、热平衡与分阶段耦合；共用缺陷按是否阻碍法国主线处理。甲方和其他验证任务全部保留，但甲方独有问题不再成为法国工作的统一前置条件。不得覆盖甲方原配置，不重做已交付提取，不无计划开启双线长跑。
+
+
+<!-- ===== END 239A_CLIENT_AND_FRENCH_CASE_SCOPE_ADDENDUM_2026-11-24.md ===== -->
+
+
+<!-- ===== BEGIN 240_OPHELIE_FLOW_THERMAL_CLIENT_HANDOFF_AND_LINUX_BRANCH_CURSOR_PLAN_2026-11-24.md ===== -->
+
+# 240：法国低速自然对流突破、甲方两案补齐与Linux软件分支交接
+
+日期：2026-11-24
+执行对象：物理开发机上的Cursor；第12节为Linux软件机交接约定。
+前置资料：Doc239 lean交接包、239物性数据包、修订版239A、238本地完整证据。
+
+## 0. 本轮决定与优先级
+
+用户最新要求：法国复现仍是验收主要物理目标；同时补齐甲方自然对流和弹性搅拌两案的软件调用闭环，用户另开分支开发Linux软件。
+
+本轮四个结果：
+
+1. 在法国固定域模型中降低非浮力背景运动，获得可分辨的浮力响应。
+2. 让局部k(T)、cp(T)、mu(T)进入真正的计算路径，建立合理冷壁温度初猜。
+3. 非均匀T下完成sigma A/B，使用明确的功率控制，检查EM热源传递时序。
+4. 交付甲方两个真实可运行算例、配置、输出和重启证据，使Linux软件开发可以立即开始。
+
+这不是重写SPHinXsys，也不是把两个工程case全部调到定量验收精度后才允许开发GUI。软件流程可用、数值模块验证、法国复现和甲方实验温度对齐分别记录。
+
+甲方两案交接准备在本轮开始即开展，不等待法国主线全部结束；GPU运行按依赖顺序排队，避免争抢显存导致失败。
+
+本文件接替239的下一轮执行计划；239数据和全部未完成事项保留。独立A-phi/Laplace研究不改。没有用户取消授权的必要回归/可逆修复，Cursor自主推进，不在每一步完成后反复要求用户重新批准或手工触发下一命令。
+
+## 1. 已审查的239事实，禁止错误归因
+
+Doc239记录的HEAD为845e580de9ad13fc49eda78add5586531b811ab1，分支feature/EM-Biot-Savart；存在WIP，HEAD并不等于所有运行代码。以本机实际状态再次冻结，不假装本轮包包含完整源代码。
+
+| 事实 | 本轮意义 |
+|---|---|
+| 法国OFF 1s U_rms_end=0.0290414m/s，Umax=0.128176m/s | 背景足以污染约1e-3m/s的参考流动 |
+| 对应ON U_rms_end=0.0292271m/s | 浮力信号尚不能由速度范数分辨；不说明浮力力链必然错误 |
+| hydro_model=open_free_surface，paper_flat_slip_top=0，total_p_plus_GravityForceCK | 与期刊固定平坦滑移顶面存在模型差异 |
+| constant_thermal_rheology=1；P6 mu_min=max=2.39045，cp约1598.77，k约6 | 物性表导入不是完整局部温变物性生效 |
+| P2为1473K均匀T下A/B | 接线已查；不能替代非均匀T热源形状比较 |
+| 配置描述fixed_absorbed_power，P6实际fixed-current | 必须统一实际生效控制与报告 |
+| P6 EM重建功率与流体热量功率差约0.7%，存在交替变化 | 需要查量的时间戳、映射开关与取样路径；不能直接断言漏能 |
+| 初始均温1473K、Jac BC下散热约221kW | 初态冷却合理；不是必须新增冷壳厚度的证明 |
+| P5 french_energy_budget.csv只有表头；P6有31行数据 | P5仅可引用摘要及日志量，不能声称该CSV支持时间积分 |
+| 多个summary passed=1而validation_passed=0 | 技术短跑成功不能写成物理验证通过 |
+
+包未提供本轮全部源码、粒子事件、kinetic_work.csv，故尚未证明具体哪个算子是唯一根因。不要从“声学步骤后速度出现”跳到“已证明压力公式坏了”。
+
+## 2. 配置隔离与本轮执行表
+
+保留以下身份，允许共用可执行文件：
+
+| 身份 | 用途 | 不得混入 |
+|---|---|---|
+| CLIENT_NC_BASELINE | 甲方几何自然对流，软件可运行基线 | 法国500mm/7匝/55kW未经说明覆盖 |
+| CLIENT_STIRRING_ELASTIC_BASELINE | 甲方不锈钢弹性桨及既有驱动 | 刚体动画替代真实弹性求解 |
+| FRENCH_PAPER_NC | 期刊50kW目标及其边界 | 博士55kW结果当成同一硬性验收值 |
+| JAC_CH3_55KW | 已知物性较完整的博士参考，分gamma=0/含Marangoni | Sauvage Uox2与Jac Uox1物性混用 |
+| FRENCH_FIXED_DOMAIN_DIAGNOSTIC | 固定平坦滑移顶面/压力诊断 | 作为甲方真实自由液面模式默认覆盖 |
+
+每次运行写出effective配置和几何/物性表hash；配置中的PENDING_WIRE、声明值与实际生效值必须被程序验证，不得将手写JSON当作执行证据。
+
+## 3. P0：第一时间冻结甲方软件可用基线
+
+### 3.1 只做一次本机盘点
+
+记录git status、HEAD、分支、WIP diff、实际目标与二进制hash、运行所需STL/reload/物性表/相对路径。不得reset --hard、clean -fd、强推或git add整个仓库。
+
+确认每个甲方case最后一次可运行版本及参数；找不到证据则标UNVERIFIED并安排短测，不按聊天记忆重建假配置。
+
+### 3.2 立即形成软件交接候选
+
+- 复用既有validate/prepare/run、JSON和CLI约定。先查本机实现与软件计划，不凭空新设计另一套协议。
+- 若只有现有binary，可用薄包装层调用，但参数检查、退出状态、输出目录、日志路径必须真实可用。
+- 未有GUI不阻止物理侧输出求解器交接包。
+- 产生基线提交时，只提交明确列出的源码、构建文件、配置、表和小型必需资产；大体积结果另打包。
+- 脏目录不允许直接共享给第二台机并称其为版本。要提交可审查改动，或交付base+完整补丁及补丁hash；优先可直接构建的提交。
+
+P0完成后软件机即可开始，物理机继续P1–P6。尚未通过真实短跑的功能在交接状态中明确标注。
+
+## 4. P1：将流动诊断收敛为三种配置，而非全开关扫描
+
+### 4.1 先审查现有实现
+
+查清paper_flat_slip_top、reduced_pressure/pprime、既有静水背景场、Riemann边界及TVF相关代码。阅读调用顺序、内外算子和墙接触，不只看开关名称。
+
+不要因为旧开关存在就认定已正确实现；也不要在没有审查前再写一个重复版本。保留原始低耗散Riemann主框架，先在OPHELIE局部配置/适配类隔离。
+
+### 4.2 有限对照矩阵
+
+| 配置 | 顶面 | 压力/重力 | 目的 |
+|---|---|---|---|
+| F0 | 239开放FS | 原总压+重力 | 已有对照；证据足够时不再重复 |
+| F1 | 固定平坦不可穿透、切向滑移 | 保持原压力/重力 | 只改变顶面，识别其影响 |
+| F2 | 与F1相同 | 一致的静水分解或扰动压力路径 | F1仍污染时才做；定位基准重力平衡影响 |
+
+除上述变量外，F1与F2分别保持几何、粒子排布、温度、mu、步长策略和输出一致。首先冻结T0常数物性检查动量，不同时加入大范围温变mu，避免把刚度与边界错误混为一谈。
+
+### 4.3 固定平坦滑移顶面的边界含义
+
+- 顶面位置固定；法向速度为0；侧/底仍按目标文献无滑移。
+- gamma=0时顶面切向黏性牵引为0，不是切向速度为0。
+- 顶面机械条件与顶面对流/辐射分别施加，不能加机械顶面就取消散热。
+- 使用现有墙粒子/边界能力，默认不引入需重新布置ghost粒子的工程流程。
+- 不能仅每步剪裁z、清零整个速度或施加经验dashpot，冒充正确边界。
+- 必要的边界法向投影必须与边界离散一致，并记录反力/能量变化；不将全域非物理耗散藏进边界。
+- 核对原自由液面识别、密度修正、压力大气钳位是否仍错误作用在固定顶面；检查角区重复施加。
+- 增加顶面切向均匀滑动的针对性检查，确认没有把free-slip误做no-slip。
+
+### 4.4 F2压力分解的实施边界
+
+连续模型：p=p_h+p'，grad(p_h)=rho0*g。参考rho0重力被静水背景平衡，温变浮力保留。
+
+若采用Boussinesq固定域扰动压力形式：明确rho是声学辅助密度，rho0是基准惯性密度，beta(T-Tref)是浮力密度差；EOS返回的是p'还是p_total，必须一致。
+
+必须一起审查：
+
+1. 内部压力梯度与墙压力边界。
+2. 连续性、密度重求和及密度/压力裁剪。
+3. Riemann左右压力及速度状态。
+4. 静水背景是否已加在某处，避免双计或漏计。
+5. 顶面/侧壁/底部基准压力/牵引。
+6. 诊断压力、真实总压力和施力压力的字段含义。
+7. 初始化及每次重启的状态。
+
+不能只关闭GravityForceCK而保留原静水密度场，再称为等价分解；不能将上一步实测残余力永久反向补偿。若完整分解不具备条件，只做清楚标记的隔离诊断，不发布生产正确性结论。
+
+### 4.5 静态残余与OFF/ON运行
+
+先在未移动粒子上输出压力/重力/墙作用与净加速度，按内部、侧壁、底部、顶面、角区分区。输出质量加权范数、有向分量和高分位值；不是再次只看全域合力。
+
+OFF检查：U=0，等温，无热源，无热边界演化，浮力关；t=0、首声学步、0.2s、1s记录；若稳定再延长到5s确认无持续增长。
+
+ON检查：首先使用与239相同的冻结径向热核DT30作为力链回归，与对应OFF同物性/同时间窗；温度非均匀但mu暂固定，其他设置一致。径向热核可导致中心上升，不能要求它复现法国外围热区上升的拓扑。
+
+通过基础响应后，使用带外围内部热区的同一固定T场做OFF/ON。该温度场的来源/假设明确；不把人为初猜称为文献原始场。
+
+不必每个失败配置都继续跑5s；1s已显示持续增长或明显污染时保存证据，转到下一项有依据的实现检查。
+
+### 4.6 本轮工程诊断门槛
+
+以下是本轮内部筛选标准，不是文献或合同规定：参考速度尺度Uref=1e-3m/s。
+
+- 进入可信环流评价前，选定时间窗OFF质量加权U_rms应不超过1e-4m/s，且持续无增长；U的99分位原则上不超过3e-4m/s。若局部角点异常，单独报告，不删除异常点后宣布通过。
+- 对应ON应出现与温度梯度相符、持续存在的有向响应；主比较剖面信号建议至少为同位置OFF背景的5倍。OFF接近零时报告绝对差，不用除零制造无限SNR。
+- 未达到门槛仍可做探索性热流动，但不得标FLOW_VERIFIED；须说明背景相对目标量级。
+- 速度范数ON-OFF不能代替逐位置/同采样算子的矢量与有向剖面对比。
+- 任意清零/投影/边界约束能量变化应列入预算。
+
+F1可用则不必强制开发F2。F1、F2都失败时停止新增lid/TVF/密度开关排列，交付具体算子与首步事件证据，进入单项修复，不回到无目的参数扫描。
+
+## 5. P2：真正接入局部温变热物性，先固定粒子
+
+### 5.1 必须看实际算子而不是材料标签
+
+建立property_path_audit.md，列明每个字段生产者、存储位置、消费算子、更新时刻、CPU/GPU路径：
+
+- k_i(T_i)：粒子内导热及边界处理。
+- cp_i(T_i)/h_i(T_i)：温度推进、源项、热边界和能量积分。
+- mu_i(T_i)：黏性力、时间步及隐式求解。
+- sigma_i(T_i)：EM求解、松弛与更新。
+
+日志与CSV同时输出真实最小/均值/最大值；若T场有明显跨温区变化而这些始终等于T0值，则接入未完成。平均物性不是局部变物性。
+
+### 5.2 热离散与能量
+
+固定粒子，保持质量和体积定义一致，先关闭动量更新，隔离热模块；不是仅zero-buoyancy，因为239即使浮力关粒子仍有显著运动。
+
+热方程可写为m_i dh_i/dt=sum_j Q_ij+Qsource_i+Qboundary_i，h(T)=integral cp(T)dT。粒子对通量应反对称，使用与既有验证一致的正导通系数；不要只按邻居算术平均mu/k随意改算子。
+
+边界热流产生的能量和粒子实际焓增必须同账。变cp不能在扩散用cp(T)而边界温升用cp(T0)。若暂采用温度形式，需要以相同积分/迭代精度验证焓收支。
+
+只做必要核对：
+
+1. 均匀T、绝热、无源，应不产生温差与净能量变化。
+2. 非均匀T、绝热、无源，内交换守恒，温度趋势合理。
+3. 给定Q及Robin/辐射，独立积分热源和热损与焓变化闭合。
+4. 对本轮新变系数实现做一次针对性的两层导热/串联热阻核对；若复用已有已验证实现则引用对应证据，避免镜像实现的重复测试。
+
+### 5.3 边界原文值与初态含义
+
+Jac第三章：h_side=h_bottom=300，h_top=20 W/(m2 K)，Twater=Tair=303K，Trad=423K，eps=0.9，R=.25m、H=.185m，吸收55kW。期刊目标单独保存。
+
+均温1473K时理论裸壁散热约222kW是合理瞬态条件。1–2s冷却不是失败，也不是必须引入未知skull厚度的证据。
+
+对应Jac稳态散热20.5kW侧壁、3.7kW底部，以该h反算面积平均表面温度约538K和366K，仅是诊断反算，不能硬施加为Dirichlet条件来制造结果。
+
+全玻璃域含冷玻璃时，由k(T)、mu(T)、热边界及能量演化形成冷层；本轮不增加串联skull热阻以补偿初态。若已有case实际裁去了冷区，应先明确域边界后再定义等效模型。
+
+## 6. P3：快速生成冷壁温度初猜，不等待三维声学跑到热平衡
+
+### 6.1 优先实现顺序
+
+先复用已有固定粒子隐式热求解。若没有且显式受限，则允许隔离的轻量轴对称有限体积/有限差分热计算生成初猜，不能替代SPH最终验证，也不扩展成完整新CFD平台。
+
+轴对称模型应包含(1/r)*d(r*k*dT/dr)/dr及竖直导热；r=0按对称通量，r-z能量积分用2*pi*r体积/面积权重。不能将平面二维方腔当轴对称圆柱。
+
+输入Q依次采用可追溯给定Q和当前EM的轴对称Q；归一化目标功率与几何体积一致。非均匀Q不能在整个温度更新中又均匀化。
+
+非线性k、cp及辐射采用有残差检查的迭代/隐式步进，选择可实施方法即可，不强制一个求解器库。输出稳态残差或真实伪时间，不将伪时间说成实验升温时间。
+
+### 6.2 适用范围与收敛
+
+纯导热结果只作初猜/热账参考。缺少对流时Tmax和热点位置可能不同于文献，不能硬凑1660K或把30.8/20.5/3.7kW设成强制分配。
+
+输出T(r,z)、边界T分布、Ptop/Pside/Pbottom、Pin、焓或稳态残差。映射回SPH后重新核算边界和热源，不假设参考模型与SPH的热账完全一致。
+
+初猜收敛的建议内部标准：连续两个诊断窗口的归一化能量不平衡<1%，Tmax及质量平均T变化各<0.5%；做一次时间步减半或网格加密，确认主要结果差异<2%，否则报告尚未收敛。这些是初猜质量检查，不是法国复现验收。
+
+在冷区特征尺度上至少能辨别温度梯度；dp15mm粗粒子无法声称精确解析毫米冷层。先使用参考热网格生成平滑初猜并保存映射误差，再判断是否确需SPH局部/全局加密，不在物理路径未正确前扫五个分辨率。
+
+禁止无检查把纯导热高温解用于生产：若越过物性有效范围、Boussinesq假设不再适用或热量不平衡，先报告并调整初猜求解，不通过温度硬裁剪隐藏失败。
+
+## 7. P4：局部mu(T)与低速流动重连
+
+1. 优先复用已经验证过的局部变mu及隐式黏性实现；核对当前frozen_q生产入口是否真正调用它，而不是其他入口通过后自动宣布迁移完成。
+2. GPU隐式优先；若本轮确实不能可靠完成，允许CPU隐式黏性或已有准确路径作为隔离回退，报告设备、性能及数据传输。准确性优先于全部GPU，禁止用大幅减小mu代替。
+3. 先运行常mu与统一粒子mu字段等价性；已有证据适用时引用。再用239/227已验证的变黏度Couette等针对性检查，不要求全部基准重跑。
+4. 用P3温度初猜计算mu分布，输出mu_min/max、达上限粒子比例、mu>1e4区域形状与有效流动区域。
+5. mu>1e4是文献冷层分析阈值，不自动冻结/删除粒子。若采用冻结等额外模型需独立身份，本轮不默认实施。
+6. 真实时间步与黏性更新时间一并审计；隐式并非允许任意大步长，仍检查时间步减半的关键剖面及耗散趋势。
+7. 在低背景固定域上先固定T求流动，再解热流动，最后开EM更新。恢复移动粒子时，明确温度/物性更新与cell/邻域重建顺序；不要重复引入已修过的邻域年龄问题。
+
+Jac图mu低温平台约8e4与正文1e5上限的差异保持记录；本轮选定一个有来源配置，不为此扩大扫描。Sauvage Uox2物性不混入。
+
+## 8. P5：非均匀T电导率A/B与恒吸收功率
+
+### 8.1 控制模式必须真实一致
+
+法国复现选fixed_absorbed_power，每次EM重求解后吸收功率目标仍为55kW（博士）或对应期刊50kW。线性、材料固定的谐波EM求解可通过Inew=Iold*sqrt(Ptarget/Praw)调整激励，但复数J、场及Q应一致缩放，记录所有因子。若模型不满足该线性前提，按实际求解处理。
+
+fixed-current保留为独立诊断身份，不用它冒充恒吸收功率。功率控制与更换sigma是两件事，先明确模式，再做A/B。
+
+### 8.2 A/B输入
+
+- A：10**(3.7921-3179.8/T_K)。
+- B：使用239附带的图拟合，明确拟合区1100–1550K与外推区域。
+- 同一个非均匀温度场；先用P3初猜或已有明确ASSUMED场，不能两方案各自选不同T初态。
+- 其余geometry、粒子、底板/屏蔽、自感、容差、功率目标一致。
+- 均匀T0下已有接线不重复；本轮关注形状差异与热点位置。
+- 输出sigma值和外推粒子比例/体积分数；冷区sigma跨多数量级要检查线性求解残差与预条件，不用改变公式静默削平。
+
+### 8.3 Q传递与交替偏差
+
+给每个量加physical_time、em_generation、temperature_generation、particle_state_generation，至少同时区分：EM原始总功率、EM网格积分、流体实际施加瞬时功率、该热子步实际能量。
+
+检查periodic_refresh时conservative_remap是否从1变0；这可能是模式标志或真实路径变化，须审源码，不能只凭CSV猜测。核查日志交替采样是否一条对应诊断、一条对应实际施加，排除重复施加与阶段错位。
+
+同一状态下固定Q、固定粒子先确认传递。随后移动粒子检查；必要的守恒重映射要保留局部形状并记录修正幅度。
+
+本轮建议固定状态传递相对误差<0.1%，移动状态累计热源能量偏差<1%；这是内部调试指标，达到不代表EM空间场验证完成。记录相对EM功率和相对目标功率的两个偏差。
+
+P6末端恰好触发EM刷新却没有后续热子步时，transfer标NOT_MEASURED_NEXT_THERMAL_STEP，不因为没有下一步数据而判传递已通过；可多走一个必要热子步补测。
+
+### 8.4 后续耦合
+
+先用诊断短间隔确认更新，再根据温度/sigma变化选择更新间隔，不默认0.5s或100s是普遍正确值。初猜之后允许分段续跑；对照时间间隔减半对主要结果的影响，避免无意义地每声学步解EM。
+
+## 9. P6：甲方自然对流与弹性搅拌两案必须完成的交接
+
+### 9.1 甲方自然对流
+
+- 原甲方STL、坐标、液位、线圈配置及材料来源保护。
+- 区分电源输入、玻璃吸收、真实EM热源、给定体积热源；用户界面应能显示来源。
+- 跑一次有效短窗，覆盖至少一次热更新、一次实际EM更新（如果该模式承诺周期EM）以及结果写出。
+- 记录温度、速度、质量/逸出、热收支、求解残差和背景限制。不能把“未崩溃”标为实验温度1000C验证通过。
+- 如共用流动修复需用于甲方，独立配置回归；法国固定顶面不能未经说明覆盖甲方原物理边界。
+
+### 9.2 甲方弹性搅拌
+
+- 核对真实elastic_driven，不锈钢参数和既有10rpm等已确认驱动；以本机effective文件为准，不重新猜几何或材质。
+- 确认固体内部应变/应力求解实际运行，驱动施加于既定驱动区，非全桨刚体坐标动画。
+- 短窗应覆盖固体子步、流固载荷交换及写出，报告驱动角度和扭矩/力/位移/应力的适用量。
+- 若短窗不足分辨弹性形变，标“弹性路径运行”，不为展示夸大形变或降低E；由独立固体基准提供正确性证据。
+- 若热源用替代模型就标替代模型；真实EM/完整FSI热耦合未运行则保留未验证状态。
+- 本轮不强制一整圈，不因此停止软件交接。
+
+### 9.3 重启与可调用性
+
+每案至少一次短跑+结果加载；若软件承诺restart，则做保存-重启的短窗核对，保存粒子ID/排序映射、温度、密度/压力、固体形变/驱动相位、时间和必要EM状态。
+
+若当前还没有可信restart，不伪造支持；标功能缺口，软件先禁用该按钮，提供从初态重跑。不能为了“完整”发布虚假的继续计算。
+
+正常结束有非空summary、结果帧及CSV；错误配置有明确非零退出码或结构化失败，不能输出一个passed=1。每案都提供可直接复制运行的命令，无交互相对路径依赖。
+
+本轮短测时长按子步/刷新覆盖确定并写明，不随意指定1s作为所有case充分证据。可复用仍匹配当前binary/config hash的既有有效结果。
+
+## 10. Python后处理与判据
+
+统一输出T/U/Q/mu/k/cp/sigma的r-z图；甲方几何不轴对称时保留真实剖面与三维结果，不强做轴对称。
+
+- 标注原始粒子与插值网格、掩膜、周向平均、有效覆盖率、坐标轴及重力方向。
+- 边界附近不跨墙插值，无数据不填零制造流线。
+- 速度矢量与流函数重建交叉核对；若散度/覆盖不满足，流函数标近似，不能据闭合线宣称真双涡。
+- 输出轴线、内部上升带、外壁下降带的有向速度及时间序列，固定探针和空间采样定义。
+- 法国热核初猜与文献温度分布不同，需展示，不用相同颜色范围掩盖数值差异。
+- 期刊与博士、含Marangoni与纯浮力分开比较。Marangoni未实现不是本轮重写大模块的授权，也不掩盖差异。
+
+文献一维剖面与二维场未在239数据包完成数字化。当前原图、方向、量级、散热可用，不能声称逐点二维误差或强行填满图像数据。本轮参考提取若有独立可用资源可以补，但不阻塞其他工作。
+
+## 11. 本轮最小运行清单与停止规则
+
+| ID | 必须/条件 | 核心问题 |
+|---|---|---|
+| B0 | 必须 | 甲方配置与软件基线冻结、资产完整 |
+| F1_OFF | 必须 | 固定滑移顶面是否减小背景 |
+| F2_OFF | F1失败且分解实现具备条件时 | 静水分解能否改善平衡 |
+| F_ON | 选定可用配置后 | 浮力响应能否与OFF分离 |
+| T_FIXED | 必须 | 局部k/cp热路径与能量一致 |
+| T_INIT | 必须推进 | 冷壁温度初猜形成，报告有效温区 |
+| MU_LOCAL | 必须推进 | 局部mu进入实际入口，刚度处理明确 |
+| EM_AB_NONUNIFORM | 必须 | sigma温变形式对空间热源影响 |
+| CLIENT_NC_SMOKE | 必须 | 甲方自然对流真实调用/结果闭环 |
+| CLIENT_ELASTIC_SMOKE | 必须 | 甲方弹性桨真实调用/结果闭环 |
+| F_COUPLED | 前置通过后 | 实际向法国耦合流动推进 |
+
+相同编译/输入错误先修复再跑，不靠降低门槛继续。失败需保存一个足以定位的事件包，不保存十套重复大输出。
+
+不进行dp×CFL×TVF×lid×mu×sigma的笛卡尔扫描。先固定dp15mm诊断；只有热层分辨/收敛证据需要时加一个更细分辨率，不把它变成无穷研究。
+
+任何阻塞不会自动阻止甲方软件交接：可运行路径冻结、未达物理标准的标签保留；但不可将有数值崩溃的路径伪装为默认可用。
+
+## 12. Git分支与Linux软件工作约定
+
+### 12.1 原则
+
+物理机继续当前物理工作；软件机从明确的可运行提交创建独立Linux软件分支。分支名按仓库现状确定，建议feature/ophelie-linux-desktop与物理后续分支区分。
+
+不要为开分支丢弃未提交修改。已有物理WIP必须明确整理成提交或补丁；不能仅给845e580de这个旧HEAD并声称包含239改动。
+
+软件开发可以立即从已有可运行基线开始，不等240全部通过。240后产生v240候选，再选择性迁移已验证物理修复。
+
+### 12.2 提交边界
+
+建议独立提交：基线/配置交接、物性适配、固定顶面、静水分解、热模块、局部黏性、功率控制及Q映射、甲方回归、软件封装。实际按依赖顺序组织，不强行为每个文件一个提交。
+
+不要让GUI改动和试验性力学改动混在同一个提交。后续合并/挑选必须包含必要依赖、表和资产，不能只拣一行修复。先审差异再合并，不强推。
+
+两台机器独立clone/工作目录下，一台commit/push不会自动改另一台文件；另一台pull/merge/rebase/checkout等才引入改变。不要共享同一个网络工作目录同时编辑。
+
+### 12.3 软件机首先接什么
+
+- 求解器可执行入口或既有薄包装；validate/prepare/run/replay实际支持项。
+- 两个甲方项目及可编辑参数schema/示例；默认值来源。
+- STL/reload/物性表及路径规则和许可证/使用限制（沿用项目已有说明，不另造）。
+- 构建环境说明、device选择、二进制与动态库要求；本轮只承诺已有验证的Ubuntu GPU路径，CPU切换支持以实际证据为准，不把Windows打包带进来。
+- 成功/失败状态、进度、日志、输出目录、取消行为与结果格式。复用已有协议，不重做不兼容API。
+- 真实计算和回放清晰区分；已有结果可用于开发结果视图，但不能把回放说成刚完成求解。
+
+状态建议逐项：workflow_completed、em_ran、thermal_ran、elastic_ran、coupling_exercised、background_flow_status、reference_validation_status、experimental_validation_status。旧passed字段如需兼容，文案只能表示明确范围。
+
+软件内提供原始数值单位和材料/热源来源，不把试验调试开关全部暴露给最终用户。后台effective配置和详细报告供审查追溯。
+
+## 13. 证据与交接打包：精简不能删掉关键证据
+
+交付docs/ophelie/reference/doc240_runs/（可按项目已有结构调整），至少包含：
+
+1. ROUND240_REVIEW.md：结论、变化、阻塞、下一步。
+2. CASE_IDENTITY_TABLE.csv及每次effective配置。
+3. SOURCE：base提交、完整WIP补丁或提交列表、关键C++/hpp、对应CMake、改动函数索引；禁止只交摘要无源码。
+4. 首步静态力残余CSV、少量含稳定粒子ID的关键事件；kinetic_work完整CSV；无需所有时间帧，但决定根因的帧不能删。
+5. OFF/ON同窗有向剖面及原始时间序列；修正239中固定0–5s窗口却只跑1s的问题，未覆盖窗标NOT_EVALUATED。
+6. 热CSV必须包含数据行与实际末时间；表头文件标EMPTY，不能当证据。输出文件copy之前确认本次run_id，防止沿用共享output目录旧文件。
+7. EM A/B和Q传递时序CSV，软件所需两案非空结果帧。
+8. property_path_audit.md、局部物性分布/范围及隐式求解残差。
+9. SOFTWARE_HANDOFF.md：稳定提交、依赖、命令、功能状态、已知限制。
+10. Linux软件机最小输入资产和两案配置；大输出不入Git，数据包保存hash。
+
+程序运行目录为每案每run独立路径，禁止多个作业共用output并靠覆盖backup管理结果。
+
+摘要各项用PASS/FAIL/NOT_RUN/NOT_EVALUATED/EXPLORATORY，写出原因。不能再出现passed=1却让用户误以为validation_passed=1；末端无传递测量、能量参考原点、冷层未解析等分别解释。
+
+## 14. 本轮交付成功的定义
+
+至少得到：
+
+- 两个甲方算例的软件调用交接闭环，或具体到功能/文件的未就绪项；可用版本足以让软件机开工。
+- 固定域OFF/ON的一组有归因结果；若未成功，则明确到首步离散作用与下一项修复，而非只说压力噪声。
+- 温变物性是否真实生效的证据，固定粒子热账及冷壁初猜的实际结果。
+- 非均匀T的电导率A/B，以及恒吸收功率实际生效/尚未生效的真实报告。
+- 在前置具备时，确实进入法国温度驱动或EM耦合计算，而不是所有工作停留在1s接线检查。
+
+不承诺本轮一定完成法国所有图和实验温度误差；也不允许因为未达到全部目标就只提供泛泛总结。法国复现、甲方适配、软件功能和标准验证是四种状态，分别给证据。
+
+
+<!-- ===== END 240_OPHELIE_FLOW_THERMAL_CLIENT_HANDOFF_AND_LINUX_BRANCH_CURSOR_PLAN_2026-11-24.md ===== -->
+
+<!-- ===== BEGIN 241_OPHELIE_FRENCH_TEMPERATURE_FLOW_AND_CLIENT_ELASTIC_RELEASE_CURSOR_PLAN_2026-11-24.md ===== -->
+
+# 241_OPHELIE_FRENCH_TEMPERATURE_FLOW_AND_CLIENT_ELASTIC_RELEASE_CURSOR_PLAN_2026-11-24.md
+
+# 241：法国温度场—环流联合对比、甲方弹性搅拌修复与Linux软件可运行交接
+
+日期：2026-11-24。执行对象：物理开发机上的Cursor。
+
+本任务接替240的下一轮物理开发安排；239物性数据包、239A身份隔离要求继续有效。不要修改独立A-phi/Laplace研究分支。软件开发可同时进行，但本轮必须交付甲方两案的真实运行能力，不能仅交付禁用按钮或历史回放。
+
+## 1. 本轮决定：先修甲方阻塞，同时以温度场组织法国复现
+
+最终目标有两个，分别验收：
+
+1. **甲方软件基线**：甲方自然对流可真实执行电磁—热短跑；甲方搅拌采用不锈钢弹性桨，实际运行到规定短窗并输出可展示结果。软件开发不再被粗reload失败卡住。
+2. **法国论文主线**：用同次计算的温度剖面和速度场联合对比，主看期刊Fig.8温度场，辅以Fig.7环流趋势，再追踪Fig.6热源。不再以“画出两个涡”作为唯一推进门槛。
+
+本轮顺序：冻结代码与证据 → 修甲方reload/弹性短测 → 甲方两案交接候选 → 法国历史F2回归 → 论文目标温度数据与当前场联合对比 → 修一个有证据的主问题 → 更新交接。CPU侧数据整理可穿插，单GPU上的正式计算串行排队。
+
+若时间紧，先完成甲方两案交接和法国首组联合对比；不因此伪造法国稳态复现。不要启动新GUI、重写求解器或开展全参数扫描。
+
+## 2. 审核过的事实与不能据此推出的结论
+
+### 2.1 Doc240实际状态
+
+- 法国固定域OFF：1s内速度为零；ON固定热核温差30K，1s内产生浮力响应。两组温度控制不完全相同，不是严格同温场的β对照。
+- 当前ON主要采用`--prescribe-t-radial=30`，不是第223—224轮的环带高温温场；不能以当前单回流证明历史双回流能力丢失。
+- 法国短耦合计算尚不能证明准稳态温度/环流已经接近论文。
+- 局部μ有变化。k/cp表字段存在，不等于局部k/cp已实际进入热更新；cp/k在高温平台不变也不能据此断言接线失败。
+- 甲方NC当前只完成0.2s、zero_q、EM关闭短烟，不能称真实电磁加热工作流已过。开放自由面仍有背景运动，须单列状态。
+- 甲方弹性搅拌粗reload：玻璃约5255粒子、桨483粒子，短跑发散；历史较密reload桨约4332粒子有短窗PASS，不能替代当前粗reload通过。
+- 搅拌入口存在强制dp=0.005的逻辑。它与粗reload的实际尺度可能不一致；这是优先核查假设，不是已经证明的唯一根因。
+- 固体子步冻结solid_dt0的改动不能自动视为稳定性修复；当前仍有流体时间步塌缩。
+- 摘要中极端负哨兵值可能被isfinite误判为正常；仅`finite_ok=1`不足以证明结果有效。
+
+### 2.2 历史双环流的准确定位
+
+第223轮F2引入人工环带温场；第224轮C3d配置延长到30s，记录为`DIAGNOSTIC_TWO_CELL_OBSERVED`。15–20、20–25、25–30s的U_rms约7.09e-4、6.81e-4、6.87e-4 m/s；末两窗轴心Uz变化约12.2%，未授稳定标签。
+
+历史F2：R=0.25m、H=0.185m、dp=0.015m、β=1e-5，Q=0，关闭TVF，空间冻结温度：
+
+```text
+T = T0 + 200 * exp(-((r-0.15)/0.05)^2
+                  -((z-z_bottom-0.13)/0.035)^2)
+```
+
+对应实现：
+
+```text
+tests/extra_source_and_tests/3d_examples/
+  test_3d_ophelie_french_natural_convection_frozen_q/
+  test_3d_ophelie_french_natural_convection_frozen_q.cpp
+
+tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/
+  diagnostics/electromagnetic_ophelie_boussinesq.h
+函数：hostPrescribeDoc223AnnularHotRingTemperature
+```
+
+温度在粒子移动后按空间坐标重新赋值；不是随粒子携带的单次初温。该函数写温度，不直接写目标速度。
+
+第224轮证据相对包根目录：
+
+```text
+doc224_runs/C_f2_late_windows/C_F2_ANNULAR_30s_RUN.md
+doc224_runs/C_f2_late_windows/C_RESULT_30s_C3d.md
+doc224_runs/C_f2_late_windows/C_F2_annular_hot_beta1e-5_30s_C3d.json
+doc224_runs/C_f2_late_windows/C_F2_annular_hot_beta1e-5_30s_C3d_meridional_ur_uz.csv
+src_snapshot_N224/
+```
+
+当前240入口仍保留环带函数调用。历史包找不到时先定位本地留存；确实没有再列出具体缺件，不按聊天描述重新制造“历史原始数据”。
+
+## 3. 论文对比目标与身份，启动前一次性写清
+
+### 3.1 图号对应的物理含义
+
+| 目标 | 内容 | 本轮用途 |
+|---|---|---|
+| 期刊Fig.6 | 耦合收敛后的焦耳热源竖直剖面 | 判断高热源区域的位置、范围和热量分配 |
+| 期刊Fig.7 | 2D轴对称耦合流动剖面 | 轴降—内部环带升—冷壁附近降，主次回流趋势 |
+| 期刊Fig.8 | 2D轴对称耦合的无量纲温度竖直剖面 | 本轮法国复现首要场对比 |
+| 期刊Fig.9/10 | 含真实热电偶装置的3D速度/温度剖面 | 当前无热电偶模型不得混用为同一目标 |
+| 期刊Fig.12–14 | 热电偶温度数值与实验比较 | 后续独立定量验证，不能用Fig.8代替 |
+
+Fig.8是穿过轴线的竖直截面，不是中间高度的水平截面。期刊结果为稳态耦合解；约20次耦合迭代不是20秒物理时间，不能据此设定结束时间。
+
+### 3.2 配置至少保留四个独立身份
+
+- `CLIENT_NC_BASELINE`：甲方几何、甲方已确认参数和独立标注的借用物性。
+- `CLIENT_STIRRING_ELASTIC_BASELINE`：甲方弹性桨，不锈钢物性、10rpm既有驱动。
+- `FRENCH_F2_HISTORICAL_DIAGNOSTIC`：第224轮人工环带温场回归。
+- `FRENCH_PAPER_NC`：期刊50kW及其边界；博士资料只补未明参数，标记来源。
+
+Jac博士55kW无Marangoni/含Marangoni另列身份，不与期刊50kW共用“论文PASS”。期刊与博士的ρ、β、底部h等不得不加说明地拼装。所有未明项保留ASSUMED及来源。
+
+## 4. P0：冻结当前基线，修复“假正常”诊断
+
+1. 记录HEAD、分支、git status、WIP diff、可执行文件hash、构建命令、设备与驱动；代码状态以实际运行版本为准。
+2. 每组独立目录保存请求配置和程序输出的effective配置。旧输出不得覆盖。
+3. 修复有效性检测：检查所有粒子位置、速度、密度、温度、固体变形/应力及关键规约量；同时检查计数>0、min<=max、哨兵值、非正密度/体积/时间步、NaN/Inf。
+4. `Umax`必须非负，未初始化不得用极端有限值冒充有效。无样本写null+原因，JSON不写NaN/Infinity。
+5. 运行失败写非零退出码和fail_reason，不能只看日志最后一行或进程正常退出。长任务使用已有进度/超时机制，保存最后有效状态。
+
+完成条件：现有失败样本会被识别为FAIL，正常样本仍正常；这些检查是防止软件展示坏数据，不是要求重做所有模块验证。
+
+## 5. P1：甲方弹性搅拌——先解决reload与数值尺度一致性
+
+### 5.1 先测量后改代码
+
+对当前粗reload和历史PASS密reload，各输出一份`reload_audit.json`：
+
+- 粒子数、边界框、坐标单位、转轴与中心、STL/reload文件hash。
+- 读取的Vol/Mass/ρ，按材料与内部/表层分组；立方根Vol仅作间距参考。
+- 内部粒子最近邻距离分布及h、核支持半径；实际dp、系统参考dp、固体参考dp、reload生成dp。
+- 初始内邻域/流固接触邻域数分布、零邻居比例、最小间隙和明显重叠。
+- 变形梯度修正矩阵奇异/病态计数；若当前实现没有该量，明确是否使用及等效诊断。
+- 实际ρ_s、E、ν、固体声速与步长公式输入；驱动约束覆盖的粒子数及其空间区域。
+
+必须追踪`applyClientStirringDevelopmentDefaults`前后dp，以及强制0.005覆盖逻辑。不要用总粒子数反推精确dp，不要仅修改JSON中的dp标签。
+
+### 5.2 正式修复选择
+
+优先选实际reload尺度与求解参数完全一致的路径：
+
+A. 当前粗reload确为合法较粗排布，则根据其生成元数据设置对应系统dp/h/体积/邻域，移除无条件强制0.005。
+
+B. 粗reload不适合桨厚度或已缺失关键结构，则重新生成一致的粒子集；允许沿用历史较密可运行排布作为交付基线，但必须是甲方当前STL/坐标/材质，并重新真实运行。
+
+禁止缩放粒子体积掩盖空间间距不匹配，禁止只调h覆盖稀疏/断开的桨。粗分辨率难以描述薄桨时直接说明，交付采用能可靠运行的密度，不必坚持483粒子版本。
+
+加载时显式检查元数据；缺失元数据可做一次审计后生成manifest。矛盾时prepare修复或validate报错，不静默覆盖。
+
+### 5.3 三步定位，避免弹性与接触同时混淆
+
+| 运行 | 条件 | 目的 |
+|---|---|---|
+| S0 | 相同弹性桨，静止驱动，单固体/已有最小独立入口 | 排除初始化、材料、固体内部积分错误 |
+| S1 | 相同桨，10rpm平滑驱动，暂不施加流体接触载荷 | 检查真实弹性体及驱动区域是否稳定 |
+| S2 | 同一桨及驱动，恢复等温流固接触 | 定位流体、接触或耦合时间推进 |
+
+复用现有开关/入口；确无入口时只增加本case局部诊断选项。不再创建重复的大型test。S0/S1可以短测；S2先0.002s，过后0.02s，再0.05s。每阶段保持输出与时间步审计。
+
+正常驱动应限制轴/轮毂等指定区域，桨叶其余区域参与弹性求解。若全部固体粒子每步被规定坐标覆盖，必须标明不是有效弹性响应实现，先修约束范围。
+
+### 5.4 步长与执行设备
+
+记录每个流体步实际dt_f、固体稳定dt_s、子步数、子步和、末子步余量、实际物理时间。步长由当前状态和既有稳定准则约束。
+
+上一轮冻结solid_dt0可保留为明确对照，但正式路径不能在变形恶化后无限忽略更小的稳定步长。采用`min(启动参考上限, 当前有效稳定上限, 剩余时间)`或与现有求解器一致的合理实现；非法/过小步长应停机并定位，不能继续循环假推进。
+
+允许减小流体步长/耦合步长、增大固体子步数，优先准确性。不能靠降低不锈钢E、增大黏度或全域清零速度获取PASS。GPU优先；若GPU固体路径仍阻塞，可用已有可信CPU固体积分配合明确的数据同步，准确报告混合执行及耗时，不假称全GPU。
+
+### 5.5 S2通过标准（工程短跑，非材料/FSI论文验证）
+
+- 实际时间达到0.05s，所有场有效，无时间步塌缩、超时或丢粒子；0.002s通过不能直接冒充正式短窗通过。
+- 使用真实甲方几何、不锈钢弹性材料、10rpm平滑驱动。角度按实际转速时间积分，不能用未完成加速阶段的时间乘恒定ω冒充真实角度。
+- 报告最大总位移，以及扣除驱动刚体转动后的弹性变形；应力、形变梯度Jacobian有效。
+- 速度最大值与ωr、惯性启动、流固相互作用作数量级检查；异常尖峰必须定位，不能只满足“有限”。
+- 0.05s只是短窗，不是一整圈。10rpm完成一圈的匀速周期为6s，含启动过程另算；整圈不阻塞首轮软件集成。
+- 输出至少初态、中间、末态3帧真实粒子/场结果和CSV；重启若已有接口则验证，没有则明确标不支持，不临时承诺。
+
+S2失败时按S0/S1/S2定位结果只修相应一层；至多比较原步长与减半两档，不做大范围参数扫描。
+
+## 6. P2：甲方NC——补齐真实加热短跑，不把zero_q烟测当交付完成
+
+### 6.1 锁定已有甲方条件
+
+复用甲方几何和effective预设；Doc240基线为R=0.1415m、H=0.18m、dp=0.01m、4匝、100kHz、T0=1273.15K。若本机最新甲方确认数据不同，以可追溯版本为准，说明差异，禁止被法国500mm/7匝自动覆盖。
+
+σ=16等借用值、cp/k来源、未知电流/电压与电源功率必须在配置显示。30kW若为电源输入，不能自动解释为玻璃吸收功率；缺失效率时先使用明确命名的“假设玻璃吸收功率”演示配置，且不宣称实验工况已定。
+
+### 6.2 最小真实流程
+
+1. validate读取真实几何、材料和运行模式。
+2. prepare生成或检查粒子及线圈资产；如有缓存，核对hash并报告复用。
+3. 在当前玻璃几何/σ上真实执行EM，输出原始吸收功率、功率控制方式、电流幅值约定及归一化因子。
+4. 将实际Q映射到热模块，真实推进热量和流体；先0.2s再到1s，无需等待升到实验稳定温度。
+5. 输出玻璃温度、速度、热源、真实线圈几何、摘要与进度。
+
+阶段证据分别记录`em_executed`、`thermal_advanced`、`flow_advanced`、`solid_advanced`；常温热场一步未进不能写thermal PASS。
+
+### 6.3 短测判定
+
+- 输入/输出Q功率采用同一时刻、同一体积积分与单位，原始EM功率和控制后功率分别报告；固定吸收功率归一只能验证控制链，不能证明原始场准确。
+- 热收支输出储能变化、入热、侧/底/顶对流和辐射、能量残差；同一时间区间积分。短时净冷却可以合理，不能强求温度一定上升。
+- 暂用工程筛查：功率映射相对差<=1%，累计能量残差/累计能量收支绝对值之和<=5%；近零分母时报告绝对值及不评估原因。这是本轮接线标准，不是合同10%物理验证。
+- 不再将开放FS背景直接称自然对流。保留原客户模式，并做同温场β=0对照；若背景明显淹没信号，采用明确标注的固定平坦滑移顶面工程预设供演示，说明与自由面模型的差异。
+- 两种顶面可共存；不把固定域设置全局覆盖客户自由液面case。显著体积/粒子逃逸或异常背景仍须标未解决。
+
+## 7. P3：法国历史F2回归——只回答能力是否仍在
+
+### 7.1 静态核查和运行约束
+
+查当前环带函数、冻结T赋值时序、β/T_ref、力累加与重置、pressure/background组合、C3d顶面实际算子。`paper-flat-slip-top`是组合配置，不能只按名称认为与旧版相同。
+
+先用当前代码跑历史配置，不整体退回旧求解器；使用同一reload及材质/常物性。记录历史缺失项。历史C3d：声学不启用AcousticWallFreeSlip，黏性OpenCup保留，p′+静水背景，不重复完整GravityForce。
+
+必须先validate，排除其他温度初始化分支抢占环带分支；输出实际温度模式和热点坐标。
+
+### 7.2 最小对照
+
+- F2_OFF：相同空间冻结环带T，β=0，Q=0。
+- F2_ON：完全相同配置，β=1e-5。先10s，稳定推进后20s；仅为直接比较第224轮后期结果且仍有必要时到30s。
+
+两组温场保持完全相同，不能OFF均温、ON环带热，也不能只一组解热扩散。若OFF已有足以污染目标的流动先停止延长，定位背景，不为凑图继续跑。
+
+输出瞬时与末完整时间窗平均速度；若确实计算到20/30s，再使用与历史相同的5s窗口，不用全程累计平均替代后期窗口。
+
+### 7.3 判断方式
+
+- 对比相同r-z位置的Ur/Uz、轴/环/缘方向和U_rms数量级，检查热点位置与实际温差。
+- 同时画原始速度矢量与插值流线；不以流函数符号区域数代替涡数。
+- β=0背景U_rms低于ON的10%可视为信号清晰的工程筛查；背景更大标污染，不能从ON减OFF的范数声称得到物理流场。
+- 观察到两个回流区域可写`DIAGNOSTIC_TWO_CELL_OBSERVED`，稳定性未过则NONSTEADY；不要强行扩大温差维持两个涡。
+- 本测试成功只证明指定温场下的水动力能力，不等于EM—热耦合复现。
+
+若失败，先从温场赋值、顶面、压力、黏性与步长的有效差异中找首个不一致；一次仅变一项。不得新增shifting/δ-SPH/ghost路线来代替归因。
+
+## 8. P4：Fig.8温度场与Fig.7速度场联合对比
+
+### 8.1 先验收参考数据，不重复虚构数字化
+
+查现有Fig.7/8提取数据、图像、坐标标定和239资料。Fig.7速度矢量/流线与Fig.8等温线不是同一种数据，文件不能混用。
+
+若现有数据不完整，本轮补齐：
+
+- 保存原始图页/裁剪和带标定点的覆盖图。
+- 记录r/z轴、单位、轴线/壁面/自由面坐标、温度无量纲定义及图例。
+- 逐条提取可辨识等温线的标签与点坐标；看不清的标uncertain，不编造数值。
+- 无量纲定义必须核对原文；无法确认则只做归一化形状比较，不用默认T/Tmax换算绝对温度。
+- 分清数字化误差与文献缺失参数；表中列坐标误差、温度标签误差和数据来源。
+- 缺少图像时只能进行文字趋势检查，不能宣称已完成定量图像对齐。
+
+不要将人为补全的二维温场当“论文完整数值解”。稀疏等温线插值可作有不确定性的初猜，不能当高精度全域真值。
+
+### 8.2 每组法国计算必须输出同一时间窗的三联图
+
+使用现有Python管线完善，不要求手动ParaView作为唯一依据：
+
+1. 温度剖面：有单位绝对T、论文定义的无量纲T分别画，叠加参考等温线；所有对比用相同坐标与色标。
+2. 速度剖面：Ur/Uz矢量、真实速度幅值色标、插值流线；轴/环/缘分区及数据不足区域明确显示。
+3. 热源剖面：原始Q和控制后Q、累计功率径向分布，标热点与高热源区域。
+
+对3D场同时保留真实中心薄片与周向平均r-z场；轴对称参考优先对周向平均，真实切片用于检查非轴对称。不得将整直径镜像后的左右大回流算作两个径向胞。
+
+r-z轴对称流函数若使用，应满足`ur=-(1/r)*∂ψ/∂z`、`uz=(1/r)*∂ψ/∂r`的约定，明确轴线处理。回算速度误差>20%时不用ψ单独证明闭合；不要只修ψ图而忽略原始速度。
+
+### 8.3 比较量与本轮判定边界
+
+| 类别 | 必须报告 |
+|---|---|
+| 温度 | Tmin/Tmax/体积平均T；热点(r/R,z/H)；中心/中环/外缘竖向剖面；上/中/下水平剖面 |
+| 等温线 | 同标签轮廓位置、向轴心弯曲方向、热区面积及匹配误差；参考不可辨识区剔除并标注 |
+| 速度 | 轴/内部环带/外缘Uz、U_rms/Umax、主要回流旋向；小涡是否仅单bin宽 |
+| 热源 | 体积积分功率、高热源位置和范围、径向/轴向功率占比 |
+| 收支 | 热输入与各面散热、储能变化、残差、运行物理时间与统计窗口 |
+
+轮廓位置误差可用H或R归一的距离并列图像提取误差；在拿到可靠参考后再填写数值。未预先约定的指标不临时设置“刚好通过”的阈值。
+
+本轮只区分：参考数据可用/不足、方向一致/不一致、温场接近/明显偏离、准稳态/未达准稳态、论文验证未完成。不得把自定形状误差当合同10%通过。
+
+## 9. P5：法国耦合推进——修温度场的主因，不盲目追两个涡
+
+### 9.1 先完成真实热更新审计
+
+沿调用链确认k(T)、cp(T)、μ(T)、σ(T)在哪一步读取，作用于哪个算子。重点检查`ApplyLaplaceDiffusionDtCK`使用标量cp还是逐粒子cp，接触扩散是否用局部导热率，以及边界热量到粒子温升的换算。
+
+用少量覆盖物性曲线变化区的温度点做函数/单步能量检查；不把不合适的大温差制造到正式论文工况中。热物性跨平台测试属于局部测试，不替代论文运行。
+
+若局部cp未实际生效，优先在OPHELIE热模块局部修复。温变cp储能应采用与数值更新一致的焓差积分，不直接用某时刻cp乘全温差充当精确储能。侧/底/顶热流的面积、法向、单位和重复计数逐项核对。
+
+### 9.2 首轮只选一个明确的法国主配置
+
+选择`FRENCH_PAPER_NC`作为主比较；从期刊锁定已知几何、功率、热边界、顶面机械条件与β/ρ等，未明物性使用239提取的Jac资料并标BORROWED。博士55kW用于辅助，不能替换论文身份。
+
+σ公式A/B先使用同一非均匀冻结T，同一几何和功率约定对比真实EM热源；不让两组热演化不同导致无法归因。上一轮thaw A/B只保留为耦合示例。
+
+A/B不要求两条都跑长时间。根据原始功率、固定功率下Q形状与Fig.6位置趋势选一个主配置，另一个列敏感性候选；不要按温度一个点最接近就宣称公式已证实。
+
+EM更新间隔是本实现数值参数，论文未明说则标ASSUMED；用相同状态检查更新前后σ与Q变化，必要时仅做一个减半间隔短测。不开自感时明确A_ind=off，固定功率归一不能掩盖此模型差异。
+
+### 9.3 逐级热流动耦合，避免起步状态误导
+
+1. 合理初猜可用当前热模块或有边界的轻量轴对称热计算；这是加速收敛，不是预先指定最终速度。
+2. 保留固定功率及目标散热边界；先看热收支和热点是否向参考区域发展，再决定延长时间。
+3. 短窗后画联合三联图：明显中心热核与参考上部环带热区不符时，先查Q/散热/μ冷壁区，不能只改浮力。
+4. T已接近、方向仍错时，回看β/T_ref、浮力符号、局部μ和顶面机械条件。
+5. 方向一致、小外围涡不清时，先检查热区位置和冷壁/桨等细节分辨率，再考虑一档加密；不先全域扫描分辨率。
+6. 全场仍在变但趋势合理时，才安排延长；不得把1s结果与论文稳态直接判失败，也不得仅靠跑长时间期待错误边界自动修复。
+
+工程准稳态筛查：三个连续等长完整窗口中，平均T变化小于代表温差的1%/窗，主要速度统计变化<5%/窗，储能速率相对输入/散热功率规模<5%，无异常漂移。低信号用绝对量说明。以上是本项目筛查标准，非论文原始标准，未达到就标TRANSIENT。
+
+### 9.4 参数调整允许范围
+
+用户允许对未知条件校准，但只能调整已登记的不确定参数。先给一张参数表：已知固定项、博士借用项、未知待校准项、范围依据、预期影响。
+
+优先校准散热与黏度曲线来源，再判断电磁热源形状；每次只动一类参数。所有校准结果明确标CALIBRATED。禁止改动已知物理单位、强写速度、任意增β、硬设热点来冒充预测结果。
+
+本轮最多两组耦合候选：主配置＋针对已识别最大偏差的一组修复。仍无改善时提交调用链证据和对比，不继续无边界扫参。
+
+## 10. P6：Linux软件交接，必须能在新目录真实启动
+
+### 10.1 软件最小接入契约
+
+复用既有validate/prepare/run、case.json/effective JSON和进度接口。没有统一二进制时用薄包装调用已有target，不要求先完成大型框架迁移。
+
+每个case交付：
+
+- 可构建提交或明确base+完整patch，必要CMake与依赖说明。
+- 几何、坐标与单位说明、材料表、reload及其manifest；大资产不必进git，但要有校验和与获取位置。
+- 默认项目JSON、生成的effective JSON、完整可复制命令、所需环境变量。
+- 初态/过程/末态结果、进度、summary、日志、CSV、字段单位与关联文件清单。
+- 模式和能力标签：真实EM/热/流/弹性、GPU或CPU/混合、短窗/稳态、校准/借用参数、验证未完成项。
+
+求解器端应输出真实状态。软件不得根据按钮名称推断“电磁已运行”或把回放记为新计算。
+
+### 10.2 清洁目录复跑门控
+
+使用新的运行目录、相对资产路径，在不依赖开发目录隐含文件的情况下执行两个预设。依次完成validate→prepare或有效缓存复用→真实短跑→加载结果。失败时报告准确缺件，不能以历史结果覆盖输出目录。
+
+甲方NC：真实EM、Q映射和热/流推进达到1s；甲方弹性：真实S2达到0.05s。两组均通过才授`LINUX_SOLVER_HANDOFF_READY`。
+
+该标签表示软件可调用的真实短跑基线，不代表法国文献、甲方1000℃测点或合同模块验证已完成。后续若扩展更长时间仍须独立检查。
+
+若未通过，交接状态仍写BLOCKED并列具体原因；GUI界面开发可继续，但不能把按钮禁用/回放当本轮物理任务完成。
+
+### 10.3 两机分支与版本
+
+物理机与软件机使用各自分支和工作目录。物理改动形成可审查提交后由软件分支显式cherry-pick/合并；git push不会自动改另一台机的工作区，pull/merge才引入变化。不要让两机长期同时向同名共享开发分支混推未协调改动。
+
+交接写明commit及全部必需资产hash；WIP补丁必须记录基线、应用顺序和hash。禁止提交整个临时结果仓库、强推或清理用户未提交文件。
+
+## 11. 执行顺序、停止条件与本轮边界
+
+| 顺序 | 工作 | 完成/停止条件 |
+|---|---|---|
+| 1 | P0 + reload审计 | 诊断有效、尺度与失败证据清楚 |
+| 2 | S0/S1/S2 | 优先解除甲方弹性阻塞；失败停在首个异常算子 |
+| 3 | 甲方NC真实EM—热短跑 | 两案形成真实交接候选 |
+| 4 | 清洁目录复跑并交接 | 软件机可直接接入；不等法国稳态 |
+| 5 | F2历史回归＋参考数据检查 | 确认指定温场能力和图像目标 |
+| 6 | 法国三联图＋一次主因修复 | 温度/流动/热源可联合解释 |
+
+CPU整理、源代码审计和参考标定可穿插，不在单GPU上同时启动几个正式求解器。每次失败保留第一个坏步及前一有效状态；不要只上传最后一屏日志。
+
+本轮不重开TEAM7、不重跑已充分验证的标准方腔、不新增ghost粒子、不重写Riemann核心、不追求整圈搅拌、不做高分辨率长时全耦合盲跑。若发现本轮改动会影响已有方腔/EM核心，则仅补对应必要回归，并说明触发原因。
+
+## 12. 必须交付的文件和结论格式
+
+建议根目录`doc241_runs/`，包括：
+
+```text
+00_freeze/                 # 代码、二进制、设备、资产hash
+01_client_reload_audit/    # 粗/密reload对比与尺度修复
+02_client_elastic/         # S0 S1 S2、状态场、逐步dt与失败首帧
+03_client_nc/              # 真实EM/热/流、能量与功率映射
+04_f2_regression/          # OFF ON、历史对比、原始速度与温度
+05_paper_reference/        # Fig6/7/8来源、标定、数字化与不确定性
+06_french_joint_compare/   # T/U/Q三联图、剖面、热收支、有效配置
+07_linux_handoff/          # 两案预设、资产清单、清洁目录复跑
+RUN_COMMANDS.md
+ROUND241_DECISION.md
+WORK_SUMMARY_ZH.md
+NEXT_TASKS.md
+```
+
+每一组至少包含effective配置、summary、日志、原始CSV及用于展示的真实帧；Python绘图脚本必须纳入可追溯源码。已有原始数据本机完整保留，精简包提供清单和关键证据即可，不要求把全部历史重新打包。
+
+summary至少区分：
+
+```text
+workflow_completed
+reached_end_time
+requested_end_time_s / actual_end_time_s
+em_executed / thermal_advanced / flow_advanced / solid_advanced
+finite_fields_ok / geometry_resolution_consistent
+short_run_passed / steady_state_reached
+paper_comparison_status / experimental_validation_status
+execution_backend / source_commit / binary_hash / asset_manifest_hash
+fail_reason
+```
+
+若某字段尚未实现，不手工填PASS；补实现或标NOT_IMPLEMENTED。
+
+最终总结直接回答七个问题：
+
+1. 弹性失败由什么证据定位，reload/dp不一致是否成立？修了哪一层？
+2. 当前甲方弹性是否真实到0.05s，采用什么粒子集、材质与设备？
+3. 甲方NC是否真实计算了EM并推进热量，能否从清洁目录启动？
+4. 当前代码能否复现历史人工环带双回流；不能时首个差异是什么？
+5. Fig.8温度场与当前场最大偏差在哪里，与Fig.6热源是否对应？
+6. Fig.7方向不一致究竟是温场驱动不同，还是在相同温场下水动力仍不同？证据不足则写未定。
+7. Linux软件机现在可以启用哪些真实计算功能，哪些仍未通过物理/合同验证？
+
+不要再只交“补了几个开关、短烟通过”的总结。本轮应交付可运行的甲方基线，以及能定位法国温度场差异的一套联合证据。
+
+<!-- ===== END 241_OPHELIE_FRENCH_TEMPERATURE_FLOW_AND_CLIENT_ELASTIC_RELEASE_CURSOR_PLAN_2026-11-24.md ===== -->
+
+
+<!-- ===== BEGIN 242_OPHELIE_FINAL_PHYSICS_PREPARATION_AND_LINUX_ENTRY_CURSOR_PLAN_2026-11-24.md ===== -->
+
+# 242_OPHELIE_FINAL_PHYSICS_PREPARATION_AND_LINUX_ENTRY_CURSOR_PLAN_2026-11-24.md
+
+# 242：Linux软件开发前最后一轮物理整改、场图对比与调用闭环
+
+日期：2026-11-24
+执行对象：当前物理开发机上的Cursor。
+前置资料：Doc241完整交接包、239物性数据包与239A、240/241任务书、现有Linux软件源码。
+
+## 0. 用户决定与本轮结束方式
+
+用户决定：再做一轮物理与调用准备，随后转入Linux软件开发。**本轮不再扩大研究路线，不以论文稳态完全复现或合同验证全部完成作为软件开工条件。**
+
+本轮要交付四项：
+
+1. 甲方弹性搅拌异常速度/密度的具体定位与针对性修复，保留真实不锈钢弹性计算。
+2. 甲方自然对流的低背景工程预设与真实EM—热短跑。
+3. 法国F2实际速度图，以及至少一组期刊目标工况的温度—速度—热源对比，结束只报能力标签、不交场图的状态。
+4. 两个甲方算例通过现有CLI的validate→prepare→run→结果索引闭环，而非仅手工运行C++ binary。
+
+完成本轮后冻结交接版本，转Linux桌面软件。未完成的物理验证保留明确问题单继续研究，不能伪装PASS，也不能让任务无限追加，拖住软件界面开发。
+
+本文件接替241的下一轮执行安排；未被修改的物性来源、案例身份隔离规则继续有效。独立A-phi/Laplace分支不改。不开发Windows，不新增GUI框架，不要求本轮安装Qt/VTK或完成桌面发行包。
+
+## 1. Doc241事实：必须沿用，不能重新解释成全部成功或全部失败
+
+| 项目 | 实际证据 | 本轮处理 |
+|---|---|---|
+| 粗reload与参考dp | 粗Vol约1e-6 m³，对应10mm；旧入口强制5mm | 不一致已确认；不重复审计整套历史 |
+| 当前弹性桨 | 重生5mm，4329桨粒子、43928玻璃粒子，GPU真实跑0.05s | 保留可运行基线 |
+| 弹性流体异常 | 末Umax=1.381m/s；CSV峰值3.511m/s；桨最大速度约0.071m/s | 必须定位，不能以有限值为通过标准 |
+| 弹性密度 | rho_ref=2700，末rho_max约3641kg/m³ | 约+35%；需查位置/分布/初始即有或推进产生 |
+| 固体步长 | 仍固定启动solid_dt0 | 补当前稳定步长与完整时间覆盖检查 |
+| 甲方EM—热 | 假设玻璃吸收15kW，P_joule=15000，P_heat=14991.8W，1s | 接线已通，不必重新研发EM |
+| 甲方浮力ON/OFF | U_rms约0.00341157/0.00341174m/s | 原开放FS短窗中背景主导；不宣称自然对流已验证 |
+| 法国F2 | OFF 10s零流；ON 10s末7.30e-4、20s末5.19e-4m/s | 清晰浮力响应；尚无本轮双胞场图证据 |
+| Fig.7/8 | Doc204数字化已在241包中 | 直接使用并标不确定性，不重新声称没有数据 |
+| 论文主线 | 241 P5暂缓，未做温度场叠图 | 本轮必须给实际图，不再因Fig.6缺数字化而全推迟 |
+| 软件层 | NC默认heating=none，run.py固定zero-q；搅拌prepare未传dp | 必须同步，底层PASS不等于软件已调用成功 |
+| 清洁复跑 | 241是新输出目录直接运行binary，且关闭场输出 | 本轮验证统一CLI与可加载场文件 |
+
+重要归因边界：Doc241同时纠正尺度并加密粒子，不能断言“此前所有失败唯一由dp错误造成”。无需为证明唯一根因继续穷举粗粒子。
+
+## 2. 本轮执行顺序与资源限制
+
+按依赖执行：
+
+1. A：保留241版本、补关键诊断与错误判定。
+2. B：甲方弹性最小对照，抓首个异常并只修对应路径。
+3. C：甲方NC固定平坦滑移顶面与低背景对照，接回真实EM—热。
+4. D：法国F2绘图与Fig.8温度对比；图像整理可与前面穿插。
+5. E：现有CLI参数传递与结果索引；调用层修改可穿插，正式闭环测试在物理预设冻结后执行。
+6. F：冻结版本、交接Linux软件开发任务。
+
+单GPU正式运行串行；不要同时跑多个solver造成显存/耗时异常。尽量复用241已有结果，缺空间数据才重跑。默认只使用当前分辨率，不开始网格扫描。
+
+诊断矩阵最多：弹性3组基础对照＋1组针对性修复（必要时再加一档dt/2）；NC固定域OFF/ON＋1组真实热耦合；法国F2有数据则零重跑、无数据最多1组ON；期刊目标1组初始联合对比＋1组明确主因修复。超出矩阵必须在总结中说明新证据与必要性，不能自动转为扫参。
+
+## 3. A：一次性冻结与关键诊断修复
+
+### 3.1 冻结已有成功版本
+
+保存实际HEAD、WIP diff、binary hash、设备、构建命令、STL/reload/材料hash。Doc241记录base为16d67c9d0799aeee899a914059fc51d67740f738且另有WIP；不要只检出base就假定含全部修复。
+
+保留原5mm密reload，不覆盖；新实验另建目录。物理修复只限OPHELIE局部适配、case和必要调用层，避免影响SPHinXsys其他case与A-phi研究。
+
+### 3.2 修正会使坏运行变成PASS的源码逻辑
+
+在`test_3d_ophelie_client_stirring_f0_elastic_fsi.cpp`重点处理：
+
+1. 现有`time_ok = t_final >= 0.8 * end_time`不能用于`reached_end_time`。以实际达到目标为准；允许最后一步的小量超调，报告绝对/相对差，不允许少跑20%还标完成。
+2. 现有`coupled_ok`把“有转速”与“有流固载荷”用OR相连。分开记录drive_executed、solid_advanced、fluid_contact_evaluated、load_sample_valid；驱动本身不能证明FSI载荷传递。
+3. 固体子循环到kSolidSubMax后当前仅WARN并返回，可能尚未覆盖dt_fluid。时间未覆盖必须FAIL/停止或按严格规则继续补完，不得流体继续前进而固体欠时间。
+4. 检查所有向量分量和张量分量；hostRotorSnap只检查pos[0]/force[0]不足以审计固体。新增固体Position、Velocity、变形梯度/应力（若有）、Jacobian的有效性；场名以实际代码为准。
+5. 区分finite_fields_ok、numerical_quality_ok、workflow_completed、validation_passed。不存在的验证不能用passed=1代替。
+
+不要新增庞大测试框架。用一个缩短运行、一个非法配置和已有坏摘要确认判定有效，再开展正式矩阵。
+
+### 3.3 输出最小诊断
+
+逐流体声学步记录time、dt_f、dt_s_candidate、dt_s_used、solid_covered_time、solid_substeps、Umax、U_rms、密度分位数/极值、max弹性偏差、力/转矩；异常附近频率加密。
+
+对速度与密度前10个异常粒子记录稳定ParticleID、位置、到桨/壁/顶面的距离或接触分区、邻域数、压力。若排序改变索引，用稳定ID追踪，不能把排序后的同一数组下标当同一粒子。
+
+## 4. B：甲方弹性搅拌异常的最小归因与修复
+
+### 4.1 固定条件
+
+采用Doc241可运行5mm dense reload、真实甲方桨与容器、不锈钢E约2e11Pa、rho_s约7900、玻璃rho约2700、当前黏度14.532Pa·s、10rpm与0.05s加速。驱动轴、轴心、坐标单位按当前有效配置打印并核对STL变换，不凭名称假设Z/Y。
+
+保留顶端5cm驱动带但标provisional，画出278个约束粒子分布，确认没有覆盖整桨或桨叶。不能把所有桨粒子强写规定轨迹冒充弹性响应。
+
+本轮不再试483粒子粗桨，不降低E凑稳定，不通过增加黏度或清零流场压制异常。
+
+### 4.2 三组基础对照
+
+| 编号 | 条件 | 时长/输出 | 要回答的问题 |
+|---|---|---|---|
+| B0 | 241原配置复跑，开启空间场和高频诊断 | 先0.02s，捕获已知约0.01s速度尖峰；必要时到0.05s | 异常从哪些粒子/哪一步出现？ |
+| B1 | 同一粒子/物性/流固接触，桨驱动转速=0 | 同B0窗口 | 不旋转是否也有尖峰和压缩？ |
+| B2 | 同一弹性桨和10rpm驱动，关闭流体载荷对固体的传递，作为固体诊断 | 0.02s或覆盖首个异常时刻 | 固体内部/驱动是否独立正常？ |
+
+B2是诊断，不能授FSI验证；优先复用既有开关，没有则添加case局部开关。若B0尚未出现异常，先核对是否真正用了同一二进制/粒子，不随意加长到数秒。
+
+输出初态、首个尖峰前后、末态VTP；全程只存5–8帧即可。额外保存速度/密度直方图和异常位置切片。
+
+### 4.3 根据证据选择唯一优先修复
+
+- B1也明显异常：优先检查粒子初始重叠/间隙、初始压力/密度、重力与壁面平衡、流固界面初始化；先查异常位置再决定是否需要短静置。
+- B1正常、B2固体异常：检查驱动速度/位置时刻一致性、约束范围、参考构型、固体步长与刚体旋转误差。
+- B1/B2正常、B0异常：检查流固压力/黏性载荷方向、界面速度时间层、AverageVelocity的实际定义与赋值、移动后的cell/邻域更新。沿已有成熟FSI路径比较，不按猜测新增经验阻尼。
+- 异常只在自由面或容器壁：定位边界贡献与背景，不能直接归咎弹性E或电磁。
+
+只实施证据指向的修复；保留修前修后同一诊断。若多个问题并存，先修首个异常，不把全部模块同时替换。
+
+### 4.4 固体子步修复
+
+恢复当前状态的稳定步长评估，打印其输入；可采用`min(启动参考上限, 当前稳定候选, 剩余流体步时间)`的保守方式，或与本项目已验证固体求解器一致的实现。
+
+候选步长非正、非有限或持续塌缩时停机保存首个坏状态，不能回退到更大的固定dt强行走完。检查子步累计时间与流体dt一致，记录所有截断/子步上限。
+
+若GPU候选规约有问题，用明确的小型CPU复核或可信CPU固体路径定位；准确性优先，混合执行需标明。无需为本轮重新实现GPU隐式固体。
+
+### 4.5 B组判定与延长条件
+
+必须：实际达到0.05s；无丢粒子、非法场、非法Jacobian、子步欠时或超时；输出真实弹性变形与载荷，所有异常定位有结论。
+
+质量筛查同时报告：
+
+- Umax、U_rms、U95/U99及对应粒子比例，不能只看一个极值也不能丢弃极值。
+- 速度与桨速之比、U/c0、峰值持续时间和位置；若继续出现1–3.5m/s量级速度而无合理解释，则numerical_quality不通过，不称低速搅拌流场可信。
+- 密度相对参考值及相对合理静水/静置基线的偏差。WCSPH静水密度可随压力变化，不能将全部偏差认定为错误；但约35%压缩不能无解释接受。
+- 暂用工程目标：内部流体相对静置平衡基线的密度偏差P99<=2%、最大<=5%，超出标WARN/FAIL并定位；这是本轮筛查阈值，不是论文或合同标准。边界层单列但不从全场统计中隐藏。
+- 动能、外驱动功、重力/压力释放等来源；如高速度由初始化产生，需证明静置后衰减且之后驱动信号可分辨，不仅解释一句“启动瞬态”。
+
+仅当0.05s质量合理且耗时可接受，允许一次延长到0.1–0.2s检查趋势；不要求整圈6s，本轮不靠长跑掩盖初始异常。
+
+## 5. C：甲方NC低背景工程预设与真实电磁加热
+
+### 5.1 保留原开放FS，新增明确的固定域预设
+
+Doc241开关浮力结果几乎相同，说明该短窗不能识别浮力贡献，不说明实际玻璃不存在自然对流。
+
+保留`CLIENT_NC_OPEN_FS_DIAGNOSTIC`，新增`CLIENT_NC_FLAT_SLIP_ENGINEERING`。复用法国固定平坦不可穿透、切向自由的已存在局部配置，核对组合开关和实际压力/重力路径。
+
+侧/底无滑移；顶部机械条件与散热分开，不取消辐射/对流。程序中明确hydro_model及top_boundary，软件以后展示这一建模假设，不把固定顶面说成真实可变形自由面。
+
+### 5.2 一对严格可比较的固定温场诊断
+
+C_OFF/C_ON采用甲方相同几何、相同粒子、相同空间冻结温场、相同物性与顶面，只有β不同；Q=0。可复用ΔT=20K径向诊断场，明确其为人工诊断，不是甲方实验温场。
+
+先0.2s检查，再到1s；报告U_rms、各分区Uz、最大速度与背景。OFF/ON的温度赋值规则必须一致，不能OFF均温、ON有温差。
+
+工程信号目标：OFF U_rms<=ON的10%，ON方向符合指定温场驱动；若ON还过弱，先报实际绝对量/预期加速度和时长，不增β硬凑。固定域仍异常时查本机配置与法国零背景配置差异，只修首个不一致。
+
+### 5.3 恢复真实EM—热—流短跑
+
+使用C组已确认的工程预设，真实EM、σ=16借用值、T0=1273.15K、当前甲方几何和线圈参数，先推进1s。
+
+继续明确：15kW是ASSUMED玻璃吸收功率；30kW是电源输入，不能默认效率=50%。当前电流/电压未确认，定电流模式不可用；固定吸收功率模式可根据目标求解等效电流，并标该电流为计算结果。
+
+输出原始EM功率、控制后功率、实际入热、σ场、温度与速度场，以及每个散热边界累计能量。初态散热大于15kW而净冷却可以合理，不能要求短时一定升温。
+
+复核同时间区间收支：功率映射差工程目标<=1%，累计能量残差按241统一定义<=5%；近零分母用绝对量，不能用随意大floor压低误差。固定功率吻合仅证明控制链，不证明EM空间精度。
+
+C组通过后，这个明确标注假设的固定域EM预设作为Linux首轮默认候选。原开放FS仍保留研究入口，禁止无提示更换建模条件。
+
+## 6. D：法国必须交实际场图，不能再次只有参考盘点
+
+### 6.1 F2先利用已有20s结果
+
+检查原机输出是否存在F2_ON_20s的r-z速度/温度CSV或VTP；有则直接绘图，不重跑。若已被后续运行覆盖且不可恢复，使用242当前代码重跑一组ON至20s并开启输出；OFF已有清洁结果可复用，除非水动力修改影响该路径。
+
+输出：原始Ur/Uz矢量、带速度幅值的流线、温度等高线；同时展示瞬时末态及一个完整后期时间窗的平均。不要把全程平均当后期稳态。
+
+实际回答：轴心是否下降、内部环带是否上升、最外缘是否下降、是否有两个回流区。没有可靠闭合证据就写direction_observed；双胞不明显也要交图，不继续盲目延长。
+
+历史200K冻结环带是诊断温场，不作为Fig.8温度复现。左右镜像的两个大回流不算径向主次两个胞。
+
+### 6.2 期刊目标工况至少跑一组，并完成温度对比
+
+目标为`FRENCH_PAPER_NC`：期刊50kW、无热电偶装置、平坦滑移顶面，已知参数来自期刊，未明项按239提取博士资料补充并标BORROWED。禁止用Jac55kW含Marangoni结果替代期刊Fig.7/8。
+
+先给出effective身份表：几何、ρ、β、μ/k/cp/σ曲线、频率与线圈、功率控制、侧/底/顶散热、辐射参数、是否Marangoni、自感开关、初始温场、更新间隔。缺失项标ASSUMED，不擅自称全部与论文相同。
+
+温变物性审计只补241尚未证明的关键链：局部cp/k是否进入真实热更新；不能只打印物性数组。若仍标量cp，先明确当前近似及误差风险，优先修本case局部路径；温变cp能量按一致焓差检查。
+
+初猜可来自现有热模块/轻量轴对称热计算，或标明不确定性的参考温场插值。初猜不得被持续冻结成论文结果，正式联合工况必须允许温度演化。
+
+先短窗输出三联图与热收支，检查趋势后再决定一个有限延长窗口。不要把1s瞬态与论文稳态直接作最终误差判定。只有初始/短窗结果时标TRANSIENT，仍需完成叠图说明差异。
+
+### 6.3 参考与图像要求
+
+直接使用241包内`reference_fig7_fig8_Doc204/`：保留原图、标定、等温线标签及不确定性。Fig.8是穿轴线的竖直温度剖面，Fig.10是带热电偶三维计算，不能混用。
+
+核对无量纲温度定义；无法确认时只对可确定的形状/坐标比较，不擅自换算绝对T。Fig.6未数字化不阻塞Fig.8叠图，可以先用Fig.6原图做位置定性比较，标明无定量误差。
+
+每组正式法国结果交：
+
+1. T：绝对温度与论文定义无量纲温度、参考等温线叠加、同坐标同色标。
+2. U：周向平均r-z矢量/流线及真实中心薄片，显示非轴对称差异与缺采样区域。
+3. Q：原始/控制后焦耳热源与热点位置、径向/轴向功率占比。
+
+至少报告Tmin/Tmax/Tmean、热点位置、中心/中环/近壁竖向剖面、上/中/下横向剖面；轴/环/缘Uz与U_rms；输入、散热、储能、物理时间。
+
+### 6.4 只允许一次有依据的主修复
+
+先根据联合图归类：
+
+- 热区位置错：查Q形状、σ分布、功率映射和边界散热。
+- 冷壁层/温度梯度错：查局部k/cp、热边界面积与μ(T)冷区响应。
+- T趋势接近而速度方向错：查浮力/压力/黏性及边界路径。
+- 主流向对、小外围胞不清：先判当前分辨率与采样是否足以描述，不为凑双胞任意调β。
+
+选择证据最明确的一项改动，给出修前修后同图。未知h/μ曲线等可校准，但预先列范围与来源，并标CALIBRATED；不改已知单位或强写速度。
+
+不要求本轮达论文稳态PASS；要求第一次形成可解释的真实差距图和下一主因，不允许再次以“参考已盘点，比较留后续”结束。
+
+## 7. E：完成软件开工所需的CLI调用链，不在本轮开发桌面
+
+### 7.1 只改已有Python适配层，不另起第二套接口
+
+路径为仓库内`docs/ophelie/software/linux_src/`，241包中对应`software/linux_src/`。以本机实际实现为准，以下问题已在241快照看到：
+
+- `coldcrucible_solver/run.py`：NC固定加入zero-q，仅支持isothermal_hydro/dT20_boussinesq。
+- `prepare.py`：搅拌生成仅传`--bodies=all`，dp未传到生成器。
+- `examples/natural-convection/case.json`：heating=none，与真实15kW短跑不一致。
+- `run.py`：搅拌omega-ramp、clamp等硬编码；优先读取case并写effective，不让GUI参数看似可调却不生效。
+
+不要求统一为新C++ binary；现有薄包装可继续。
+
+### 7.2 新增明确的NC真实加热模式
+
+保留旧诊断模式，新模式明确fixed_absorbed_power、target_absorbed_power_W=15000、power_status=ASSUMED、generator_input_power_W=30000、current_status=unknown、固定域顶面身份及1s结束时间。
+
+字段名可沿现有schema统一，但JSON、validate、命令构建、effective、summary必须一致。真实EM模式不允许混入zero-q。未知电流不阻塞固定吸收功率模式，但必须阻止错误的given_current调用。
+
+有冲突参数validate必须报错，不静默降级等温模式。非法mode不允许fallback成功。
+
+### 7.3 prepare与资产一致性
+
+搅拌prepare必须实际向生成器传dp=0.005；若生成器暂不接受该参数，先补该case的参数入口。读取生成后的体积/坐标近邻尺度和manifest验证，不只是写prepared.json中的标签。
+
+reload检查分玻璃、桨、壁独立统计。Vol^(1/3)是均匀体积粒子的参考，不能独自代替空间最近邻、局部h与拓扑检查。缓存fingerprint加入几何文件内容hash与影响生成的配置，避免替换同名STL仍复用旧粒子。
+
+修复相对资产路径/软链，提供可复制资产清单。运行时不得静默优先使用binary/data里旧桨而忽略项目所选桨；若当前只支持固定几何，validate明确限制并核对hash，不能假称任意STL已支持。
+
+### 7.4 结果与进度
+
+正式演示预设必须开启初态/中间/末态至少3帧VTP，并写结果索引（名称可复用现有机制）：文件相对路径、body、时间、可用字段与单位、帧数、实际结束时间。
+
+建议玻璃Velocity/Pressure/Temperature/Q；桨Position/Velocity/弹性位移/应力或当前可用弹性字段。尚未实现的字段不伪造，列表注明缺失。空间冻结诊断与正式热计算区别显示。
+
+每次运行独立工作/输出目录；如底层仍固定写binary/output，适配层需隔离或安全收集并禁止并发混写，不能索引上一运行残留文件。
+
+汇总CLI不得仅看returncode或passed，应带出实际能力与质量标签。进度、取消、错误退出、结果加载路径沿现有协议，避免另建协议。
+
+### 7.5 一次真正端到端测试
+
+在不含旧结果的新项目目录，用软件正式入口依次运行：
+
+```text
+validate → prepare（或hash验证通过的缓存） → run → 读取result index
+```
+
+两个case都必须通过该入口，不再以手工调用binary替代。输出完整命令及退出码。确认：
+
+- NC summary显示EM实际执行、热与流实际推进；目标15kW及ASSUMED状态一致。
+- 搅拌为5mm真实弹性桨、实际到0.05s，数值质量标签与B组一致。
+- 至少3帧存在、可用现有VTK/Python reader读开，时间单调、点数合理、要求字段存在且有效。
+- 验证一个非法功率模式、一个dp/缓存不一致负例，会清晰失败，不悄悄切换模式。
+- 不要求在本轮打开Qt GUI；reader能读取与GUI完整验收分别记录。
+
+## 8. 明确通过标准：不要再只有一个总PASS
+
+| 标签 | 条件 |
+|---|---|
+| WORKFLOW_PASS | CLI全流程完成、确实到终止时间、结果可读取 |
+| NUMERICAL_QUALITY_PASS | B/C对应速度、密度、时间覆盖及场有效性检查通过 |
+| EM_THERMAL_WIRING_PASS | 真实EM/Q/热更新与能量映射检查通过 |
+| BUOYANCY_SIGNAL_RESOLVED | 同温场β对照可分辨，不由背景主导 |
+| PAPER_COMPARISON_AVAILABLE | 实际计算图与Fig.7/8参考完成对比并列差距 |
+| PAPER_VALIDATED | 本轮默认不授；需之后充分稳态、参数和误差证据 |
+| LINUX_INTEGRATION_BASELINE_READY | 两案CLI和场文件闭环完成，假设/能力/质量状态完整 |
+
+`LINUX_INTEGRATION_BASELINE_READY`是可集成状态，不自动覆盖NUMERICAL_QUALITY_PASS。若某case质量仍FAIL，可以开发软件、导入/回放已知结果，但默认运行预设须清晰标诊断用途；不得称物理可信或第三方验收已通过。
+
+当异常已定位但本轮修不完：给出首个坏状态、相关源码、复现命令、影响范围、推荐下一刀；不再开启无限新矩阵。用户按本轮结束转软件的决定执行，物理未完成项独立跟踪。
+
+## 9. 本轮禁止的扩张与允许的回归
+
+- 不重开TEAM7/全套电磁验证，不重跑整套方腔，不新增δ-SPH/ghost/shifting路线。
+- 不在本轮要求整圈弹性搅拌、千秒加热或高分辨率全耦合长跑。
+- 不以固定吸收功率吻合证明EM原始热源正确，不以人工温场双胞证明法国耦合复现。
+- 不改不锈钢E为软材料、不任意增β、不清零流体速度凑稳定。
+- 不将未知电流换成无来源常数、不将15kW假设写成甲方确认。
+- 如果局部修改触及已有核心算子，补一个与修改直接相关的必要回归；不因此重启整个验证项目。
+
+## 10. 本轮交付目录与最终问题
+
+建议`doc242_runs/`：
+
+```text
+00_freeze/
+01_elastic_diagnostics/        # B0/B1/B2、极值位置、初始/尖峰/末态
+02_elastic_fix/                # 针对性修复及时间步/子步覆盖审计
+03_client_nc_fixed_domain/    # OFF/ON和真实EM热短跑
+04_french_f2_fields/           # 现有数据绘图或唯一必要重跑
+05_french_paper_joint/        # Fig8叠图、T/U/Q三联图、误差/差异表
+06_cli_e2e/                   # 两案validate prepare run与结果可读测试
+07_linux_entry/               # 冻结提交/补丁、资产、示例、能力清单
+RUN_COMMANDS.md
+ROUND242_DECISION.md
+WORK_SUMMARY_ZH.md
+KNOWN_LIMITATIONS.md
+```
+
+物理曲线和结果文件本机完整保留，精简交接包包含关键CSV、5–8帧必要场结果或可获取资产路径/hash、脚本、有效配置和日志。不能本轮再只打包summary，却丢失空间场。
+
+冻结交接优先形成可审查提交；不要因“用户未说git commit”自动停住本地版本整理。遵守本机仓库规则，提交只包含明确相关源码、配置、脚本和小资产；不强推、不把临时大包和全部结果纳入git。若用base+patch，给应用顺序、hash和构建步骤，不把HEAD当全部运行代码。
+
+本轮最终总结必须直接回答：
+
+1. 1–3.5m/s异常在哪些粒子/哪一步产生，桨静止是否也存在？有无针对性改善？
+2. 约35%密度偏差的分布与来源，修后是否仍存在？
+3. 固体是否覆盖完整流体时间步，当前稳定dt是否真的参与控制？
+4. 甲方NC是否获得低背景浮力响应，实际EM—热短跑采用什么假设？
+5. 法国F2到底画出了什么流动，是否有真实双胞证据？
+6. Fig.8温度图最大差异在哪里，下一主因是什么？必须附图。
+7. 两案是否经统一CLI运行并产出可读取场文件，是否仍有静默忽略参数？
+8. Linux机需要的代码、粒子、几何、参数与结果是否齐全？还不能声称什么？
+
+本轮之后的工作切换：Linux机开始桌面装配、参数、启动/停止、进度、结果加载和打包；物理问题按KNOWN_LIMITATIONS单独续进。不要把法国完整论文验收和Linux软件开工继续绑定。
+
+<!-- ===== END 242_OPHELIE_FINAL_PHYSICS_PREPARATION_AND_LINUX_ENTRY_CURSOR_PLAN_2026-11-24.md ===== -->
+
+
+<!-- ===== BEGIN 243_OPHELIE_72H_PHYSICS_CLOSEOUT_AND_FRENCH_REPRODUCTION_CURSOR_PLAN_2026-11-24.md ===== -->
+
+# 243_OPHELIE_72H_PHYSICS_CLOSEOUT_AND_FRENCH_REPRODUCTION_CURSOR_PLAN_2026-11-24.md
+
+# 243：答辩前三天物理推进计划——法国热结构、搅拌异常与可审查证据
+
+日期：2026-11-24。
+执行对象：物理开发机上的Cursor。Linux桌面软件已由另一条工作线开始，本任务不开发GUI。
+前置：Doc242实际运行代码/补丁、原始结果、239物性提取包、Doc204 Fig.7/8数字化参考。
+
+## 0. 用户目标、优先级与硬边界
+
+用户还有约三天答辩。法国自然对流是物理展示主目标；甲方搅拌需继续修复，但不得拖住法国主线和Linux软件。
+
+本轮不承诺三天内必然实现论文完全定量复现；目标是最大化得到可信结果的概率，交出可解释的场图与量化差距，同时避免临近答辩引入失控改动。
+
+优先级：
+
+1. **P0：纠正归因与锁定法国工况，核实温变物性真实参与更新。**
+2. **P1：用合理非均匀初猜推进法国耦合，形成Fig.8温度场＋Fig.7流动＋Fig.6热源联合证据。**
+3. **P2：对甲方搅拌做最小静水诊断，定位第一个异常算子，实施一项有证据的修复。**
+4. **P3：补齐可重生成图表、数据、能力标签和软件增量交接，最后一天以复跑与报告为主。**
+
+建议物理GPU时间分配：法国约60%，搅拌约25%，必要回归/整理约15%。不是平均分配每个未完成任务。单GPU正式求解串行，CPU源码审查与图表整理可穿插。
+
+禁止重开全套TEAM7/方腔、新造Maxwell或流体框架、引入ghost/δ-SPH新路线、做全参数/全分辨率扫描。已通过基础验证保留，只有相关核心代码变动才补对应必要回归。独立A-phi/Laplace研究不修改。
+
+## 1. 已核查事实与必须纠正的结论
+
+### 1.1 已经可以直接利用的基础
+
+- 法国固定域：同一环带温场OFF零流、ON有清晰响应。当前能够产生轴降—环升—缘降的趋势，不应继续重复论证浮力公式能不能驱动流动。
+- 甲方NC固定平坦滑移顶：同温场OFF静止，ON U_rms约3.39e-5m/s，浮力信号可分辨。开放自由面路径仍有背景问题，保留为独立限制。
+- 两案CLI已经能prepare/run并收集场文件。软件可以继续集成，不等待法国论文完全验证。
+- 甲方电磁—热短跑使用ASSUMED玻璃吸收15kW；电源30kW不能自动解释成50%效率，等效电流反算也不是甲方实测电流。
+
+### 1.2 法国242结果不能这样归因
+
+242报告将5s散热约154kW、入热50kW归为`heat_loss_dominant_cold_wall`，并推断“继续延时只会更冷，无法形成论文结构”。**该推断未证实，本轮改标：均温起步的短时净冷却，边界实现正确性与最终平衡未定。**
+
+实际5s末：Tmin≈1440.55K，Tmean≈1468.3K，Tmax≈1477.99K。初始1473K，最低下降而最高上升，温度梯度正在形成。
+
+质量约97.21kg、cp约1150J/(kg·K)，热容量约112kJ/K。净散热约104kW对应平均降温约0.93K/s，与5s平均下降约4.7K相符；这不能单独证明h设错。
+
+242法国日志同时写明：`constant_thermal_rheology=1`，μ=4Pa·s、k=4W/(m·K)、cp≈1150J/(kg·K)。这不是完整温变物性论文复现。σ有温变路径也不代表热/黏度全部温变。
+
+5s温度差距不等于最终稳态误差；约20次论文耦合迭代不等于20秒物理时间。不能为了让5s图好看就修改已知边界或增加β。
+
+### 1.3 搅拌仍需承认的问题
+
+- 242静止桨仍出现异常流动，关闭流体向固体载荷也未消除尖峰，因此首先查流体平衡、几何/边界与界面更新，不优先软化弹性材料。
+- 加静水IC只降低早期波动；约0.012–0.015s仍可有3.5–4.3m/s尖峰，不能认定“缺初始静水压”解释全部问题。
+- CLI末Umax≈1.24m/s，密度最大相对偏差约54%，数值质量未过。
+- 当前固体候选dt有打印，真实子步仍取启动dt_s0；不能称当前稳定步长已经控制推进。
+- `hold-hydrostatic-ic`每次重置密度/压力仅是诊断，不能作为默认修复。
+
+## 2. 启动前最多一次资料定位与版本冻结
+
+先读当前源码与有效配置，不把旧包HEAD当现在唯一版本。用户已在其他机器推进软件，不覆盖对方分支。
+
+保存：本机HEAD、分支、WIP、binary hash、工具链/设备、关键STL/reload/物性表hash。新实验在独立目录，保留242的可运行版本。
+
+本机需要的资料按下列入口寻找；不依赖ChatGPT页面、sandbox链接或会话内脚本：
+
+| 资料 | 应用位置/实际入口 |
+|---|---|
+| 当前法国主case | `tests/extra_source_and_tests/3d_examples/test_3d_ophelie_french_natural_convection_frozen_q/` |
+| 当前甲方弹性case | `tests/extra_source_and_tests/3d_examples/test_3d_ophelie_client_stirring_f0_elastic_fsi/` |
+| OPHELIE共享物性 | `tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/`下`electromagnetic_ophelie_french_material_laws.h`及相关局部算子 |
+| 242法国基线 | `doc242_runs/05_french_paper_joint/PAPER_NC_50kW_5s/`，本机通常位于docs/ophelie/reference下 |
+| 242搅拌 | `doc242_runs/01_elastic_diagnostics/`、`02_elastic_fix/`、`06_cli_e2e/` |
+| Fig.7/8参考 | 242包内`reference_fig7_fig8_Doc204/reference/`及provenance/说明 |
+| 物性提取 | 已交付239数据包：Jac/Sauv曲线与公式来源、拟合及QA |
+| 软件适配层 | `docs/ophelie/software/linux_src/`，已有validate/prepare/run与result-index |
+
+目录不同时只做一次定位并写入`INPUTS.md`，缺件列具体文件，不遍历所有历史包反复读计划。已有图像和数据不得假称没有；当前模型不支持的材料项明确标未接入。
+
+## 3. P0-A：锁定法国主配置，隔离诊断与论文目标
+
+### 3.1 本轮唯一论文主身份
+
+`FRENCH_PAPER_NC_50KW`：期刊无热电偶装置、无机械搅拌自然对流，平坦固定不可穿透/切向滑移顶面，侧/底无滑移。优先对齐Fig.8温度、Fig.7速度趋势、Fig.6热源。
+
+人工F2环带另保留`FRENCH_F2_DIAGNOSTIC`，不是正式初值来源真值，不把冻结温场图当耦合复现。
+
+Jac博士55kW、Marangoni组别、Sauv另一玻璃组别不得混成同一个验证身份。每次输出物性dataset_id、property_model_id和论文/借用/假设来源。
+
+### 3.2 本轮必须打印的有效参数表
+
+- R/H、坐标轴与重力、粒子dp、初始质量/体积。
+- ρ、β、μ/k/cp/σ公式或表、上下界与温标；℃转换仅在入口发生，求解内部用K。
+- 线圈半径/匝数/高度/频率、输入电流幅值约定、固定吸收功率50kW及归一因子。
+- EM形式、自感开关、σ更新方式和间隔。
+- 侧/底/顶h、环境温度、辐射ε与辐射环境温度、边界面积。
+- 顶面机械条件、压力/静水背景分解、完整重力是否另施加、Marangoni是否启用。
+- 初猜来源、温度是否随时间推进、实际控制分支。
+
+期刊已知参数固定；未知项才用博士补充或假设。参数表是后续所有run共用基线，不每次临时拼装。
+
+## 4. P0-B：局部温变物性接线，先查后补
+
+### 4.1 查真实调用链，不看数组就授PASS
+
+输出`PROPERTY_PATH_AUDIT.md`，每项列：数据来源 → 更新时机 → 字段/函数 → 实际消费算子 → 步长限制 → 能量或动量检查。
+
+| 项 | 必须核实 | 本轮顺序 |
+|---|---|---|
+| μ(T) | 粒子局部值进入黏性相互作用/隐式系统，不是体积平均一个μ | 第一优先 |
+| k(T) | 流体内部与接触导热采用一致局部系数 | 第二优先 |
+| cp(T) | 实际温升换算使用局部cp/焓，不是构造函数标量覆盖 | 与k一起审计 |
+| σ(T) | 当前温度更新到真实EM解，非仅可视化字段；时间戳明确 | 接回正式耦合 |
+
+特别审查`ApplyLaplaceDiffusionDtCK`及热边界消耗cp的路径。复用已有局部实现，避免重写重复算子。
+
+### 4.2 最小功能验证，不重跑一套论文case
+
+1. 选3–5个覆盖实际温区与曲线转折的温度点，记录μ/k/cp/σ；与已提取表插值结果核对，检查单位、单调区段和截断。
+2. 无热源绝热的小型热交换：实际温变cp下按一致焓差检查总能量，目标漂移<=0.5%（工程筛查）；失败先查公式/双计数，不继续正式耦合。
+3. 局部μ算子若修改，用已有可信黏性验证的一个必要短回归。恒μ时恢复原结果；局部μ用同一离散的残差/耗散与CPU小规模复核，不新造大型验证项目。
+4. 在非均匀正式初猜上打印物性min/mean/max及实际消费统计；高温平台不变可以合理，不能为了min!=max故意使用无物理根据温度。
+
+温变cp应以`h(T)=积分cp(T)dT`定义储能；若使用显式近似，报告离散能量残差和步长敏感性，不能以当前cp乘总温差充当严格焓。
+
+### 4.3 冷区大黏度的处理
+
+μ(T)可能跨多个数量级，必须报告最大黏度比、显/隐式路径、线性残差、实际dt与迭代次数。高μ导致慢，不等于浮力公式错误。
+
+优先沿已有可信隐式黏性实现做局部系数一致化；不在三天内另写全GPU隐式框架。已有CPU/混合可信路径可以作为备选，准确标设备与耗时。
+
+不得静默截断μ、直接冻结冷区速度或把高μ区域删掉。如果需黏度上限作数值延续，只能在独立DIAGNOSTIC身份下逐级接近目标上限；最终展示注明限制，并用目标物性作回查。续进阶段结果不是论文定量验证。
+
+若cp局部化短时间无法完成，不无限卡住主线：先用已验证常cp、局部μ(T)/k(T)做明确标注的中间模型，输出限制和对应误差风险；不得称完整温变物性复现。
+
+## 5. P0-C：热边界审计，不先调h
+
+### 5.1 几何与热量核对
+
+- 先用圆柱几何解析面积：侧2πRH、顶πR²、底πR²，与离散有效面积积分比较；工程目标<=5%，边角归属规则明确。
+- 检查侧/底/顶分类重叠及遗漏；机械顶墙不应额外引入第二份热损失。
+- 对流与辐射各自报告面积、采用的边界温度、环境温度和符号；净流入与净流出约定统一。
+- 顶面辐射用绝对K；冷水/空气/辐射环境不能用同一个默认值静默覆盖。
+- 用均匀T的单步检查与解析`hA(T-Tenv)`、`εσSB A(T^4-Trad^4)`核对；此时可检验面积与单位，正式非均匀场需按各面温度积分。
+- 边界扣热与总储能采用同一时间区间、质量/体积和cp约定；固定T诊断的维持温场功单列，不混入正式能量守恒。
+
+单步输入功率/边界计算目标差<=1%（排除已量化面积差）；累计正式热收支残差工程目标<=2%，>5%先停下来排查。不用大floor掩盖残差。
+
+### 5.2 审核结果决定是否修h
+
+面积/符号/温度层有实现错误：先修实现，保持文献h。
+
+实现一致但参考不明：保留ASSUMED身份，先运行真实热演化；只有出现可比热平衡且偏差仍与散热相关时，再选择一个有范围依据的未知边界参数敏感性。
+
+不允许由5s散热/入热>1直接推导必须减h；也不允许仅为T*接近0.5–0.9而调低绝对温度。
+
+## 6. P1-A：构造可自由演化的合理非均匀初猜
+
+### 6.1 优先顺序
+
+首选已有热模块或现有轻量轴对称热计算生成冷壁梯度；如果已有成熟初猜文件则直接复用并查身份。不要从零开发通用2D求解器。
+
+热初猜过程可暂冻结速度并使用一份固定Q，只为加快建立热梯度；若用有限体积轴对称辅助工具，须包含r权重、轴线对称、实际顶部/底部/侧壁条件和积分功率。它是初猜生成器，不是SPH验证真值。
+
+Doc204稀疏等温线可作有不确定性的备选初猜，保留插值范围/掩码与假设Tmax，不把未识别区域补成“论文完整场”。
+
+### 6.2 导入与正式推进要求
+
+- 正确处理r/z原点、m单位、粒子采样位置、轴线和越界点。
+- 导入后实际统计Tmin/Tmax/均值、剖面、总焓与冷/热区体积分数；输出初态场图。
+- 初态速度不指定目标环流，压力/背景初始化与当前固定域路径一致。
+- 正式run不得开启`freeze-prescribed-t`；初猜导入一次后，温度由热方程、对流和Q共同演化。
+- 不得每步覆写Fig.8温度，或每步重置流体速度，以伪造稳态。
+- 若初猜温度超物性有效范围，标记并采用有记录的外推策略，不静默截断后称文献精确值。
+
+### 6.3 初猜独立性
+
+主配置取得可比热结构后，再做第二个合理初猜的短续算（例如适度扰动初猜梯度/均值，保持物性和边界不变）。若二者呈趋同则增强稳态可信度；时长不够只标未验证。不要为完成此项提前铺开多组长跑。
+
+## 7. P1-B：有限矩阵推进法国耦合，不固定要求超长物理时间
+
+### 7.1 正式矩阵
+
+| 组 | 内容 | 是否必须 |
+|---|---|---|
+| F_BASE | 242常物性5s原始结果，作为历史对照 | 复用，不重跑 |
+| F_VAR | 真实局部物性＋合理初猜＋50kW＋当前可信EM路径 | 主任务 |
+| F_SEED | 主模型第二初猜短续进 | 主结果有希望后执行 |
+| F_SENS | 一个有证据的σ/边界/EM数值敏感性 | 最多选一项，不全开 |
+
+先不改变dp=15mm，不扩展全部线圈/频率/功率。不得同时改变初猜、h、β、功率再声称找到唯一根因。F_VAR是更完整模型，不用于声称单项因果；如果要归因局部μ，用短的相同初猜常μ/变μ对照即可。
+
+### 7.2 运行时长由演化与耗时共同决定
+
+先2s仪器化短跑，测每物理秒耗时、步长、黏性/EM迭代、温度变化与稳定性；只做必要输出，不能每步全量VTP。
+
+健康后逐段推进到10s、30s；有热结构发展且预算允许时才继续到60/120s或现有重启的更长窗口。这些是检查点，不是强制总时长或稳态判定。
+
+如果没有可靠checkpoint，不临时构造只存T的“完整重启”。可以单次run定期保存统计和有限场帧；热初猜导入与完整状态重启分开命名。
+
+每段判断：
+
+- 数值有效、热收支健康、T结构向目标发展：允许继续。
+- 高μ令dt/隐式迭代失控：先查局部黏性实现/预处理/容差，不靠把温变物性关掉宣称完成。
+- 热结构几乎不变且离目标很远：先判是否已接近平衡、Q/边界/初猜是否有问题；不无限跑。
+- 场仍明显发展：标TRANSIENT，不以5s差距定最终误差。
+
+第一天必须交2s/首段图；长任务每30–60分钟写进度/有效物理时间，不允许一天后才发现零推进。
+
+### 7.3 EM方面只做必要的实场核查
+
+当前固定功率50kW控制可以保留；同时报告归一前功率、等效电流及归一后功率，避免50kW吻合掩盖形状问题。
+
+σ(T)先选明确定义的主曲线（239提取的图拟合/印刷公式不混用），写模型ID及有效区间。若需A/B，用同一冻结非均匀T比较原始与固定功率Q分布；最多两次EM解，不同时热演化A/B以免失去可比性。
+
+A_ind=off必须标模型差异，不因本次“皮肤状Q”就声称已完整考虑自感趋肤。只有同温场下Q趋势与Fig.6明显不一致、且现有自感路径已有可信验证时，才将其选为唯一F_SENS；不临时启用未验证自感强行改善图像。
+
+EM更新间隔用固定主值，记录每次采用的T/σ/Q时间戳。需要数值敏感性时仅主值与减半两档；不要与h/σ曲线同时扫描。
+
+## 8. P1-C：统一场图、稳态判定与参考误差
+
+### 8.1 每次同窗输出T/U/Q三联图
+
+- Fig.8：绝对T与原文定义的T*=T/Tmax，分别保留；Tmax绝对来源不明不反推唯一温标。
+- Fig.7：r-z周向平均速度矢量/流线与中心薄片；主次胞必须在同一半径剖面判断，左右镜像不能当两个径向胞。
+- Fig.6：Q位置/范围、径向与轴向累计功率，定性图像或数字化结果的精度分开说明。
+
+所有图含坐标单位、刻度、色标、图例、实际时间/平均窗口、模型身份、数据/脚本来源。参考只在已识别轮廓/点区域比较，不将稀疏插值场作为全域精确真值。
+
+### 8.2 必交数值
+
+Tmin/Tmax/Tmean、热点r/R和z/H、三条竖向/三条水平温度剖面、主要等温线形状；轴/内部环带/最外缘Uz、Umax/U_rms和回流旋向；Q积分/热点与高热源区域；每面散热和总焓变化。
+
+两组图使用统一色标，另有自适应色标时明确说明。不能仅用各自色标让接近均温的场看起来梯度很强。
+
+### 8.3 工程准稳态筛查，不能伪造论文标准
+
+用三个连续、等长、完整后期窗口，窗口长度根据实际热/流动演化确定并保持不变：
+
+- 储能速率/输入与散热功率规模<=5%；
+- Tmean每窗变化<=代表温差的1%；
+- 热点位置及主要等温线无明显持续漂移；
+- U_rms和主要分区Uz邻窗变化<=5%，低信号同时报告绝对量；
+- 热收支残差符合第5节要求，密度/体积/粒子数无异常漂移。
+
+满足才标ENGINEERING_QUASI_STEADY，不自动变成PAPER_VALIDATED。不满足则保留TRANSIENT并显示仍在发展的量。
+
+没有可靠参考误差定义时不给合同10%或自造“论文PASS”。形状接近、方向一致、量级接近分别报告，不能用一个百分比概括全部。
+
+## 9. P2：甲方搅拌只定位第一个异常，避免继续堆初始化补丁
+
+### 9.1 复用已知对照，不重做242矩阵
+
+B1静止桨异常、B2去载荷尖峰仍在是已有证据。保留5mm密粒子、不锈钢材料；不软化E，不用hold-hydrostatic作为默认。
+
+先运行零转速、等温、无EM/无浮力静水诊断。新增局部诊断开关必须明确作用范围，不改其他case默认。
+
+### 9.2 从三种状态区分流体与弹性运动
+
+- S_FIXED：桨完全固定，作为静止墙接触，流体有重力。诊断静水/壁面平衡。
+- S_ELASTIC_REST：桨真实弹性、驱动为零，其余相同。判断固体重力/约束/接触运动是否使问题放大。
+- S_DRIVEN：只有前两者有清楚结论后，恢复10rpm驱动。
+
+固定桨仅为诊断，不替代最终弹性模型。若S_FIXED仍异常，不优先重写固体积分器。
+
+### 9.3 抓首个坏步而非最终Umax
+
+输出声学步内以下阶段前后粒子级增量：密度求和/重初始化、压力更新、完整重力、内压力力、墙/桨接触压力、黏性、位置更新、cell/邻域更新。以实际调用顺序为准，不凭任务书重排成熟算法。
+
+每阶段记录Umax/U_rms、rho极值及P99、极值ParticleID与位置、压力、邻域数；追踪前10异常粒子。用稳定ID处理排序。
+
+核对：
+
+1. 静水IC后的ρ/p是否在首个密度求和时被重写；若被重写，应修相容的密度/压力/边界路径，不能每步强刷静水解。
+2. 重力是否重复加、ForcePrior是否正确清理/累加、静水背景与完整重力是否混用。
+3. 几何是否单位或轴变换错误、流体初始是否侵入桨/壁、邻域是否在实际位置更新后刷新。
+4. 法向与接触体积是否一致，接触力符号是否正确，桨平均速度与位置时间层是否匹配。
+5. c0=8下合理静水压缩应按EOS和深度估计；不能将54%偏差归为正常弱可压缩效应，也不能只按rho/rho_ref无视静水基线。
+
+必要时做唯一一次`dt/2`对照；波动仍同量级则不继续缩dt扫稳定。若c0需敏感性，只在静水配置中比较原值与合理一档，不能用极大c0掩盖不平衡且不报告耗时。
+
+### 9.4 固体dt真实参与控制
+
+将live稳定候选用于实际dt_use约束，非法候选应FAIL而非继续使用更大固定dt。子步和必须覆盖dt_fluid，不满足即停；记录dt_candidate/dt_used/covered_time。
+
+该项是代码欠账，不能预先归为所有高速尖峰根因。S_FIXED异常仍应先修流体路径。
+
+### 9.5 本轮只修一个有证据的主问题
+
+选择第一个明显不平衡阶段，最小局部修复，保持相同初态作修前/修后比较。若仍有第二问题，先保留证据，不把全部离散算子同时替换。
+
+静水目标：相对合理静水基线的密度异常明显降低，无持续自激流动；速度背景足够低于旋转驱动信号。P99密度偏差<=2%、最大<=5%可作工程筛查；边界层单列但不从总统计隐藏。失败不能通过调阈值转PASS。
+
+通过静水后再跑真实弹性0.05s，若质量健康可到0.2s；本轮不强求整圈。报告粒子逃逸、固体Jacobian/应力有效性、桨速与流速量级。仍异常则软件保持诊断标签，不渲染成可信工程结果。
+
+## 10. 三天安排与停止规则
+
+按相对开始时间计，不受机器时区影响。以答辩前至少12小时冻结演示版本为原则。
+
+| 时间段 | 法国主线 | 搅拌/整理 | 当段必须留下 |
+|---|---|---|---|
+| 0–6小时 | 有效身份、物性调用链、热边界单步审计 | 版本冻结、旧图脚本补全 | 参数表/缺口表/首个明确修复点 |
+| 6–24小时 | 局部物性与初猜，F_VAR首段实际推进 | 静水首坏步诊断，限制投入 | 首张真实T/U/Q三联图、进度与耗时 |
+| 24–48小时 | 条件健康则分段续算；最多一个敏感性 | 一项搅拌修复和必要回归 | 后期窗口趋势、修前修后、可复跑版本 |
+| 48–60小时 | 主模型稳定性/第二初猜短检查，优先复用已有长结果 | 增量交软件机、补报告 | 冻结候选及完整图表 |
+| 最后12小时 | 不再改核心物理；只复跑/导出/检查 | 软件集成与演示备份 | 答辩可用包、明确限制和运行说明 |
+
+物性局部化某一项超过约4小时仍无清楚路径时，提交调用链与阻塞点，采用有标签中间模型继续有效计算，不整天盲改。边界审计只做必要解析核对，不扩展到未知结构全建模。
+
+任何正式run在首个非有限量、非正密度/体积、非法固体Jacobian、子步欠时间、明显不守恒时停止并保留首坏步。出现这些问题不允许继续长跑“看看会不会自己稳定”。
+
+若48小时仍未达论文热结构：选择最可信模型与瞬态趋势诚实展示，附差距原因与下一步，不临时强写目标温场/速度。同时保留人工F2作为独立功能证据，但清晰区分。
+
+## 11. 与Linux软件机的接口和增量交接
+
+软件机继续GUI、参数、结果加载、打包；物理机不重构界面和重复CLI。不因软件已开工就冻结必要物理修复，也不让软件实时跟随未经检查的物理WIP。
+
+两机独立分支。物理修复以小提交或base+完整patch交付，写接口是否变化、配置是否兼容、资产是否重生、最小复跑命令。软件机显式cherry-pick/合并；不强推、不覆盖对方未提交代码。
+
+每次最多交一个已检查候选，稳定配置与实验配置分开。状态字段至少包括：workflow_completed、numerical_quality_ok、em_executed、thermal_advanced、flow_advanced、solid_advanced、steady_state_status、paper_comparison_status、assumptions。
+
+第三方展示中必须区分真实计算、历史回放、人工温场诊断、校准结果、文献预测。搅拌质量FAIL不能因为GUI能加载就改名“已验证”。
+
+## 12. 交付物：少读文档，多看可复现证据
+
+目录建议`doc243_runs/`：
+
+```text
+00_freeze/                    # 版本、设备、二进制、资产hash
+01_model_and_properties/      # 有效身份表、调用链、函数/单步检查
+02_boundary_audit/            # 面积、解析热流、能量审计
+03_thermal_initial_guess/     # 初猜来源、导入检查、非冻结证明
+04_french_coupled/            # F_VAR主线、后期窗、有限敏感性
+05_client_hydro_fix/          # 首坏步、固定桨/弹性静止诊断、局部修复
+06_figures_and_tables/        # 可直接答辩的PNG/PDF/SVG和CSV
+07_software_increment/       # 最小代码/配置/资产增量与回归命令
+INPUTS.md
+RUN_COMMANDS.md
+ROUND243_DECISION.md
+KNOWN_LIMITATIONS.md
+DEFENSE_EVIDENCE_INDEX.md
+```
+
+必须有真正可执行绘图脚本，指定输入目录和输出目录，禁止再交只提示“使用会话内脚本”的占位文件。普通Python绘图即可，不新增大型可视化依赖。
+
+每组保留effective配置、日志、原始CSV、必要VTP、统计窗口和源代码hash。精简包至少包含每个关键结论对应的场帧/CSV，其他完整场可本机保留并列清单/hash，不用重复上传全部历史。
+
+### 答辩证据至少六张图/表
+
+1. **模型对齐表**：期刊已知、博士借用、假设/校准及当前差异。
+2. **物性生效图/表**：真实μ/k/cp/σ路径与实际温区，说明仍常量的项。
+3. **法国热收支随时间**：输入、三面散热、储能变化及残差。
+4. **法国同窗T/U/Q图**：参考与计算，同坐标/色标，时间状态明确。
+5. **温度/速度关键剖面与后期变化**：说明接近程度与是否仍在发展。
+6. **甲方搅拌异常修复证据**：首坏步位置、修前修后与质量状态，不只展示动画。
+
+若最终只达到部分目标，DEFENSE_EVIDENCE_INDEX必须逐项说明支持什么、不支持什么。单模块验证由已有验证材料另行支撑，本轮不以工程短跑代替标准case/实验误差证明。
+
+## 13. Cursor最终汇报只回答这些问题
+
+1. 法国当前实际使用哪些温变物性，哪些仍为近似？给真实调用证据。
+2. 热边界有没有实现错误？还是只是起步净冷却？给面积/单步/累计证据。
+3. 初猜从哪里来，是否导入一次后自由演化？运行到了多少物理时间？
+4. Fig.8温度结构是否接近、最大偏差在哪里，是否已有准稳态证据？
+5. Fig.7轴降—环升—缘降是否在正式耦合中出现？小外围胞证据是否足够？
+6. Q位置与Fig.6的差异是什么，当前自感/σ模型有哪些限制？
+7. 搅拌首个异常算子定位了吗，修复实际改善多少，质量是否仍FAIL？
+8. 交给Linux机的准确版本、兼容配置和不可夸大的结论是什么？
+
+不要用新增开关数量、运行次数、授牌数量概括进展。以实际温度结构、收支、速度场与异常修复证据作为本轮完成标准。
+
+<!-- ===== END 243_OPHELIE_72H_PHYSICS_CLOSEOUT_AND_FRENCH_REPRODUCTION_CURSOR_PLAN_2026-11-24.md ===== -->
+
+
+<!-- ===== BEGIN 244_OPHELIE_TARGETED_PHYSICS_DEVELOPMENT_AND_TEST_PLAN_2026-11-24.md ===== -->
+
+# 244_OPHELIE_TARGETED_PHYSICS_DEVELOPMENT_AND_TEST_PLAN_2026-11-24.md
+
+# 第244轮：法国温度场整改与搅拌首步异常定位——开发测试任务书
+
+日期：2026-11-24。
+执行对象：物理开发机上的Cursor。Linux软件机继续独立开发。
+版本：修订版；替代此前第244轮任务书。只执行本文件，旧版未保留的任务不执行。
+
+## 0. 本轮范围：只做两条物理任务，不扩展路线
+
+1. 法国自然对流：纠正空间热平衡判断，恢复符合原文归一关系的温度初猜，检查真实冷区物性和数值刚性，推进自由演化的热—流动计算。
+2. 搅拌：用真正固定的桨做静水诊断，分析首个声学步各算子的贡献，定位并修复第一个明确错误。
+
+本轮不开发GUI，不重跑整套方腔/TEAM7，不新建流体框架，不新增ghost/δ-SPH路线，不全域扫描粒子分辨率，不拟合文献参数，不改写目标图或求解输出。
+
+目标是两项具体证据：**法国正确温度定义下的冷区处理和实际场图；搅拌具体哪个算子、哪些粒子首先失衡。** 不再以增加开关或阶段PASS标签代替解决问题。
+
+## 1. Doc243已审查事实：保留成果，纠正结论
+
+### 1.1 保留现有有效改动
+
+- 逐粒子cp热扩散更新`ApplyLaplaceDiffusionDtParticleCpCK`。
+- 已接入的局部μ(T)、k(T)和σ(T)路径；仍需补足必要消费/守恒检查。
+- 无附加壳阻的30s耦合结果：T约1291–1553K，轴心下降、内部外围区域上升，U_rms约4.42e-4m/s。作为有效研究基线保存，不重跑作废。
+- 搅拌跳过运行时dens-sum的尝试已失败，恢复正常默认；不重复同一个开关试验。
+- 两案现有CLI和结果索引，不重构软件接口。
+
+### 1.2 必须纠正的报告表述
+
+| 原结论 | 本轮处理 |
+|---|---|
+| 全域均温1473K散热157kW，故50kW与论文温区不兼容 | 撤回推断；只说明该均温初态净冷却 |
+| 0-D平衡温度778/1260K决定空间模型最终温度 | 不采用；集总均温模型不能替代非均温空间解 |
+| 缺冷壳资料已被证明是根因 | 未证明；附加热阻降为独立敏感性历史结果，本轮不继续调它 |
+| Fig.8初猜1400–1550K失败，故参考温场不可用 | 原初猜改动了Tstar比例，不能用来否定论文温场 |
+| 搅拌首坏步定位完成 | 改为仅缩小到流体/边界侧；具体算子仍未定位 |
+| hold重刷密度使偏差降低，证明dens-sum是唯一根因 | 不成立；必须直接测该算子前后增量 |
+
+先更新本轮结论，不删除历史原始记录，避免后续继续引用错误推断。
+
+## 2. 启动前冻结与资料定位：最多做一次
+
+保存实际HEAD、分支、WIP、binary hash、设备、STL/reload/物性表hash。Doc243包的旧HEAD不等于现在软件机或物理机代码，不擅自回退。
+
+关键源码：
+
+```text
+tests/extra_source_and_tests/3d_examples/
+  test_3d_ophelie_french_natural_convection_frozen_q/
+  test_3d_ophelie_client_stirring_f0_elastic_fsi/
+
+tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/
+  electromagnetic_ophelie_french_material_laws.h
+  electromagnetic_ophelie_french_skull_resistance.h
+  diagnostics/electromagnetic_ophelie_thermal_diffusion_one_way.h
+```
+
+输入：Doc243本机完整运行记录、239物性提取资料、Doc204 Fig.7/8标定/等温线/部分重建数据。一次定位后写入`INPUTS.md`，不要反复翻阅全部历史任务书。
+
+Doc243精简包未装完整VTP与全日志；需要的数据优先在原机找，确实缺失再最短重跑，不从summary反推不存在的粒子证据。
+
+本轮法国主身份：期刊50kW、无机械搅拌、无热电偶装置、固定平坦滑移顶面；侧/底无滑移。博士资料仅补未明确项并标来源，不混入55kW/Marangoni组作为同一验证目标。
+
+## 3. 法国任务F1：用非均匀边界温度判断热平衡
+
+### 3.1 保持当前已知物理参数，先检查实现
+
+正式主配置关闭额外`skull-resistance/free-crust-resistance`，保留其源码和历史结果，不在本轮继续调壳厚。
+
+实际收支应为：
+
+```text
+P_in = ∫V Q dV
+P_side = ∫side h_side*(T_face-T_cool) dA
+P_bottom = ∫bottom h_bottom*(T_face-T_cool) dA
+P_top = ∫top [h_top*(T_face-T_air)
+              + epsilon*sigma_SB*(T_face^4-T_rad^4)] dA
+储能变化率 = P_in - P_side - P_bottom - P_top + 数值残差
+```
+
+T_face必须是边界局部温度，不能用内部代表温度、Tmean或Tmax覆盖所有边界。均温0-D只用于公式/初态数量级核对，不决定空间模型是否能形成热平衡。
+
+### 3.2 只补Doc243未证明的关键项
+
+Doc243已完成面积归一和均温解析散热核对，不重做。补输出：
+
+1. 侧/底/顶每个边界粒子的温度、对应面温、面积权重及热流。
+2. 各面面积加权温度与温度范围，各面实际功率。
+3. 粒子中心温度与几何面温的关系；是否有外推、其距离/方向/梯度来源。
+4. 热流积分与实际扣除储能是否对应同一时间段、同一cp/焓定义。
+5. 不同面的归属是否重复；机械顶墙是否额外增加一份热损失。
+
+特别检查侧面是否仍把热粒子中心温度直接当冷壁面温；若存在此近似，量化其范围，不直接宣布错误或添加经验热阻。
+
+若要修改面温处理，必须使局部传导和Robin边界一致；不把已知换热条件改成固定温度，不用任意低温边界凑结果。
+
+### 3.3 完成标准
+
+交`BOUNDARY_SPATIAL_AUDIT.md`和原始CSV，明确：已经证实的实现问题、修复内容、仍属分辨率近似的项。没有新错误则保持边界参数不变，继续F2，不因0-D估算再次停止主线。
+
+## 4. 法国任务F2：正确构造Fig.8初猜，正面检查高黏度
+
+### 4.1 保持原文归一关系
+
+现有参考定义：`Tstar = T/Tmax`。正确重建形式：
+
+```text
+T_seed(r,z) = Tscale * Tstar_reference(r,z)
+```
+
+Tscale精确值未确定时标ASSUMED；原文名义“约1500K”不等于精确Tmax。先登记一个有来源说明的诊断值；不要启动Tscale扫描。
+
+禁止再次把Tstar∈[0.5,0.9]仿射映射到1400–1550K并称保留Fig.8温度结构。旧热温带文件保留为人工诊断，不用于本轮正式参考判断。
+
+在已识别参考点检查`T_seed/Tscale`与原Tstar是否一致。未知区域插值规则、有效区域掩码、外推方法和误差明确记录，不把部分重建当原作者完整数值解。
+
+### 4.2 先查物性与dt，再启动长计算
+
+仅导入正确初猜，输出：
+
+- Tmin/Tmax/Tmean、冷区体积分数、总焓、初态温度剖面。
+- μ/k/cp/σ的min/max/P50/P95/P99及空间分布。
+- 每条物性曲线有效范围、外推/截断数量和原因。
+- 真实声学、热扩散、黏性步长限制；显/隐式黏性实际执行路径。
+
+若没有准确Tscale，先用名义1500K作明确假设的物性/步长诊断，不把结果写为论文绝对温度已确定。
+
+### 4.3 处理数值刚性的顺序
+
+1. 查现有可信隐式黏性是否支持局部μ及当前边界；支持则复用，记录残差、迭代、耗散和实际dt。
+2. GPU路径不适配时，可用已有CPU/混合可信实现做小规模验证；准确性优先，不临时编写大型GPU线性求解器。
+3. 显式dt合理时先极短自由演化，不因μ大就认定模型错误。
+4. 真实目标μ暂不能稳定推进，报告最严粒子/算子/dt与耗时瓶颈；不要静默压缩温差、截断μ或冻结冷区速度来授PASS。
+
+本轮不新增黏度上限扫描。已有上限仅能作为明确标注的数值诊断，不能替代目标物性结果。
+
+## 5. 法国任务F3：最小矩阵与真实热演化
+
+| 编号 | 内容 | 运行要求 |
+|---|---|---|
+| F0 | 243无附加壳阻30s基线 | 复用，不重跑 |
+| F1 | 正确Fig.8初猜的导入/物性/dt检查 | 必做，先不长跑 |
+| F2 | 原边界、正确初猜、实际局部物性，极短自由演化 | 初始检查健康后做 |
+| F3 | F2健康后的续进；或复用已有可信非均匀热初猜自由演化 | 最多一条主计算线 |
+
+F2/F3不冻结温度、不指定目标速度，不在每步重新刷Fig.8温场。初猜导入与完整状态重启分开命名：仅保存T不能冒充完整checkpoint。
+
+先极短窗口检查，再根据健康度和实测耗时到2/10/30/60s检查点。这些是观察点，不是稳态时间承诺。已有30s数据不重复起步计算以凑运行次数。
+
+仅因10s外围Uz未向上，不能判最终失败；仅因净散热不能判边界错误。可以因时间预算停止，但结论写“尚未达到/无法在预算内完成”，不写“已经证明不可能”。
+
+当前dp15mm可能不足以解析数毫米冷壁层。先查边界面温/热流近似，必要时利用已有轻量轴对称热模块生成更合理初猜或作独立热诊断；不在本轮新建大型辅助求解器，不全域加密扫参。
+
+## 6. 法国输出和判断标准
+
+每个正式结果同窗输出：
+
+- 温度绝对值与Tstar、参考等温线叠加、热点位置；中心/中环/近壁竖向剖面与上/中/下横向剖面。
+- r-z周向平均Ur/Uz矢量和流线；保留真实中心薄片识别非轴对称。
+- 原始Q与固定功率后的Q分布、功率积分及径向/轴向分配。
+- 输入功率、各面散热、总焓变化与残差时间曲线。
+
+报告轴/内部环带/最外缘Uz，不能把宽泛“外围上升”当成最外侧冷壁小胞已经形成；左右镜像也不算两个径向胞。
+
+T/U/Q图必须有坐标单位、刻度、色标、图例、实际时间/平均窗、模型身份。参考和计算同色标同坐标，不用各自色标隐藏差距。
+
+物性接线至少补：3–5温度点函数核对、局部cp的绝热热交换/焓守恒短检查。已有结果充分则复用，不新建完整验证项目。
+
+正式累计能量残差工程目标<=2%，>5%先查实现；低分母用绝对值，不用大floor。准稳态需热收支和连续后期窗口一起判断；未达到标TRANSIENT，不授PAPER_VALIDATED。
+
+本轮完成标准是：正确温度定义、真实冷区处理证据、可读实际场图与明确差距，不强行承诺论文完全复现。
+
+## 7. 搅拌任务S1：真正固定桨的首步静水诊断
+
+### 7.1 固定混杂因素
+
+采用当前5mm密reload，等温、无EM、无浮力，保留实际重力；桨完全固定为静止接触壁。
+
+停转弹性桨仍可能运动；关流体→固体载荷也没有关闭固体→流体接触。已有B1/B2只缩小问题范围，不能替代本诊断。
+
+先检查STL/reload坐标、轴变换、初始玻璃与桨/壁重叠、法向和邻域。无需重新审计全部历史粒子集，只查当前实际资产。
+
+固定桨只作诊断，不把该结果标成弹性FSI验证，不替换甲方最终真实弹性任务。
+
+### 7.2 输出粒子级阶段增量
+
+必须从同一初态获得以下位置的真实量：
+
+```text
+S0：邻域、法向、初始rho/p/u、ForcePrior各来源
+S1：密度求和/正则前后（若该步发生）
+S2：声学第一半步内部压力相互作用
+S3：该半步墙/桨接触贡献
+S4：速度更新中的完整重力及其他力
+S5：连续性/第二半步更新
+S6：位置更新、下一次cell与邻域重建
+```
+
+这是观测位置，不要求按此表重新排列成熟算法。融合kernel内部可加诊断字段或小规模host复算，不把两个已演化成不同状态的关开算子run直接相减当同一状态贡献。
+
+每粒子记录稳定ID、位置、ρ、p、u、内压力/壁压力/桨压力/重力/黏性加速度、邻域数、法向与接触体积分量。
+
+追踪前10异常粒子，处理排序后的稳定ID，不能用数组下标冒充同一粒子。首步全量CSV应随精简包交付，数据量小，不再只给最终Umax。
+
+### 7.3 静水平衡检查
+
+```text
+a_res = a_pressure_inner + a_pressure_contact + g + a_other
+```
+
+按内部、容器壁邻域、桨邻域、自由面分组，报告绝对残差、最大值与P99及位置。先看局部是否相消，不能用全局平均抵消证明正确。
+
+直接量出密度求和前后Δρ/Δp；不能因为hold强刷后ρ偏差降低就宣布密度根因已证实。
+
+## 8. 搅拌任务S2：只修第一个明确错误
+
+按证据分支：
+
+- S1破坏状态：检查静水ρ与密度求和/自由面正则相容性，不每步覆写解析解。
+- S2/S3失衡：检查压力离散、壁面虚拟状态/加速度、法向和体积、界面几何。
+- S4重力或旧ForcePrior重复：修累加/清理位置，不全域删重力。
+- S5异常：查连续性与压力/速度时间层及邻域状态。
+- S6后变坏：查位置更新、cell/邻域重建、变量同步和排序。
+
+实施最小OPHELIE局部修复，先证明同一首步状态的残差降低，再到0.02/0.05s；首步未解决前不继续一排长窗口。
+
+若证据指出需要一致的静水分解，参照已有法国路径做局部适配；不能只移一个background_hydro_p开关而留下重复重力或不一致边界，也不在没有首步证据前整体移植求解器。
+
+允许一次dt/2核对时间离散影响，不重复扫dt。当前c0=8下静水密度变化按EOS/深度核查，不能把50%以上压缩解释为正常弱可压缩性。
+
+固体live稳定dt应真正约束dt_use，非法候选停机；子步和覆盖完整流体dt。该代码欠账单独修，但它不能解释固定桨流体首步失衡。
+
+## 9. 搅拌任务S3：修复后才恢复真实弹性旋转
+
+固定桨静水健康后，按顺序恢复：弹性桨静止 → 10rpm平滑驱动 → 0.05s短测。保留真实不锈钢E约2e11Pa，禁止软化E、增黏度、清零全场速度来压异常。
+
+输出密度/速度分位数与极值位置、ParticleID、桨速、力/转矩、弹性位移、固体Jacobian/应力有效性、粒子逃逸及每步时间覆盖。
+
+工程筛查可用：相对合理静水基线的密度偏差P99<=2%、最大<=5%；这是本轮质量门，不是合同误差。边界层单列但不能从总统计隐藏。
+
+流速与桨速比较仅作数量级检查，仍有1–4m/s异常时必须解释具体来源，不只以有限数值判断成功。质量未过就保持FAIL，不调阈值。
+
+## 10. 时间约束与停止规则
+
+本轮不再展开新的多天大计划。建议前2小时必须产出：正确初猜映射/冷区物性与dt表，以及固定桨首步增量CSV。
+
+后续优先做：一个有证据的局部修复、法国一条健康主计算线、真实场图。单GPU串行；CPU脚本/报告整理穿插。
+
+停止条件：非有限场、非正ρ/体积、非法固体Jacobian、子步欠时间、严重能量不闭合。保存首个坏状态和此前有效状态，不继续长跑期待自行稳定。
+
+如果实际代码条件不支持某项：交明确调用链、复现命令、残差和具体阻塞；不自行改变研究路线，不因为“诊断已完成”跳过应做的粒子级证据。
+
+答辩前至少留6小时冻结稳定版本、导出和软件复跑；不要在最后时段继续改核心算法。未完成项真实列明，不扩展为额外任务矩阵。
+
+## 11. 交付与软件机关系
+
+建议目录`doc244_runs/`：
+
+```text
+00_freeze/
+01_spatial_boundary_audit/
+02_correct_reference_seed/
+03_french_coupled/
+04_first_acoustic_step/
+05_targeted_fix/
+06_elastic_regression/
+07_figures/
+08_software_increment/
+INPUTS.md
+RUN_COMMANDS.md
+DECISION.md
+KNOWN_LIMITATIONS.md
+```
+
+必交：
+
+1. 纠正后的热平衡说明与局部面温/通量CSV。
+2. 正确Fig.8初猜、掩码、归一化核对与物性/dt表。
+3. 法国实际T/U/Q图及热收支，明确瞬态/准稳态状态。
+4. 固定桨首步粒子级各算子增量CSV、残差位置图。
+5. 首个局部修复的修前/修后比较；无修复则具体阻塞证据。
+6. 真实弹性复测结果与质量状态；未进入该阶段就写未执行。
+7. 源码/配置/资产hash、必要场帧、真实可执行绘图脚本。
+
+禁止再交仅提示“使用会话内生成脚本”的占位文件。原始求解器CSV不得被绘图脚本覆盖。精简包包含首步数据与关键结论对应场帧；其他完整数据本机保存并列清单。
+
+软件机只接已检查的小提交或base+完整patch，列参数兼容性与最小回归命令。物理失败不改软件状态为通过，软件可运行也不等于物理验证通过。不要覆盖软件机分支或重构GUI。
+
+## 12. 最终总结只回答这些问题
+
+1. 是否已停止用0-D均温结论否定空间热平衡？实际各面温度与热流是多少？
+2. Fig.8初猜是否保持T/Tmax，绝对温标和缺失区如何处理？
+3. 冷区真实μ范围、最严dt和实际推进路径是什么？
+4. 法国温度结构和轴/环/缘流动是否改善，仍有什么差距？
+5. 搅拌首个异常究竟来自哪个实际算子、哪些粒子？给增量证据。
+6. 修复减少了多少残差/异常，固定桨与真实弹性是否分别通过？
+7. 哪些结论已证实，哪些只是合理怀疑或仍未执行？
+8. 交给软件机的准确版本、能力与限制是什么？
+
+不以新增开关、试跑次数或标签数量总结进展。本轮以实际热结构和首步异常的可核查证据为准。
+
+<!-- ===== END 244_OPHELIE_TARGETED_PHYSICS_DEVELOPMENT_AND_TEST_PLAN_2026-11-24.md ===== -->
+
+
+<!-- ===== BEGIN 245_OPHELIE_THESIS_PROPERTIES_AND_PAPER_COMPARISON_PLAN.md ===== -->
+
+# 245_OPHELIE_THESIS_PROPERTIES_AND_PAPER_COMPARISON_PLAN.md
+
+# 第245轮：博士论文物性实际接入、数值修复回归与法国文献温度—环流联合对比
+
+日期：2026-11-25  
+执行对象：物理开发电脑上的 Cursor  
+适用范围：OPHELIE 法国自然对流分支；不修改独立 A-phi/Laplace 方法分支。  
+性质：下一轮开发与测试任务书。本文中的建议接口、目录和阈值均为待落实要求，不代表已有代码已经实现。
+
+## 0. 本轮必须交付什么
+
+本轮不能再仅提交“短测可运行”和状态摘要，必须同时交付以下三类可复核成果：
+
+1. **博士论文物性数据真正进入求解器。** 从原始 CSV、加载路径、插值结果到实际热扩散、热源升温、边界散热、局部黏性和电磁模块的使用位置，形成完整证据。
+2. **修复后的计算可信度回归。** 重点检查粒子排序造成的边界量错位、局部物性排序与更新、隐式黏性时间步准确性、能量收支。
+3. **每组主要计算自动输出与法国期刊论文相对应的图和原始数据。** 至少包含温度等高线、温度剖面曲线、速度矢量和环流图；不能再让用户仅凭一个速度箭头截图判断。
+
+本轮优先解决法国自然对流主线。软件分支保持已交接的稳定版本。搅拌问题只安排有明确证据的有限回归，不得挤占物性接入与论文对比任务。本文不包含后备调参拟合方案。
+
+## 1. 当前问题与本轮判断原则
+
+### 1.1 已有实质进展
+
+上一轮发现并修复了热边界辅助变量未随 ParticleSort 正确重排的问题。修复前，自由液面权重可能分布到整个高度，且出现负绝对温度的表面外推；修复后的短测中，顶部、底部权重位置恢复合理，负表面温度消失。这是实质性错误，必须保留回归。
+
+当前两秒自然对流测试中，开启浮力有速度信号、关闭浮力速度为零，说明该测试的流动可以归因到浮力驱动。但这不等于温度、环流形态、稳态和论文数值已经验证通过。
+
+### 1.2 尚未落实的关键问题
+
+此前提取了博士论文数据，不等于最新自然对流 case 已经使用。最新审查中，运行所标注的 μ、cp、k 仍指向旧的稀疏近似表，不能用“已采用局部温变物性”替代“已采用博士论文提取数据”的证明。
+
+已有整套 Doc239 case identity 可能同时改变功率、密度、浮力系数和边界条件。不得为了加载博士数据，顺带把法国期刊 50 kW 工况换成博士论文其他工况。
+
+两秒属于短时诊断，不能直接判定法国自然对流无法形成。全域平均黏度对应的 Rayleigh 数也不能单独否定强非均匀黏度温度场中的局部热区流动。
+
+### 1.3 证据等级必须区分
+
+| 状态 | 可以声称 | 不可以声称 |
+| --- | --- | --- |
+| 原始数据存在 | 已提取/已收到 | 求解器已使用 |
+| 表格加载成功 | 文件已读取、插值可查询 | 所有实际算子已消费 |
+| 算子消费通过 | 对应模块使用了该数据 | 耦合结果已对齐论文 |
+| 短测稳定 | 在指定步长与时间窗可运行 | 长时准确、达到稳态 |
+| 图形类似 | 有相近流动特征 | 定量复现完成 |
+
+## 2. 开始前冻结基线，避免再次失去可比性
+
+创建本轮独立工作目录，保留上一轮可执行文件、代码提交号、完整命令、effective 配置、初始温度 CSV、热源文件、物性文件、关键结果和日志。
+
+至少记录：几何半径/高度、粒子间距、初始温度生成方法、总热功率、浮力系数、密度、各面热边界、环境温度、辐射参数、黏性模式、时间步设置、粒子排序周期及代码提交号。
+
+禁止覆盖旧结果后再比较摘要。禁止同一运行编号下替换输入但保留旧图。每次运行都要有唯一 run_id，并在 CSV、图注和 summary 中一致使用。
+
+## 3. 任务 A：整理博士论文物性数据并独立接入
+
+### A1. 先找到真实数据，不能再重画近似曲线替代
+
+查找第239轮提取包、对应 solver tables、原始图和提取脚本。优先使用已经提取、与目标玻璃材料对应的 Jacoutot 数据；其他博士论文材料只能作为明确标注的补充，不得自动混用。
+
+对 μ(T)、k(T)、cp(T)、σ(T) 分别建立清单，包含：
+
+- 文献名称、页码、图号或公式号、玻璃材料标识。
+- 原始 CSV 的真实路径、SHA-256、节点数、有效温度范围。
+- 横纵坐标单位、对数坐标转换、摄氏度到开尔文转换是否已完成。
+- 数字化数据的不确定性，曲线是否存在截断、平台、人工补点。
+- 插值方式、超范围处理、上下限、是否做锚点缩放。
+
+**缺少文件必须报错并列明缺失项，不得悄悄回退旧表。** 不得在找不到原数据时重新手填几组数，并继续标记为“博士论文数字化数据”。
+
+### A2. 数据集必须分开命名
+
+建议至少保留以下明确身份；可以沿用项目命名，但含义必须等价：
+
+| 数据集 | 用途 | 标注要求 |
+| --- | --- | --- |
+| `LEGACY_APPROX_TABLE` | 冻结旧基线 | 旧近似表，不标记为新博士数据 |
+| `JAC_THESIS_RAW_BORROWED` | 本轮真实数据接入主线 | 博士原始提取曲线，借用于期刊复现 |
+| `JAC_THESIS_SHAPE_CEP_ANCHORED` | 可选、需单独运行 | 若保留曲线形状并按期刊锚点缩放，必须明确写出变换 |
+
+原始博士曲线与期刊表格在某温度点存在差异时，先保留差异。不得把缩放后的曲线再称为博士原始曲线。
+
+σ 的“论文印刷公式”与“图线数字化/拟合”必须保留为不同模型。两者可以做独立测试，但禁止混成一条曲线，禁止默认哪条更接近最终图就更真实。拟合适用区间之外的结果要标注外推。
+
+### A3. 物性选择与工况选择解耦
+
+实现独立的物性数据集选择接口。例如：`material_dataset`、`material_manifest`，具体参数名称由现有代码结构决定。
+
+加载物性只允许改变明确选择的物性函数。不得隐式改变：50 kW/55 kW、β、ρ、h、辐射率、几何、初始温度、是否 Marangoni、是否施加 Lorentz 力。
+
+保留原有整套 case identity 接口也可以，但新的单独物性入口必须可用。对同条件新旧物性对照，自动比较 effective 配置；除物性及其必要派生时间步外出现其他差异，应停止该对照并说明。
+
+### A4. 输出可核查的加载证据
+
+每次运行输出 `material_effective.json`、`material_probe.csv` 和四条曲线图。
+
+probe 至少包含 750、1000、1200、1400、1473、1500 K，以及每张表的最低/最高节点；超范围点仍可用于测试，但必须标记插值、外推或限幅。
+
+CSV 至少包含：dataset_id、物性名称、T_K、原始表插值值、实际返回值、单位、处理方式、是否命中限幅。曲线图同时画旧表与新表，并标出模拟实际覆盖温度范围。
+
+启动日志打印真实解析后的路径、哈希、节点数、范围、插值和外推规则。只打印一个模型名字，不足以验收。
+
+### A5. 通过条件
+
+原始文件可定位、数据清单完整、独立加载成功、探针数值可复算、缺文件测试会明确失败、物性切换不改变其他工况参数。全部满足后，才进入耦合短测。
+
+## 4. 任务 B：确认实际算子使用了这些物性
+
+逐项列出当前实际消费位置，不得仅检查初始化函数：
+
+| 物性/量 | 必查消费位置 | 关键风险 |
+| --- | --- | --- |
+| μ(T) | 隐式或显式黏性相互作用及壁面黏性项 | 只更新输出数组，算子仍用常数；显隐式重复施加 |
+| k(T) | 热扩散离散及接触传热 | 更新后未同步；仍使用旧均值 |
+| cp(T) | 热扩散、体积热源升温、边界热损失升温 | 不同热项使用不同 cp，破坏能量闭合 |
+| σ(T) | 电磁组装、Joule 热及更新触发 | 只在开始读一次；功率控制掩盖分布差异 |
+| ρ、体积、质量 | 热量与温升转换、黏性权重 | 配置与实际粒子字段不一致 |
+
+输出同一组稳定粒子 ID 在物性更新前后和算子执行前的 T、μ、k、cp、σ。选择冷区、过渡区、热区，验证其对应探针函数。
+
+核查 CPU/GPU 同步方向和时机。若黏性暂时走 CPU 隐式，允许准确优先，但要明确时间成本。不得为了宣称“全 GPU”保留有问题的路径。
+
+变 cp 的能量统计采用与实际 cp 模型一致的比焓：`h(T)-h(Tref)=积分 cp(T)dT`。不能继续用固定 cp×温差作为唯一能量依据。至少完成短时绝热热源升温检查或等价的非重复核查。
+
+若本轮自然对流仍使用冻结热源：明确写“σ 尚未反馈该热源”，不能把物性接口接好等同于完成温度—电磁耦合。先完成热流主线，随后安排两种 σ 模型的同一温度快照电磁比较。
+
+## 5. 任务 C：粒子排序与边界量回归
+
+### C1. 对不同类型变量采用正确处理
+
+随粒子输运的状态量应随排序保持 ID 对应；由当前位置定义的边界几何掩码、面法向、面积权重等，必须明确是排序携带还是排序/移动后重新计算。不能机械地把所有变量都注册为 evolving 后就视为结束。
+
+检查热边界掩码、面编号、面积权重、外推距离、T、μ、k、cp、σ、Q 及相关缓存。固定空间热源在粒子移动后也需要正确重新映射，不能误当成永远随粒子移动的材料属性。
+
+### C2. 必须保留的回归数据
+
+1. 按稳定 ID 对齐的排序前后字段比较。
+2. 顶面、侧面、底面权重在空间中的分布图与高度范围。
+3. 各面有效面积与功率；既查总量，也查位置。
+4. 表面温度的最小值、最大值、非有限值和非正绝对温度计数。
+5. 明显粒子运动后至少再取一个时刻复查，而非只看初始状态。
+
+顶部外推、底部外推与侧壁直接取粒子温度的处理差异要记录。当前边界壳厚度与粒子间距一起输出；不能把壳内粒子温度直接称作真实外表面温度而不解释。
+
+若发现侧壁热损失偏高，先检查表面温度取值和边界面积，再考虑热阻模型。不得用新增壳层热阻掩盖坐标错位或重复计算冷玻璃层的问题。
+
+## 6. 任务 D：最小测试矩阵，先隔离原因，再延长时间
+
+| 编号 | 内容 | 目的/限制 |
+| --- | --- | --- |
+| R0 | 冻结上一轮旧物性结果 | 能复用则复用，不重复耗时计算 |
+| R1 | 同几何、同初值、同边界、同功率，仅切换新物性 | 测量真实物性改变的影响 |
+| R2 | R1 基础上，将实际控制隐式推进的时间步减半 | 检查时间离散敏感性，不能只改未生效的参数 |
+| R3 | 通过健康检查后推进到 10 s、30 s，分段输出 | 观察流动和温度演化，不预设已稳态 |
+| R4 | 仅在趋势和成本支持时继续一个窗口 | 需写清继续能回答什么问题 |
+
+建议短测先用与既有结果可比的时间窗，例如 0.2 s 和 2 s；时间步减半比较使用相同物理终止时刻。
+
+R1/R2 至少比较 T 场、速度场、Umax、Urms、各面热损失、焓变化和能量残差。报告相对差值及绝对差值；近零量不得只报相对误差。可用主要非零积分量差异 5% 作为本轮初筛提示线，但该值不是论文验收标准；若超过，应定位后再决定是否延长。
+
+核查隐式子步实际累计时间、壁面项、局部 μ 配对方式，以及显式黏性 ForcePrior 是否重复保留。稳定不代表准确。
+
+上一轮约 4.4% 的能量残差要重新按一致焓定义审查，列出贡献与时间积分口径。不得仅提高允许阈值使其通过。若只是统计口径错误，要用同一数据重算并说明；若为更新错误，先修复。
+
+### 初始温度的身份必须写清
+
+Fig.8 数字化重建是部分参考初猜，不是作者原始完整温度场。若仍用 `T=Tscale*Tstar` 且 `Tscale=1500 K` 为假设，要明确写出。若最大 Tstar 只有 0.95，则实际种子 Tmax 是 1425 K，而不是 1500 K。
+
+禁止把该场偷偷做成仿射变换、整体加热或高温截断后，继续称为原 Fig.8 场。缺失区域、插值区域、外推区域必须有 mask 和覆盖率。主线耦合计算中不得冻结温度以维持目标环流；冻结温度仅可单独标注为诊断测试。
+
+## 7. 任务 E：从下一轮开始强制生成论文同类图
+
+不要求等待“算好”才出图。每个主要运行的初始、短时末帧及后续 10/30 s 关键帧，都要自动生成下述结果。保留原始数值和可重复脚本，不能只交截图。
+
+### E1. Fig.8：温度等高线和温度曲线
+
+至少生成：
+
+1. 期刊 Fig.8 原图，保留图号和坐标定义。
+2. 同一轴向剖面的计算绝对温度图 T/K。
+3. 按论文定义归一化的 T* 图，使用匹配的等值线等级。
+4. 参考等值线与计算等值线叠加图。
+5. 至少三条轴向线和三条径向线的温度曲线；线的位置在剖面上标出。
+
+曲线 CSV 至少记录 run_id、时间、r、z、归一化坐标、T、T*、参考值是否真实存在、参考来源和不确定性。
+
+**参考只有离散等值线交点时，只画真实参考点。** 不得把自己补出来的连续场当成作者完整温度曲线。可以画数字化重建曲线，但必须与原始交点分别标注。
+
+绝对温度与形状比较分开：Tmax 未完全确定时，仍可比较 T* 等值线位置；不能因此宣称绝对温度已对齐。原文按最大数值归一化的定义要核实并记录，不得默认使用 `(T-Tmin)/(Tmax-Tmin)` 替代 `T/Tmax`。
+
+### E2. Fig.7：速度矢量、流线与环流结构
+
+至少生成轴对称 r-z 视图下：速度大小、稀疏矢量、流线，以及关键径向/高度位置的速度剖面。使用一致的视向、轴方向、容器边界和尺度。
+
+检查轴区、内部上升带、最外侧下降带及回流闭合。不能只用“轴区平均为负、壁区平均为负”就判定没有内部上升带，也不能把左右镜像显示的同一个环流算成两个独立环流。
+
+如果由速度重建流函数，必须写清轴对称关系及采用的是物理速度而非 transport velocity。常用约定为 `u_r=-(1/r)∂ψ/∂z`、`u_z=(1/r)∂ψ/∂r`；其他符号约定可以使用，但须统一。检查轴线处理和离散一致性。流函数重建不能覆盖原始速度的散度或壁面法向残差。
+
+对流线同时输出原始采样点矢量图；注明插值、平滑、掩码和种子规则。没有原始数据支持的区域不画流线。统计剖面重建的连续性误差和壁面法向速度，用于识别后处理误差；这不等同于直接断言粒子穿墙。
+
+至少同时展示一个瞬时场和一个明确时间窗口的平均场。只有单帧出现的次级涡，标记为瞬时特征。已有 Fig.7 方向数字化点可作定性约束，不能伪造原文未给出的速度幅值。
+
+### E3. Fig.6：Joule 热分布
+
+保存原始电磁热源与功率归一化后的热源，分别记录体积分功率、Qmax、位置、轴向/径向分布。明确当前热源是否冻结、σ 是否更新、导体自身感应响应是否启用。
+
+图上标出参考与计算使用的归一化方式。固定总功率后分布仍可能错误，不能用总功率正确替代空间分布验证。
+
+如果本轮没有完成 Fig.6 数字化，先做清楚标注的定性并排比较，不能阻塞 Fig.7/8，也不能虚构量化参考。
+
+### E4. 热收支与演化图
+
+自动生成 Tmean/Tmin/Tmax、Umax/Urms、输入功率、侧壁/底部/顶部对流/辐射功率、累计输入能量、累计损失能量、焓变化及残差曲线。
+
+稳态需用温度变化、热收支与流场变化共同判断。文献耦合迭代次数不能换算为同样的物理秒数；不使用“两秒没有目标图，所以路线不行”作为结论。
+
+### E5. 比较报告必须有具体差距
+
+建立 `paper_comparison_metrics.csv`，每行包含：比较对象、参考来源、参考数值/形态、计算值、误差定义、误差值、数字化不确定性、通过状态及原因。
+
+可量化项目优先包括：真实参考等值线的归一化位置误差、真实剖面交点温度差、热区位置、上升/下降区域位置、已知速度幅值和 Q 分布指标。无参考数值的项目标记“不具备定量参考”，不得填 0 或 PASS。
+
+不同运行使用固定色标；若为展示局部差异另用自动色标，需另存一张并明确标注。所有图注明 run_id、时间、物性集、温度单位、归一化定义和假设。
+
+## 8. 电导率模型的有限比较
+
+完成热流主线数据接入后，选择同一个有完整记录的温度快照，分别用 σ 印刷公式和 σ 图线模型求电磁场。先固定其他条件，报告原始功率、功率控制后的分布、等效驱动幅值和热源位置变化。
+
+若两种模型都归一化到 50 kW，必须保留归一化前结果，否则可能掩盖两模型实际耦合强度差异。没有完成真实反馈更新时，不称为全耦合收敛。
+
+这一比较不能与同时更换热边界、初温、几何等混在一起。不要本轮一次铺开全部组合。依据材料出处、实现正确性和对结果的影响决定后续，而不是仅看哪张图更漂亮。
+
+## 9. 搅拌支线的时间限制
+
+保留静止桨 p-prime 静水平衡回归。已知驱动搅拌仍存在显著速度峰值问题，终点速度正常不能掩盖过程超调。
+
+若安排修复，只针对首次异常出现的粒子、位置、时间和受力项做一个有证据的修复；不再铺开无归因的密度处理组合。刚体规定运动与真弹性桨分别命名，强制重设密度的测试不能作为连续性准确的证据。
+
+本轮法国自然对流任务未完成前，不扩展新的弹性算法和 GUI 功能。
+
+## 10. 执行顺序及停止条件
+
+按下列顺序执行，不能先跑长时计算再补物性证明：
+
+1. 冻结旧配置与结果；找到并核对第239轮实际数据。
+2. 独立物性接口、manifest、探针和新旧曲线图。
+3. 确认热、黏性等实际算子消费，以及排序/更新正确。
+4. 新物性短测，与旧结果同条件比较；立即生成第一批论文对照图。
+5. 实际时间步减半检查、能量审查。
+6. 健康后推进 10/30 s，持续生成对照图和差距表。
+7. 有预算再做同温度快照两种 σ 的电磁比较及一个搅拌定点回归。
+
+出现非有限量、非正绝对温度、边界权重错位、缺失数据静默回退、显隐式重复黏性或明显不合理能量增长，应停止延长并定位。仅仅图形没有双环流不是立即停止的条件；应结合温度、速度、热收支和演化判断。
+
+不得通过关闭物性温变、冻结温度、重置密度、提高错误阈值来把主线标记为通过。必要诊断可以做，但须独立命名并说明不属于最终预测。
+
+## 11. 交付目录与证据要求
+
+建议目录结构如下，允许按项目惯例调整，但内容不得缺失：
+
+```text
+doc245_runs/
+  00_baseline_freeze/
+  01_material_dataset/
+  02_operator_consumption/
+  03_sort_boundary_regression/
+  04_same_condition_comparison/
+  05_timestep_check/
+  06_main_evolution/
+  07_paper_figures/
+  08_stirring_limited_regression/
+  09_handoff/
+```
+
+交付 `INPUTS.md`、`RUN_COMMANDS.md`、`DECISION.md`、`KNOWN_LIMITS.md`；附真实数据集、哈希、effective 配置、原始日志、关键帧字段、对比 CSV、PNG/PDF 和可执行绘图脚本。
+
+绘图脚本要能从已落盘字段复现全部主要图，不接受只有空函数或依赖未交接文件的占位脚本。若精简打包排除大文件，必须给出其实际保存位置、哈希和重建方式；不能只保留 summary。
+
+## 12. 最终总结必须逐条回答
+
+1. 本轮究竟用了哪几个真实 CSV，路径、哈希、节点数和温度范围是什么？
+2. 哪些仍是旧近似、借用、缩放或外推？是否存在静默回退？
+3. μ、k、cp、σ 各自已进入哪些实际算子，哪些尚未耦合？
+4. 更换物性时，有没有同时改变其他工况条件？
+5. 粒子排序与热边界错位是否完成回归，运动后是否仍正确？
+6. 隐式时间步减半后结果变化多少，能量残差如何解释？
+7. 新旧物性使温度、散热和流动发生了哪些可量化变化？
+8. Fig.6/7/8 分别已能比较什么，具体差距是什么，参考缺失是什么？
+9. 当前只是瞬时演化，还是具备稳态证据？下一段时间推进能回答什么？
+10. 哪个版本可继续交给软件分支，必须保留哪些准确性限制？
+
+**本轮完成的标志是：物性数据实际生效、关键数值错误有回归证据、与论文同类的图和差距表已经生成。不是把任务书中的模型名称再写进 summary 一遍。**
+
+<!-- ===== END 245_OPHELIE_THESIS_PROPERTIES_AND_PAPER_COMPARISON_PLAN.md ===== -->
+
+
+<!-- ===== BEGIN 246_OPHELIE_ORDERED_CALIBRATION_AND_STIRRING_METRICS_PLAN.md ===== -->
+
+# 246_OPHELIE_ORDERED_CALIBRATION_AND_STIRRING_METRICS_PLAN.md
+
+# 第246轮：法国自然对流有序参数组合测试与搅拌指标准备
+
+日期：2026-11-25。执行对象：物理开发电脑上的Cursor。
+
+## 0. 本轮目标与边界
+
+用有限、可比较的试验找到更接近法国自然对流Fig.7/8的温度分层和主次回流。允许校准吸收功率、有效热阻及已明确标注的热源模型。目标是得到真实计算产生、可以追溯的校准结果；改变文献条件的结果标记为“参考法国文献的校准工况”，保留实际参数，不沿用“原论文50 kW工况验证通过”的标签。
+
+本轮不改浮力公式、不引入新的SPH框架、不重做方腔、不全面重写流体求解器、不把目标速度或目标温度持续施加到最终演化中。A-phi/Laplace独立分支和软件稳定交付分支不受影响。所有扫描限于OPHELIE研究case。
+
+必做：修正环流判断和焓基线，完成共同基线与3个核心边界组合。选做：一个侧壁组合、一个热源位置组合、两个功率组合。筛选最多8个唯一配置；不展开全因子乘积。最终只确认最优候选和基线。
+
+## 1. 当前证据与必须纠正的判断
+
+第245轮R10c已出现轴侧下降、内部上升、最外侧下降及上外侧小回流候选；但温度范围约1396～1546 K，Tmin/Tmax≈0.903，与论文大范围0.5～0.8等温区差别明显。R11b均匀1473 K起算的20～30 s平均完整速度场也有内部上升和外围下降。不能因宽外缘平均Uz为负就认定没有环流。
+
+论文主涡视觉区域在上部，当前R10c主涡偏右偏低。当前结果尚为瞬态。论文Fig.7方向样本和涡心ROI均是人工近似，没有可靠速度幅值，不得据此生成速度误差小于10%的结论。
+
+现有skull/crust降低总散热，但未解析的冷层可能在流体图之外；绘制对比时必须标清流体域与等效冷层。不能通过补造边界冷温度填进流体图来得到论文等值线。
+
+## 2. 先做两项短修复，不能再次延伸成新研究
+
+### 2.1 环流诊断
+
+保留旧Uz_axis/Uz_rim，但取消其一票否决。自动输出z/H=0.50、0.75、0.85处Uz(r)，报告内部上升峰位置、峰值、最外带下降速度、轴侧方向。用二维矢量图和流线确认回流，流线不得通过强制无散度修正原速度后冒充原解。
+
+### 2.2 独立初始焓
+
+第245轮R10c：独立焓残差约0.614 MJ，而实际热初猜均温比默认1473 K高约3.95 K，按97.21 kg与cp≈1599换算约0.614 MJ。优先检查诊断是否错误地以均匀1473 K为初始基线。
+
+在物性加载、初温加载和静水准备完成、开始计入热源与散热之前，捕获实际H_initial=sum(m_i*h(T_i))，与后续同一h(T)定义和积分口径比较。若静水准备本身推进热方程，明确它计入哪段时间，不遗漏能量。
+
+用一次短测确认。若只是统计基线问题，只修统计，不改热算子；若仍不闭合，列出剩余绝对残差及具体项，停止新增组合扩张，保留已生成结果。禁止提高阈值强行通过。
+
+## 3. 公共配置：所有组合只改矩阵中明确列出的项
+
+沿用第245轮R10c公共配置：R=0.25 m、H=0.185 m、dp=0.015 m；rho=2750 kg/m³、beta=1e-5 K^-1；JAC_THESIS_RAW_BORROWED的局部mu/k/cp；当前sigma解析模型；implicit_split；A_ind=off；顶部固定平坦滑移工程模型；周期EM更新0.5 s；默认固定玻璃吸收功率50 kW。
+
+快速筛选统一使用同一份第245轮coldwall_skin ASSUMED初温CSV，文件哈希相同，初始速度一致。它是热启动加速初猜，不是参考真值，不改变其幅值、热团位置或填充方法以优待某个组合。freeze_prescribed_t必须为0。不能一组从均匀初温、另一组从热初猜直接排名。
+
+确认阶段必须加入均匀1473 K初温对照，判断候选效果是否只来自预设热团。均匀1473 K是高温均匀启动，不叫室温冷启动。
+
+先核对当前源码中的有效参数。以下5 mm和k=1来自已审查历史实现，若本机实际R10c不同，先报告并把基线改成实际值；不得静默把错误基线继续称为原R10c。
+
+### 3.1 显式基线热参数
+
+| 参数 | 基线值 |
+| --- | ---: |
+| 冷却侧h_side | 300 W/(m² K) |
+| 冷却侧h_bottom | 35 W/(m² K) |
+| 顶面对流h_free | 20 W/(m² K) |
+| 顶面辐射率epsilon | 0.8 |
+| Tcool、Tamb、Trad | 各300 K |
+| 侧壁附加层delta_side | 0.005 m |
+| 底部附加层delta_bottom | 0.005 m |
+| 顶部附加层delta_top | 0.005 m |
+| 附加层k_side/bottom/top | 各1 W/(m K) |
+
+### 3.2 必须看有效热阻，不只看厚度
+
+侧面/底部的串联模型为R_total=delta/k+1/h_cool；h_eff=1/R_total。基线h_side_eff=120，h_bottom_eff≈29.787 W/(m² K)。底部厚度5 mm减至2.5 mm，在h_bottom=35下仅使h_eff增至约32.184，增强约8%，不能误称“冷却翻倍”。
+
+因此本轮底部主敏感性方案同时设h_cool_bottom=70和delta_bottom=2.5 mm，有效h_bottom≈59.574，约为基线2倍。它是一个“底部有效冷却组合”，不是分辨h与delta独立贡献的试验。70在论文讨论过的底部敏感性范围内，但不能声称就是Fig.8的确定参数。
+
+顶部包含非线性辐射，不能用相同h_eff公式替代实际表面温度平衡。必须输出Ti、Ts、对流/辐射/导热热流及其闭合。
+
+## 4. 阶段A：按顺序测试边界组合
+
+全部保留50 kW和原始EM热源。不改sigma、不移动线圈、不改mu/beta。具体值见同包CSV。
+
+| ID | 侧壁delta / mm | 底部delta / mm | 底部h_cool | 顶部delta / mm | 意图 |
+| --- | ---: | ---: | ---: | ---: | --- |
+| C0 | 5 | 5 | 35 | 5 | 显式基线 |
+| C1_BOTTOM | 5 | 2.5 | 70 | 5 | 单独增强底部有效冷却 |
+| C2_TOP | 5 | 5 | 35 | 2.5 | 单独增强表面冷却 |
+| C3_BOTTOM_TOP | 5 | 2.5 | 70 | 2.5 | 同时发展底部冷区和表面冷玻璃 |
+| C4_SIDE_BOTTOM_TOP，条件执行 | 2.5 | 2.5 | 70 | 2.5 | 对照C3再增强侧壁冷却，检验外围下降带 |
+
+C4侧壁h_cool保持300，h_side_eff由120变至约171.429。仅当C3仍稳定、最外侧下降带不足或近壁冷区仍明显不足时执行；如果C3已整体快速过冷而上部热区消失，不执行C4。
+
+不能预先指定C3必胜。它可能使整锅冷却，也可能使流速降低；都应如实保留。C1、C2用于区分底部与顶部对温度分层及回流的贡献。
+
+### 4.1 已存在接口与最小适配
+
+历史源码已有：`--skull-resistance`、`--skull-delta-side=`、`--skull-delta-bottom=`、`--skull-k=`、`--skull-h-cool-side=`、`--skull-h-cool-bottom=`、`--free-crust-resistance`、`--free-crust-delta=`、`--free-crust-k=`。必须检查本机--help和实际解析后再使用，不能把未知参数忽略后继续跑。
+
+统一参数顺序：公共参数先、组合覆盖后；禁止脚本后部重复添加默认值覆盖组合。每组启动时打印原始h、delta、k和最终h_eff。明确thermal BC覆盖与skull转换的调用顺序，不重复串联两次。不能把h_eff再次当作h_cool送入同一转换。
+
+## 5. 时间与计算预算
+
+先用C0进行5 s健康检查和墙钟测量。通过后，阶段A统一推进到60 s，保留10、30、60 s的字段和热收支。不得以60 s为准稳态验收。
+
+可以对所有组合使用同一份完整的共同检查点，随后在同一物理时刻切换参数做阶跃敏感性；但这一批必须全部同样处理，并与从初始条件起算的结果分开编号。不能只给某一组继承已发展好的速度场。
+
+没有可靠重启动功能时，直接从同一初温重新跑；不要为扫描重写checkpoint系统。如果已有运行无法保存逐帧字段，至少输出关键帧原始粒子或网格场，而不是只留末态summary。
+
+阶段A先完成C0～C3，四组足以决定主要方向。选择1～2个候选和C0继续到120 s；不对全部组合无条件长跑。若墙钟明显超预算，先停止C4、热源诊断和功率扩展，保留核心四组及图表，不缩短到彼此不同物理时间后强行比较。
+
+## 6. 候选评价：先健康，再温度，最后回流
+
+### 6.1 健康条件
+
+无NaN、负绝对温度、明显粒子逃逸；步长实际生效；能量计算使用实际初始焓；热源转移、边界面积和排序量空间归属合理。健康不等于文献验证通过。
+
+### 6.2 共同评价量
+
+1. T/Tmax等高线、真实参考交点的温度差、Tmin/Tmax及冷区体积比例。
+2. 上部热区是否保留，底部/轴侧/近壁的温度是否按目标方向分化；不能只优化Tmin一个粒子。
+3. 主回流位置、内部上升带位置与最外侧下降带；通过平均速度场与原始矢量相互核对。
+4. P输入、各面散热、焓变化率及温度变化率。
+5. 10～30、30～60、60～120 s的变化趋势，是否只在某个瞬间相似。
+
+温度指标采用真实参考交点和同一T/Tmax定义。不对缺失区域最近点外推填0/PASS；参考位置不在数据支持域内应标NA。参考图数字化的坐标与角度有不确定性，不能机械地把10%设为所有形态指标的合格线。
+
+不定义一个把温度、方向和热平衡随意加权的总分掩盖失败项。先淘汰不健康结果，再按温度差距、回流位置、变化趋势列出并排表，保留折中候选。如果没有候选改善，明确报告，不自动增加十几个新参数。
+
+### 6.3 必须统一的绘图口径
+
+每组同一时间输出Fig.8式温度图、绝对温度图、两条参考剖面、Fig.7式平均速度图、至少三条Uz(r)及热收支。统一坐标、参考等值线、归一化和色标。不得采用(T−Tmin)/(Tmax−Tmin)替代T/Tmax制造冷热对比。
+
+## 7. 阶段B：一个上移热源的诊断组合
+
+仅在阶段A有健康候选且主热区/主涡仍偏低时执行。继承该候选边界，设Q1_UPPER：对EM原热源施加非负空间权重
+
+`Q_controlled(x)=C*Q_EM(x)*exp[1.5*(z/H−0.5)]`。
+
+z是相对于玻璃底面的高度，不能直接用世界坐标。C由实际体积积分求得，使本轮规定吸收功率保持不变。顶部相对底部的权重比约4.48，属于有明显区分度的一次诊断，不是已知论文热源。
+
+这是“EM形状基础上的受控热源”，不是原始Maxwell预测；单独编号、单独图注。它只能回答热源上移能否改善温度和涡心，不能用来声称EM验证通过。
+
+实现时保留Q_EM原字段，新增Q_controlled字段，不能覆盖原始EM输出后仍标原场。每次EM刷新后仅加权一次，保存原/新Q分布、体积分、功率重心z_Q、径向重心和上部功率占比。推荐在固定EM粒子/欧拉场上按体积加权归一，再传给流体；粒子采样误差另记录，不把目标功率当作已施加能量。
+
+接口若不存在只新增局部受控热源入口，默认关闭；不得修改原EM算子、线圈几何或其他case。不得通过直接上移初始温度团代替本试验。
+
+若只改变Q就显著改善涡心位置，后续再通过sigma模型或电磁配置寻求相近原始Q；若无明显改善，停止加大加权系数。
+
+## 8. 阶段C：有限功率比较
+
+选一个最好的边界/热源身份，固定其余参数。50 kW结果已存在，只新增：P35=35 kW、P65=65 kW。两者为校准搜索点，不是论文参数范围或实验数据。
+
+不把“当前散热62 kW”当成必须把功率改到62 kW的依据。增加功率可能让整锅更热而分层更差；降低功率也可能只导致整体降温。根据温度形状与热收支共同选择。
+
+采用原始EM模式时通过固定吸收功率控制重新求EM；采用Q1诊断时按目标功率归一Q_controlled，必须保留其受控身份。电源输入功率与玻璃吸收功率分开，不强行设效率。
+
+本轮不再同时扫描beta、黏度倍数、cp、k、sigma和功率。若最佳候选仍只欠流速，下一轮另做一个明确的流变对照，不能在本轮暗改已选物性。
+
+## 9. 最终确认与展示结论
+
+最优候选至少延长一个共同观察窗口，展示后期平均而非仅挑一帧。补均匀1473 K初温对照；若仅热初猜短窗能相似，明确标注瞬态热启动结果，不能称独立稳态复现。
+
+最终表同时列：论文原参数、计算实际参数、哪些被校准、哪个量用于校准、哪些量作额外检查。未达到稳态就报告时刻和演化，不把有限终止时间自动视为平衡。
+
+保留未经修改的R10c/R11b基线。PPT可以展示形态改善，但功率、边界、初态与受控热源身份应可查；不覆盖不理想结果、不把改后的功率写成论文50 kW、不修图改数据。
+
+## 10. 搅拌：先明确要比什么，不扩大到弹性桨研发
+
+法国机械搅拌论文以功率数Np和Nu等宏观指标评价系统，相关Re、Pr及等效黏度定义需从期刊正文核对；博士论文用于补充。先建一张reference table：页码/公式、几何、N、吸收功率、物性定义、特征长度、参考值或关联式及数字化误差。
+
+不同几何的甲方case可计算这些指标，但不能直接拿它的值当法国原几何验证。不要凭记忆确定桨直径或用坩埚直径代替；先核对论文及实际STL、轴向和长度单位。
+
+### 10.1 Re与Pr：计算容易，口径优先
+
+常见搅拌定义Re=rho*N*D²/mu，Pr=mu*cp/k，最终以原文为准。N用转每秒：10 rpm=1/6 s^-1，omega=2*pi*N约1.0472 rad/s。动态黏度与运动黏度不可混用。
+
+输出物性所取温度、局部/平均/等效黏度的定义。论文等效黏度不能默认换成全域均值。若原文定义暂未取得，只输出“工程定义指标，未完成论文同口径比较”。
+
+### 10.2 Np：公式容易，可靠力矩是前提
+
+常见Np=P_mech/(rho*N³*D⁵)，P_mech=omega*M，最终核对原文。M由流体对桨的压力和黏性载荷，绕实际搅拌轴积分；轴原点、单位轴向量、力作用位置、作用反作用符号要明确。
+
+单独输出M_pressure、M_viscous、M_total、P_mech与时间序列，不把驱动惯性力矩、固体内力、离心载荷或电磁吸收热功率当搅拌阻力功率。双边相互作用不得重复计数。
+
+法国论文对照可以采用规定刚性转动桨；不需要为得到Np先解决甲方弹性桨全部FSI问题。若已有旋转流体仍有速度尖峰，先定位该运行质量，不用计算出一个数就宣布Np已验证。扭矩应在桨相位/多窗或完整周期范围报告，短窗不足时明确覆盖比例。
+
+若等效黏度由同一扭矩反推，再用它验证Np-Re关联，可能只是代数恒等关系；这种一致性不是独立验证，必须说明。
+
+### 10.3 Nu：最可能需要新增物理/输出的部分
+
+先核实论文Nu评价的是哪一个换热表面、特征长度与温差。若其对象是冷却搅拌桨，而当前桨绝热，仅有流体温度和力矩就不能得到同口径Nu。
+
+常见工程形式Nu=h*L/k，h=Qdot/(A*DeltaT)，但L、A、DeltaT及参考k需按原文。所需Qdot是流体向指定换热面的热量，不是全域EM热功率。输出面热流、面积、参考温度、壁温及其时间平均；避免温差近零导致虚大Nu。
+
+若流固接触传热已存在，只补面热流积分和指标输出；若不存在，必须新增真实热边界/传热并做能量核对，不能仅补一个Nu后处理公式。数据不足标NA，不用规定h反算Nu再当作独立预测验证。
+
+### 10.4 本轮搅拌的有限交付
+
+先交reference table、Re/Pr计算表、现有力矩和热流输出清单。没有可靠力矩则列Np缺口；没有论文对应热边界则列Nu缺口。自然对流核心四组未完成前，不扩展搅拌参数扫描或新弹性算法。能后处理完成的工作可穿插，但同一GPU重任务顺序运行，避免抢占使所有结果延迟。
+
+## 11. 自动化、记录与交接
+
+用本包CSV生成运行清单。每组独立目录，保存config_requested、config_effective、命令、代码hash、初温hash、物性表hash和原始日志。写一个顺序执行脚本即可，不要搭建复杂优化平台。失败组只记录失败，不把它替换为默认参数重跑而继续沿用原编号。
+
+配置覆盖后先dry-run打印并核对h_eff、Q模型、功率；运行后summary再次写出实际值。建立总表：ID、父配置、变化项、终止时间、健康状态、温度参考误差、上升带、涡心、热收支和是否继续。
+
+打包至少包含：新增/修改源码、可运行命令、CSV矩阵、effective、关键帧T/U/Q和边界面温度、物性证据、能量初始基线、全部同尺度对比图、评价表和搅拌指标缺口表。只交summary不算完成。
+
+最终回答：哪个组合改善了哪个量、代价是什么、是否依赖热初猜、是否仍净冷却、哪些参数偏离原论文、下一步只需补哪个关键点。不得把所有组合统一写成PASS。
+
+<!-- ===== END 246_OPHELIE_ORDERED_CALIBRATION_AND_STIRRING_METRICS_PLAN.md ===== -->
+
+
+<!-- ===== BEGIN 247_CURSOR_EXECUTION_PLAN.md ===== -->
+
+# 247_CURSOR_EXECUTION_PLAN.md
+
+# 247：法国搅拌论文数字化、参考场初始化与报告图输出
+
+## 0. 目标和范围
+
+本轮直接使用本包的数据，完成法国自然对流与法国搅拌两条参考工况的结果输出。甲方case、Linux软件及A-phi/Laplace研究分支不在本轮修改范围。保留当前已能出现环流的稳定设置，禁止重新叠加未经归因的压力、连续性、shifting或黏性方案。
+
+本包提供：实际人工读图描点、插值得到的二维初猜、无量纲关系、Python计算辅助程序与原图叠加检查图。初猜可用于缩短启动过程；它不能替代实际运行的结果文件。报告图注可简洁写“以文献温度场重建值初始化，演化Δt=…，采用…热源”，无需长篇描述启动过程，但不能标为独立冷启动复现或稳态验证。
+
+优先级：先让已有稳定代码正确接收物性和参考场，输出真实VTP/CSV；然后比较温度轮廓及搅拌指标。不要先重构求解器，不要为凑图修改导出的数值或色标数据。
+
+## 1. 两篇论文的图号必须隔离
+
+| 唯一标识 | 内容 | 本轮用途 |
+|---|---|---|
+| NC_Fig6 | 自然对流论文，归一化焦耳热分布 | 规定空间热源的形状参考；与实际EM预测热源分开 |
+| NC_Fig8 | 自然对流论文，轴对称温度等值线 | 已有参考数据继续使用；不能把搅拌1620 K套过来 |
+| NC_Fig10 | 自然对流论文，含测温探针的三维温度分布 | 若未建探针，不声称相同工况 |
+| STIR_Fig6 | 搅拌论文，A/B监测点随时间的温度 | 不是焦耳热分布图 |
+| STIR_Fig8a/b | 搅拌论文，两个竖直温度截面 | a主对比；b本包未数字化，不伪造数据 |
+| STIR_Fig8c | 搅拌论文，穿过桨叶的水平温度截面 | 辅助对比，局部非轴对称明显 |
+| STIR_Fig8d | 搅拌论文，自由液面温度 | 第二张推荐对比图，勿误设为桨叶高度 |
+| STIR_Fig9 | 搅拌论文，对应四个面的归一化速度/流动图 | Vmax=0.22 m/s；不能把等值线直接当作流函数或数字化矢量场 |
+| STIR_Fig10 | 搅拌论文，收敛后的焦耳热分布 | Qmax=6.64e6 W/m³；本轮仅核对，不包含此图数字化网格 |
+| STIR_Fig11 | 等温搅拌Np–Re | 独立常物性验证的首选 |
+| STIR_Fig15/16 | 冷却桨传热关系 | Fig16优先，Fig15完整Nu口径仍有不确定性 |
+
+搅拌文献：Jacoutot et al., Chemical Engineering Science 63 (2008), 2391–2401，DOI 10.1016/j.ces.2008.01.026。以下页码为印刷页。
+
+## 2. 本包实际提取了什么
+
+`data/*_contour_points.csv`：图上可辨识等值线的人工稀疏描点，字段有曲线编号、点顺序、原图像素、归一化坐标、等值线数值。STIR温度提供 `T_K = 1620 × value_normalized`。这是视觉数字化数据，不是作者原始场数据。
+
+- STIR_Fig8a：159点，9条折线片段，涵盖0.6/0.7/0.8/0.9。
+- STIR_Fig8c：91点，9条片段，涵盖0.7/0.8/0.9。
+- STIR_Fig8d：78点，5条片段，涵盖0.40/0.45/0.50/0.55，0.55存在内外两条轮廓。
+- NC_Fig6：110点，5条片段，仅保留核查后的0.1/0.3/0.9；中间曲线未完整确认，未补成假观测。
+
+`figures/*_trace_QA.png`：描点与原图叠加；Cursor必须先打开核对，再导入。
+
+`data/*_INITIAL_GUESS_grid.csv`：161×121二维网格，散点线性插值、外区补全。它是**初始化重建**，不是可逐点打分的参考真值。
+
+字段解释：
+
+- `x_unit`：竖直图横向坐标由左至右0…1；NC图专指r/R。
+- `z_or_y_unit`：竖直图底部0顶部1；水平图为第二平面坐标底部0顶部1。
+- `reference_visible_mask`：原图可见区域掩码，黑色搅拌桨示意/遮挡区域已排除。**不是实际流体/固体几何掩码**，特别是自由液面图可能含投影示意；真实掩码必须由STL与粒子类型决定。
+- `nearest_extrapolation`：原描点凸包之外，不能当作观测。
+- `distance_to_trace_unit`：距最近描点的归一化距离，可用于标识低可信区域。
+- `value_uncertainty_estimate`：STIR暂取±0.025、NC暂取±0.05，仅为读图工作估计，不是统计置信区间。坐标估计约±4像素。
+
+二维网格各区域均含重建假设；边界极薄的低温层没有被完整解析。不要把重建网格上数万个点误报为数万个文献观测。插值值不会自动达到Tmax=1620 K：原图没有提供最高温点坐标，禁止为强行达峰对整个场再次归一化。
+
+### 2.1 温度初猜局限
+
+a/c/d分别有约16%/25%/28%的可见网格位于描点凸包外，采用最近值补全。若直接映射，冷壁附近薄层会偏暖；真实Robin边界应随后自行演化，不能把这个薄层称为已复现的凝固层。
+
+Fig8a只有一个竖直剖面，不能确定唯一三维场。默认方案是以a构造轴对称近似初猜，后续三维桨运动产生非轴对称变化；应记录这个假设。c/d先作为对比图，不强行同时拼成连续三维场；尤其不能在不同高度的三个面之间简单硬覆盖。
+
+## 3. 搅拌论文已确认工况
+
+| 参数 | 数值/定义 | 来源 |
+|---|---|---|
+| rho0 | 2800 kg/m³ | p2392 §2.1 |
+| beta | 3e-5 K^-1 | p2392 |
+| Boussinesq T0 | 293 K，参考温度；不是启动温度 | p2392 |
+| 物性 | μ、cp、k、σ随温度，见Fig2 | p2393 |
+| 图8/9/10转速 | 10 rpm = 1/6 rev/s | p2397–2398图注 |
+| 图8/9/10焦耳吸收功率 | 60 kW，玻璃内积分功率 | 同上 |
+| 图8最高温度 | 1620 K，即1346.85℃ | Fig8 |
+| 图9最大速度 | 0.22 m/s | Fig9 |
+| 图10最大焦耳热 | 6.64e6 W/m³ | Fig10 |
+| 图8/9/10状态 | 作者耦合收敛，t=1000 s | 图注及正文 |
+| Fig12/13/14 | Ptot=56 kW，勿用60 kW标签 | 各图注 |
+| Fig15/16 | 56与70 kW两组 | 各图注 |
+| 自由液面hs | 20 W/(m² K) | p2394 Table1 |
+| 水冷参考Tc | 333 K | Table1 |
+| 对流环境Ta | 303 K | Table1 |
+| 辐射环境Tar | 423 K | Table1 |
+| 发射率 | 0.9 | Table1 |
+| 非运动冷壁hw | 300 W/(m² K) | p2396 |
+| 冷却搅拌桨hw | 2500 W/(m² K) | p2396 |
+| 固壁速度 | 无滑移 | §2.1 |
+| 自由液面速度 | 滑移 | §2.1 |
+| 玻璃“凝固”判据 | μ>1e4 Pa·s | p2397–2398 |
+| 流体参考系 | 作者采用旋转参考系 | §2.1 |
+| EM更新 | 热步0.2 s，选10热步一次，即约2 s | p2396；SPH不得照搬其热/声学时间步 |
+
+自由液面向外热损失：
+
+`q_out = 0.9*5.67e-8*(T_surface^4 - 423^4) + 20*(T_surface - 303)`，T全部为K。
+
+非运动冷壁：`q_out=300*(Twall-333)`；冷却桨：`q_out=2500*(Twall-333)`。论文只建玻璃域，hw合并多种热阻。若本程序显式建立实体导热和冷却，不要重复叠加同一层热阻。
+
+注意：作者用高黏度形成的低流动层解释热阻。只设置同一个hw，尚不能保证我们得到相同冷壁传热。不得直接把论文阈值当成已实现的相变潜热/固化模型。
+
+论文介绍提到650 mm坩埚、400 kW/300 kHz电源；不等于玻璃直径、电磁吸收功率或所有图的精确实验输入。当前自然对流几何中已确认的500 mm玻璃直径继续保留；搅拌几何及桨直径须从已交接模型/明确文献尺寸复核，不能从650 mm推算。**Re、Np中d为桨直径。**
+
+### 3.1 温变物性落实顺序
+
+1. 使用已交接239/245的曲线文件及配置，记录每条曲线来源，核对是否为本搅拌论文Fig2对应玻璃；不得仅因为都叫法国玻璃就自动认定完全一致。
+2. 本包未重新数字化Fig2，不提供新拟合系数。已有曲线能接则先接；来源不一致要记差异，不用未知多项式替代。
+3. 温度初始化之后，先计算实际μ(T)、cp(T)、k(T)、σ(T)，再第一次EM求解。不得先按默认σ=16求一次EM后才导入温度。
+4. 定期从粒子温度投影到EM网格，记录σ目标、松弛后的实际σ、Q映射以及更新时刻。仅导出了σ(T)图不等于EM已经使用该值。
+5. 每次钳位/外推输出数量、体积分数、阈值及来源。禁止无日志冻结μ或σ。
+
+## 4. 自然对流Fig6如何用作热源
+
+焦耳热是体积源Q，单位W/m³，不是温度初值，也没有“只在t=0加一次Q”的物理等价方案。
+
+本轮可并列保留两种模式：
+
+- `q_mode=em_coupled`：实际EM求解、随温度更新σ、映射Q；用于检查真实电磁耦合。
+- `q_mode=prescribed_nc_fig6_shape`：用本包图6重建形状，在整个短窗内持续施加；用于检查给定非均匀热源时的温度与流动响应。禁止同一时刻叠加同功率EM热源。
+
+图6只数字化到若干轮廓，低于0.1的大范围区域没有直接数值。当前初猜在凸包外用最近轮廓值随距离指数衰减（归一化衰减尺度0.12）；这是明确的低热源区补全先验，**不是论文公式**。约71%的二维域涉及这类外推，适合做受控热源测试，不适合宣称精确重建全域EM热源。
+
+实施：
+
+1. `r_unit=r/R`, `z_unit=(z-z_bottom)/H`，轴对称复制到真实玻璃粒子。
+2. 用真实粒子体积 `V_i=m_i/rho_i`，计算 `S=sum(Qshape_i*V_i)`。
+3. `Q_i=Qshape_i*Pabs/S`。自然对流论文该组总焦耳功率50 kW；若采用其他功率，明确记录。
+4. 本包 `normalize_source.py` 提供此步骤。采用二维轴对称积分时应使用 `2*pi*r*dr*dz`，不能用普通二维面积求和。
+5. 记录有效Pabs、峰值Q、热源重心、上半区功率占比。Fig6归一化图本身不能同时唯一确定原文Qmax与未知的低热源区。
+6. 若只把规定源作为EM迭代的初始猜测，首个实际EM收敛解会覆盖它；需明确采用“持续规定源”还是“EM初猜”，不要混称。
+
+可以配合文献温度场初猜运行，但报告名称应为“规定热源下热流动计算”，不能把规定Q图当作电磁模块独立预测结果。
+
+## 5. 搅拌无量纲量：落实到程序
+
+### 5.1 三种功率分开命名
+
+- `P_Joule_W`：玻璃内电磁焦耳热积分，即Ptot，56/60/70 kW。
+- `P_viscous_W`：机械耗散功率P，Fig11/12和Np使用。
+- `P_heat_removed_stirrer_W`：冷却搅拌桨从玻璃吸收的热功率，即Fig16的Pstir。
+
+禁止把Ptot代入Np，也禁止把机械搅拌功率当成Fig16的Pstir。
+
+### 5.2 机械功率和Re/Np
+
+`N = rpm / 60`，单位rev/s；`omega = 2*pi*N`，单位rad/s。
+
+`D = 0.5*(grad(u) + grad(u).T)`。
+
+`P_viscous = sum(2*mu_i*(D_i:D_i)*V_i)`。
+
+这是论文Eq14/15。稳态时才可作为整体搅拌耗功的近似；短窗内还存在动能变化，不能强行令瞬时耗散等于桨输入功率。
+
+扭矩交叉检查：`P_torque=2*pi*N*C_resisting`。需分清桨表面力、驱动反力及弹性储能；不能直接用电机设定功率。本文因冷却层附近扭矩梯度误差，后续优先采用耗散积分。
+
+`Re = rho*N*d²/mu_ref`
+
+`Np = P_viscous/(rho*N³*d⁵)`
+
+常物性等温验证参考：`Np = 47/Re`（Fig11）。只有同一种桨几何、浸没深度及容器比例才能用47做定量门槛；甲方不同桨只能计算自身Np/Re，不能照抄47。
+
+变量物性时应同时输出：体积平均μ、有效μ与范围，不能挑一种平均值恰好使NpRe=47后称为验证。
+
+论文的等效定义：
+
+`Re_e=47/Np`，`mu_e=rho*N*d²/Re_e = P_viscous/(47*N²*d³)`。
+
+**按该定义必有Np*Re_e=47，所以这个乘积不是独立验证。** Fig11应另跑常物性等温工况：预先指定μ，计算P，再对比Np/Re。
+
+低成本首轮：保持同一桨/网格，给定常物性，试5/10/20 rpm或等价Re点。先检查P和扭矩是否趋稳，再计算误差；受时间限制不能稳态时输出趋势和未完成标签，禁止直接PASS。
+
+### 5.3 传热指标
+
+`Pr_e=mu_e*cp_ref/k_ref`。cp_ref、k_ref的评价温度与平均方法必须记录。
+
+Fig16直接给出：
+
+`P_heat_removed_stirrer/P_Joule = 0.005*Re_e^(1/3)*Pr_e^(1/3)`。
+
+先完成单个10 rpm工况的取量，不要求立刻跑出整条56/70 kW转速曲线。若时间允许，再逐步增加点。
+
+Fig15：`Nu/Pr^(1/3)`与`Re^(1/3)`相关，系数随总焦耳功率变化，不能假设唯一K。正文给 `Vi=mu_wall/mu_bulk`；采用等效黏度时不再额外乘Vi修正。论文没有充分展开Nu的特征长度、面积和温差平均细节，本包辅助程序只输出明确标注的工程定义Nu，不把它冒充已经统一口径的Fig15数值。
+
+图11/16 CSV由论文公式生成，是解析参考线，不是伪装成读出的散点。请保留CSV的source字段。
+
+## 6. Cursor执行顺序与停机条件
+
+### P0：封存、接入与零时间检查
+
+1. 建立隔离case配置，复用当前稳定求解路径；列出本轮git差异。
+2. 打开3张STIR叠加图和NC叠加图。不得再次让大模型从头猜读整图。
+3. 为每个平面输出：物理坐标原点、方向、宽高、物理单位、旋转角度、与桨几何的对应。Fig8a/b不同切面不能互换。
+4. 导入Fig8a：左半与右半分别转换到r/R，轴对称初猜默认取两半平均；仅为初始化，不要求计算结果保持左右镜像。插值到真实粒子；由STL决定实体排除区域。
+5. d仅作为自由液面二维校验，不把它设为整个体积的温度。c为桨高度切面校验。
+6. t=0立即导出T、μ、σ、k、cp与初始化元数据；先看是否坐标翻转、摄氏/开尔文混用、固体内误填流体。
+7. 使用与物性模型一致的内能 `h(T)=integral(cp(T)dT)`做能量差；不能简单用变化cp的 `cp(T)*T`当内能。
+
+### P1：短窗可运行性
+
+1. 先运行0.02 s和0.1 s；通过后到0.5 s，再视稳定性到2 s。均以实际达到时间为准。
+2. 使用已有稳定时间步与黏性处理。若低温区大黏度导致刚性，优先查隐式残差、壁面接触和时间步，不先改温度/物性曲线。
+3. 温度/σ导入必须早于第一次EM求解；电磁场初始化与更新要有单独日志。
+4. 检查NaN、负物性、粒子越界、真实达到时间、EM迭代残差、热源积分及能量项。
+5. 每个检查点保存VTP和CSV，终止也必须保存最后有效状态。不得只落图或summary。
+6. 粘性耗散进入热方程与否按当前模型明确记录，功率诊断积分本身不自动意味着热源重复施加。
+
+### P2：同口径比较
+
+温度图使用固定1620 K作为归一化分母；同时保留实际K与℃色标。不得用本次计算自身Tmax再归一化来掩盖绝对温差。
+
+对原始轮廓点插值采样，逐线统计预测T/1620与参考值差；避开原图黑色遮挡，单独列出±读图不确定度。不能用初始化重建网格直接作为独立验证的几万点样本。
+
+交付3列图：文献原图、计算同面温度等值线、差异/轮廓偏移图。保留t=0与后续时刻；若图形仅在t=0相近随后迅速离开，应报告漂移，不算稳定复现。
+
+环流图用实际速度矢量和流线另画；不得用温度等值线替代流线。三维速度作平面投影后未必二维无散；不要强行把任意截面都解释为严格轴对称流函数。若需要参考Fig9，先核对旋转参考系：实验室与旋转系满足 `u_abs=u_rel+omega×r`；两种速度都可导出，图中明确使用哪一种。
+
+定量门槛分层：
+
+- 接入通过：单位/坐标正确，数据与实际使用物性一致，文件齐全。
+- 运行通过：达到声明时长，无数值中止，热源功率一致。
+- 参考初值保持性：报告温度轮廓误差及随时间漂移，不等于冷启动复现。
+- 独立搅拌验证：常物性稳定工况的Np/Re及误差；10%只能用于事先约定的指标，不能事后删掉未通过项。
+- 耦合复现：实际EM–热–流动演化得到的温度、速度和功率；不得用规定热源那一支的Q来签EM合格。
+
+## 7. 报告展示字段：不要求与文献逐场比较
+
+按用户要求，以下是实际计算字段的分布展示：
+
+- 温度T_K与T_C。
+- 实际用于动量方程的动态黏度mu_Pa_s（可用对数色标，注明范围）。
+- 实际用于最近一次EM的sigma_used_S_m；另有sigma_target_from_T供内部诊断。
+- 电磁B幅值、J幅值与Q_Joule，明确峰值/有效值及复数幅值约定。若J是峰值复幅值，时间平均Q=|J|²/(2σ)；若RMS则无1/2，必须全链一致。
+- 速度m/s、桨形状、线圈实体外观。
+
+每帧附带 `physical_time, em_last_update_time, q_mode, property_profile_id, N_rpm, Pabs_W`。规定Q场文件名不得叫EM预测结果。插值得到的背景网格也需保留覆盖掩码，避免容器外无效值被画成物性。
+
+展示σ/μ分布不需要文献对比，也不能据此直接判定两个模块已独立验证通过。
+
+## 8. 最终文件与本轮总结格式
+
+至少产出：
+
+1. `effective_config.json`：所有单位、物性来源、边界、几何、初始化和热源模式。
+2. `plane_mapping.json`：归一化数据到物理坐标的映射。
+3. `initialization_audit.csv`：T、物性、掩码、钳位范围与统计。
+4. `history.csv`：实际时间、功率、温度范围、动能、EM更新时间和残差。
+5. 原始结果VTP、同面CSV、温度/速度/物性PNG。
+6. `stirring_metrics.json`：三个功率、d、N、Re/Np/Pr和定义。
+7. `comparison.csv`：按参考轮廓逐线统计，不混入重建区。
+8. `round_summary.md`：完成项、未完成项、明确失败原因、下一步只列最关键的1–2项。
+
+验收展示优先：自然对流Fig8温度、其实际速度/环流；搅拌Fig8a与8d；温变物性与EM展示；搅拌Np/Re单点或少量点。时间不足则明确哪些是参考场初始化的短窗结果，哪些是独立验证。不要再次花整轮只做任务拆分而没有实际结果文件。
+
+<!-- ===== END 247_CURSOR_EXECUTION_PLAN.md ===== -->
+
+
+<!-- ===== BEGIN OPHELIE_Doc241_round_handoff_20261124_WORK_SUMMARY_ZH.md ===== -->
+
+# OPHELIE_Doc241_round_handoff_20261124_WORK_SUMMARY_ZH.md
+
+# Doc241 本轮做了什么 / 没做什么（打包说明）
+
+日期：2026-11-24。分支：`feature/EM-Biot-Savart` @ `16d67c9d0` + **未提交 WIP**（见 `code/patches/`）。  
+正式门控标签：**`LINUX_SOLVER_HANDOFF_READY`**
+
+---
+
+## 一、做了什么
+
+### P0 冻结与诊断
+- 冻结 HEAD / status / 二进制 hash / 设备到 `00_freeze/`
+- 加强有限性 / 哨兵 / `Umax` 等假正常防护（F0 侧）
+
+### P1 甲方弹性搅拌
+- 根因：**粗 Reload** Vol→dp≈0.01，旧逻辑强制系统 dp=0.005 → 尺度不一致（负对照 exit 3）
+- 修复：去掉无条件强制；从 Reload `Vol^(1/3)` 推断系统 dp；相对误差>15% → exit 3；写出 `reload_manifest.json`
+- Path B：`--dp=0.005` 重生 dense Reload（n_rotor=4329）
+- S2：0.002 / 0.02 / **0.05s PASS**（不锈钢弹性，GPU）
+
+### P2 甲方自然对流（真实 EM+热）
+- 修 `--client-nc-material` 清零吸收功率 → 保留 CLI `--target-absorbed-power`
+- ASSUMED 玻璃吸收 **15 kW**（≠ 电源标称 30 kW）
+- EM 1s：`P_joule=15000`，热推进，`em=RUN`
+- β=0 对照：U_rms 比≈1 → 标签 **`OPEN_FS_RESIDUAL_DOMINANT`**（开放自由面背景淹没浮力）
+
+### P3 法国历史 F2 环带回归
+- OFF 10s：U≡0（背景干净）
+- ON 10s：`U_rms_end≈7.3e-4`（与历史 ~7e-4 同量级）
+- ON 20s：后期窗 `U_rms_avg≈5.9e-4`，末≈5.2e-4
+- **能力回归 PASS**；未授双回流 / 稳态
+
+### P4 论文参考盘点（仅盘点）
+- Fig.7/8：复用 Doc204 数字化（受限可用）
+- Fig.6：本树无独立数字化 → **不足**
+- **未做**与计算结果的叠图对比（属 P5）
+
+### P6 Linux 交接
+- 空目录清洁复跑：弹性 0.05s + NC EM 1s **均 PASS**
+- 授 **`LINUX_SOLVER_HANDOFF_READY`**
+- 软件树：`docs/ophelie/software/`（此前已并入 linux handoff）
+
+### 仓库卫生（穿插）
+- 228–240 计划文进 `archive/DOCS_201_250_MERGED.md`；`doc*_runs` gitignore；代码勿堆 docs
+
+---
+
+## 二、没做什么，以及原因
+
+| 未做项 | 原因 |
+|---|---|
+| **P5** `FRENCH_PAPER_NC` 三联图 + 主因修复 | 本轮明确**暂缓**：先收甲方两案 + Linux 交接；法国论文主线留下一轮 |
+| Fig.8/7 **定量叠图对比** | 依赖 P5 正式耦合/或对标跑；P4 只完成参考可用性盘点 |
+| Fig.6 热源数字化补齐 | 本树缺独立提取件；不伪造数值场 |
+| F2 `DIAGNOSTIC_TWO_CELL` / 准稳态 | 20s 只证明浮力信号与历史量级；未做双胞分区诊断与稳定性窗 |
+| 甲方 NC **自然对流环流验证** | β ON/OFF 速度几乎相同，开放 FS 残差主导；短窗不能宣称环流已验证 |
+| 弹性 **整圈** / 长时 | 门控仅 S2 0.05s 工程短窗 |
+| 合同验证 / 实验 1000°C / 论文稳态复现 | 计划边界外；handoff 标签明确不覆盖 |
+| WIP **git commit / push** | 用户未要求提交；包内以 patch + 源码快照交付 |
+| 软件机本机 GUI 联调 | 物理机交付可调用基线；对面按 software 文档自行 build/prepare |
+
+---
+
+## 三、软件可声明 vs 不可声明
+
+**可声明**
+- 甲方弹性：dense Reload + 真实弹性短窗 0.05s 可从清洁目录启动
+- 甲方 NC：真实 EM + 热 1s（ASSUMED 15 kW）可从清洁目录启动
+- 法国 F2：指定环带冻结温场下浮力能力仍在
+
+**不可声明**
+- “自然对流环流已验证”
+- “论文 Fig.7/8 已复现”
+- “合同模块 / 实验测点已通过”
+- 粗 Reload 483 粒子桨可当交付基线
+
+---
+
+## 四、包内路径速查
+
+```text
+README.md                          # 入口
+docs/241_*.md                      # 本轮计划
+docs/WORK_SUMMARY_ZH.md            # 本文
+results/doc241_runs/               # 全部运行记录与判定
+code/patches/                      # 相对 HEAD 的 WIP patch
+code/snapshot/                     # 改动/新增源码全文
+code/BASE_COMMIT.txt
+reference_fig7_fig8_Doc204/        # P4 用数字化参考（非作者 CFD）
+software/                          # Linux 软件交接树摘要/全文
+MANIFEST.md
+```
+
+<!-- ===== END OPHELIE_Doc241_round_handoff_20261124_WORK_SUMMARY_ZH.md ===== -->
+
+
+<!-- ===== BEGIN OPHELIE_Doc242_round_handoff_lean_20261124_WORK_SUMMARY_ZH.md ===== -->
+
+# OPHELIE_Doc242_round_handoff_lean_20261124_WORK_SUMMARY_ZH.md
+
+# Doc242 工作摘要（简体中文）
+
+日期：2026-11-24。分支：`feature/EM-Biot-Savart` @ `16d67c9d0` + WIP。  
+门控：**`LINUX_INTEGRATION_BASELINE_READY`**
+
+## 本轮目标
+
+Linux 软件开工前最后一轮物理整改与 CLI 闭环：弹性异常定位/默认、甲方 NC 固定滑移+EM、法国场图与 Fig.8 对比、两案 CLI e2e。**不以论文稳态/合同验收作为软件开工条件。**
+
+## 按阶段做了什么
+
+| 阶段 | 内容 | 结果标签 |
+|---|---|---|
+| A | 冻结 HEAD/WIP/binary；F0 到达时间/固体覆盖/场审计 | 基线可审 |
+| B | B0/B1/B2 对照；静水 IC / hold-hydro；生产默认 IC-only | workflow 可完成；**质量 FAIL** |
+| C | 固定平坦滑移顶 OFF/ON 0.2s→1s；真实 EM 15 kW 1s | `BUOYANCY_SIGNAL_RESOLVED`；`EM_THERMAL_WIRING_PASS` |
+| D | F2 20s 带场；论文 50 kW 1s+5s 叠 Fig.8 | `direction_observed`；`PAPER_COMPARISON_AVAILABLE`；主因 `heat_loss_dominant_cold_wall` |
+| E | CLI：`fixed_absorbed_power_em`、禁 zero-q、prepare 传 dp；负例；E1/E2 GPU | **两案 WORKFLOW_PASS** |
+| F | 能力清单与判定冻结 | **`LINUX_INTEGRATION_BASELINE_READY`** |
+
+## 关键数值（便于扫一眼）
+
+- 弹性 CLI E2：`reached_end_time=1`，`u_max≈1.24 m/s`，`rho_rel_max≈0.54`，`numerical_quality_ok=0`
+- 甲方 NC EM：`P_joule=15000`，`zero_q=false`，`em_status=RUN`
+- 法国 5s：dT≈37 K，T\*_mid≈0.99，散热/P≈3.1
+
+## 最终八问（答）
+
+1. **尖峰**：约 0.012–0.015s 仍可 ~3.5–4.3 m/s，末态 ~1.2 m/s；IC-only 改善早期，未消中段；静止桨见 B1。
+2. **密度**：偏差仍在（B ~35–40%；E2 ~54%）；未改 E / 未清零速度。
+3. **固体时间**：`solid_time_uncovered=0`，覆盖完整。
+4. **甲方 NC**：固定域浮力可分辨；EM 短跑 **ASSUMED 15 kW**（≠ 电源 30 kW）。
+5. **F2**：轴↓/环↑/缘↓；不授双胞/稳态。
+6. **Fig.8**：T\* 仍近 1；主因冷壁散热过大；附图在 `05_french_paper_joint/*/figures`。
+7. **CLI**：validate→prepare→run 两案通过；场 VTP 可读；非法模式拒绝。
+8. **齐套**：代码/示例/结果/限制清单齐；**不能**声称质量门、论文验收、合同验证。
+
+## 未授 / 未做
+
+- 未授：`PAPER_VALIDATED`、`NUMERICAL_QUALITY_PASS`
+- 未开 Qt GUI；未再延法国时窗；未自动 git commit
+
+## 转交
+
+- 软件：桌面装配 / 进度取消 / 结果加载（物理与论文验收解绑）
+- 物理续：弹性尖峰与密度；法国 h/边界审计 — 见 `KNOWN_LIMITATIONS.md`
+
+<!-- ===== END OPHELIE_Doc242_round_handoff_lean_20261124_WORK_SUMMARY_ZH.md ===== -->
+
+
+<!-- ===== BEGIN OPHELIE_Doc243_round_handoff_lean_20261124_WORK_SUMMARY_ZH.md ===== -->
+
+# OPHELIE_Doc243_round_handoff_lean_20261124_WORK_SUMMARY_ZH.md
+
+# Doc243 工作摘要（简体中文）
+
+日期：2026-11-24。分支：`feature/EM-Biot-Savart`。  
+本包：**精简交接**（无 VTP、无完整大 run.log）。
+
+## 目标
+
+72h 物理收口 + 法国优先复现：物性真消费、边界审计、非均匀初猜、耦合矩阵；搅拌只定位首坏。
+
+## 法国 P0/P1
+
+| 项 | 结果 |
+|---|---|
+| 物性接线 | PASS（`--temperature-dependent-properties` + ParticleCpCK + local μ） |
+| P0-C 面积/0-D | 实现 PASS；`bare_walls`@1473K 与 50kW **热力学不兼容**（loss/P≈3.14） |
+| 主 IC | coldwall_skin（轴↓缘↑） |
+| F_SEED Fig.8 带 | 缘永不升 → 弃 |
+| F_SENS skull+crust | loss/P≈**1.25**，主栈；30s 仍 TRANSIENT |
+| 0-D Teq（默认壳） | ≈1260 K → **不盲延 60s** |
+| Fig.8 / PAPER | **未达成**（壳厚 ASSUMED/OPEN） |
+
+主栈：`coldwall + 变物性 + --skull-resistance --free-crust-resistance`。
+
+## P2 搅拌
+
+| 步 | 结果 |
+|---|---|
+| 粗 Reload | INVALID（dp=0.01） |
+| dp=5mm ω=0 | 跑完；rho_rel≈0.56；u≈1.9 |
+| B2 去载荷 | 尖峰不变 → 首坏=**流体** |
+| HOLD | rho→0.048；u 仍坏 |
+| skip dens-sum | rho **更差** → **失败并撤销默认** |
+| 恢复冒烟 | dens_sum 默认已恢复 |
+
+未授：`NUMERICAL_QUALITY_PASS`。中期债：`background_hydro_p`。
+
+## 包内有什么
+
+- 计划书 `243_*.md`、`doc243_runs/` 精简结果（CSV/JSON/MD/SVG/种子）
+- 本轮关键关键源码副本 + `doc243_code.diff`
+- 本摘要与 README
+
+## 故意不装
+
+- 全部 `*.vtp` / `out/` 粒子场
+- 完整大 `run.log`（仅保留各跑 `run_excerpt.txt` 头尾）
+- 二进制、build、Reload 粒子库
+
+## 未做 / 未授
+
+- 未授 PAPER_VALIDATED / ENGINEERING_QUASI_STEADY / NUMERICAL_QUALITY_PASS  
+- 未自动 git commit / push
+
+<!-- ===== END OPHELIE_Doc243_round_handoff_lean_20261124_WORK_SUMMARY_ZH.md ===== -->
+

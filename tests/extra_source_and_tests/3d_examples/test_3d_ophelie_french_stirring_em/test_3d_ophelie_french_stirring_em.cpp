@@ -36,13 +36,17 @@
 #include <algorithm>
 #include <cmath>
 #include <chrono>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
+#include <sstream>
 #include <string>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -52,6 +56,206 @@ using MainExecutionPolicy = execution::MainExecutionPolicy;
 
 namespace
 {
+
+/** Same r–z absolute-T grid loader as frozen_q Doc224/225 (minimal copy for stirring IC). */
+struct Doc224RzTemperatureGrid
+{
+    std::vector<double> r_axis;
+    std::vector<double> z_axis;
+    std::vector<double> T; // row-major: ir + nr*iz
+    double T_min = 0;
+    double T_max = 0;
+    size_t n_nodes = 0;
+    bool ok = false;
+
+    size_t nr() const { return r_axis.size(); }
+    size_t nz() const { return z_axis.size(); }
+    double at(size_t ir, size_t iz) const { return T[ir + nr() * iz]; }
+
+    double sample(double r, double z) const
+    {
+        if (!ok || nr() < 2 || nz() < 2)
+            return T.empty() ? 0.0 : T.front();
+        r = std::max(r_axis.front(), std::min(r_axis.back(), r));
+        z = std::max(z_axis.front(), std::min(z_axis.back(), z));
+        auto upper = [](const std::vector<double> &ax, double v) {
+            return static_cast<size_t>(
+                std::max<std::ptrdiff_t>(1, std::lower_bound(ax.begin(), ax.end(), v) - ax.begin()));
+        };
+        const size_t ir1 = std::min(upper(r_axis, r), nr() - 1);
+        const size_t iz1 = std::min(upper(z_axis, z), nz() - 1);
+        const size_t ir0 = ir1 - 1;
+        const size_t iz0 = iz1 - 1;
+        const double r0 = r_axis[ir0], r1 = r_axis[ir1];
+        const double z0 = z_axis[iz0], z1 = z_axis[iz1];
+        const double tr = (r1 > r0) ? (r - r0) / (r1 - r0) : 0.0;
+        const double tz = (z1 > z0) ? (z - z0) / (z1 - z0) : 0.0;
+        const double t00 = at(ir0, iz0), t10 = at(ir1, iz0), t01 = at(ir0, iz1), t11 = at(ir1, iz1);
+        return (1.0 - tr) * (1.0 - tz) * t00 + tr * (1.0 - tz) * t10 + (1.0 - tr) * tz * t01 + tr * tz * t11;
+    }
+};
+
+inline bool hostLoadDoc224RzTemperatureGrid(const std::string &csv_path, Doc224RzTemperatureGrid &grid,
+                                            std::string &err)
+{
+    grid = Doc224RzTemperatureGrid{};
+    std::ifstream in(csv_path);
+    if (!in)
+    {
+        err = "cannot open init-T-rz-csv";
+        return false;
+    }
+    std::string line;
+    if (!std::getline(in, line))
+    {
+        err = "empty init-T-rz-csv";
+        return false;
+    }
+    auto strip = [](std::string s) {
+        while (!s.empty() && (s.back() == '\r' || s.back() == ' ' || s.back() == '\t'))
+            s.pop_back();
+        size_t i = 0;
+        while (i < s.size() && (s[i] == ' ' || s[i] == '\t'))
+            ++i;
+        return s.substr(i);
+    };
+    auto lower = [&](std::string s) {
+        s = strip(s);
+        for (char &c : s)
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        return s;
+    };
+    std::vector<std::string> hdr;
+    {
+        std::stringstream ss(line);
+        std::string cell;
+        while (std::getline(ss, cell, ','))
+            hdr.push_back(lower(cell));
+    }
+    int i_r = -1, i_z = -1, i_T = -1;
+    for (int i = 0; i < static_cast<int>(hdr.size()); ++i)
+    {
+        if (hdr[static_cast<size_t>(i)] == "r_m" || hdr[static_cast<size_t>(i)] == "r")
+            i_r = i;
+        else if (hdr[static_cast<size_t>(i)] == "z_m" || hdr[static_cast<size_t>(i)] == "z")
+            i_z = i;
+        else if (hdr[static_cast<size_t>(i)] == "t_k" || hdr[static_cast<size_t>(i)] == "t" ||
+                 hdr[static_cast<size_t>(i)] == "temperature_k")
+            i_T = i;
+    }
+    if (i_r < 0 || i_z < 0 || i_T < 0)
+    {
+        err = "init-T-rz-csv needs r_m,z_m,T_K";
+        return false;
+    }
+    std::vector<double> rs, zs, Ts;
+    while (std::getline(in, line))
+    {
+        if (line.empty())
+            continue;
+        std::stringstream ss(line);
+        std::vector<std::string> cells;
+        std::string cell;
+        while (std::getline(ss, cell, ','))
+            cells.push_back(strip(cell));
+        if (static_cast<int>(cells.size()) <= std::max(i_r, std::max(i_z, i_T)))
+            continue;
+        const double r = std::atof(cells[static_cast<size_t>(i_r)].c_str());
+        const double z = std::atof(cells[static_cast<size_t>(i_z)].c_str());
+        const double Tv = std::atof(cells[static_cast<size_t>(i_T)].c_str());
+        if (!(std::isfinite(r) && std::isfinite(z) && std::isfinite(Tv)) || r < 0.0 || !(Tv > 0.0))
+        {
+            err = "non-finite/non-positive T or bad r in init-T-rz-csv";
+            return false;
+        }
+        rs.push_back(r);
+        zs.push_back(z);
+        Ts.push_back(Tv);
+    }
+    if (rs.empty())
+    {
+        err = "no usable rows in init-T-rz-csv";
+        return false;
+    }
+    auto uniq_sorted = [](std::vector<double> v) {
+        std::sort(v.begin(), v.end());
+        v.erase(std::unique(v.begin(), v.end(),
+                            [](double a, double b) { return std::fabs(a - b) < 1e-12; }),
+                v.end());
+        return v;
+    };
+    grid.r_axis = uniq_sorted(rs);
+    grid.z_axis = uniq_sorted(zs);
+    if (grid.nr() < 2 || grid.nz() < 2 || grid.nr() * grid.nz() != rs.size())
+    {
+        err = "init-T-rz-csv is not a complete regular r-z grid";
+        return false;
+    }
+    grid.T.assign(grid.nr() * grid.nz(), std::numeric_limits<double>::quiet_NaN());
+    grid.T_min = Ts.front();
+    grid.T_max = Ts.front();
+    for (size_t k = 0; k < rs.size(); ++k)
+    {
+        const auto ir = static_cast<size_t>(
+            std::lower_bound(grid.r_axis.begin(), grid.r_axis.end(), rs[k]) - grid.r_axis.begin());
+        const auto iz = static_cast<size_t>(
+            std::lower_bound(grid.z_axis.begin(), grid.z_axis.end(), zs[k]) - grid.z_axis.begin());
+        if (ir >= grid.nr() || iz >= grid.nz() || std::fabs(grid.r_axis[ir] - rs[k]) > 1e-12 ||
+            std::fabs(grid.z_axis[iz] - zs[k]) > 1e-12)
+        {
+            err = "init-T-rz-csv grid axis mismatch";
+            return false;
+        }
+        grid.T[ir + grid.nr() * iz] = Ts[k];
+        grid.T_min = std::min(grid.T_min, Ts[k]);
+        grid.T_max = std::max(grid.T_max, Ts[k]);
+    }
+    for (double v : grid.T)
+    {
+        if (!std::isfinite(v))
+        {
+            err = "init-T-rz-csv missing grid node";
+            return false;
+        }
+    }
+    grid.n_nodes = rs.size();
+    grid.ok = true;
+    return true;
+}
+
+/** Sample CSV with z measured from melt floor (seed z_m ∈ [0,H]). */
+inline void hostApplyInitTRzFromFloor(BaseParticles &particles, const Vecd &center, Real glass_half_height,
+                                      Real t_thermal_ref, const Doc224RzTemperatureGrid &grid)
+{
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<Real>(particles, kOphelieTemperatureField);
+    syncVariableToHost<Real>(particles, kOphelieThermalDeltaTField);
+    Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    Real *temp = particles.getVariableDataByName<Real>(kOphelieTemperatureField);
+    Real *delta_t = particles.getVariableDataByName<Real>(kOphelieThermalDeltaTField);
+    const size_t n = particles.TotalRealParticles();
+    const double z_floor = static_cast<double>(center[2] - glass_half_height);
+    double Tmin = 1.0e300, Tmax = -1.0e300, Tsum = 0.0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const double dx = static_cast<double>(pos[i][0] - center[0]);
+        const double dy = static_cast<double>(pos[i][1] - center[1]);
+        const double r = std::sqrt(dx * dx + dy * dy);
+        const double z = static_cast<double>(pos[i][2]) - z_floor;
+        const double Ti = grid.sample(r, z);
+        temp[i] = static_cast<Real>(Ti);
+        delta_t[i] = static_cast<Real>(Ti) - t_thermal_ref;
+        Tmin = std::min(Tmin, Ti);
+        Tmax = std::max(Tmax, Ti);
+        Tsum += Ti;
+    }
+    syncVariableToDevice<Real>(particles, kOphelieTemperatureField);
+    syncVariableToDevice<Real>(particles, kOphelieThermalDeltaTField);
+    std::cout << "[ophelie][stirring-em][init-T-rz] n_nodes=" << grid.n_nodes << " nr=" << grid.nr()
+              << " nz=" << grid.nz() << " T_csv=[" << grid.T_min << "," << grid.T_max << "] T_particle=["
+              << Tmin << "," << Tmax << "] T_mean=" << (n > 0 ? Tsum / static_cast<double>(n) : 0.0)
+              << " T_thermal_ref=" << t_thermal_ref << " z_floor=" << z_floor << std::endl;
+}
 
 inline bool reloadXmlExists(const std::string &folder)
 {
@@ -108,6 +312,8 @@ struct LocalCli
     bool require_validation = false;
     /** Doc 69 P1: write output/french_f07_state_audit.csv with same-state Mass/ρ/V snapshots. */
     bool f07_state_audit = false;
+    /** Doc247: optional absolute T(r,z) IC (seed z_m from melt floor). Empty → uniform T0. */
+    std::string init_T_rz_csv;
     FrenchLiteratureParameters literature = makeFrenchStirredLiteratureParameters();
     FrenchSkullResistanceParams skull;
     FrenchFreeCrustParams free_crust;
@@ -129,6 +335,7 @@ inline bool isLocalCliOption(const char *arg)
            std::strcmp(arg, "--no-state-recording") == 0 || std::strcmp(arg, "--no-self-induction") == 0 ||
            std::strcmp(arg, "--no-boussinesq") == 0 || std::strcmp(arg, "--q-conservative-remap") == 0 ||
            std::strcmp(arg, "--require-validation") == 0 || std::strcmp(arg, "--f07-state-audit") == 0 ||
+           std::strncmp(arg, "--init-T-rz-csv=", 16) == 0 ||
            isFrenchLiteratureCouplingCliOption(arg) ||
            isFrenchSkullCliOption(arg) || isFrenchSkullShellCliOption(arg);
 }
@@ -227,6 +434,10 @@ inline void applyLocalCli(int ac, char *av[], LocalCli &cli)
         else if (std::strcmp(av[i], "--f07-state-audit") == 0)
         {
             cli.f07_state_audit = true;
+        }
+        else if (std::strncmp(av[i], "--init-T-rz-csv=", 16) == 0)
+        {
+            cli.init_T_rz_csv = std::string(av[i] + 16);
         }
         else if (std::strcmp(av[i], "--no-self-induction") == 0)
         {
@@ -1010,6 +1221,20 @@ int main(int ac, char *av[])
     glass_particles.registerStateVariable<Real>(rh200::kJouleHeatField, Real(0));
     (void)glass_particles.getVariableByName<Real>(rh200::kJouleHeatField)->DelegatedData(MainExecutionPolicy{});
 
+    if (!local_cli.init_T_rz_csv.empty())
+    {
+        Doc224RzTemperatureGrid init_grid;
+        std::string terr;
+        if (!hostLoadDoc224RzTemperatureGrid(local_cli.init_T_rz_csv, init_grid, terr))
+        {
+            std::cerr << "[ophelie][stirring-em] " << terr << " path=" << local_cli.init_T_rz_csv << std::endl;
+            return 1;
+        }
+        hostApplyInitTRzFromFloor(glass_particles, french.glass_center, french.glass_half_height, t0, init_grid);
+        std::cout << "[ophelie][stirring-em] loaded init-T-rz-csv=" << local_cli.init_T_rz_csv
+                  << " (ASSUMED axisymmetric Fig8a fold; first EM may still be at T0 until periodic refresh)\n";
+    }
+
     OphelieThermalDiffusionOneWayOptions thermal_bc;
     thermal_bc.enable_french_natural_bc = true;
     thermal_bc.enable_cold_wall_dirichlet = false;
@@ -1624,6 +1849,12 @@ int main(int ac, char *av[])
                     appendFrenchSpatialStatsCsv("output/french_spatial_stats.csv", t_now, spatial);
                     writeFluidTemperatureRzCsv("output/french_T_rz.csv", glass_particles, cyl_frame,
                                                kOphelieTemperatureField);
+                    {
+                        char snap[128];
+                        std::snprintf(snap, sizeof(snap), "output/french_T_rz_t%07.2f.csv",
+                                      static_cast<double>(t_now));
+                        writeFluidTemperatureRzCsv(snap, glass_particles, cyl_frame, kOphelieTemperatureField);
+                    }
                     Real side_w = 0, bottom_w = 0, free_conv_w = 0, free_rad_w = 0, total_loss_w = 0;
                     Real residual = 0.0;
                     const Real dT_now = t_max_now - t_min_now;

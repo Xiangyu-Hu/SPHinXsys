@@ -405,6 +405,64 @@ inline bool hostOphelieCylinderDumpMidplaneParticleCsv(
 }
 
 /**
+ * Doc237 F1: full-domain particle dump for offline quadrature / production-Q audit.
+ * Columns: OriginalID,x,y,z,r,vol,sigma,
+ *   Jx_re,Jy_re,Jz_re,Jx_im,Jy_im,Jz_im,J_theta_sph,J_theta_an,
+ *   Q_prod,Q_Jtheta_recon,Q_Jvec_recon
+ * Q_prod = production joule field (edge-recon complex); Q_*_recon = |·|²/(2σ).
+ */
+inline bool hostOphelieCylinderDumpFullParticleCsv(
+    const UnsignedInt *oid, const Vecd *pos, const Real *vol, const Vecd *j_re, const Vecd *j_im, const Real *q_prod,
+    size_t n, const Vecd &axis_origin, Real radius_m, Real B0, Real omega, Real mu0, Real sigma,
+    const std::string &csv_path,
+    OphelieCylinderReferenceMode reference_mode = OphelieCylinderReferenceMode::FullSkin)
+{
+    if (csv_path.empty())
+    {
+        return false;
+    }
+    auto sol = makeOphelieCylinderAnalyticSolution(radius_m, B0, omega, mu0, sigma);
+    finalizeOphelieCylinderAnalyticPower(sol);
+    std::ofstream ofs(csv_path);
+    if (!ofs)
+    {
+        std::cerr << "[ophelie][cyl-analytic] failed to write full particle CSV: " << csv_path << std::endl;
+        return false;
+    }
+    ofs.setf(std::ios::scientific);
+    ofs.precision(16);
+    ofs << "OriginalID,x,y,z,r,vol,sigma,"
+           "Jx_re,Jy_re,Jz_re,Jx_im,Jy_im,Jz_im,J_theta_sph,J_theta_an,"
+           "Q_prod,Q_Jtheta_recon,Q_Jvec_recon\n";
+    size_t n_out = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        const Real dx = pos[i][0] - axis_origin[0];
+        const Real dy = pos[i][1] - axis_origin[1];
+        const Real r = std::sqrt(dx * dx + dy * dy);
+        const Real inv_r = (r > TinyReal) ? (Real(1) / r) : Real(0);
+        const Real jt_re = inv_r * (-j_re[i][0] * dy + j_re[i][1] * dx);
+        const Real jt_im = inv_r * (-j_im[i][0] * dy + j_im[i][1] * dx);
+        const Real jt = std::hypot(jt_re, jt_im);
+        const auto samp =
+            sampleOphelieCylinderByReferenceMode(reference_mode, sol, r, radius_m, B0, omega, sigma);
+        const Real j2_vec = j_re[i].squaredNorm() + j_im[i].squaredNorm();
+        const Real q_jtheta = (jt * jt) / (Real(2) * sigma);
+        const Real q_jvec = j2_vec / (Real(2) * sigma);
+        const UnsignedInt id = oid ? oid[i] : static_cast<UnsignedInt>(i);
+        ofs << id << "," << pos[i][0] << "," << pos[i][1] << "," << pos[i][2] << "," << r << "," << vol[i] << ","
+            << sigma << "," << j_re[i][0] << "," << j_re[i][1] << "," << j_re[i][2] << "," << j_im[i][0] << ","
+            << j_im[i][1] << "," << j_im[i][2] << "," << jt << "," << samp.Jtheta_abs << "," << q_prod[i] << ","
+            << q_jtheta << "," << q_jvec << "\n";
+        ++n_out;
+    }
+    std::cout << "[ophelie][cyl-analytic][doc237][F] full_particle_csv=" << csv_path << " n=" << n_out
+              << " sigma=" << sigma << " reference_mode=" << ophelieCylinderReferenceModeName(reference_mode)
+              << std::endl;
+    return n_out > 0;
+}
+
+/**
  * Same mid-plane bins as hostOphelieCylinderMidplaneCompare; optional CSV for Doc197 root-cause.
  * Columns: bin,r_mid_m,w_vol,J_sph,J_an,rel_err_J,Q_sph,Q_an
  */

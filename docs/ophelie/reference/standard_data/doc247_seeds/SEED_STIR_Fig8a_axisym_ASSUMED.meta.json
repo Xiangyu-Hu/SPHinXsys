@@ -1,0 +1,12 @@
+{
+  "source": "/home/ubuntu/SPHinXsys/docs/ophelie/reference/doc247_french_digitization_kit/data/STIR_Fig8a_INITIAL_GUESS_grid.csv",
+  "mapping": "|x_unit-0.5|*2 -> r/R; left/right averaged; ASSUMED axisymmetric",
+  "R_m": 0.25,
+  "H_m": 0.21,
+  "nr": 81,
+  "nz": 81,
+  "Tmin": 971.9999999999998,
+  "Tmax": 1458.0000000000002,
+  "Tmean": 1255.48455825836,
+  "note": "For french_stirring_em --init-T-rz-csv; NOT 3D-compatible with Fig8c/d"
+}

@@ -1,0 +1,22 @@
+{
+  "paper_title": "Numerical modeling of coupled phenomena in a mechanically stirred molten-glass bath heated by induction",
+  "DOI": "10.1016/j.ces.2008.01.026",
+  "date": "2026-11-25",
+  "digitization": "Manual sparse contour tracing, reviewed by image overlays; not original author field data",
+  "normalized_temperature": "T_K/1620; not Celsius ratio",
+  "coordinates": "Image normalized; no asserted impeller diameter or absolute geometry inferred",
+  "temperature_grid_method": "linear scattered interpolation, nearest extrapolation, no invented cold-wall values",
+  "NC_Q_grid_method": "linear interpolation; beyond convex hull, nearest contour value times exp(-distance/0.12); reconstruction prior, not measured reference",
+  "incomplete_items": [
+    "Fig8b",
+    "STIR Fig10 heat-source digitization",
+    "Fig2 re-digitization",
+    "Nu exact reference averaging convention",
+    "unique 3D reconstruction",
+    "case-specific geometry/impeller diameter verification"
+  ],
+  "source_sha256": {
+    "Numerical modeling of coupled phenomena in a mechanically stirred molten-glass bath heated by induction(4).pdf": "b68f85646a18195b7ef5173e01136fb6c43e55cb438eb33118bc244cbbc4ba85",
+    "Numerical modelling of natural convection in molten glass heated by induction(2).pdf": "6dddf36ebe7078dd9d5dcf90f852e99032fe1cdb1aa07df30606105bf519c92b"
+  }
+}

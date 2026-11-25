@@ -1,6 +1,6 @@
 # 给软件机的最短同步清单（2026-11-21）
 
-物理机已完成甲方 **自然对流 + 机械搅拌** 首轮短测门控。本文件是软件机接入时的唯一入口；细节见同目录 `HANDOFF.md`、`COMPILE_AND_RUN.sh`、`docs/ophelie/230_*.md`。
+物理机已完成甲方 **自然对流 + 机械搅拌** 首轮短测门控。本文件是软件机接入时的唯一入口；细节见同目录 `HANDOFF.md`、`COMPILE_AND_RUN.sh`、以及 `docs/ophelie/archive/DOCS_201_250_MERGED.md`（Doc228–230）。
 
 ## 1. 同步什么
 
@@ -13,7 +13,7 @@
 | 几何 | `tests/.../test_3d_ophelie_client_nc_glass_relax/data/` | NC CAD |
 | 几何 | `tests/.../test_3d_ophelie_client_stirring_glass_relax/data/` | 搅拌 CAD + `client_stir_paddle_solver_m.stl` |
 | 任务书 | `docs/ophelie/software/OPHELIE_DESKTOP_IMPLEMENTATION_CURSOR_PLAN_2026-11-19.md` | M1/M2 |
-| 补充 | `docs/ophelie/228_*.md`、`229_*.md`、`230_*.md` | 弹性桨 / 材料 / 物理落地 |
+| 补充 | `docs/ophelie/archive/DOCS_201_250_MERGED.md`（Doc228–230） | 弹性桨 / 材料 / 物理落地 |
 
 **注意：** 软件机请拉取本分支最新提交（含甲方 case 源码、几何 STL、交接包）。不要停在旧基线 `2b35c44`。Reload/VTP/bin 不入库，需本机 relax 生成或使用已落盘 summary。
 

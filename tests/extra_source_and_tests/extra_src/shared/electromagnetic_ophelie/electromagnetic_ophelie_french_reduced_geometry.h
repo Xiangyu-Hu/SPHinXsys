@@ -555,7 +555,13 @@ inline bool isFrenchReducedCommandLineOption(const char *arg)
            std::strncmp(arg, "--sigma-mode=", 13) == 0 ||
            std::strncmp(arg, "--sigma-field-file=", 19) == 0 ||
            std::strncmp(arg, "--em-result-json=", 17) == 0 ||
-           std::strncmp(arg, "--dump-em-particles-csv=", 24) == 0;
+           std::strncmp(arg, "--dump-em-particles-csv=", 24) == 0 ||
+           // Doc239: parsed in frozen_q LocalCli; strip here so SPH filter does not see them.
+           std::strncmp(arg, "--doc239-case-identity=", 23) == 0 ||
+           std::strncmp(arg, "--doc239-sigma-identity=", 24) == 0 ||
+           std::strncmp(arg, "--doc239-solver-tables-dir=", 27) == 0 ||
+           std::strcmp(arg, "--doc239-mu-text-upper-1e5") == 0 ||
+           std::strcmp(arg, "--doc239-no-mu-text-upper-1e5") == 0;
 }
 
 inline void applyFrenchReducedCommandLineOption(const char *arg, OphelieFrenchReducedCaseParams &french)

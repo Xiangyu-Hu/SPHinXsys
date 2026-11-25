@@ -1,0 +1,25 @@
+parameter,value,unit,source
+rho0,2800.0,kg/m3,2392 §2.1
+beta,3e-05,1/K,2392 §2.1
+T_boussinesq_reference,293.0,K,2392 §2.1; not initial temperature
+hs_free_surface,20.0,W/m2/K,2394 Table1
+T_cooling,333.0,K,2394 Table1
+T_air,303.0,K,2394 Table1
+T_radiation,423.0,K,2394 Table1
+emissivity,0.9,1,2394 Table1
+h_nonmoving_wall,300.0,W/m2/K,2396 §4.1
+h_stirrer,2500.0,W/m2/K,2396 §4.1
+rpm_local_figs8_9_10,10.0,rev/min,2397-2398 captions
+Pabs_local_figs8_9_10,60000.0,W,2397-2398 captions
+Tmax_Fig8,1620.0,K,2397 Fig8
+Umax_Fig9,0.22,m/s,2397 Fig9
+Qmax_Fig10,6640000.0,W/m3,2398 Fig10
+author_time_local_figs,1000.0,s,2397-2398 captions; not short-run elapsed time
+Pabs_Figs12_13_14,56000.0,W,2399-2400 captions
+Pabs_Figs15_16_low,56000.0,W,2400 legends
+Pabs_Figs15_16_high,70000.0,W,2400 legends
+A_laminar_same_impeller,47.0,1,2399 Fig11
+heat_ratio_coefficient,0.005,1,2400 Fig16
+skull_viscosity_threshold,10000.0,Pa s,2397-2398
+thermal_step_author,0.2,s,2396; do not use as SPH acoustic dt
+EM_refresh_author,2.0,s,2396; derived 10 thermal steps

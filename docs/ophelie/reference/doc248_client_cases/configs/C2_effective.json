@@ -1,0 +1,31 @@
+{
+  "case_id": "doc248_C2_client_stir_f1",
+  "role": "client stirring elastic_driven + volumetric heat (Doc248 C2)",
+  "mechanics": {
+    "mode": "elastic_driven",
+    "rpm": 10,
+    "omega_ramp_s": 0.5,
+    "note": "elastic FSI; long wall time expected"
+  },
+  "geometry": {
+    "dp_m": 0.005,
+    "melt_height_m": 0.230,
+    "rotor_stl": "data/client_stir_paddle_solver_m.stl"
+  },
+  "heating": {
+    "heat_power_W": 15000,
+    "status": "ASSUMED_volumetric",
+    "generator_input_power_W": 30000
+  },
+  "thermal": {
+    "t_initial_k": 1273.15
+  },
+  "probes": ["client_midradius_probe", "legacy_thermocouple_tip"],
+  "run_default": {
+    "end_time_s": 60,
+    "state_record_interval_s": 2,
+    "max_wall_hours": 24,
+    "note": "60 s ≈ 10 rev at 10 rpm; raise end-time / wall hours on production GPU"
+  },
+  "particles": "regenerate via 01_generate_particles.sh (stir relax --bodies=all)"
+}

@@ -1,0 +1,39 @@
+{
+  "schema": "doc248-client-probe-2026-11-25",
+  "coordinate": "solver +Z up (not plan y-up sketch)",
+  "NC": {
+    "melt_radius_m": 0.1415,
+    "melt_height_m": 0.180,
+    "melt_bottom_z_m": 0.001,
+    "free_surface_z_m": 0.181,
+    "client_midradius_probe": {
+      "id": "client_midradius_probe",
+      "r_over_R": 0.5,
+      "depth_below_free_surface_m": 0.12,
+      "xyz_m": [0.07075, 0.0, 0.061],
+      "azimuth": "+X ASSUMED (avoids stirring paddle eccentricity near -X)",
+      "status": "engineering_assumed_midradius_depth12cm",
+      "target_C_note": "~1000 C without paddle (Doc248)"
+    },
+    "legacy_centerline_probes": {
+      "note": "CAD thermocouple AABB tip kept as separate series; do NOT mix with midradius"
+    }
+  },
+  "STIR": {
+    "melt_radius_m": 0.1415,
+    "melt_height_m": 0.230,
+    "melt_bottom_z_m": 0.001,
+    "free_surface_z_m": 0.231,
+    "paddle_axis_x_m": -0.067,
+    "rpm": 10,
+    "client_midradius_probe": {
+      "id": "client_midradius_probe",
+      "r_over_R": 0.5,
+      "depth_below_free_surface_m": 0.12,
+      "xyz_m": [0.07075, 0.0, 0.111],
+      "azimuth": "+X ASSUMED",
+      "status": "engineering_assumed_midradius_depth12cm",
+      "target_C_note": "trend toward ~1400 C with stirring (Doc248); not PASS gate"
+    }
+  }
+}

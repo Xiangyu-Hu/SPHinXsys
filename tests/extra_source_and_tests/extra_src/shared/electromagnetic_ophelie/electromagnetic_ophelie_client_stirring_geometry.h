@@ -47,9 +47,11 @@ struct OphelieClientStirringCaseParams
     /** Solver-frame paddle STL (metres, +Z up). Empty → must preprocess. */
     std::string rotor_stl_solver_m = "./data/client_stir_paddle_solver_m.stl";
 
-    /** Provisional melt fill (parametric cylinder); shell STL not used as fluid. */
+    /** Melt fill (parametric cylinder); shell STL not used as fluid.
+     *  Client CAD: paddle blade lowest ≈ 180 mm; blade disk ~40–50 mm thick.
+     *  Default free surface 230 mm so blades are immersed (was wrongly 180 mm = surface skim). */
     Real melt_radius_m = Real(0.1415);
-    Real melt_height_m = Real(0.180); // provisional; confirm with client
+    Real melt_height_m = Real(0.230);
     Real melt_bottom_z_m = Real(0.001);
 
     /** Historical CAD eccentricity; verify before locking drive axis. */
@@ -101,17 +103,20 @@ inline Vecd clientStirringThermocoupleProbePosition()
 /** CAD STL filename under stirring relax data/ (display / audit; probe uses tip AABB). */
 inline const char *clientStirringThermocoupleStlName() { return "thermal-couple-1.STL"; }
 
-/** Melt = parametric cylinder minus solver-frame paddle STL (French stirring structure). */
+/** Melt = parametric cylinder minus solver-frame paddle STL (French stirring structure).
+ *  SPHinXsys GeometricCylinder is X-axis by default — must use TriangleMeshShapeCylinder(+Z)
+ *  like NC / French reduced, otherwise melt appears lying on its side (90° flip vs wall/CAD). */
 class OphelieClientStirringGlassFluidShape : public ComplexShape
 {
   public:
-    OphelieClientStirringGlassFluidShape(const std::string &shape_name, const OphelieClientStirringCaseParams &c)
+    OphelieClientStirringGlassFluidShape(const std::string &shape_name, const OphelieClientStirringCaseParams &c,
+                                         int mesh_resolution = 20)
         : ComplexShape(shape_name)
     {
         const Vecd center = c.french_stirring.french.glass_center;
         const Real R = c.french_stirring.french.glass_radius;
         const Real half_h = c.french_stirring.french.glass_half_height;
-        add<GeometricShapeCylinder>(Transform(center), R, half_h);
+        add<TriangleMeshShapeCylinder>(Vec3d(0, 0, 1), R, half_h, mesh_resolution, center, "ClientStirMelt");
         subtract<TriangleMeshShapeSTL>(c.rotor_stl_solver_m, Vecd::Zero(), Real(1), "RotorCutout");
     }
 };

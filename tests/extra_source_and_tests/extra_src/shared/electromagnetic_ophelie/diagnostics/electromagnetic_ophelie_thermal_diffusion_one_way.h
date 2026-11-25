@@ -13,6 +13,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -372,6 +374,17 @@ inline void registerOphelieThermalDiffusionAuxFields(BaseParticles &particles, R
     particles.registerStateVariable<Real>(kOphelieThermalBoundaryWeightFreeField, Real(0));
     particles.registerStateVariable<Real>(kOphelieThermalWallGapField, Real(0));
     particles.registerStateVariable<Real>(kOphelieThermalWallTemperatureField, Real(0));
+    // Doc244: these must follow ParticleSortCK with Position. Tagging A_disc looked correct at
+    // setup, but pre-loop sorts scrambled weight↔position and poisoned spatial BC / F1 dump.
+    particles.addEvolvingVariable<Real>(kOphelieThermalLaplaceTField);
+    particles.addEvolvingVariable<Real>(kOphelieThermalConductivityField);
+    particles.addEvolvingVariable<Real>(kOphelieThermalBoundaryMaskField);
+    particles.addEvolvingVariable<Real>(kOphelieThermalBoundaryFaceField);
+    particles.addEvolvingVariable<Real>(kOphelieThermalBoundaryWeightSideField);
+    particles.addEvolvingVariable<Real>(kOphelieThermalBoundaryWeightBottomField);
+    particles.addEvolvingVariable<Real>(kOphelieThermalBoundaryWeightFreeField);
+    particles.addEvolvingVariable<Real>(kOphelieThermalWallGapField);
+    particles.addEvolvingVariable<Real>(kOphelieThermalWallTemperatureField);
     const size_t n = particles.TotalRealParticles();
     Real *conductivity = particles.getVariableDataByName<Real>(kOphelieThermalConductivityField);
     for (size_t i = 0; i < n; ++i)
@@ -1283,6 +1296,77 @@ inline void hostOphelieThermalWallTemperatureHeatLossPowers(BaseParticles &parti
         free_conv_w += w_free[i] * q_conv * area;
         free_rad_w += w_free[i] * q_rad * area;
         total_w += (w_side[i] * q_side + w_bottom[i] * q_bottom + w_free[i] * q_free) * area;
+    }
+}
+
+/**
+ * Doc244 F1: per-boundary-particle spatial heat audit CSV (T_particle vs T_face, weights, fluxes).
+ * Read-only; uses the same flux formula as hostOphelieThermalFrenchNaturalHeatLossPowers.
+ */
+inline void hostDumpFrenchBoundarySpatialParticleCsv(BaseParticles &particles,
+                                                    const OphelieThermalDiffusionOneWayOptions &options,
+                                                    Real shell_thickness, const std::string &path,
+                                                    Real z_bot = Real(0), Real z_top = Real(0),
+                                                    Real dTdz_bottom = Real(0), bool extrapolate_face_t = false,
+                                                    Real dTdz_top = std::numeric_limits<Real>::quiet_NaN())
+{
+    if (!options.enable_french_natural_bc || shell_thickness <= TinyReal)
+        return;
+    const Real dTdz_bot_use = dTdz_bottom;
+    const Real dTdz_free = std::isfinite(static_cast<double>(dTdz_top)) ? dTdz_top : dTdz_bottom;
+    const size_t n = particles.TotalRealParticles();
+    syncVariableToHost<Real>(particles, kOphelieTemperatureField);
+    syncVariableToHost<Real>(particles, kOphelieThermalBoundaryWeightSideField);
+    syncVariableToHost<Real>(particles, kOphelieThermalBoundaryWeightBottomField);
+    syncVariableToHost<Real>(particles, kOphelieThermalBoundaryWeightFreeField);
+    syncVariableToHost<Real>(particles, "VolumetricMeasure");
+    syncVariableToHost<Vecd>(particles, "Position");
+    syncVariableToHost<UnsignedInt>(particles, "OriginalID");
+    const Real *temperature = particles.getVariableDataByName<Real>(kOphelieTemperatureField);
+    const Real *w_side = particles.getVariableDataByName<Real>(kOphelieThermalBoundaryWeightSideField);
+    const Real *w_bottom = particles.getVariableDataByName<Real>(kOphelieThermalBoundaryWeightBottomField);
+    const Real *w_free = particles.getVariableDataByName<Real>(kOphelieThermalBoundaryWeightFreeField);
+    const Real *vol = particles.getVariableDataByName<Real>("VolumetricMeasure");
+    const Vecd *pos = particles.getVariableDataByName<Vecd>("Position");
+    const UnsignedInt *oid = particles.getVariableDataByName<UnsignedInt>("OriginalID");
+    const Real inv_delta = Real(1) / (shell_thickness + TinyReal);
+    const Real enable_crust = options.enable_free_crust ? Real(1) : Real(0);
+    std::ofstream out(path);
+    out << std::setprecision(10);
+    out << "OriginalID,x,y,z,r,T_particle,T_face_side,T_face_bottom,T_face_free,"
+           "w_side,w_bottom,w_free,area_proxy_m2,q_side_Wm2,q_bottom_Wm2,q_free_Wm2,"
+           "q_free_conv_Wm2,q_free_rad_Wm2,P_side_W,P_bottom_W,P_free_W,multi_face,"
+           "extrapolate_face_t,dTdz_bottom,dTdz_free,note\n";
+    for (size_t i = 0; i < n; ++i)
+    {
+        if (w_side[i] + w_bottom[i] + w_free[i] <= TinyReal)
+            continue;
+        const Real area = vol[i] * inv_delta;
+        const Real t = temperature[i];
+        Real t_side = t, t_bottom = t, t_free = t;
+        if (extrapolate_face_t && z_top > z_bot + TinyReal)
+        {
+            const Real z = pos[i][2];
+            t_bottom = t + dTdz_bot_use * (z_bot - z);
+            t_free = t + dTdz_free * (z_top - z);
+            // Side: no radial face extrapolation here — particle T used as T_face_side (Doc244 check item).
+            t_side = t;
+        }
+        Real q_side = 0, q_bottom = 0, q_free = 0, q_conv = 0, q_rad = 0;
+        (void)frenchCombinedBoundaryHeatFluxWm2AtFaces(
+            t_side, t_bottom, t_free, w_side[i], w_bottom[i], w_free[i], options.h_side, options.h_bottom,
+            options.t_cool, options.h_free, options.emissivity, options.t_ambient, options.t_rad_ambient,
+            options.stefan_boltzmann, enable_crust, options.free_crust_delta_m, options.free_crust_k, q_side, q_bottom,
+            q_free, q_conv, q_rad);
+        const Real r = std::sqrt(pos[i][0] * pos[i][0] + pos[i][1] * pos[i][1]);
+        const int multi = ((w_side[i] > TinyReal) + (w_bottom[i] > TinyReal) + (w_free[i] > TinyReal) > 1) ? 1 : 0;
+        out << oid[i] << "," << pos[i][0] << "," << pos[i][1] << "," << pos[i][2] << "," << r << "," << t << ","
+            << t_side << "," << t_bottom << "," << t_free << "," << w_side[i] << "," << w_bottom[i] << "," << w_free[i]
+            << "," << area << "," << q_side << "," << q_bottom << "," << q_free << "," << q_conv << "," << q_rad << ","
+            << (w_side[i] * q_side * area) << "," << (w_bottom[i] * q_bottom * area) << ","
+            << (w_free[i] * q_free * area) << "," << multi << "," << (extrapolate_face_t ? 1 : 0) << ","
+            << dTdz_bot_use << "," << dTdz_free
+            << ",side_uses_particle_T_no_radial_extrapolate\n";
     }
 }
 

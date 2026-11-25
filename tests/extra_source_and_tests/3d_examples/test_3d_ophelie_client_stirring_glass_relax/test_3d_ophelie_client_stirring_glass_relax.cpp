@@ -185,9 +185,13 @@ int main(int ac, char *av[])
         melt.glass_half_height = Real(0.5) * melt.melt_height_m;
         melt.glass_center_z_m = melt.inner_bottom_z_m + melt.glass_half_height;
         melt.glass_center = Vecd(0, 0, melt.glass_center_z_m);
+        // Freeboard rim above free surface (same splash-guard idea as NC: ~6 dp), not a lid.
+        const Real wall_dp = g_case.french_stirring.french.dp;
+        const Real wall_thickness = Real(4) * wall_dp;
+        const Real rim_height = Real(6) * wall_dp;
         wall_keeper = makeUnique<SolidBody>(
             sph_system, makeShared<OphelieClientNcCrucibleWallShape>(
-                            "WallBoundary", melt, Real(4) * g_case.french_stirring.french.dp, 20));
+                            "WallBoundary", melt, wall_thickness, 20, rim_height));
         SolidBody &wall = *wall_keeper;
         wall.defineAdaptationRatios(1.3, 1.0);
         wall.defineMatterMaterial<Solid>();
