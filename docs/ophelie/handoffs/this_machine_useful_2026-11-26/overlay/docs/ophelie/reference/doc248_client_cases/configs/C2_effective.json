@@ -1,0 +1,43 @@
+{
+  "case_id": "doc248_C2_client_stir_f1",
+  "role": "client stirring elastic_driven + volumetric heat (Doc248 C2)",
+  "path_role": "engineering_soft_hang",
+  "stainless_material_path": "doc248_C3_client_stir_stainless_f1",
+  "mechanics": {
+    "mode": "elastic_driven",
+    "rpm": 10,
+    "omega_ramp_s": 5,
+    "youngs_modulus_Pa": 5e8,
+    "E_status": "development_softened_not_stainless",
+    "solid_damping_shape": 1.2,
+    "solid_damping": "DampingWithRandomChoice_0.5_pairwise_Velocity_sqrt_rhoE_dp",
+    "e_off_abort_m": 0.05,
+    "note": "engineering_soft_hang; stainless material path is C3. Softer E + stronger damping + slower ramp; NOT stainless stiffness claim"
+  },
+  "geometry": {
+    "dp_m": 0.005,
+    "melt_height_m": 0.230,
+    "rotor_stl": "data/client_stir_paddle_solver_m.stl"
+  },
+  "heating": {
+    "heat_power_W": 15000,
+    "status": "ASSUMED_volumetric",
+    "generator_input_power_W": 30000
+  },
+  "thermal": {
+    "t_initial_k": 1273.15
+  },
+  "probes": ["client_midradius_probe", "legacy_thermocouple_tip"],
+  "run_default": {
+    "end_time_s": 5,
+    "c0": 8,
+    "state_record_interval_s": 0.5,
+    "max_wall_hours": 4,
+    "note": "short window covers full ω ramp (5 s). Long hang: END_TIME=60|600 still engineering-only"
+  },
+  "run_long_hang": {
+    "end_time_s_options": [60, 600],
+    "note": "only after short window stable; still development_softened_not_stainless"
+  },
+  "particles": "regenerate via 01_generate_particles.sh (stir relax --bodies=all)"
+}

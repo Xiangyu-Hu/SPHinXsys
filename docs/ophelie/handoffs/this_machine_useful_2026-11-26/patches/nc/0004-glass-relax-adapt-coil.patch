@@ -1,0 +1,12 @@
+diff --git a/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_client_nc_glass_relax/test_3d_ophelie_client_nc_glass_relax.cpp b/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_client_nc_glass_relax/test_3d_ophelie_client_nc_glass_relax.cpp
+index 5f0e0e8cf..d50676cc9 100644
+--- a/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_client_nc_glass_relax/test_3d_ophelie_client_nc_glass_relax.cpp
++++ b/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_client_nc_glass_relax/test_3d_ophelie_client_nc_glass_relax.cpp
+@@ -60,6 +60,7 @@ inline void applyLocalCommandLine(int ac, char *av[], StdVec<char *> &sph_av)
+             g_melt.glass_center_z_m = g_melt.inner_bottom_z_m + g_melt.glass_half_height;
+             g_melt.glass_center = Vecd(0, 0, g_melt.glass_center_z_m);
+             g_melt.melt_height_status = "user_cli_override";
++            adaptClientNcCoilStackToMeltHeight(g_melt);
+             continue;
+         }
+         if (std::strncmp(arg, "--melt-radius=", 14) == 0)

@@ -1,0 +1,146 @@
+diff --git a/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_french_natural_convection_frozen_q/test_3d_ophelie_french_natural_convection_frozen_q.cpp b/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_french_natural_convection_frozen_q/test_3d_ophelie_french_natural_convection_frozen_q.cpp
+index 2c4d20460..08fcbf57a 100644
+--- a/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_french_natural_convection_frozen_q/test_3d_ophelie_french_natural_convection_frozen_q.cpp
++++ b/tests/extra_source_and_tests/3d_examples/test_3d_ophelie_french_natural_convection_frozen_q/test_3d_ophelie_french_natural_convection_frozen_q.cpp
+@@ -926,8 +926,14 @@ struct LocalCli
+     bool client_nc_geometry = false;
+     /** Doc230: install client development materials (frozen μ @ 1000°C, σ16 borrowed). */
+     bool client_nc_material = false;
+-    /** Optional override when --client-nc-geometry; NaN => development 0.180 m. */
++    /** Optional override when --client-nc-geometry; NaN => development 0.230 m. */
+     Real client_melt_height_m = std::numeric_limits<Real>::quiet_NaN();
++    /**
++     * Optional coil filament band as fraction of melt height (with --client-nc-geometry).
++     * NaN => adapt default [0.15, 0.92]. Upper-localized e.g. 0.55,0.95 toward Fig.6 Q tongue.
++     */
++    Real client_coil_z_lo_frac = std::numeric_limits<Real>::quiet_NaN();
++    Real client_coil_z_hi_frac = std::numeric_limits<Real>::quiet_NaN();
+     /**
+      * Doc245: independent μ/k/cp dataset switch (does not change ρ/β/σ/power/geometry).
+      * LEGACY_APPROX_TABLE | JAC_THESIS_RAW_BORROWED | JAC_THESIS_SHAPE_CEP_ANCHORED
+@@ -988,6 +994,14 @@ inline int applyLocalCli(int ac, char *av[], OphelieFrenchReducedCaseParams &fre
+             // Consumed with --client-nc-geometry (same knob as client relax).
+             cli.client_melt_height_m = static_cast<Real>(std::atof(av[i] + 14));
+         }
++        else if (std::strncmp(av[i], "--client-nc-coil-z-frac-lo=", 27) == 0)
++        {
++            cli.client_coil_z_lo_frac = static_cast<Real>(std::atof(av[i] + 27));
++        }
++        else if (std::strncmp(av[i], "--client-nc-coil-z-frac-hi=", 27) == 0)
++        {
++            cli.client_coil_z_hi_frac = static_cast<Real>(std::atof(av[i] + 27));
++        }
+         else if (std::strncmp(av[i], "--end-time=", 11) == 0)
+         {
+             cli.end_time = static_cast<Real>(std::atof(av[i] + 11));
+@@ -6093,27 +6107,59 @@ int main(int ac, char *av[])
+             melt.glass_center = Vecd(0, 0, melt.glass_center_z_m);
+             melt.melt_height_status = "user_cli_override";
+         }
++        {
++            const Real lo = std::isfinite(static_cast<double>(local_cli.client_coil_z_lo_frac))
++                                ? local_cli.client_coil_z_lo_frac
++                                : Real(0.15);
++            const Real hi = std::isfinite(static_cast<double>(local_cli.client_coil_z_hi_frac))
++                                ? local_cli.client_coil_z_hi_frac
++                                : Real(0.92);
++            adaptClientNcCoilStackToMeltHeight(melt, lo, hi);
++        }
+         // Client development default 10 mm (matches relax). Later filterFrenchReduced applies --dp= if set.
+         applyClientNcMeltToFrenchReduced(french, melt, Real(0.010));
+         std::cout << "[ophelie][client-nc] geometry: R=" << french.glass_radius
+                   << " H=" << (Real(2) * french.glass_half_height) << " center_z=" << french.glass_center[2]
+                   << " bottom_z=" << (french.glass_center[2] - french.glass_half_height)
+                   << " dp=" << french.dp
+-                  << " coil_loops=" << french.coil.num_loops << " f_Hz=" << french.frequency_hz
++                  << " coil_loops=" << french.coil.num_loops
++                  << " coil_z=[" << french.coil.z_min << "," << french.coil.z_max << "]"
++                  << " coil_frac=[" << melt.coil_z_lo_frac << "," << melt.coil_z_hi_frac << "]"
++                  << " coil_adapt=" << melt.coil_adapt_status
++                  << " f_Hz=" << french.frequency_hz
+                   << " (avoid bare --glass-height= after this; use --melt-height=)\n";
+     }
+     if (local_cli.client_nc_material)
+     {
+         const OphelieClientCaseParams preset = makeClientNaturalConvectionDevelopmentParams();
++        // applyClientNcDevelopmentToLiterature zeroes absorbed target (unknown). Preserve any
++        // explicit --target-absorbed-power= / --target-power= so client NC never falls back to
++        // the French literature default 50 kW coil calibration (Doc248 C0 bug).
++        const bool keep_cli_absorbed = local_cli.target_power_flag_seen;
++        const Real cli_absorbed_w = local_cli.target_power_w;
+         applyClientNcDevelopmentToLiterature(local_cli.literature, preset);
+-        local_cli.enable_target_power = false;
+         local_cli.beta = preset.beta;
+         french.sigma_glass = local_cli.literature.material.sigma.evaluate(preset.t_initial_k);
+         french.frequency_hz = preset.frequency_hz;
+-        // Isothermal hydro short-run default: no EM Q unless user later enables heating.
+-        if (!local_cli.literature.zero_q && !local_cli.prescribed_heat_mode)
++        if (keep_cli_absorbed && cli_absorbed_w > TinyReal)
+         {
+-            std::cout << "[ophelie][client-nc] tip: pass --zero-q for isothermal hydro (no EM Q / no 50 kW)\n";
++            local_cli.enable_target_power = true;
++            local_cli.target_power_w = cli_absorbed_w;
++            local_cli.literature.target_glass_absorbed_power_w = cli_absorbed_w;
++            local_cli.literature.em_control = EMControlMode::FixedAbsorbedPower;
++            std::cout << "[ophelie][client-nc] absorbed EM target from CLI=" << cli_absorbed_w
++                      << " W (overrides French 50 kW default; generator_input_W="
++                      << local_cli.literature.generator_power_w << " is ledger only)\n";
++        }
++        else
++        {
++            local_cli.enable_target_power = false;
++            // Isothermal hydro short-run default: no EM Q unless user enables heating.
++            if (!local_cli.literature.zero_q && !local_cli.prescribed_heat_mode)
++            {
++                std::cout << "[ophelie][client-nc] tip: pass --zero-q for isothermal hydro, or "
++                             "--target-absorbed-power= to set client EM watts (do not inherit French 50 kW)\n";
++            }
+         }
+         std::cout << "[ophelie][client-nc] material: id=" << preset.material_id
+                   << " T0_K=" << preset.t_initial_k
+@@ -6121,7 +6167,9 @@ int main(int ac, char *av[])
+                   << " sigma=" << french.sigma_glass
+                   << " rho=" << local_cli.literature.material.rho.evaluate(preset.t_initial_k)
+                   << " boussinesq=" << (local_cli.literature.enable_boussinesq ? 1 : 0)
+-                  << " generator_input_W=" << local_cli.literature.generator_power_w << "\n";
++                  << " generator_input_W=" << local_cli.literature.generator_power_w
++                  << " enable_target_power=" << (local_cli.enable_target_power ? 1 : 0)
++                  << " target_power_w=" << local_cli.target_power_w << "\n";
+     }
+     // Doc245: material dataset AFTER case identity so μ/k/cp can be swapped without
+     // rewriting 50 kW / β / ρ. Missing JAC thesis CSV → hard fail (no CES fallback).
+@@ -6582,6 +6630,34 @@ int main(int ac, char *av[])
+         french.target_joule_power = local_cli.target_power_w;
+         params.target_joule_power_ = local_cli.target_power_w;
+     }
++    // Doc248: client NC must never silently calibrate to French 50 kW.
++    if ((local_cli.client_nc_geometry || local_cli.client_nc_material) && !local_cli.literature.zero_q &&
++        !local_cli.prescribed_heat_mode)
++    {
++        const bool french_50k =
++            std::abs(params.target_joule_power_ - Real(50000)) <= Real(50) ||
++            std::abs(french.target_joule_power - Real(50000)) <= Real(50);
++        const bool cli_wants_50k =
++            local_cli.target_power_flag_seen && std::abs(local_cli.target_power_w - Real(50000)) <= Real(50);
++        if (french_50k && !cli_wants_50k)
++        {
++            std::cerr << "[ophelie][client-nc] FATAL: absorbed target still French default 50 kW "
++                         "(params.target_joule_power_="
++                      << params.target_joule_power_ << ", french.target_joule_power="
++                      << french.target_joule_power
++                      << "). Pass --target-absorbed-power=<client watts>; do not inherit Jacoutot 50 kW.\n";
++            return 2;
++        }
++        if (local_cli.target_power_flag_seen && local_cli.target_power_w > TinyReal)
++        {
++            french.target_joule_power = local_cli.target_power_w;
++            params.target_joule_power_ = local_cli.target_power_w;
++            params.enable_power_scaling_ = false;
++            local_cli.literature.target_glass_absorbed_power_w = local_cli.target_power_w;
++            std::cout << "[ophelie][client-nc] calibrate_target_asserted_W=" << params.target_joule_power_
++                      << " generator_ledger_W=" << local_cli.literature.generator_power_w << std::endl;
++        }
++    }
+     applyOphelieCoilCurrentScale(french, params);
+     logOphelieFinalParams(params, cli_options);
+ 

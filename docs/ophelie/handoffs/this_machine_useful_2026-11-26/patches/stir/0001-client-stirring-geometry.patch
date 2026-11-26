@@ -1,0 +1,75 @@
+diff --git a/tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/electromagnetic_ophelie_client_stirring_geometry.h b/tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/electromagnetic_ophelie_client_stirring_geometry.h
+index dc330be14..3ce8f6a5f 100644
+--- a/tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/electromagnetic_ophelie_client_stirring_geometry.h
++++ b/tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/electromagnetic_ophelie_client_stirring_geometry.h
+@@ -63,7 +63,10 @@ inline void applyClientStirringDevelopmentDefaults(OphelieClientStirringCasePara
+ {
+     applyFrenchReducedStirringDefaults(c.french_stirring);
+     c.french_stirring.rotor_stl_path = c.rotor_stl_solver_m;
+-    c.french_stirring.geometry_scale = Real(1); // already metres
++    c.french_stirring.geometry_scale = Real(1); // client paddle STL is already metres
++    // French glass-z.stl is millimetres (scale 0.001). Leave path empty so summaries / domain
++    // helpers cannot accidentally inflate the box to ~500 m (Doc248 C5 bad_alloc).
++    c.french_stirring.glass_stl_path.clear();
+     c.french_stirring.rotor_translation = Vecd::Zero();
+     c.french_stirring.rotation_axis = c.rotation_axis;
+     c.french_stirring.rotation_center = Vecd(c.paddle_axis_x_m, 0, Real(0.5) * c.melt_height_m);
+@@ -77,6 +80,23 @@ inline void applyClientStirringDevelopmentDefaults(OphelieClientStirringCasePara
+     c.french_stirring.french.glass_half_height = Real(0.5) * c.melt_height_m;
+     c.french_stirring.french.glass_center = Vecd(0, 0, c.melt_bottom_z_m + c.french_stirring.french.glass_half_height);
+     c.french_stirring.french.require_canonical_bottom_at_zero = false;
++    // Coil stack = NC development rings remapped into stir melt band (H=0.230 m).
++    {
++        OphelieClientMeltGeometryM melt = makeClientNcMeltGeometryDevelopment();
++        melt.melt_height_m = c.melt_height_m;
++        melt.glass_half_height = Real(0.5) * c.melt_height_m;
++        melt.glass_center_z_m = c.melt_bottom_z_m + melt.glass_half_height;
++        melt.glass_center = Vecd(0, 0, melt.glass_center_z_m);
++        adaptClientNcCoilStackToMeltHeight(melt);
++        applyClientNcMeltToFrenchReduced(c.french_stirring.french, melt, c.french_stirring.french.dp);
++        // applyClientNcMeltToFrenchReduced overwrites glass_* from melt; restore stir fill.
++        c.french_stirring.french.glass_radius = c.melt_radius_m;
++        c.french_stirring.french.glass_half_height = Real(0.5) * c.melt_height_m;
++        c.french_stirring.french.glass_center =
++            Vecd(0, 0, c.melt_bottom_z_m + c.french_stirring.french.glass_half_height);
++        c.french_stirring.french.frequency_hz = c.client.frequency_hz;
++        c.french_stirring.french.require_canonical_bottom_at_zero = false;
++    }
+ }
+ 
+ inline const char *clientPaddleMechanicsName(OphelieClientPaddleMechanics m)
+@@ -144,6 +164,34 @@ inline BoundingBoxd clientStirringRelaxDomainBounds(const OphelieClientStirringC
+     return b.expand(pad);
+ }
+ 
++/**
++ * Flow / SPHSystem domain for client stir on french_stirring_em.
++ * Must NOT call frenchStirringFlowDomainBounds: that loads French glass-z.stl (mm) with
++ * geometry_scale=1 → ~500 m box → cell-list bad_alloc.
++ */
++inline BoundingBoxd clientStirringFlowDomainBounds(const OphelieFrenchStirringCaseParams &stirring)
++{
++    const Real dp = stirring.french.dp;
++    const Real pad = Real(8) * dp;
++    const Real wall = frenchStirringWallThickness(stirring);
++    TriangleMeshShapeSTL rotor(stirring.rotor_stl_path, stirring.rotor_translation, Real(1), "ClientRotorBounds");
++    BoundingBoxd b = rotor.getBounds();
++    const Vecd gc = stirring.french.glass_center;
++    const Real R = stirring.french.glass_radius;
++    const Real hh = stirring.french.glass_half_height;
++    b.lower_ = b.lower_.cwiseMin(gc - Vecd(R, R, hh));
++    b.upper_ = b.upper_.cwiseMax(gc + Vecd(R, R, hh));
++    b.lower_ -= Vecd(wall + pad, wall + pad, wall + pad);
++    b.upper_ += Vecd(wall + pad, wall + pad, pad);
++    return b;
++}
++
++/** Advection reference speed from parametric melt radius (not French mm glass STL). */
++inline Real clientStirringReferenceSpeed(const OphelieFrenchStirringCaseParams &stirring)
++{
++    return Real(1.2) * stirring.rotation_speed_rad_s * stirring.french.glass_radius;
++}
++
+ } // namespace ophelie
+ } // namespace electromagnetics
+ } // namespace SPH

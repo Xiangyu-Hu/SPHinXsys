@@ -1113,6 +1113,23 @@ docs/ophelie/*.zip
 docs/ophelie/**/*.zip
 docs/ophelie/**/*.tar.gz
 docs/ophelie/**/*.tar.gz.sha256
+# Keep the GPT IC zip + JSON inside the machine handoff pack
+!docs/ophelie/handoffs/this_machine_useful_2026-11-26/**/*.zip
+!docs/ophelie/handoffs/this_machine_useful_2026-11-26/**/*.json
+!docs/ophelie/handoffs/this_machine_useful_2026-11-26/**/*.meta.json
+
+# Local duplicates of handoff pack content (canonical under handoffs/)
+docs/ophelie/reference/doc248_client_cases/configs/client_nc_*
+docs/ophelie/reference/doc248_client_cases/configs/gpt_nc_ic/
+docs/ophelie/reference/doc248_client_cases/configs/fig8_seed_normalized_preview.png
+docs/ophelie/reference/doc248_client_cases/configs/C3_effective.json
+docs/ophelie/reference/doc248_client_cases/configs/C4_effective.json
+docs/ophelie/reference/doc248_client_cases/configs/C5_effective.json
+docs/ophelie/reference/doc248_client_cases/scripts/
+docs/ophelie/reference/doc248_client_cases/04_run_C3_stir_stainless.sh
+docs/ophelie/reference/doc248_client_cases/05_run_C4_stir_rigid.sh
+docs/ophelie/reference/doc248_client_cases/06_run_C5_stir_em30.sh
+local-deps/
 # Simulation outputs under docs (never track)
 docs/ophelie/**/*.vtp
 docs/ophelie/**/*.vtk

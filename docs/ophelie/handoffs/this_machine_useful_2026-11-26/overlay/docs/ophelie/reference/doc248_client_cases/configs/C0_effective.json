@@ -1,0 +1,92 @@
+{
+  "case_id": "doc248_C0_client_nc",
+  "role": "client natural convection baseline (no paddle)",
+  "geometry": {
+    "flags": "--client-nc-geometry --client-nc-material",
+    "dp_m": 0.010,
+    "melt_height_m": 0.230,
+    "melt_height_note": "aligned with stirring fill (was 0.180); French Fig.8 lit H=0.185 m",
+    "coil_adapt": "adaptClientNcCoilStackToMeltHeight — default [0.15H,0.92H]; override via --client-nc-coil-z-frac-lo/hi (rebuild)",
+    "top": "--doc223-paper-flat-slip-top"
+  },
+  "heating": {
+    "em_control": "fixed-power",
+    "generator_input_power_W": 30000,
+    "em_scaling_target_W": 18000,
+    "target_absorbed_power_W": 18000,
+    "absorbed_band_W": [17000, 20000],
+    "status": "ASSUMED_absorbed_from_generator_30kW",
+    "power_identity": "generator_30kW_ledger__absorbed_17to20kW_engineering_target",
+    "note": "NOT French 50 kW. Default 18 kW; override TARGET_ABSORBED. Cooling changes net ΔT, not P_joule.",
+    "em_update_interval_s": 0.5,
+    "aind": "off",
+    "Q_shape_levers": {
+      "why": "Fig.8 hot tongue is thin upper-wall; current EM Q from 4-turn coil spanning ~15–92%H is too tall → bulky T. French NC Fig.6 Q* peak is ~r/R 0.73–0.86, z/H 0.73–0.87.",
+      "fig6_mapped_reference_csv": "configs/client_nc_fig6_mapped_H230_ASSUMED_Q_rz.csv",
+      "fig6_mapped_note": "ASSUMED shape for mapping-back; frozen_q cannot load Q_rz yet — do NOT label as EM prediction.",
+      "doc246_q_upper_kappa": {
+        "env": "Q_UPPER_KAPPA",
+        "cli": "--doc246-q-upper-kappa=",
+        "works_on_current_binary": true,
+        "suggested": 3.5,
+        "note": "Q_ctrl∝Q_EM·exp[κ(z/H−0.5)], power renormalized; controlled shape not Maxwell. v1 smoke used 2.5."
+      },
+      "coil_band_frac": {
+        "env": ["COIL_Z_FRAC_LO", "COIL_Z_FRAC_HI"],
+        "cli": ["--client-nc-coil-z-frac-lo=", "--client-nc-coil-z-frac-hi="],
+        "works_on_current_binary": true,
+        "suggested": [0.68, 0.97],
+        "note": "Compresses filament stack toward Fig.6 upper band. v1 smoke used 0.55–0.95."
+      }
+    }
+  },
+  "thermal": {
+    "t_initial_k": 1273.15,
+    "preferred_IC": "configs/client_nc_gpt_H230_T_rz.csv",
+    "note": "GPT field built for H=230 mm. Physical depths 20/70/120 mm locked. Below 150 mm the lower profile is stretched smoothly to an 810 C bottom."
+  },
+  "cooling": {
+    "scheme": "Robin",
+    "h_side": 90,
+    "h_bottom": 35,
+    "h_free": 10,
+    "emissivity": 0.4,
+    "t_cool_K": 300,
+    "status": "ASSUMED_retune_for_energy_balance_with_fig8_IC",
+    "note": "Balanced smoke used H_SIDE=90 H_FREE=10 EMISSIVITY=0.4 at 18 kW on prior H=180 path; re-check budget after H=230 particle regen."
+  },
+  "gpt_IC": {
+    "csv": "configs/client_nc_gpt_H230_T_rz.csv",
+    "preview": "configs/client_nc_gpt_H230_preview.png",
+    "meta": "configs/client_nc_gpt_H230.meta.json",
+    "package": "configs/gpt_nc_ic/",
+    "env": "INIT_T_RZ",
+    "status": "GPT_engineering_IC",
+    "construction": "Native H=230 GPT table. 0–150 mm keeps the original profile with 20/70/120 mm locked. 150–230 mm is a smooth extension to an 810 C bottom. Peak about 1474 C at r≈91 mm, depth≈44 mm."
+  },
+  "hybrid_IC": {
+    "csv": "configs/client_nc_hybrid_tongue_v6_H230_ASSUMED_T_rz.csv",
+    "preview": "configs/client_nc_hybrid_tongue_v6_H230_preview_norm.png",
+    "preview_top": "configs/client_nc_hybrid_tongue_v6_H230_preview_top.png",
+    "meta": "configs/client_nc_hybrid_tongue_v6_H230_ASSUMED.meta.json",
+    "env": "INIT_T_RZ",
+    "status": "ASSUMED",
+    "construction": "v6 nested ellipses: core inset from wall, cold skin at r→1, outer contours reach the axis, steep gradient on the wall side",
+    "older": ["configs/client_nc_hybrid_tongue_v4_H230_ASSUMED_T_rz.csv", "configs/client_nc_hybrid_tongue_v2_H230_ASSUMED_T_rz.csv"]
+  },
+  "fig8_scaled_IC": {
+    "csv": "configs/client_nc_fig8_scaled_H230_ASSUMED_T_rz.csv",
+    "env": "INIT_T_RZ",
+    "status": "ASSUMED",
+    "construction": "PURE Fig.8 spatial form mapped r/R,z/H → client H=230; global linear T scale to 830–1050 C (no axis-profile override)",
+    "client_readout_C_reference": {"d2cm": 817.54, "d7cm": 1068.82, "d12cm": 980.66},
+    "note": "Axis still nearly flat in seed; superseded as preferred by hybrid_IC for client probe stratification"
+  },
+  "probes": ["client_midradius_probe", "legacy_centerline_probes_tip_proxy"],
+  "run_default": {
+    "end_time_s": 60,
+    "state_record_interval_s": 5,
+    "max_wall_hours_via_timeout": 10
+  },
+  "particles": "MUST regenerate NC Reload after H 180→230 via 01_generate_particles.sh"
+}

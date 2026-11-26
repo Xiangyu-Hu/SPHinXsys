@@ -1,0 +1,105 @@
+{
+  "radius_mm": 141.5,
+  "coordinates": "r from melt axis, depth positive down from initial free surface",
+  "units": "millimetres, degree Celsius at nodes, Kelvin for solver",
+  "radial_shape_exponent": 1.5,
+  "wall_blend_power_on_r_squared": 6,
+  "surface_peak": {
+    "temperature_C": 1245.560251849727,
+    "r_mm": 107.68149999999999
+  },
+  "modeled_midradius_at_120mm_C": 1003.0127034097447,
+  "liquid_depth_mm": 230.0,
+  "peak": {
+    "temperature_C": 1473.7157531241169,
+    "r_mm": 91.39235294117647,
+    "depth_mm": 43.5
+  },
+  "hypothetical_hot_volume_fraction_ge_1400C": 0.03623140564665764,
+  "absolute_axis_measurements": [
+    {
+      "depth_mm": 20,
+      "temperature_C": 817.54
+    },
+    {
+      "depth_mm": 70,
+      "temperature_C": 1068.82
+    },
+    {
+      "depth_mm": 120,
+      "temperature_C": 980.66
+    }
+  ],
+  "depth_mapping": {
+    "joining_depth_mm": 150.0,
+    "base_depth_mm": 180.0,
+    "coordinate_note": "Absolute depth through 150 mm. Below 150 mm evaluate base profile at 150 + 30*[1-(1-(depth_mm-150)/80)^(8/3)]."
+  },
+  "base_profile": {
+    "anchor_depth_mm": [
+      0,
+      20,
+      70,
+      120,
+      180
+    ],
+    "axis_C": [
+      790,
+      817.54,
+      1068.82,
+      980.66,
+      810
+    ],
+    "axis_measured_mask": [
+      false,
+      true,
+      true,
+      true,
+      false
+    ],
+    "shape_depth_mm": [
+      0,
+      20,
+      40,
+      55,
+      70,
+      90,
+      120,
+      150,
+      180
+    ],
+    "ring_amplitude_C": [
+      455,
+      560,
+      545,
+      420,
+      330,
+      199,
+      24,
+      5,
+      0
+    ],
+    "ring_radius_fraction": [
+      0.76,
+      0.73,
+      0.66,
+      0.6,
+      0.53,
+      0.45,
+      0.44,
+      0.44,
+      0.44
+    ],
+    "liquid_edge_C": [
+      805,
+      825,
+      840,
+      850,
+      855,
+      850,
+      835,
+      815,
+      810
+    ]
+  }
+}

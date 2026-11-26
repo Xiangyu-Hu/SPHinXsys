@@ -1,0 +1,39 @@
+{
+  "case_id": "doc248_C4_client_stir_rigid_f1",
+  "role": "client stirring rigid_prescribed paddle + volumetric heat (Doc248 C4)",
+  "separated_from": ["doc248_C2_client_stir_f1", "doc248_C3_client_stir_stainless_f1"],
+  "mechanics": {
+    "mode": "rigid_prescribed",
+    "rpm": 10,
+    "omega_ramp_s": 2,
+    "rigid_rotor": true,
+    "note": "full-body ω×r snap; NeoHookean subcycle OFF. Engineering long look at stirred flow/T; NOT elastic_driven / NOT stainless deformation claim"
+  },
+  "geometry": {
+    "dp_m": 0.005,
+    "melt_height_m": 0.230,
+    "rotor_stl": "data/client_stir_paddle_solver_m.stl"
+  },
+  "heating": {
+    "heat_power_W": 15000,
+    "status": "ASSUMED_volumetric",
+    "generator_input_power_W": 30000,
+    "note": "prescribed absorbed power; not EM"
+  },
+  "thermal": {
+    "t_initial_k": 1273.15
+  },
+  "probes": ["client_midradius_probe", "legacy_thermocouple_tip"],
+  "run_default": {
+    "end_time_s": 5,
+    "c0": 8,
+    "state_record_interval_s": 1,
+    "max_wall_hours": 4,
+    "note": "short probe first; long hang END_TIME=60|600"
+  },
+  "run_long_hang": {
+    "end_time_s_options": [60, 600],
+    "note": "engineering look only; midradius ~1400C is qualitative trend not PASS gate"
+  },
+  "particles": "same Reload as C2/C3 via 01_generate_particles.sh; OUT is runs/C4_stir_rigid"
+}

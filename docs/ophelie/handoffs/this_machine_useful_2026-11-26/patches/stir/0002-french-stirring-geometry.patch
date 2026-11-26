@@ -1,0 +1,68 @@
+diff --git a/tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/electromagnetic_ophelie_french_stirring_geometry.h b/tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/electromagnetic_ophelie_french_stirring_geometry.h
+index d8e674d21..410965734 100644
+--- a/tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/electromagnetic_ophelie_french_stirring_geometry.h
++++ b/tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/electromagnetic_ophelie_french_stirring_geometry.h
+@@ -179,6 +179,12 @@ inline BoundingBoxd frenchStirringScaledStlBounds(const std::string &stl_path, c
+  */
+ inline void syncFrenchStirringGlassToFrenchParams(OphelieFrenchStirringCaseParams &stirring)
+ {
++    // Parametric / client-stir path: glass_* already set; empty STL must not be loaded.
++    if (stirring.glass_stl_path.empty())
++    {
++        stirring.french.require_canonical_bottom_at_zero = false;
++        return;
++    }
+     const BoundingBoxd bounds =
+         frenchStirringScaledStlBounds(stirring.glass_stl_path, stirring.glass_translation, stirring.geometry_scale);
+     const Vecd center = Real(0.5) * (bounds.lower_ + bounds.upper_);
+@@ -210,7 +216,8 @@ inline void resolveFrenchStirringGeometryPlacement(OphelieFrenchStirringCasePara
+     {
+         stirring.rotor_bbox_stl_path = stirring.rotor_stl_path;
+     }
+-    if (stirring.auto_center_rotor_in_glass && !stirring.rotor_translation_user_set)
++    if (stirring.auto_center_rotor_in_glass && !stirring.rotor_translation_user_set &&
++        !stirring.glass_stl_path.empty())
+     {
+         const Vecd glass_center =
+             frenchStirringScaledStlCenter(stirring.glass_stl_path, stirring.glass_translation, stirring.geometry_scale);
+@@ -639,23 +646,31 @@ inline StdVec<std::string> filterFrenchStirringCommandLine(int ac, char *av[], O
+ 
+ inline void printFrenchStirringCaseSummary(const OphelieFrenchStirringCaseParams &stirring)
+ {
+-    const BoundingBoxd glass_bounds =
+-        frenchStirringScaledStlBounds(stirring.glass_stl_path, stirring.glass_translation, stirring.geometry_scale);
++    const bool parametric_glass = stirring.glass_stl_path.empty();
+     const BoundingBoxd rotor_bounds = frenchStirringScaledStlBounds(
+         stirring.rotor_stl_path, stirring.rotor_translation, stirring.geometry_scale);
+-    std::cout << "[ophelie][stirring] CAD glass + paddle STLs\n"
+-              << "  glass_stl=" << stirring.glass_stl_path << " scale=" << stirring.geometry_scale
+-              << " translation=" << stirring.glass_translation.transpose() << " dp=" << stirring.french.dp << "\n"
+-              << "  glass_bbox min=(" << glass_bounds.lower_.transpose() << ") max=(" << glass_bounds.upper_.transpose()
+-              << ")\n"
+-              << "  rotor_stl=" << stirring.rotor_stl_path << " translation=" << stirring.rotor_translation.transpose()
++    const Real u_ref = parametric_glass
++                           ? (Real(1.2) * stirring.rotation_speed_rad_s * stirring.french.glass_radius)
++                           : frenchStirringReferenceSpeed(stirring);
++    std::cout << "[ophelie][stirring] " << (parametric_glass ? "parametric melt + paddle STL\n" : "CAD glass + paddle STLs\n")
++              << "  glass_stl=" << (parametric_glass ? "(parametric cylinder)" : stirring.glass_stl_path)
++              << " scale=" << stirring.geometry_scale
++              << " translation=" << stirring.glass_translation.transpose() << " dp=" << stirring.french.dp << "\n";
++    if (!parametric_glass)
++    {
++        const BoundingBoxd glass_bounds = frenchStirringScaledStlBounds(
++            stirring.glass_stl_path, stirring.glass_translation, stirring.geometry_scale);
++        std::cout << "  glass_bbox min=(" << glass_bounds.lower_.transpose() << ") max=("
++                  << glass_bounds.upper_.transpose() << ")\n";
++    }
++    std::cout << "  rotor_stl=" << stirring.rotor_stl_path << " translation=" << stirring.rotor_translation.transpose()
+               << " auto_center=" << (stirring.auto_center_rotor_in_glass ? 1 : 0) << "\n"
+               << "  rotor_bbox min=(" << rotor_bounds.lower_.transpose() << ") max=(" << rotor_bounds.upper_.transpose()
+               << ")\n"
+               << "  rotation: center=" << stirring.rotation_center.transpose()
+               << " axis=" << stirring.rotation_axis.transpose() << " omega=" << stirring.rotation_speed_rad_s
+               << " rad/s (" << stirring.rotation_speed_rad_s * Real(60.0) / Real(2.0 * M_PI)
+-              << " rpm) U_ref~" << frenchStirringReferenceSpeed(stirring) << " m/s\n"
++              << " rpm) U_ref~" << u_ref << " m/s\n"
+               << "  melt as z-cylinder: center=" << stirring.french.glass_center.transpose()
+               << " R=" << stirring.french.glass_radius << " half_H=" << stirring.french.glass_half_height
+               << " wall_thickness=" << frenchStirringWallThickness(stirring) << "\n"

@@ -1,0 +1,31 @@
+{
+  "source": "OPHELIE_Client_NC_Initial_Temperature_Field-230mm.zip",
+  "status": "GPT_engineering_IC",
+  "csv": "configs/client_nc_gpt_H230_T_rz.csv",
+  "geometry_m": {
+    "R": 0.1415,
+    "z_bottom": 0.001,
+    "H": 0.23,
+    "z_surface": 0.231
+  },
+  "mapping": "CSV depth is already 0\u2013230 mm from the free surface. z_m = 0.231 - depth. 0\u2013150 mm keeps the original profile; 150\u2013230 mm is GPT's smooth extension to a 810 C bottom. 20/70/120 mm stay at their physical depths.",
+  "axis_probes_C": [
+    {
+      "depth_mm": 20,
+      "T_C": 817.54
+    },
+    {
+      "depth_mm": 70,
+      "T_C": 1068.82
+    },
+    {
+      "depth_mm": 120,
+      "T_C": 980.66
+    }
+  ],
+  "axis_ends_C": {
+    "surface": 790.0,
+    "d150": 904.87,
+    "bottom": 810.0
+  }
+}

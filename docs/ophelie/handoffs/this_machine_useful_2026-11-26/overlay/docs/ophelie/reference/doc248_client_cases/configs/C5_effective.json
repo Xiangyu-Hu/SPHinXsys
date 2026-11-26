@@ -1,0 +1,64 @@
+{
+  "case_id": "doc248_C5_client_stir_em30",
+  "role": "client stir geometry/material on french_stirring_em stack; 30 kW EM scaling + skull/crust cooling",
+  "separated_from": ["doc248_C0_client_nc", "doc248_C2_client_stir_f1", "doc248_C4_stir_rigid"],
+  "carrier": "test_3d_ophelie_french_stirring_em",
+  "flags": {
+    "geometry": "--client-stir-geometry",
+    "material": "--client-stir-material",
+    "note": "mirrors frozen_q --client-nc-*; Reload from client_stirring_glass_relax --bodies=all"
+  },
+  "mechanics": {
+    "mode": "host_spin_rigid_prescribed",
+    "rpm": 10,
+    "note": "French stirring host-spin paddle; NOT F1 elastic_driven / NOT C4 volumetric heat"
+  },
+  "geometry": {
+    "dp_m": 0.005,
+    "melt_height_m": 0.230,
+    "rotor_stl": "client_stir_paddle_solver_m.stl"
+  },
+  "heating": {
+    "em_control": "fixed-power",
+    "em_scaling_target_W": 30000,
+    "generator_input_power_W": 30000,
+    "power_identity": "generator_input_used_as_EM_scaling_target",
+    "status": "engineering_EM_calibration_target",
+    "note": "NOT C0 ASSUMED 15 kW absorbed; NOT a claim of 100% coupling efficiency; absorption unknown — scale coil I so glass Joule ≈ 30 kW",
+    "em_update_interval_s": 0.5,
+    "aind": "off",
+    "thermo_em_coupling": "periodic"
+  },
+  "cooling": {
+    "skull_resistance": true,
+    "skull_delta_m": 0.030,
+    "skull_k": 1.0,
+    "h_eff_side_approx": 30.0,
+    "free_crust_resistance": true,
+    "free_crust_delta_m": 0.005,
+    "free_crust_k": 1.0,
+    "balance_heat_loss": false,
+    "target_net_heating_W": [18000, 20000],
+    "zero_d_estimate_at_T0": {
+      "P_em_W": 30000,
+      "P_loss_approx_W": 11000,
+      "P_net_approx_W": 19000,
+      "note": "was skull_delta=0.005 → h_eff_side=120, P_loss≈26–29 kW, P_net≈4 kW; thicker skull is engineering knob, not client CAD"
+    },
+    "tune_env": ["SKULL_DELTA", "SKULL_K", "FREE_CRUST_DELTA", "FREE_CRUST_K"],
+    "note": "do not stack --balance-heat-loss; retune via SKULL_DELTA without rebuild"
+  },
+  "thermal": {
+    "t_initial_k": 1273.15,
+    "sph_conduction": "periodic default on (unless --no-thermal-diffusion)",
+    "boussinesq": true
+  },
+  "probes": ["client_midradius_probe"],
+  "run_default": {
+    "end_time_s": 60,
+    "state_record_interval_s": 5,
+    "max_wall_hours": 10,
+    "acceptance": "diverged=0; EM updates; reconstructed_glass_power ~30 kW; P_em−total_heat_loss in ~18–20 kW; report net dT"
+  },
+  "particles": "same stir Reload as C2/C3/C4 via 01_generate_particles.sh; OUT is runs/C5_stir_em30"
+}

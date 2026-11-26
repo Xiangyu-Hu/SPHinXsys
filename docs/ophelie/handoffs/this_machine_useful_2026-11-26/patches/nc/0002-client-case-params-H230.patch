@@ -1,0 +1,44 @@
+diff --git a/tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/electromagnetic_ophelie_client_case_params.h b/tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/electromagnetic_ophelie_client_case_params.h
+index 29e747041..d97a7fe48 100644
+--- a/tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/electromagnetic_ophelie_client_case_params.h
++++ b/tests/extra_source_and_tests/extra_src/shared/electromagnetic_ophelie/electromagnetic_ophelie_client_case_params.h
+@@ -116,8 +116,8 @@ struct OphelieClientCaseParams
+ 
+     const char *material_id = kClientMaterialIdFrenchSigma16Borrowed;
+ 
+-    /** Parametric melt fill height [m]; provisional until client confirms liquid depth. */
+-    Real melt_height_m = Real(0.180);
++    /** Parametric melt fill height [m]; NC aligned with stirring fill 0.230 m (Doc248). */
++    Real melt_height_m = Real(0.230);
+     OphelieClientConfirmation melt_height_status = OphelieClientConfirmation::Provisional;
+     Real particle_spacing_m = Real(0.005); // match client case.json default; override via --dp=
+ };
+@@ -236,6 +236,28 @@ inline void applyClientNcDevelopmentToLiterature(FrenchLiteratureParameters &lit
+     lit.constant_sigma = (p.sigma_preset == OphelieClientSigmaPreset::FrenchTable1Sigma16Borrowed);
+ }
+ 
++/**
++ * Client stirring materials into literature knobs.
++ * Does not set EM absorbed target / em_control — caller decides (Doc248 C5 uses generator
++ * ledger as engineering EM scaling target; C0 NC zeroes absorbed until explicit CLI).
++ */
++inline void applyClientStirringDevelopmentToLiterature(FrenchLiteratureParameters &lit,
++                                                       const OphelieClientCaseParams &p)
++{
++    lit.regime = FrenchLiteratureRegime::MechanicallyStirred;
++    lit.frequency_hz = p.frequency_hz;
++    lit.t_initial_k = p.t_initial_k;
++    lit.generator_power_w = p.power.generator_input_power_w; // supply-side ledger
++    lit.stirrer_rpm = p.stirrer_rpm;
++    lit.constant_thermal_rheology = true;
++    lit.material = buildClientCaseMaterialLaws(p);
++    lit.constant_sigma = (p.sigma_preset == OphelieClientSigmaPreset::FrenchTable1Sigma16Borrowed);
++}
++
++/** Doc248 C5 power semantics: generator input used as EM scaling target (not η=100% claim). */
++inline constexpr const char *kClientStirEmPowerIdentityGeneratorAsEmTarget =
++    "generator_input_used_as_EM_scaling_target";
++
+ inline bool writeClientEffectiveCaseJson(const OphelieClientCaseParams &p, const std::string &path)
+ {
+     const auto laws = buildClientCaseMaterialLaws(p);

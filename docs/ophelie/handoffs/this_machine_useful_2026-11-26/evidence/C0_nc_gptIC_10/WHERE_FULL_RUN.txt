@@ -1,0 +1,4 @@
+Full machine-local run (not copied into this pack, ~20 MB + VTPs):
+  docs/ophelie/reference/doc248_client_cases/runs/C0_nc_gptIC_10/
+Last VTP (t=10 s):
+  .../out/GlassBody_ite_0000004752.vtp
