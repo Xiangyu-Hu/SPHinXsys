@@ -26,6 +26,7 @@
 #include "electromagnetic_ophelie_thermal_diffusion_one_way.h"
 #include "electromagnetic_ophelie_thermo_em_coupling.h"
 #include "electromagnetic_ophelie_french_skin_depth_diagnostic.h"
+#include "electromagnetic_ophelie_doc247_q_shape_correct.h"
 #include "io_environment.h"
 #include "sphinxsys.h"
 
@@ -290,6 +291,8 @@ struct LocalCli
     // c0 = 10 blows up within 50 acoustic steps; c0 = 8 runs. The residual 3% hydrostatic
     // compression is absorbed by tracking the free surface (see refreshMeltExtentFromParticles).
     Real c0 = 8.0;
+    /** Soft acoustic CFL (default 0.55). Lower for fragile rpm (e.g. 5) startups. */
+    Real acoustic_cfl = 0.55;
     Real q_grid_spacing = 0.0;  // 0 -> dp
     Real t_min = 300.0;         // coolant temperature floor (see README, skull layer)
     Real t_max = 2500.0;
@@ -314,6 +317,14 @@ struct LocalCli
     bool f07_state_audit = false;
     /** Doc247: optional absolute T(r,z) IC (seed z_m from melt floor). Empty → uniform T0. */
     std::string init_T_rz_csv;
+    /**
+     * Doc247 Phase5: after each EM→Q, blend particle Q toward STIR Fig.10 (or PLACEHOLDER) shape
+     * and rescale ∫Q dV → target_glass_absorbed_power. Requires --init-Q-rz-csv=.
+     */
+    bool fig10_q_correct = false;
+    Real fig10_q_correct_blend = Real(0.8);
+    int fig10_q_correct_every = 1;
+    std::string init_Q_rz_csv;
     FrenchLiteratureParameters literature = makeFrenchStirredLiteratureParameters();
     FrenchSkullResistanceParams skull;
     FrenchFreeCrustParams free_crust;
@@ -324,6 +335,7 @@ inline bool isLocalCliOption(const char *arg)
 {
     return std::strncmp(arg, "--reload-dir=", 13) == 0 || std::strncmp(arg, "--end-time=", 11) == 0 ||
            std::strncmp(arg, "--max-wall-hours=", 17) == 0 || std::strncmp(arg, "--c0=", 5) == 0 ||
+           std::strncmp(arg, "--acoustic-cfl=", 15) == 0 ||
            std::strncmp(arg, "--q-grid-spacing=", 17) == 0 || std::strncmp(arg, "--t-min=", 8) == 0 ||
            std::strncmp(arg, "--t-max=", 8) == 0 || std::strncmp(arg, "--h-side=", 9) == 0 ||
            std::strncmp(arg, "--h-bottom=", 11) == 0 || std::strncmp(arg, "--h-free=", 9) == 0 ||
@@ -336,6 +348,10 @@ inline bool isLocalCliOption(const char *arg)
            std::strcmp(arg, "--no-boussinesq") == 0 || std::strcmp(arg, "--q-conservative-remap") == 0 ||
            std::strcmp(arg, "--require-validation") == 0 || std::strcmp(arg, "--f07-state-audit") == 0 ||
            std::strncmp(arg, "--init-T-rz-csv=", 16) == 0 ||
+           std::strcmp(arg, "--fig10-q-correct") == 0 ||
+           std::strncmp(arg, "--fig10-q-correct-blend=", 24) == 0 ||
+           std::strncmp(arg, "--fig10-q-correct-every=", 24) == 0 ||
+           std::strncmp(arg, "--init-Q-rz-csv=", 16) == 0 ||
            isFrenchLiteratureCouplingCliOption(arg) ||
            isFrenchSkullCliOption(arg) || isFrenchSkullShellCliOption(arg);
 }
@@ -359,6 +375,10 @@ inline void applyLocalCli(int ac, char *av[], LocalCli &cli)
         else if (std::strncmp(av[i], "--c0=", 5) == 0)
         {
             cli.c0 = static_cast<Real>(std::atof(av[i] + 5));
+        }
+        else if (std::strncmp(av[i], "--acoustic-cfl=", 15) == 0)
+        {
+            cli.acoustic_cfl = static_cast<Real>(std::atof(av[i] + 15));
         }
         else if (std::strncmp(av[i], "--q-grid-spacing=", 17) == 0)
         {
@@ -438,6 +458,23 @@ inline void applyLocalCli(int ac, char *av[], LocalCli &cli)
         else if (std::strncmp(av[i], "--init-T-rz-csv=", 16) == 0)
         {
             cli.init_T_rz_csv = std::string(av[i] + 16);
+        }
+        else if (std::strcmp(av[i], "--fig10-q-correct") == 0)
+        {
+            cli.fig10_q_correct = true;
+        }
+        else if (std::strncmp(av[i], "--fig10-q-correct-blend=", 24) == 0)
+        {
+            cli.fig10_q_correct = true;
+            cli.fig10_q_correct_blend = static_cast<Real>(std::atof(av[i] + 24));
+        }
+        else if (std::strncmp(av[i], "--fig10-q-correct-every=", 24) == 0)
+        {
+            cli.fig10_q_correct_every = std::atoi(av[i] + 24);
+        }
+        else if (std::strncmp(av[i], "--init-Q-rz-csv=", 16) == 0)
+        {
+            cli.init_Q_rz_csv = std::string(av[i] + 16);
         }
         else if (std::strcmp(av[i], "--no-self-induction") == 0)
         {
@@ -893,6 +930,30 @@ int main(int ac, char *av[])
     const StdVec<std::string> filtered = filterFrenchStirringCommandLine(ac, av, stirring);
     OphelieFrenchReducedCaseParams &french = stirring.french;
 
+    if (local_cli.fig10_q_correct)
+    {
+        if (local_cli.literature.zero_q)
+        {
+            std::cerr << "[ophelie][doc247][Fig10Q-correct] FATAL: incompatible with --zero-q\n";
+            return 1;
+        }
+        if (local_cli.init_Q_rz_csv.empty())
+        {
+            std::cerr << "[ophelie][doc247][Fig10Q-correct] FATAL: --fig10-q-correct requires --init-Q-rz-csv=\n";
+            return 1;
+        }
+        if (!(local_cli.fig10_q_correct_blend >= Real(0) && local_cli.fig10_q_correct_blend <= Real(1)))
+        {
+            std::cerr << "[ophelie][doc247][Fig10Q-correct] FATAL: --fig10-q-correct-blend must be in [0,1]\n";
+            return 1;
+        }
+        if (local_cli.fig10_q_correct_every < 1)
+        {
+            std::cerr << "[ophelie][doc247][Fig10Q-correct] FATAL: --fig10-q-correct-every must be >= 1\n";
+            return 1;
+        }
+    }
+
     params.enable_phi_correction_ = true;
     params.ophelie_current_form_ = OphelieCurrentFormKind::EdgeFlux;
     params.edge_flux_complex_ = true;
@@ -1020,6 +1081,22 @@ int main(int ac, char *av[])
     FrenchCylindricalFrame cyl_frame = makeFrenchCylinderFrameFromGlass(
         french.glass_center, french.glass_radius, french.glass_half_height, local_cli.literature.vertical_axis);
     const bool periodic_coupling = local_cli.literature.coupling == ThermoEMCouplingMode::Periodic;
+    Doc247RzQGrid fig10_q_shape;
+    if (local_cli.fig10_q_correct)
+    {
+        std::string q_err;
+        if (!hostLoadDoc247RzQGrid(local_cli.init_Q_rz_csv, fig10_q_shape, q_err) || !fig10_q_shape.ok)
+        {
+            std::cerr << "[ophelie][doc247][Fig10Q-correct] FATAL: " << q_err << " path=" << local_cli.init_Q_rz_csv
+                      << "\n";
+            return 1;
+        }
+        std::cout << "[ophelie][doc247][Fig10Q-correct] ENABLED blend=" << local_cli.fig10_q_correct_blend
+                  << " every=" << local_cli.fig10_q_correct_every << " nodes=" << fig10_q_shape.n_nodes
+                  << " unit_box=" << (fig10_q_shape.looks_normalized_unit_box ? 1 : 0)
+                  << " Qshape=[" << fig10_q_shape.Q_min << "," << fig10_q_shape.Q_max << "] seed="
+                  << local_cli.init_Q_rz_csv << "\n";
+    }
     fs::create_directories("./output");
     {
         const BoundingBoxd bounds = frenchReducedDomainBounds(french, 3.0 * french.dp);
@@ -1057,6 +1134,13 @@ int main(int ac, char *av[])
 
         BaseParticles &particles = glass_em->getBaseParticles();
         const std::string q_field = ophelieJouleHeatSourceFieldForThermal(glass_em_names, params);
+        if (local_cli.fig10_q_correct && hostDoc247QShapeCorrectDue(/*update_count=*/1, local_cli.fig10_q_correct_every))
+        {
+            const Real p_tgt = local_cli.literature.target_glass_absorbed_power_w;
+            p_joule = hostBlendEmQWithRzShape(particles, q_field, fig10_q_shape, french.glass_center,
+                                             french.glass_radius, french.glass_half_height, p_tgt,
+                                             local_cli.fig10_q_correct_blend, /*verbose=*/true, "Fig10Q-correct");
+        }
         syncVariableToHost<Real>(particles, q_field);
         syncVariableToHost<Vecd>(particles, "Position");
         syncVariableToHost<Real>(particles, "VolumetricMeasure");
@@ -1439,7 +1523,9 @@ int main(int ac, char *av[])
             rotor_fluid_contact);
 
     auto &advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(glass, u_ref);
-    auto &acoustic_time_step = main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(glass, 0.55);
+    const Real acoustic_cfl_use = std::max(Real(0.05), std::min(Real(0.9), local_cli.acoustic_cfl));
+    auto &acoustic_time_step =
+        main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(glass, acoustic_cfl_use);
     auto &u_max_reduce = main_methods.addReduceDynamics<OphelieVelocityMaxReduceCK>(glass);
     auto &t_mean_reduce = main_methods.addReduceDynamics<OphelieTemperatureMeanReduceCK>(glass);
     auto &t_max_reduce =
@@ -1585,7 +1671,8 @@ int main(int ac, char *av[])
               << " n_wall=" << wall.getBaseParticles().TotalRealParticles() << " n_bc_shell=" << n_bc_particles
               << " out_of_grid=" << n_out_of_grid << "\n"
               << "  rho=" << rho0 << " mu=" << mu << " cp=" << cp << " k=" << k_th << " beta=" << beta
-              << " c0=" << local_cli.c0 << " U_ref=" << u_ref << " T0=" << t0 << " T_floor=" << local_cli.t_min
+              << " c0=" << local_cli.c0 << " acoustic_cfl=" << acoustic_cfl_use << " U_ref=" << u_ref
+              << " T0=" << t0 << " T_floor=" << local_cli.t_min
               << " thermal_diffusion=" << (thermal_bc.enable_diffusion ? 1 : 0)
               << " coupling=" << thermoEMCouplingModeName(local_cli.literature.coupling) << "\n"
               << "  paddle: rpm=" << rpm << " omega=" << omega << " rad/s r_tip=" << rotor0.r_tip
@@ -1796,6 +1883,20 @@ int main(int ac, char *av[])
                     phi_eq = probe.phi_eq_res_vol;
                     coupling_state.coil_current_per_loop = french.coil.current_per_loop;
                     coupling_state.last_phi_eq_res = phi_eq;
+                    {
+                        const int next_update = static_cast<int>(coupling_state.update_count) + 1;
+                        if (local_cli.fig10_q_correct &&
+                            hostDoc247QShapeCorrectDue(next_update, local_cli.fig10_q_correct_every))
+                        {
+                            const std::string q_field_em =
+                                ophelieJouleHeatSourceFieldForThermal(glass_em_names, params);
+                            const Real p_tgt = local_cli.literature.target_glass_absorbed_power_w;
+                            p_joule = hostBlendEmQWithRzShape(
+                                em_particles, q_field_em, fig10_q_shape, french.glass_center, french.glass_radius,
+                                french.glass_half_height, p_tgt, local_cli.fig10_q_correct_blend,
+                                /*verbose=*/true, "Fig10Q-correct");
+                        }
+                    }
                     depositEmQAndRecord(em_particles, glass_em_names, params, cyl_frame, local_cli.literature, q_grid,
                                         coupling_state, p_joule);
                     q_grid_device.upload(q_grid);

@@ -108,6 +108,11 @@ Phase A 约需 3 分钟（EM self-induction Picard + 坩埚壁 level set）。Ph
 | `--end-time=` | 1200 s | 物理时间上限（200 转） |
 | `--max-wall-hours=` | 10 | 墙钟预算，到点停 |
 | `--c0=` | 8 | 人工声速，超过 9 会发散 |
+| `--acoustic-cfl=` | 0.55 | 声学步 CFL；**5 rpm** 等温旁路需降到 **0.35**，否则 ~t=0.02 发散 |
+| `--init-Q-rz-csv=` | — | Fig.10（或 PLACEHOLDER）Q 形状种子；配合 `--fig10-q-correct` |
+| `--fig10-q-correct` | 关 | EM→Q 后按种子 blend 并 rescale 到 `target_absorbed_power`（ASSUMED） |
+| `--fig10-q-correct-blend=` | 0.8 | 形状权重 ∈[0,1] |
+| `--fig10-q-correct-every=` | 1 | 每 N 次 EM 更新校正一次 |
 | `--balance-heat-loss` | 关 | 缩放边界系数使 T₀ 热平衡 |
 | `--boundary-area-normalize` | **开**（文献默认） | 显式把 SPH 面面积 `ΣV/δ` 归一到几何柱面（不改 h；勿与 balance-heat-loss 同开） |
 | `--no-boundary-area-normalize` | — | 关闭上述归一化（诊断用） |

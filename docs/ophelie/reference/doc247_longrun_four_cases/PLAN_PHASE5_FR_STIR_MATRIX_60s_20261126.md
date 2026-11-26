@@ -124,23 +124,16 @@ docs/ophelie/reference/doc247_longrun_four_cases/overnight_6h/phase5_fr_stir_mat
 
 ---
 
-## 5. 实现缺口（写方案时尚未全部合入搅拌二进制）
+## 5. 实现缺口（状态 2026-11-26）
 
-下一个 Cursor **先做完再开 9 case**，否则矩阵口径不一致：
+| 项 | 状态 | 路径 / CLI |
+|----|------|------------|
+| Fig.10 Q shape seed | **已放 PLACEHOLDER**（`PLACEHOLDER_NOT_FIG10`；NC Fig.6→unit box） | `doc247_seeds/SEED_STIR_Fig10_Qshape_ASSUMED_rz.csv` + `.meta.json` |
+| 搅拌 Fig.10-correct | **已实现**（EM 粒子 Q 上 blend+rescale，再 deposit 欧拉网格） | `--fig10-q-correct` `--fig10-q-correct-blend=` `--fig10-q-correct-every=` `--init-Q-rz-csv=`；共享头 `electromagnetic_ophelie_doc247_q_shape_correct.h` |
+| 矩阵脚本 | **已有** | `02_fr_stir/run_fr_stir_phase5_matrix_60s.sh` |
+| 后处理 | **已有** | `02_fr_stir/post_phase5_matrix_compare.py` → `MATRIX.md` + `figures_compare/` |
 
-1. **STIR Fig.10 \(Q\) shape seed**  
-   - 现状：`standard_data` **没有** Fig.10 网格（计划里仅有 Qmax 核对）。  
-   - 动作：从 digitization kit / 文献扫描做 `SEED_STIR_Fig10_Qshape_ASSUMED_rz.csv`（+ meta）；或临时 ASSUMED 用归一化解析/NC Fig.6 形状 **仅当占位** 并在 meta 写明 `PLACEHOLDER_NOT_FIG10`。  
-2. **搅拌二进制支持 Fig.10-correct**  
-   - NC 已有：`--fig6-q-correct` / `--fig6-q-correct-blend=` / `--init-Q-rz-csv=`（`frozen_q`）。  
-   - 搅拌 `french_stirring_em`：**需移植同等 blend**（建议 CLI 名 `--fig10-q-correct` 或通用 `--q-shape-correct`），作用在 **欧拉 Q 网格或粒子采样后**，并 rescale 到 `--target-absorbed-power`。  
-3. **矩阵启动脚本**  
-   - 新增例如：`02_fr_stir/run_fr_stir_phase5_matrix_60s.sh`  
-   - 循环 9 个 case_id，统一 Fig8a IC、60 s、5 s 记录、skull/crust、periodic EM、Q-correct。  
-4. **后处理**  
-   - 批量：末态 + 选中间帧（建议 t=20/40/60）vs Fig8a / Fig10；写 `MATRIX.md`。
-
-在缺口未完成前：可用“无 Q-correct、仅 Fig8a IC + periodic EM + 60s/5s”做**冒烟矩阵**，但报告须标明 **Q 未 Fig.10 校准**。
+**仍欠（正式报告前）**：用文献扫描数字化 **真** STIR Fig.10 场，替换 PLACEHOLDER seed，并去掉 meta 里的 `PLACEHOLDER_NOT_FIG10`。在此之前 MATRIX / 第三次报告法国章必须标明 **PLACEHOLDER**。
 
 ---
 
@@ -183,15 +176,14 @@ bash docs/ophelie/reference/doc247_longrun_four_cases/02_fr_stir/run_fr_stir_pha
 
 ---
 
-## 9. 下一个 Cursor 的任务清单（按序）
+## 9. 下一个 Cursor / 4090 的任务清单（按序）
 
 1. 读本文件 + `DECISIONS_LOCKED_20261125.md` + `french_stirring_em/README.md`。  
-2. 补 Fig.10 Q seed（或明确 PLACEHOLDER）与 meta。  
-3. 在 `french_stirring_em` 实现 Q-shape-correct（对齐 frozen_q 的 blend+rescale）。  
-4. 写 `run_fr_stir_phase5_matrix_60s.sh`（9 case，60 s，5 s state）。  
-5. 4090 跑通至少 `SW_rpm10` 冒烟 → 再跑满 9。  
-6. 后处理：中间态 + 末态对比图；更新 `MATRIX.md`。  
-7. 需要入库时：只 commit 脚本/seed/本 md；**不要** commit `overnight_6h` 大 CSV/VTP。
+2. ~~补 PLACEHOLDER Fig.10 seed + Fig.10-correct + 矩阵/后处理脚本~~（已合入工作树；需 **compile** 搅拌目标）。  
+3. 4090：**先 compile**，再冒烟 `CASES=SW_rpm10 END_PT=10`，再满矩阵 9×60 s。  
+4. 后处理脚本在矩阵脚本末尾自动跑；检查 `MATRIX.md` 与 `PLACEHOLDER_NOT_FIG10` 标注。  
+5. （可选高优先）数字化真 Fig.10 替换 PLACEHOLDER。  
+6. 入库：脚本/seed/头文件/本 md；**不要** commit `overnight_6h` / `phase5_*` 大 CSV/VTP。
 
 ---
 

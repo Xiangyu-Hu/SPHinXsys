@@ -1,0 +1,11 @@
+{
+  "schema": "RECONSTRUCTED_ASSUMED_INPUT",
+  "PLACEHOLDER_NOT_FIG10": true,
+  "source": "Remapped from SEED_NC_Fig6_Qshape_ASSUMED_rz.csv onto unit box (r/R, z/H) using NC physical_scale R=0.25 H=0.185",
+  "reason": "STIR Fig.10 field digitization grid is not in the kit (only Qmax=6.64e6 check). Plan \u00a75 allows PLACEHOLDER until true Fig.10 seed exists.",
+  "literature_Qmax_Wpm3_reference_only": 6640000.0,
+  "unit_box": true,
+  "NOT_EM_prediction": true,
+  "use": "--init-Q-rz-csv=... --fig10-q-correct --fig10-q-correct-blend=0.8",
+  "replace_when": "Digitize STIR Fig.10 from literature scan into SEED_STIR_Fig10_Qshape_ASSUMED_rz.csv and drop PLACEHOLDER_NOT_FIG10"
+}
