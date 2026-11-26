@@ -3,6 +3,10 @@
 分支：`feature/EM-Biot-Savart`  
 身份：展示/工程短窗与长跑脚手架；**不宣称论文 PASS**。
 
+> **第5阶段矩阵方案（给下一个 Cursor）** →  
+> [`PLAN_PHASE5_FR_STIR_MATRIX_60s_20261126.md`](./PLAN_PHASE5_FR_STIR_MATRIX_60s_20261126.md)  
+> Fig8a IC · EM 纯算 · \(Q\)←Fig.10 校准 · 搅拌/电磁/结构各 3 case · 每 case 60 s、每 5 s 记状态。
+
 ## 1. 本轮在做什么
 
 | 线 | 目标 | 现状 |
