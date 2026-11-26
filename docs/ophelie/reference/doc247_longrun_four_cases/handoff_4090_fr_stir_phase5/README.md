@@ -6,6 +6,7 @@
 | 文件 | 说明 |
 |------|------|
 | [MANUAL_CN.md](MANUAL_CN.md) | **说明书**（改动范围、跑法、μ(T)、冲突规避） |
+| [APPLY_ON_OTHER_MACHINE_CN.md](APPLY_ON_OTHER_MACHINE_CN.md) | **到另一台如何审阅 / 合入** |
 | [SUMMARY_muT_setup_CN.md](SUMMARY_muT_setup_CN.md) | 变粘设置与结果摘要（报告用） |
 | [GPT_PLOT_BRIEF.md](GPT_PLOT_BRIEF.md) | 画图数据包说明 |
 | [PLAN_PHASE5_snapshot.md](PLAN_PHASE5_snapshot.md) | Phase5 计划快照 |
