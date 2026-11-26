@@ -1,0 +1,35 @@
+{
+  "case_id": "doc248_C2r_client_stir_rigid",
+  "role": "client stirring prescribed_rigid paddle + volumetric heat (Doc248 C2r)",
+  "mechanics": {
+    "mode": "prescribed_rigid_rotation",
+    "rpm": 10,
+    "omega_ramp_s": 0.5,
+    "note": "whole STL rigid drive; no NeoHookean solid substeps — preferred for long runs toward ~1400 K"
+  },
+  "geometry": {
+    "dp_m": 0.005,
+    "melt_height_m": 0.230,
+    "rotor_stl": "data/client_stir_paddle_solver_m.stl"
+  },
+  "heating": {
+    "heat_power_W": 15000,
+    "status": "ASSUMED_volumetric",
+    "generator_input_power_W": 30000,
+    "note": "NOT Biot–Savart EM; same ASSUMED absorbed power family as C2 elastic"
+  },
+  "thermal": {
+    "t_initial_k": 1273.15,
+    "target_t_k": 1400.0,
+    "early_stop_on_target": true
+  },
+  "probes": ["client_midradius_probe", "legacy_thermocouple_tip"],
+  "run_default": {
+    "end_time_s": 7200,
+    "state_record_interval_s": 5,
+    "max_wall_hours": 48,
+    "note": "adiabatic estimate to +127 K is O(1e3 s) at 15 kW; with losses expect longer — use wall budget"
+  },
+  "particles": "regenerate via 01_generate_particles.sh (stir relax --bodies=all)",
+  "vs_C2_elastic": "C2 elastic FSI is too slow for 1400 K campaigns; C2r is the production long-run identity"
+}

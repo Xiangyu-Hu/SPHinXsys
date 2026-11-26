@@ -10,7 +10,7 @@
 | 1 | 法国文献自然对流（最接近版） | `test_3d_ophelie_french_natural_convection_frozen_q` | **有**（600 s） | Doc246 证据到 ~60 s；~80 s 曾 U 门中止 | **C0_BASE**（JAC + coldwall + skull/crust + 50 kW）。无 doc227；`--doc224-u-blowup-gate=50`。**勿** F8SEED 长时；P65 仅能量对照。 |
 | 2 | 法国文献搅拌 | `test_3d_ophelie_french_stirring_em` | **有**（1200 s / 10 h） | 长时脚手架已有；论文 Np–Re 口径未收口 | 60 kW + 10 rpm + Level-1 skull/crust。`Np_sph` 为工程候选，非论文冻结。 |
 | 3 | 甲方自然对流 | frozen_q + `--client-nc-*` | **有**（600 s 工程挂机） | 仓库原仅 1 s 接线 PASS | ASSUMED 15 kW；电源 30 kW ≠ 已知效率。长跑矩阵此前未锁，本包给出可挂命令。 |
-| 4 | 甲方搅拌 | `client_stirring_f1_heated_elastic` | **有**（600 s 工程挂机） | **尚无对等生产身份**；F0/F1 多为短窗诊断 | 弹性桨 + 规定热（非 EM）。数值质量历史未过关；本包仅供挂机试跑，勿当验收。 |
+| 4 | 甲方搅拌 | `client_stirring_f1_heated_elastic`（弹性对照） / **`client_stirring_rigid_heated`（C2r 刚体，推荐长跑）** | **有**（C2r 默认 7200 s / 48 h，可 `--target-T-K=1400`） | C2r：规定刚体转动 + 规定热；软生产身份 | 弹性子步墙钟过长；冲 ~1400 K 用 C2r。热源仍非 EM。勿当论文 PASS。 |
 
 ## 法国搅拌是否存在？
 

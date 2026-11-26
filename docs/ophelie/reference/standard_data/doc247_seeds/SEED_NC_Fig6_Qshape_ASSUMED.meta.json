@@ -1,0 +1,11 @@
+{
+  "schema": "RECONSTRUCTED_ASSUMED_INPUT",
+  "source": "doc247_french_digitization_kit NC_Fig6_INITIAL_GUESS_grid (downsample stride 2)",
+  "physical_scale_ASSUMED": {
+    "R_m": 0.25,
+    "H_m": 0.185
+  },
+  "note": "Q_norm is literature-normalized shape ASSUMED; runtime scales to prescribed-heat-power. ~71% of full kit grid was extrapolated \u2014 this seed inherits that.",
+  "NOT_EM_prediction": true,
+  "use": "--init-Q-rz-csv=... --prescribed-heat-power=50000"
+}

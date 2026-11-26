@@ -8,5 +8,6 @@ cmake --build "$BUILD" --target \
   test_3d_ophelie_client_stirring_glass_relax \
   test_3d_ophelie_french_natural_convection_frozen_q \
   test_3d_ophelie_client_stirring_f1_heated_elastic \
+  test_3d_ophelie_client_stirring_rigid_heated \
   -j"$(nproc)"
 echo "[doc248] compile OK $(date -Is)"
