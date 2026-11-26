@@ -1,0 +1,30 @@
+{
+  "schema": "RECONSTRUCTED_ASSUMED_INPUT",
+  "PLACEHOLDER_NOT_FIG10": false,
+  "source": "Manual visual digitization of Jacoutot et al. CES 2008 Fig.10",
+  "pdf": "docs/ophelie/Numerical modeling of coupled phenomena in a mechanically stirred molten-glass bath heated by induction.pdf",
+  "figure": "Fig.10 dimensionless axisymmetric power source after coupling, t=1000s",
+  "literature_Qmax_Wpm3": 6640000.0,
+  "literature_Ptot_W": 60000.0,
+  "literature_N_rpm": 10.0,
+  "unit_box": true,
+  "axes": "r_over_R from symmetry axis to wall; z_over_H from bottom to free surface",
+  "contour_levels_digitized": [
+    0.1,
+    0.3,
+    0.5,
+    0.7,
+    0.9
+  ],
+  "grid": {
+    "nr": 81,
+    "nz": 81
+  },
+  "NOT_EM_prediction": true,
+  "ASSUMED": true,
+  "note": "Sparse contour reconstruction + linear/nearest fill with axis-side decay prior. Replaces NC-Fig6 PLACEHOLDER.",
+  "regenerate": "python3 docs/ophelie/reference/standard_data/doc247_french_digitization/scripts/digitize_stir_fig10.py",
+  "contour_csv": "reference/standard_data/doc247_french_digitization/data/STIR_Fig10_contour_points.csv",
+  "qa_overlay": "reference/standard_data/doc247_french_digitization/figures/STIR_Fig10_trace_QA.png",
+  "use": "--init-Q-rz-csv=...SEED_STIR_Fig10_Qshape_ASSUMED_rz.csv --fig10-q-correct --fig10-q-correct-blend=0.8"
+}
