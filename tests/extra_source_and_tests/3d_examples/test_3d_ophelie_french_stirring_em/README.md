@@ -108,7 +108,8 @@ Phase A 约需 3 分钟（EM self-induction Picard + 坩埚壁 level set）。Ph
 | `--end-time=` | 1200 s | 物理时间上限（200 转） |
 | `--max-wall-hours=` | 10 | 墙钟预算，到点停 |
 | `--c0=` | 8 | 人工声速，超过 9 会发散 |
-| `--acoustic-cfl=` | 0.55 | 声学步 CFL；**5 rpm** 等温旁路需降到 **0.35**，否则 ~t=0.02 发散 |
+| `--acoustic-cfl=` | 0.55 | 声学步 CFL；**5 rpm** 启动建议 **0.35**（挡 t≈0.02 瞬爆） |
+| `--advection-cfl=` | 0.25 | 平流 CFL；平流步已改为 **粘性限制**（`AdvectionViscousTimeStepCK`），低转速不再只用过小的 `U_ref~ωR` |
 | `--init-Q-rz-csv=` | — | Fig.10（或 PLACEHOLDER）Q 形状种子；配合 `--fig10-q-correct` |
 | `--fig10-q-correct` | 关 | EM→Q 后按种子 blend 并 rescale 到 `target_absorbed_power`（ASSUMED） |
 | `--fig10-q-correct-blend=` | 0.8 | 形状权重 ∈[0,1] |

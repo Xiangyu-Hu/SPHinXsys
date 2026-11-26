@@ -60,6 +60,7 @@ inline void applyLocalCommandLine(int ac, char *av[], StdVec<char *> &sph_av)
             g_melt.glass_center_z_m = g_melt.inner_bottom_z_m + g_melt.glass_half_height;
             g_melt.glass_center = Vecd(0, 0, g_melt.glass_center_z_m);
             g_melt.melt_height_status = "user_cli_override";
+            adaptClientNcCoilStackToMeltHeight(g_melt);
             continue;
         }
         if (std::strncmp(arg, "--melt-radius=", 14) == 0)

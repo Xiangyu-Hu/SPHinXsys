@@ -1,0 +1,20 @@
+{
+  "schema": "RECONSTRUCTED_ASSUMED_INPUT",
+  "ASSUMED": true,
+  "NOT_literature_PASS": true,
+  "NOT_EM_prediction": true,
+  "source_csv": "/home/ubuntu/SPHinXsys/docs/ophelie/\u6405\u62cccaase\u8d77\u59cb/SEED_STIR_Fig10_Qshape_ASSUMED_rz.csv",
+  "source_figure": "Jacoutot CES 2008 STIR Fig.10 Q shape",
+  "source_unit_box": true,
+  "client_R_m": 0.1415,
+  "client_H_m": 0.23,
+  "client_z_bottom_m": 0.001,
+  "mapping": "r=r_over_R*R_cli; z=z_bottom+z_over_H*H_cli; runtime scale \u222bQ dV \u2192 --heat-power",
+  "nr": 81,
+  "nz": 81,
+  "Q_norm_min": 0.00072079,
+  "Q_norm_max": 0.9,
+  "Q_norm_mean": 0.14390622541838136,
+  "use": "--init-Q-rz-csv=.../SEED_CLIENT_STIR_Fig10_Q_rz.csv with --heat-power=",
+  "radial_origin": "crucible axis (not eccentric paddle axis)"
+}

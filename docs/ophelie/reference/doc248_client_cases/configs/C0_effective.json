@@ -1,29 +1,102 @@
 {
   "case_id": "doc248_C0_client_nc",
   "role": "client natural convection baseline (no paddle)",
+  "software_default": true,
+  "standard_locked_from": "runs/C0_nc_gptIC_10 (exit=0, smoke_passed=1, 2026-11-27)",
   "geometry": {
     "flags": "--client-nc-geometry --client-nc-material",
-    "dp_m": 0.010,
-    "melt_height_m": 0.180,
+    "dp_m": 0.01,
+    "melt_height_m": 0.23,
+    "melt_height_note": "aligned with stirring fill (was 0.180); French Fig.8 lit H=0.185 m",
+    "coil_adapt": "adaptClientNcCoilStackToMeltHeight; STANDARD band [0.68H,0.97H] via CLI",
     "top": "--doc223-paper-flat-slip-top"
   },
   "heating": {
     "em_control": "fixed-power",
-    "target_absorbed_power_W": 15000,
-    "status": "ASSUMED",
     "generator_input_power_W": 30000,
+    "em_scaling_target_W": 18000,
+    "target_absorbed_power_W": 18000,
+    "absorbed_band_W": [
+      17000,
+      20000
+    ],
+    "status": "ASSUMED_absorbed_from_generator_30kW",
+    "power_identity": "generator_30kW_ledger__absorbed_17to20kW_engineering_target",
+    "note": "NOT French 50 kW. Default 18 kW; override TARGET_ABSORBED. Cooling changes net ΔT, not P_joule.",
     "em_update_interval_s": 0.5,
-    "aind": "off"
+    "aind": "off",
+    "Q_shape_levers": {
+      "why": "Fig.8 hot tongue is thin upper-wall; current EM Q from 4-turn coil spanning ~15–92%H is too tall → bulky T. French NC Fig.6 Q* peak is ~r/R 0.73–0.86, z/H 0.73–0.87.",
+      "fig6_mapped_reference_csv": "configs/client_nc_fig6_mapped_H230_ASSUMED_Q_rz.csv",
+      "fig6_mapped_note": "ASSUMED shape for mapping-back; frozen_q cannot load Q_rz yet — do NOT label as EM prediction.",
+      "doc246_q_upper_kappa": {
+        "env": "Q_UPPER_KAPPA",
+        "cli": "--doc246-q-upper-kappa=",
+        "works_on_current_binary": true,
+        "standard": 3.5,
+        "note": "Q_ctrl∝Q_EM·exp[κ(z/H−0.5)], power renormalized; controlled shape not Maxwell."
+      },
+      "coil_band_frac": {
+        "env": [
+          "COIL_Z_FRAC_LO",
+          "COIL_Z_FRAC_HI"
+        ],
+        "cli": [
+          "--client-nc-coil-z-frac-lo=",
+          "--client-nc-coil-z-frac-hi="
+        ],
+        "works_on_current_binary": true,
+        "standard": [
+          0.68,
+          0.97
+        ],
+        "note": "Compresses filament stack toward Fig.6 upper band."
+      }
+    }
   },
   "thermal": {
     "t_initial_k": 1273.15,
-    "note": "uniform ~1000C development IC; midradius probe constrained loosely; not Dirichlet"
+    "preferred_IC": "configs/client_nc_gpt_H230_T_rz.csv",
+    "standard_IC": "configs/client_nc_gpt_H230_T_rz.csv",
+    "note": "STANDARD = GPT Fig.10-like field for H=230 mm. Physical depths 20/70/120 mm locked. 150–230 mm smooth extension to 810 C bottom."
   },
-  "probes": ["client_midradius_probe", "legacy_centerline_probes_tip_proxy"],
+  "cooling": {
+    "scheme": "Robin",
+    "h_side": 70,
+    "h_bottom": 35,
+    "h_free": 10,
+    "emissivity": 0.4,
+    "t_cool_K": 300,
+    "status": "ASSUMED_standard_after_gptIC_10_smoke",
+    "note": "Locked to C0_nc_gptIC_10: H_SIDE=70 H_FREE=10 EMISSIVITY=0.4 at 18 kW."
+  },
+  "gpt_IC": {
+    "csv": "configs/client_nc_gpt_H230_T_rz.csv",
+    "preview": "configs/client_nc_gpt_H230_preview.png",
+    "meta": "configs/client_nc_gpt_H230.meta.json",
+    "package": "configs/gpt_nc_ic/",
+    "env": "INIT_T_RZ",
+    "status": "STANDARD_software_IC",
+    "construction": "Native H=230 GPT table. 0–150 mm keeps the original profile with 20/70/120 mm locked. 150–230 mm is a smooth extension to an 810 C bottom. Peak about 1474 C at r≈91 mm, depth≈44 mm.",
+    "note_push": "CSV tracked; zip/preview PNGs local-only (gitignore)."
+  },
+  "hybrid_IC": {
+    "csv": "configs/client_nc_hybrid_tongue_v6_H230_ASSUMED_T_rz.csv",
+    "preview": "configs/client_nc_hybrid_tongue_v6_H230_preview_norm.png",
+    "meta": "configs/client_nc_hybrid_tongue_v6_H230_ASSUMED.meta.json",
+    "env": "INIT_T_RZ",
+    "status": "ASSUMED_backup",
+    "construction": "v6 nested ellipses: core inset from wall, cold skin at r→1, outer contours reach the axis, steep gradient on the wall side",
+    "note": "Superseded as preferred by gpt_IC; keep as fallback INIT_T_RZ"
+  },
+  "probes": [
+    "client_midradius_probe",
+    "legacy_centerline_probes_tip_proxy"
+  ],
   "run_default": {
     "end_time_s": 60,
     "state_record_interval_s": 5,
     "max_wall_hours_via_timeout": 10
   },
-  "particles": "regenerate via 01_generate_particles.sh (NC relax); no pre-shipped Reload"
+  "particles": "MUST regenerate NC Reload after H 180→230 via 01_generate_particles.sh"
 }

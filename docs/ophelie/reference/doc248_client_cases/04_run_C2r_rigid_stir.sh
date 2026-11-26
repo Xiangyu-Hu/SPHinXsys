@@ -14,6 +14,9 @@ MAX_WALL_HOURS=${MAX_WALL_HOURS:-48}
 OMEGA_RAMP=${OMEGA_RAMP:-0.5}
 HEAT_POWER=${HEAT_POWER:-15000}
 TARGET_T_K=${TARGET_T_K:-1400}
+SEED_DIR=${SEED_DIR:-$SRC/docs/ophelie/reference/standard_data/doc248_seeds}
+INIT_T_CSV=${INIT_T_CSV:-$SEED_DIR/SEED_CLIENT_STIR_Fig8a_T_rz.csv}
+INIT_Q_CSV=${INIT_Q_CSV:-$SEED_DIR/SEED_CLIENT_STIR_Fig10_Q_rz.csv}
 
 export ONEAPI_DEVICE_SELECTOR=${ONEAPI_DEVICE_SELECTOR:-cuda:gpu}
 export OMP_NUM_THREADS=${OMP_NUM_THREADS:-8}
@@ -24,6 +27,8 @@ export TBB_NUM_THREADS=${TBB_NUM_THREADS:-8}
   echo "FATAL: missing rigid binary — cmake --build \$BUILD --target test_3d_ophelie_client_stirring_rigid_heated"
   exit 1
 }
+[[ -f "$INIT_T_CSV" ]] || { echo "FATAL: missing INIT_T_CSV=$INIT_T_CSV"; exit 1; }
+[[ -f "$INIT_Q_CSV" ]] || { echo "FATAL: missing INIT_Q_CSV=$INIT_Q_CSV"; exit 1; }
 
 mkdir -p "$OUT"
 cd "$BIN"
@@ -35,12 +40,15 @@ ROTOR=./data/client_stir_paddle_solver_m.stl
 [[ -f "$ROTOR" ]] || ROTOR=./input/client_stir_paddle_solver_m.stl
 
 echo "[doc248][C2r] start $(date -Is) end=$END_TIME max-wall-h=$MAX_WALL_HOURS target_T=$TARGET_T_K P=$HEAT_POWER"
+echo "[doc248][C2r] ASSUMED IC T=$INIT_T_CSV Q=$INIT_Q_CSV"
 set +e
 ./test_3d_ophelie_client_stirring_rigid_heated \
   --reload-dir="$RELOAD" \
   --rotor-stl="$ROTOR" \
   --end-time="$END_TIME" --omega-ramp="$OMEGA_RAMP" --c0=8 \
   --heat-power="$HEAT_POWER" --target-T-K="$TARGET_T_K" \
+  --init-T-rz-csv="$INIT_T_CSV" \
+  --init-Q-rz-csv="$INIT_Q_CSV" \
   --state-record-interval=5 --screen-every=20 --csv-every=20 \
   --max-wall-hours="$MAX_WALL_HOURS" \
   --out-dir="$OUT" --summary-json=summary.json \

@@ -21,7 +21,10 @@
   "thermal": {
     "t_initial_k": 1273.15,
     "target_t_k": 1400.0,
-    "early_stop_on_target": true
+    "early_stop_on_target": true,
+    "init_T_rz_csv": "docs/ophelie/reference/standard_data/doc248_seeds/SEED_CLIENT_STIR_Fig8a_T_rz.csv",
+    "init_Q_rz_csv": "docs/ophelie/reference/standard_data/doc248_seeds/SEED_CLIENT_STIR_Fig10_Q_rz.csv",
+    "init_note": "ASSUMED French Fig.8a T + Fig.10 Q remapped to client R=0.1415 H=0.230; NOT literature PASS. t_initial_k remains thermal_deltaT reference."
   },
   "probes": ["client_midradius_probe", "legacy_thermocouple_tip"],
   "run_default": {

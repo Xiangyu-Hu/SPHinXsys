@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Phase5 French stir matrix: 9 cases × 60 s × state every 5 s.
-# Fig8a T IC · EM pure · Q←Fig10-correct (PLACEHOLDER seed until true Fig.10 digitization).
+# Fig8a T IC · EM pure · Q←Fig10-correct (true Fig.10 digitization seed).
 # NOT literature PASS. See PLAN_PHASE5_FR_STIR_MATRIX_60s_20261126.md
 #
 # Env overrides:

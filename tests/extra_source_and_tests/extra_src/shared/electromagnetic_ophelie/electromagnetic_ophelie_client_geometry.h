@@ -165,38 +165,79 @@ inline OphelieClientCrucibleMetricsM clientCrucibleMetricsFromPlan()
  * Solver-frame (+Z up) parametric melt used for particle generation.
  * Fluid is NOT filled from the shell STL; shell remains display-only.
  *
- * melt_height_m is a DEVELOPMENT default until the client confirms liquid depth.
+ * melt_height_m default 0.230 m (Doc248: client NC fill aligned with stirring).
  */
 struct OphelieClientMeltGeometryM
 {
     Real melt_radius_m = Real(0.1415);
-    Real melt_height_m = Real(0.180); // provisional; client liquid depth TBD
+    Real melt_height_m = Real(0.230); // client NC fill = stirring fill (Doc248)
     Real inner_bottom_z_m = Real(0.001);
-    Real glass_center_z_m = Real(0.001 + 0.5 * 0.180);
-    Vecd glass_center = Vecd(0, 0, 0.091);
-    Real glass_half_height = Real(0.09);
+    Real glass_center_z_m = Real(0.001 + 0.5 * 0.230);
+    Vecd glass_center = Vecd(0, 0, 0.116);
+    Real glass_half_height = Real(0.115);
     Real coil_loop_radius_m = Real(0.170);
     int coil_num_loops = 4;
-    Real coil_z_min_m = Real(0.079078); // ring-1 centre
-    Real coil_z_max_m = Real(0.350);    // ring-4 centre
-    const char *melt_height_status = "provisional_development_liquid_depth";
+    Real coil_z_min_m = Real(0.079078); // overwritten by adaptClientNcCoilStackToMeltHeight
+    Real coil_z_max_m = Real(0.350);
+    Real coil_z_lo_frac = Real(0.15); // fraction of melt height (after adapt)
+    Real coil_z_hi_frac = Real(0.92);
+    const char *melt_height_status = "client_nc_fill_230mm_aligned_with_stir";
+    const char *coil_adapt_status = "unadapted_cad_rings";
 };
+
+/**
+ * Remap 4 CAD coil ring centres into the melt column when fill height changes.
+ * Keeps plan radial R=170 mm; default spans [bottom+0.15 H, bottom+0.92 H] with CAD relative spacing.
+ * Optional z_lo_frac/z_hi_frac (0–1 of melt height) compress the filament band — e.g. upper-wall
+ * tongue toward French NC Fig.6 Q* peak (~r/R≈0.8, z/H≈0.8). ASSUMED engineering; coil STL
+ * remains display-only.
+ */
+inline void adaptClientNcCoilStackToMeltHeight(OphelieClientMeltGeometryM &g,
+                                              Real z_lo_frac = Real(0.15), Real z_hi_frac = Real(0.92))
+{
+    const auto rings = clientCoilRingsRelativeToOuterBottom();
+    g.coil_loop_radius_m = rings[0].r_center_mm * Real(1.0e-3);
+    g.coil_num_loops = 4;
+    const Real z0 = g.inner_bottom_z_m;
+    const Real H = std::max(g.melt_height_m, TinyReal);
+    const Real c0 = rings[0].center_height_mm * Real(1.0e-3);
+    const Real c3 = rings[3].center_height_mm * Real(1.0e-3);
+    Real lo = z_lo_frac;
+    Real hi = z_hi_frac;
+    if (!(hi > lo) || lo < Real(0) || hi > Real(1))
+    {
+        lo = Real(0.15);
+        hi = Real(0.92);
+    }
+    g.coil_z_lo_frac = lo;
+    g.coil_z_hi_frac = hi;
+    const Real z_lo = z0 + lo * H;
+    const Real z_hi = z0 + hi * H;
+    const Real span = std::max(c3 - c0, TinyReal);
+    auto mapz = [&](Real c_cad) {
+        const Real t = (c_cad - c0) / span;
+        return z_lo + t * (z_hi - z_lo);
+    };
+    g.coil_z_min_m = mapz(c0);
+    g.coil_z_max_m = mapz(c3);
+    const bool is_default =
+        std::abs(lo - Real(0.15)) < Real(1.0e-9) && std::abs(hi - Real(0.92)) < Real(1.0e-9);
+    g.coil_adapt_status = is_default ? "assumed_remap_cad_spacing_into_melt_band_15to92pctH"
+                                     : "assumed_remap_cad_spacing_into_custom_melt_band_frac";
+}
 
 inline OphelieClientMeltGeometryM makeClientNcMeltGeometryDevelopment()
 {
     OphelieClientMeltGeometryM g;
     const auto m = clientCrucibleMetricsFromPlan();
     g.melt_radius_m = m.melt_radius_m;
-    g.melt_height_m = Real(0.180);
+    g.melt_height_m = Real(0.230);
     g.inner_bottom_z_m = m.inner_bottom_above_outer_m;
     g.glass_half_height = Real(0.5) * g.melt_height_m;
     g.glass_center_z_m = g.inner_bottom_z_m + g.glass_half_height;
     g.glass_center = Vecd(0, 0, g.glass_center_z_m);
-    const auto rings = clientCoilRingsRelativeToOuterBottom();
-    g.coil_loop_radius_m = rings[0].r_center_mm * Real(1.0e-3);
-    g.coil_num_loops = 4;
-    g.coil_z_min_m = rings[0].center_height_mm * Real(1.0e-3);
-    g.coil_z_max_m = rings[3].center_height_mm * Real(1.0e-3);
+    g.melt_height_status = "client_nc_fill_230mm_aligned_with_stir";
+    adaptClientNcCoilStackToMeltHeight(g);
     return g;
 }
 
@@ -328,6 +369,9 @@ inline bool writeClientNcMeltGeometryJson(const OphelieClientMeltGeometryM &melt
     out << "  \"coil_num_loops\": " << melt.coil_num_loops << ",\n";
     out << "  \"coil_z_min_m\": " << melt.coil_z_min_m << ",\n";
     out << "  \"coil_z_max_m\": " << melt.coil_z_max_m << ",\n";
+    out << "  \"coil_z_lo_frac\": " << melt.coil_z_lo_frac << ",\n";
+    out << "  \"coil_z_hi_frac\": " << melt.coil_z_hi_frac << ",\n";
+    out << "  \"coil_adapt_status\": \"" << melt.coil_adapt_status << "\",\n";
     out << "  \"probe_id\": \"" << probe.probe_id << "\",\n";
     out << "  \"probe_status\": \"" << probe.status << "\",\n";
     out << "  \"probe_solver_m\": [" << probe.solver_m.x << "," << probe.solver_m.y << "," << probe.solver_m.z

@@ -1,11 +1,15 @@
 /**
  * @file test_3d_ophelie_client_stirring_f1_heated_elastic.cpp
- * @brief Doc228 F1 — client stirring heated elastic FSI short integration.
+ * @brief Doc228/Doc248 C2 — client stirring heated elastic FSI.
  *
- * Builds on F0 (elastic_driven NeoHookean 304 paddle + Reload FSI). Restores a
- * *prescribed* uniform volumetric heat source (Doc228: pick prescribed heat —
- * NOT claimed as computed EM; current still unknown). Constant frozen μ; no
- * Boussinesq; no solid thermal strain; thermocouple Observer samples T.
+ * Builds on F0 (elastic_driven NeoHookean paddle + Reload FSI). Prescribed
+ * volumetric heat (NOT EM-computed). Constant frozen μ; no Boussinesq; no solid
+ * thermal strain. Rotor VTP writes VonMises stress/strain + Green–Lagrange + F.
+ *
+ * Stability note: stainless E=2e11 → ~500 solid substeps / fluid step and tip
+ * runaway near t≈0.3 s (Doc248 C2). Long runs (≥2–5 s) use --youngs-modulus=
+ * soft ASSUMED E + longer --omega-ramp= (see 03_run_C2_stir.sh). Soft E is
+ * NOT a stainless strength certificate.
  *
  * Prerequisite: test_3d_ophelie_client_stirring_glass_relax --bodies=all → Reload.xml
  */
@@ -15,6 +19,7 @@
 #include "electromagnetic_ophelie_device_sync.h"
 #include "electromagnetic_ophelie_fixed_space_probe.h"
 #include "electromagnetic_ophelie_french_material_laws.h"
+#include "electromagnetic_ophelie_init_trz_qrz.h"
 #include "electromagnetic_ophelie_joule_to_heat_one_way.h"
 #include "io_environment.h"
 #include "sphinxsys.h"
@@ -65,13 +70,28 @@ struct F1Cli
     /** Short heated smoke; wall ~8× F0@0.05s → budget ~5 min. */
     Real end_time = Real(0.2);
     Real c0 = Real(8);
-    Real omega_ramp_s = Real(0.05);
+    /** Longer ramp reduces early tip runaway under elastic FSI. */
+    Real omega_ramp_s = Real(2.0);
     Real clamp_top_band_m = Real(0.05);
     /**
      * Development prescribed absorbed power [W] for visible ΔT in short window.
      * Not generator input; not EM-computed. Override with --heat-power=.
      */
     Real heat_power_w = Real(1.0e5);
+    /**
+     * ≤0 → use stainless preset 2e11 Pa. Soft ASSUMED values (e.g. 2e8) needed
+     * for multi-second elastic FSI; label clearly in summary.
+     */
+    Real youngs_modulus_pa = Real(-1);
+    /** ≤0 → keep client stirrer_rpm default (10). */
+    Real rpm = Real(-1);
+    /** StructureIntegration1stHalf numerical damping (library default 0.125). */
+    Real solid_numerical_damping = Real(0.5);
+    /** Early abort if elastic offset vs rigid drive exceeds this [m]. */
+    Real max_elastic_offset_m = Real(0.05);
+    /** Doc248 ASSUMED: remapped French Fig.8a T / Fig.10 Q (empty = uniform T0 + uniform Q). */
+    std::string init_T_rz_csv;
+    std::string init_Q_rz_csv;
     Real state_record_interval = Real(0.05);
     int screen_every = 20;
     int csv_every = 20;
@@ -164,6 +184,21 @@ inline Real hostVolumeMeanTemperature(BaseParticles &particles)
         sum_v += vol[i];
     }
     return sum_v > TinyReal ? sum_Tv / sum_v : Real(0);
+}
+
+inline Real hostMaxRealField(BaseParticles &particles, const std::string &name)
+{
+    syncVariableToHost<Real>(particles, name);
+    const size_t n = particles.TotalRealParticles();
+    const Real *v = particles.getVariableDataByName<Real>(name);
+    Real mx = 0;
+    for (size_t i = 0; i < n; ++i)
+    {
+        if (!std::isfinite(v[i]))
+            continue;
+        mx = std::max(mx, std::abs(v[i]));
+    }
+    return mx;
 }
 
 class ClampTopBand : public BodyPartByParticle
@@ -354,6 +389,18 @@ void applyCli(int ac, char *av[], F1Cli &cli, StdVec<char *> &sph_av)
             cli.clamp_top_band_m = static_cast<Real>(std::atof(arg + 17));
         else if (std::strncmp(arg, "--heat-power=", 13) == 0)
             cli.heat_power_w = static_cast<Real>(std::atof(arg + 13));
+        else if (std::strncmp(arg, "--youngs-modulus=", 17) == 0)
+            cli.youngs_modulus_pa = static_cast<Real>(std::atof(arg + 17));
+        else if (std::strncmp(arg, "--rpm=", 6) == 0)
+            cli.rpm = static_cast<Real>(std::atof(arg + 6));
+        else if (std::strncmp(arg, "--solid-damping=", 16) == 0)
+            cli.solid_numerical_damping = static_cast<Real>(std::atof(arg + 16));
+        else if (std::strncmp(arg, "--max-elastic-offset=", 21) == 0)
+            cli.max_elastic_offset_m = static_cast<Real>(std::atof(arg + 21));
+        else if (std::strncmp(arg, "--init-T-rz-csv=", 16) == 0)
+            cli.init_T_rz_csv = arg + 16;
+        else if (std::strncmp(arg, "--init-Q-rz-csv=", 16) == 0)
+            cli.init_Q_rz_csv = arg + 16;
         else if (std::strncmp(arg, "--state-record-interval=", 24) == 0)
             cli.state_record_interval = static_cast<Real>(std::atof(arg + 24));
         else if (std::strncmp(arg, "--screen-every=", 15) == 0)
@@ -370,9 +417,12 @@ void applyCli(int ac, char *av[], F1Cli &cli, StdVec<char *> &sph_av)
             cli.state_recording = false;
         else if (std::strcmp(arg, "--help") == 0 || std::strcmp(arg, "-h") == 0)
         {
-            std::cout << "Doc228 F1 heated elastic FSI (prescribed volumetric heat):\n"
+            std::cout << "Doc248 C2 / Doc228 F1 heated elastic FSI (prescribed volumetric heat):\n"
                          "  --reload-dir= --rotor-stl= --end-time= --c0= --omega-ramp=\n"
                          "  --heat-power= --clamp-top-band= --out-dir= --summary-json=\n"
+                         "  --youngs-modulus= (ASSUMED soft E for multi-s FSI; ≤0 = stainless 2e11)\n"
+                         "  --rpm= --solid-damping= --max-elastic-offset=\n"
+                         "  --init-T-rz-csv= --init-Q-rz-csv=  (ASSUMED Fig.8a/Fig.10 remap)\n"
                          "  --max-wall-hours= --no-state-recording\n";
             std::exit(0);
         }
@@ -398,6 +448,8 @@ int main(int ac, char *av[])
 
     OphelieClientStirringCaseParams g_case;
     g_case.rotor_stl_solver_m = cli.rotor_stl;
+    if (cli.rpm > TinyReal)
+        g_case.client.stirrer_rpm = cli.rpm;
     applyClientStirringDevelopmentDefaults(g_case);
     // Reload particles use dp≈0.005 (Vol=1.25e-7); keep system resolution consistent.
     if (std::abs(g_case.french_stirring.french.dp - Real(0.005)) > Real(1.0e-6))
@@ -406,6 +458,13 @@ int main(int ac, char *av[])
                   << "; override to 0.005 to match existing Reload unless you regenerated.\n";
         g_case.client.particle_spacing_m = Real(0.005);
         applyClientStirringDevelopmentDefaults(g_case);
+    }
+    const bool soft_E_ASSUMED = cli.youngs_modulus_pa > TinyReal;
+    if (soft_E_ASSUMED)
+    {
+        g_case.steel.youngs_modulus_pa = cli.youngs_modulus_pa;
+        g_case.steel.source_status = "ASSUMED_soft_E_for_elastic_FSI_longevity";
+        g_case.steel.material_id = "soft_neoHookean_paddle_dev_NOT_stainless_certificate";
     }
 
     if (!reloadXmlExists(cli.reload_dir))
@@ -477,9 +536,44 @@ int main(int ac, char *av[])
     registerOphelieJouleHeatTemperatureField(glass_particles, t0);
     glass_particles.addVariableToWrite<Real>(kOphelieTemperatureField);
 
+    const Vecd melt_center = g_case.french_stirring.french.glass_center;
+    const Real melt_half_h = g_case.french_stirring.french.glass_half_height;
+    const Real melt_R = g_case.melt_radius_m;
+    if (!cli.init_T_rz_csv.empty())
+    {
+        Doc248RzTemperatureGrid t_grid;
+        std::string terr;
+        if (!hostLoadDoc248RzTemperatureGrid(cli.init_T_rz_csv, t_grid, terr) || !t_grid.ok)
+        {
+            std::cerr << "[ophelie][client-f1] FATAL: " << terr << " path=" << cli.init_T_rz_csv << "\n";
+            return 2;
+        }
+        hostApplyInitTRzAbsolute(glass_particles, melt_center, t0, t_grid, "client-f1/init-T-rz");
+    }
+
     const Real melt_volume = hostMeltVolume(glass_particles);
-    const Real q_uniform = cli.heat_power_w / std::max(melt_volume, TinyReal);
-    hostAssignUniformJouleHeat(glass_particles, q_uniform);
+    Real p_heat_realized = cli.heat_power_w;
+    Real q_uniform = cli.heat_power_w / std::max(melt_volume, TinyReal);
+    if (!cli.init_Q_rz_csv.empty())
+    {
+        Doc247RzQGrid q_grid;
+        std::string qerr;
+        if (!hostLoadDoc247RzQGrid(cli.init_Q_rz_csv, q_grid, qerr) || !q_grid.ok)
+        {
+            std::cerr << "[ophelie][client-f1] FATAL: " << qerr << " path=" << cli.init_Q_rz_csv << "\n";
+            return 2;
+        }
+        // register then overwrite with shaped field
+        hostAssignUniformJouleHeat(glass_particles, Real(0));
+        p_heat_realized = hostAssignPrescribedShapeJouleHeat(
+            glass_particles, "JouleHeat", q_grid, melt_center, melt_R, melt_half_h, cli.heat_power_w,
+            "client-f1/init-Q-rz");
+        q_uniform = p_heat_realized / std::max(melt_volume, TinyReal); // mean Q after shape scale
+    }
+    else
+    {
+        hostAssignUniformJouleHeat(glass_particles, q_uniform);
+    }
     glass_particles.addVariableToWrite<Real>("JouleHeat");
 
     // Legacy CAD tip (AABB) + Doc248 midradius virtual probe (r=0.5R, depth 0.12 m).
@@ -590,7 +684,7 @@ int main(int ac, char *av[])
         main_methods.addInteractionDynamicsWithUpdate<LinearCorrectionMatrix>(rotor_inner);
     auto &solid_1st =
         main_methods.addInteractionDynamicsOneLevel<solid_dynamics::StructureIntegration1stHalf, NeoHookeanSolid,
-                                                    NoKernelCorrectionCK>(rotor_inner);
+                                                    NoKernelCorrectionCK>(rotor_inner, cli.solid_numerical_damping);
     auto &solid_2nd =
         main_methods.addInteractionDynamicsOneLevel<solid_dynamics::StructureIntegration2ndHalf>(rotor_inner);
     auto &solid_acoustic_dt = main_methods.addReduceDynamics<solid_dynamics::AcousticTimeStepCK>(rotor, 0.5);
@@ -601,10 +695,32 @@ int main(int ac, char *av[])
     glass_state_recorder.addToWrite<Real>(glass, "Pressure");
     glass_state_recorder.addToWrite<Real>(glass, kOphelieTemperatureField);
     glass_state_recorder.addToWrite<Real>(glass, "JouleHeat");
+    // Host derived fields (non-CK LocalDynamics): construct first so names exist, then VTP write list.
+    SimpleDynamics<Displacement> displacement_host(rotor);
+    SimpleDynamics<VonMisesStress> von_mises_host(rotor);
+    SimpleDynamics<VonMisesStrain> von_strain_host(rotor);
+    SimpleDynamics<GreenLagrangeStrain> green_lagrange_host(rotor);
+
     auto &rotor_state_recorder = main_methods.addBodyStateRecorder<BodyStatesRecordingToVtpCK>(rotor);
     rotor_state_recorder.addToWrite<Vecd>(rotor, "Velocity");
     rotor_state_recorder.addToWrite<Vecd>(rotor, "ViscousForceFromFluid");
     rotor_state_recorder.addToWrite<Vecd>(rotor, "PressureForceFromFluid");
+    rotor_state_recorder.addToWrite<Matd>(rotor, "DeformationGradient");
+    rotor_state_recorder.addToWrite<Vecd>(rotor, "Displacement");
+    rotor_state_recorder.addToWrite<Real>(rotor, "VonMisesStress");
+    rotor_state_recorder.addToWrite<Real>(rotor, "VonMisesStrain");
+    rotor_state_recorder.addToWrite<Matd>(rotor, "GreenLagrangeStrain");
+
+    auto refresh_rotor_stress_strain = [&]() {
+        // Solid CK updates live on device; host SimpleDynamics needs synced F/ρ/x.
+        syncVariableToHost<Matd>(rotor.getBaseParticles(), "DeformationGradient");
+        syncVariableToHost<Real>(rotor.getBaseParticles(), "Density");
+        syncVariableToHost<Vecd>(rotor.getBaseParticles(), "Position");
+        displacement_host.exec();
+        von_mises_host.exec();
+        von_strain_host.exec();
+        green_lagrange_host.exec();
+    };
 
     StateDynamics<execution::MainExecutionPolicy, ApplyPrescribedVolumetricHeatCK> apply_prescribed_heat(
         glass, rho0, cp, t0);
@@ -652,6 +768,7 @@ int main(int ac, char *av[])
     std::ofstream monitor("./output/client_f1_heated_elastic_monitor.csv");
     monitor << "advection_step,physical_time_s,omega,theta,acoustic_dt_s,solid_dt_s,solid_substeps,"
                "u_max_mps,r_tip_m,tip_mps,f_visc_N,f_pres_N,torque_z_Nm,elastic_offset_m,"
+               "von_mises_max_Pa,von_mises_strain_max,"
                "T_mean_K,probe_T_K,probe_u_mps,probe_p_Pa,"
                "T_glass_virtual_midradius_K,midradius_n_neighbors,midradius_valid,"
                "E_heat_J,wall_clock_s\n";
@@ -679,6 +796,7 @@ int main(int ac, char *av[])
 
     if (cli.state_recording)
     {
+        refresh_rotor_stress_strain();
         glass_state_recorder.writeToFile(0);
         rotor_state_recorder.writeToFile(0);
     }
@@ -688,15 +806,21 @@ int main(int ac, char *av[])
         cli.heat_power_w * cli.end_time / std::max(rho0 * cp * melt_volume, TinyReal);
     std::cout << "[ophelie][client-f1] heated elastic FSI start\n"
               << "  mechanics=" << clientPaddleMechanicsName(g_case.paddle_mechanics)
-              << " E=" << g_case.steel.youngs_modulus_pa << " rho_s=" << g_case.steel.rho_kg_m3
+              << " E=" << g_case.steel.youngs_modulus_pa
+              << (soft_E_ASSUMED ? " (ASSUMED_soft_E)" : " (stainless_dev)")
+              << " rho_s=" << g_case.steel.rho_kg_m3
+              << " solid_damp=" << cli.solid_numerical_damping
               << " n_clamp=" << n_clamp << " clamp_frac=" << (Real(n_clamp) / Real(n_rotor))
               << " z_clamp=" << z_clamp << "\n"
               << "  rho_f=" << rho0 << " mu=" << mu << " cp=" << cp << " c0=" << cli.c0 << " dp=" << dp
+              << " rpm=" << g_case.client.stirrer_rpm
               << " omega_max=" << omega_max << " ramp=" << cli.omega_ramp_s << " s end=" << cli.end_time
               << " solid_dt0=" << dt_s0 << "\n"
               << "  heat_mode=prescribed_uniform_volumetric P=" << cli.heat_power_w
               << " W V_melt=" << melt_volume << " m3 Q=" << q_uniform << " W/m3"
               << " dT_expected~" << dT_expected << " K (adiabatic estimate)\n"
+              << "  rotor VTP: Velocity, FSI forces, DeformationGradient, Displacement,"
+                 " VonMisesStress, VonMisesStrain, GreenLagrangeStrain\n"
               << "  thermocouple probe id=" << thermo_probe_def.probe_id
               << " stl=" << clientStirringThermocoupleStlName()
               << " status=" << thermo_probe_def.status
@@ -722,6 +846,8 @@ int main(int ac, char *av[])
     Real last_elastic = 0;
     Real last_torque = 0;
     Real last_u_max = 0;
+    Real last_von_mises = 0;
+    Real last_von_strain = 0;
     Real last_T_mean = t0;
     Real last_probe_T = t0;
     Real E_heat_applied = 0;
@@ -793,6 +919,7 @@ int main(int ac, char *av[])
 
             if (cli.state_recording && state_recording())
             {
+                refresh_rotor_stress_strain();
                 glass_state_recorder.writeToFile(advection_steps);
                 rotor_state_recorder.writeToFile(advection_steps);
             }
@@ -821,6 +948,9 @@ int main(int ac, char *av[])
                 last_load = hostRotorSnap(rotor.getBaseParticles(), pos0, center, axis, last_theta);
                 last_elastic = last_load.max_elastic_offset;
                 last_torque = last_load.torque_z;
+                refresh_rotor_stress_strain();
+                last_von_mises = hostMaxRealField(rotor.getBaseParticles(), "VonMisesStress");
+                last_von_strain = hostMaxRealField(rotor.getBaseParticles(), "VonMisesStrain");
                 Real probe_T = t0;
                 Real probe_u = 0;
                 Real probe_p = 0;
@@ -840,6 +970,7 @@ int main(int ac, char *av[])
                             << "," << solid_acoustic_dt.exec() << "," << n_sub << "," << last_u_max << ","
                             << last_load.r_tip << "," << last_load.tip_speed << "," << last_load.f_visc << ","
                             << last_load.f_pres << "," << last_load.torque_z << "," << last_elastic << ","
+                            << last_von_mises << "," << last_von_strain << ","
                             << last_T_mean << "," << probe_T << "," << probe_u << "," << probe_p << ","
                             << mid_s.T << "," << mid_s.n_neighbors << "," << (mid_s.valid ? 1 : 0) << ","
                             << E_heat_applied << "," << wall_now << "\n";
@@ -850,12 +981,20 @@ int main(int ac, char *av[])
                     std::cout << "[ophelie][client-f1] adv=" << advection_steps << " t=" << t
                               << " dt=" << dt << " solid_sub=" << n_sub << " u_max=" << last_u_max
                               << " tip=" << last_load.tip_speed << " Tq=" << last_torque
-                              << " e_off=" << last_elastic << " T_mean=" << last_T_mean
+                              << " e_off=" << last_elastic << " VM=" << last_von_mises
+                              << " T_mean=" << last_T_mean
                               << " probe_T=" << probe_T << " mid_T=" << mid_s.T
                               << " E_heat=" << E_heat_applied << " wall_s=" << wall_now << "\n";
                 }
-                if (!std::isfinite(last_u_max) || !std::isfinite(last_elastic) || last_u_max > Real(50))
+                const Real tip_rigid = last_omega * std::max(last_load.r_tip, TinyReal);
+                const bool tip_runaway =
+                    last_load.tip_speed > std::max(Real(5) * tip_rigid, Real(2)) && last_load.tip_speed > Real(1);
+                if (!std::isfinite(last_u_max) || !std::isfinite(last_elastic) || !std::isfinite(last_von_mises) ||
+                    last_u_max > Real(50) || last_elastic > cli.max_elastic_offset_m || tip_runaway)
                 {
+                    std::cerr << "[ophelie][client-f1] diverge trip t=" << t << " u_max=" << last_u_max
+                              << " e_off=" << last_elastic << " tip=" << last_load.tip_speed
+                              << " tip_rigid~" << tip_rigid << " VM=" << last_von_mises << "\n";
                     diverged = true;
                     break;
                 }
@@ -869,6 +1008,9 @@ int main(int ac, char *av[])
     last_u_max = u_max_reduce.exec();
     last_elastic = last_load.max_elastic_offset;
     last_torque = last_load.torque_z;
+    refresh_rotor_stress_strain();
+    last_von_mises = hostMaxRealField(rotor.getBaseParticles(), "VonMisesStress");
+    last_von_strain = hostMaxRealField(rotor.getBaseParticles(), "VonMisesStrain");
     last_T_mean = hostVolumeMeanTemperature(glass_particles);
     {
         Real probe_u = 0;
@@ -890,13 +1032,17 @@ int main(int ac, char *av[])
     const bool clamp_ok = (n_clamp > 0) && (n_clamp < n_rotor);
     const bool coupled_ok = (last_load.f_pres > TinyReal || last_load.f_visc > TinyReal || last_omega > TinyReal);
     const bool time_ok = t_final >= Real(0.8) * cli.end_time || budget_exhausted;
-    const bool heat_ok = (dT_mean > Real(0.05)) && (energy_rel < Real(0.15));
+    // Remapped Fig.8a IC already embeds ΔT vs t0 → energy_rel gate is meaningless then.
+    const bool heat_ok = cli.init_T_rz_csv.empty()
+                             ? ((dT_mean > Real(0.05)) && (energy_rel < Real(0.15)))
+                             : (std::isfinite(last_T_mean) && E_heat_applied > TinyReal && !diverged);
     const bool pass =
         finite_ok && clamp_ok && coupled_ok && heat_ok && !diverged && solid_steps_total > 0 && time_ok;
 
     std::cout << "[ophelie][client-f1] done t=" << t_final << " wall_s=" << wall_s
               << " solid_steps=" << solid_steps_total << " u_max=" << last_u_max
               << " tip=" << last_load.tip_speed << " Tq=" << last_torque << " e_off=" << last_elastic
+              << " VM=" << last_von_mises << " VMeps=" << last_von_strain
               << " T_mean=" << last_T_mean << " dT=" << dT_mean << " probe_T=" << last_probe_T
               << " E_th=" << E_thermal << " E_exp=" << E_expected << " energy_rel=" << energy_rel
               << " budget_exhausted=" << (budget_exhausted ? 1 : 0) << " diverged=" << (diverged ? 1 : 0)
@@ -914,8 +1060,13 @@ int main(int ac, char *av[])
         js << "  \"passed\": " << (pass ? 1 : 0) << ",\n";
         js << "  \"HEATED_ELASTIC_INTEGRATION_PASS\": " << (pass ? 1 : 0) << ",\n";
         js << "  \"mechanics_mode\": \"elastic_driven\",\n";
-        js << "  \"heat_source_mode\": \"prescribed_uniform_volumetric\",\n";
-        js << "  \"heat_source_note\": \"NOT EM-computed; development prescribed absorbed power\",\n";
+        js << "  \"heat_source_mode\": \""
+           << (cli.init_Q_rz_csv.empty() ? "prescribed_uniform_volumetric" : "prescribed_shaped_rz") << "\",\n";
+        js << "  \"heat_source_note\": \"NOT EM-computed; ASSUMED prescribed absorbed power"
+           << (cli.init_Q_rz_csv.empty() ? "" : " with Fig.10-shaped Q remap") << "\",\n";
+        js << "  \"init_T_rz_csv\": \"" << cli.init_T_rz_csv << "\",\n";
+        js << "  \"init_Q_rz_csv\": \"" << cli.init_Q_rz_csv << "\",\n";
+        js << "  \"init_T_ASSUMED\": " << (cli.init_T_rz_csv.empty() ? 0 : 1) << ",\n";
         js << "  \"reload_dir\": \"" << cli.reload_dir << "\",\n";
         js << "  \"n_glass\": " << n_glass << ",\n";
         js << "  \"n_rotor\": " << n_rotor << ",\n";
@@ -924,12 +1075,15 @@ int main(int ac, char *av[])
         js << "  \"clamp_top_band_m\": " << cli.clamp_top_band_m << ",\n";
         js << "  \"clamp_status\": \"provisional_top_band_unconfirmed_drive_section\",\n";
         js << "  \"E_Pa\": " << g_case.steel.youngs_modulus_pa << ",\n";
+        js << "  \"E_ASSUMED_soft\": " << (soft_E_ASSUMED ? 1 : 0) << ",\n";
+        js << "  \"solid_numerical_damping\": " << cli.solid_numerical_damping << ",\n";
         js << "  \"rho_solid\": " << g_case.steel.rho_kg_m3 << ",\n";
         js << "  \"rho_fluid\": " << rho0 << ",\n";
         js << "  \"mu_fluid\": " << mu << ",\n";
         js << "  \"cp_fluid\": " << cp << ",\n";
         js << "  \"c0\": " << cli.c0 << ",\n";
         js << "  \"dp_m\": " << dp << ",\n";
+        js << "  \"rpm\": " << g_case.client.stirrer_rpm << ",\n";
         js << "  \"melt_volume_m3\": " << melt_volume << ",\n";
         js << "  \"heat_power_W\": " << cli.heat_power_w << ",\n";
         js << "  \"Q_uniform_Wpm3\": " << q_uniform << ",\n";
@@ -945,6 +1099,12 @@ int main(int ac, char *av[])
         js << "  \"f_pres_N\": " << last_load.f_pres << ",\n";
         js << "  \"torque_z_Nm\": " << last_torque << ",\n";
         js << "  \"max_elastic_offset_m\": " << last_elastic << ",\n";
+        js << "  \"von_mises_max_Pa\": " << last_von_mises << ",\n";
+        js << "  \"von_mises_strain_max\": " << last_von_strain << ",\n";
+        js << "  \"rotor_vtp_fields\": ["
+              "\"Velocity\",\"ViscousForceFromFluid\",\"PressureForceFromFluid\","
+              "\"DeformationGradient\",\"Displacement\",\"VonMisesStress\","
+              "\"VonMisesStrain\",\"GreenLagrangeStrain\"],\n";
         js << "  \"T0_K\": " << t0 << ",\n";
         js << "  \"T_mean_K\": " << last_T_mean << ",\n";
         js << "  \"dT_mean_K\": " << dT_mean << ",\n";
@@ -971,7 +1131,11 @@ int main(int ac, char *av[])
         js << "    \"target_meaning\": \"" << thermo_probe_def.target_meaning << "\",\n";
         js << "    \"probe_T_K\": " << last_probe_T << "\n";
         js << "  },\n";
-        js << "  \"note\": \"F1 prescribed volumetric heat + elastic FSI; not EM Q; stainless E not softened\"\n";
+        js << "  \"note\": \"F1/C2 prescribed volumetric heat + elastic FSI; not EM Q; "
+           << (soft_E_ASSUMED
+                   ? "ASSUMED soft E for multi-second FSI longevity (NOT stainless certificate)"
+                   : "stainless E=2e11 — expect early tip runaway without soft E")
+           << "\"\n";
         js << "}\n";
     }
     std::cout << "[ophelie][client-f1] summary_json=" << summary_path.string() << "\n";

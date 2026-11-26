@@ -1,19 +1,26 @@
 {
-  "schema": "doc248-client-probe-2026-11-25",
+  "schema": "doc248-client-probe-2026-11-26",
   "coordinate": "solver +Z up (not plan y-up sketch)",
   "NC": {
     "melt_radius_m": 0.1415,
-    "melt_height_m": 0.180,
+    "melt_height_m": 0.230,
     "melt_bottom_z_m": 0.001,
-    "free_surface_z_m": 0.181,
+    "free_surface_z_m": 0.231,
+    "note": "Doc248: NC fill aligned with stirring 230 mm (was 180 mm)",
     "client_midradius_probe": {
       "id": "client_midradius_probe",
       "r_over_R": 0.5,
       "depth_below_free_surface_m": 0.12,
-      "xyz_m": [0.07075, 0.0, 0.061],
+      "xyz_m": [0.07075, 0.0, 0.111],
       "azimuth": "+X ASSUMED (avoids stirring paddle eccentricity near -X)",
       "status": "engineering_assumed_midradius_depth12cm",
       "target_C_note": "~1000 C without paddle (Doc248)"
+    },
+    "client_axis_probes_reference_C": {
+      "note": "client vortex-center readout; IC uses +20K offset + Fig.8 radial form",
+      "depth_2cm": {"z_m": 0.211, "T_C": 817.54},
+      "depth_7cm": {"z_m": 0.161, "T_C": 1068.82},
+      "depth_12cm": {"z_m": 0.111, "T_C": 980.66}
     },
     "legacy_centerline_probes": {
       "note": "CAD thermocouple AABB tip kept as separate series; do NOT mix with midradius"

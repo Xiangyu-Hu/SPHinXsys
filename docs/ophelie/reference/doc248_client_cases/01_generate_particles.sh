@@ -22,7 +22,7 @@ cd "$NC_RELAX"
 rm -rf reload output output_backup client_nc_relax_meta
 mkdir -p reload output
 ./test_3d_ophelie_client_nc_glass_relax \
-  --dp=0.010 --melt-height=0.180 \
+  --dp=0.010 --melt-height=0.230 \
   --relax-steps=1000 --relax-vtp-every=200 \
   --output-meta-dir="$OUT/particles_nc/meta" \
   2>&1 | tee "$OUT/particles_nc/relax.log"

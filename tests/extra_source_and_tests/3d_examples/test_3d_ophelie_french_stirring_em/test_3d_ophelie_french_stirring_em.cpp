@@ -293,6 +293,12 @@ struct LocalCli
     Real c0 = 8.0;
     /** Soft acoustic CFL (default 0.55). Lower for fragile rpm (e.g. 5) startups. */
     Real acoustic_cfl = 0.55;
+    /**
+     * Advection CFL (default 0.25). Low-rpm Fig.11 needs viscous-limited advection:
+     * plain AdvectionTimeStepCK uses only U_ref~ωR, so rpm=5 allows ~3× larger Δt_adv than
+     * μ/(ρh) and free-surface/axial runaway appears (U_z ≫ U_θ).
+     */
+    Real advection_cfl = 0.25;
     Real q_grid_spacing = 0.0;  // 0 -> dp
     Real t_min = 300.0;         // coolant temperature floor (see README, skull layer)
     Real t_max = 2500.0;
@@ -336,6 +342,7 @@ inline bool isLocalCliOption(const char *arg)
     return std::strncmp(arg, "--reload-dir=", 13) == 0 || std::strncmp(arg, "--end-time=", 11) == 0 ||
            std::strncmp(arg, "--max-wall-hours=", 17) == 0 || std::strncmp(arg, "--c0=", 5) == 0 ||
            std::strncmp(arg, "--acoustic-cfl=", 15) == 0 ||
+           std::strncmp(arg, "--advection-cfl=", 16) == 0 ||
            std::strncmp(arg, "--q-grid-spacing=", 17) == 0 || std::strncmp(arg, "--t-min=", 8) == 0 ||
            std::strncmp(arg, "--t-max=", 8) == 0 || std::strncmp(arg, "--h-side=", 9) == 0 ||
            std::strncmp(arg, "--h-bottom=", 11) == 0 || std::strncmp(arg, "--h-free=", 9) == 0 ||
@@ -379,6 +386,10 @@ inline void applyLocalCli(int ac, char *av[], LocalCli &cli)
         else if (std::strncmp(av[i], "--acoustic-cfl=", 15) == 0)
         {
             cli.acoustic_cfl = static_cast<Real>(std::atof(av[i] + 15));
+        }
+        else if (std::strncmp(av[i], "--advection-cfl=", 16) == 0)
+        {
+            cli.advection_cfl = static_cast<Real>(std::atof(av[i] + 16));
         }
         else if (std::strncmp(av[i], "--q-grid-spacing=", 17) == 0)
         {
@@ -1522,7 +1533,10 @@ int main(int ac, char *av[])
             FSI::PressureForceFromFluid, std::remove_reference_t<decltype(acoustic_step_2nd_half_wall)>>(
             rotor_fluid_contact);
 
-    auto &advection_time_step = main_methods.addReduceDynamics<fluid_dynamics::AdvectionTimeStepCK>(glass, u_ref);
+    // Viscous floor: at low rpm U_ref < μ/(ρh); without it Δt_adv is oversized and axial U blows up.
+    const Real advection_cfl_use = std::max(Real(0.05), std::min(Real(0.5), local_cli.advection_cfl));
+    auto &advection_time_step =
+        main_methods.addReduceDynamics<fluid_dynamics::AdvectionViscousTimeStepCK>(glass, u_ref, advection_cfl_use);
     const Real acoustic_cfl_use = std::max(Real(0.05), std::min(Real(0.9), local_cli.acoustic_cfl));
     auto &acoustic_time_step =
         main_methods.addReduceDynamics<fluid_dynamics::AcousticTimeStepCK<>>(glass, acoustic_cfl_use);
@@ -1671,8 +1685,9 @@ int main(int ac, char *av[])
               << " n_wall=" << wall.getBaseParticles().TotalRealParticles() << " n_bc_shell=" << n_bc_particles
               << " out_of_grid=" << n_out_of_grid << "\n"
               << "  rho=" << rho0 << " mu=" << mu << " cp=" << cp << " k=" << k_th << " beta=" << beta
-              << " c0=" << local_cli.c0 << " acoustic_cfl=" << acoustic_cfl_use << " U_ref=" << u_ref
-              << " T0=" << t0 << " T_floor=" << local_cli.t_min
+              << " c0=" << local_cli.c0 << " acoustic_cfl=" << acoustic_cfl_use
+              << " advection_cfl=" << advection_cfl_use << " advection_dt=viscous_limited"
+              << " U_ref=" << u_ref << " T0=" << t0 << " T_floor=" << local_cli.t_min
               << " thermal_diffusion=" << (thermal_bc.enable_diffusion ? 1 : 0)
               << " coupling=" << thermoEMCouplingModeName(local_cli.literature.coupling) << "\n"
               << "  paddle: rpm=" << rpm << " omega=" << omega << " rad/s r_tip=" << rotor0.r_tip
@@ -1780,6 +1795,7 @@ int main(int ac, char *av[])
                 glass_particles, laws, false, t0, rheology_stats);
             glass_viscosity.setReferenceViscosity(mu_now);
             invalidateViscosityDependentCkKernels(glass_inner, glass_solid_contact, &rotor_fluid_contact);
+            advection_time_step.refreshViscousSpeedReference();
         }
         if (laplace_temperature && apply_diffusion)
         {

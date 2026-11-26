@@ -17,6 +17,7 @@
 #include "electromagnetic_ophelie_device_sync.h"
 #include "electromagnetic_ophelie_fixed_space_probe.h"
 #include "electromagnetic_ophelie_french_material_laws.h"
+#include "electromagnetic_ophelie_init_trz_qrz.h"
 #include "electromagnetic_ophelie_joule_to_heat_one_way.h"
 #include "io_environment.h"
 #include "sphinxsys.h"
@@ -74,6 +75,9 @@ struct RigidCli
      * Doc248 C2 default 15 kW ASSUMED.
      */
     Real heat_power_w = Real(1.5e4);
+    /** Doc248 ASSUMED: remapped French Fig.8a T / Fig.10 Q (empty = uniform T0 + uniform Q). */
+    std::string init_T_rz_csv;
+    std::string init_Q_rz_csv;
     /** Optional early stop when volume-mean T reaches this (0 = disabled). */
     Real target_t_k = Real(1400.0);
     Real state_record_interval = Real(5.0);
@@ -358,6 +362,10 @@ void applyCli(int ac, char *av[], RigidCli &cli, StdVec<char *> &sph_av)
             cli.clamp_top_band_m = static_cast<Real>(std::atof(arg + 17));
         else if (std::strncmp(arg, "--heat-power=", 13) == 0)
             cli.heat_power_w = static_cast<Real>(std::atof(arg + 13));
+        else if (std::strncmp(arg, "--init-T-rz-csv=", 16) == 0)
+            cli.init_T_rz_csv = arg + 16;
+        else if (std::strncmp(arg, "--init-Q-rz-csv=", 16) == 0)
+            cli.init_Q_rz_csv = arg + 16;
         else if (std::strncmp(arg, "--target-T-K=", 13) == 0)
             cli.target_t_k = static_cast<Real>(std::atof(arg + 13));
         else if (std::strncmp(arg, "--state-record-interval=", 24) == 0)
@@ -379,6 +387,7 @@ void applyCli(int ac, char *av[], RigidCli &cli, StdVec<char *> &sph_av)
             std::cout << "Doc248 C2r rigid paddle + prescribed volumetric heat:\n"
                          "  --reload-dir= --rotor-stl= --end-time= --c0= --omega-ramp=\n"
                          "  --heat-power= --target-T-K= (0 disables early stop; default 1400)\n"
+                         "  --init-T-rz-csv= --init-Q-rz-csv=  (ASSUMED Fig.8a/Fig.10 remap)\n"
                          "  --out-dir= --summary-json= --max-wall-hours= --no-state-recording\n";
             std::exit(0);
         }
@@ -481,9 +490,43 @@ int main(int ac, char *av[])
     registerOphelieJouleHeatTemperatureField(glass_particles, t0);
     glass_particles.addVariableToWrite<Real>(kOphelieTemperatureField);
 
+    const Vecd melt_center = g_case.french_stirring.french.glass_center;
+    const Real melt_half_h = g_case.french_stirring.french.glass_half_height;
+    const Real melt_R = g_case.melt_radius_m;
+    if (!cli.init_T_rz_csv.empty())
+    {
+        Doc248RzTemperatureGrid t_grid;
+        std::string terr;
+        if (!hostLoadDoc248RzTemperatureGrid(cli.init_T_rz_csv, t_grid, terr) || !t_grid.ok)
+        {
+            std::cerr << "[ophelie][client-rigid] FATAL: " << terr << " path=" << cli.init_T_rz_csv << "\n";
+            return 2;
+        }
+        hostApplyInitTRzAbsolute(glass_particles, melt_center, t0, t_grid, "client-rigid/init-T-rz");
+    }
+
     const Real melt_volume = hostMeltVolume(glass_particles);
-    const Real q_uniform = cli.heat_power_w / std::max(melt_volume, TinyReal);
-    hostAssignUniformJouleHeat(glass_particles, q_uniform);
+    Real p_heat_realized = cli.heat_power_w;
+    Real q_uniform = cli.heat_power_w / std::max(melt_volume, TinyReal);
+    if (!cli.init_Q_rz_csv.empty())
+    {
+        Doc247RzQGrid q_grid;
+        std::string qerr;
+        if (!hostLoadDoc247RzQGrid(cli.init_Q_rz_csv, q_grid, qerr) || !q_grid.ok)
+        {
+            std::cerr << "[ophelie][client-rigid] FATAL: " << qerr << " path=" << cli.init_Q_rz_csv << "\n";
+            return 2;
+        }
+        hostAssignUniformJouleHeat(glass_particles, Real(0));
+        p_heat_realized = hostAssignPrescribedShapeJouleHeat(
+            glass_particles, "JouleHeat", q_grid, melt_center, melt_R, melt_half_h, cli.heat_power_w,
+            "client-rigid/init-Q-rz");
+        q_uniform = p_heat_realized / std::max(melt_volume, TinyReal); // mean Q after shape scale
+    }
+    else
+    {
+        hostAssignUniformJouleHeat(glass_particles, q_uniform);
+    }
     glass_particles.addVariableToWrite<Real>("JouleHeat");
 
     // Legacy CAD tip (AABB) + Doc248 midradius virtual probe (r=0.5R, depth 0.12 m).
@@ -882,8 +925,13 @@ int main(int ac, char *av[])
         js << "  \"passed\": " << (pass ? 1 : 0) << ",\n";
         js << "  \"RIGID_HEATED_INTEGRATION_PASS\": " << (pass ? 1 : 0) << ",\n";
         js << "  \"mechanics_mode\": \"prescribed_rigid_rotation\",\n";
-        js << "  \"heat_source_mode\": \"prescribed_uniform_volumetric\",\n";
-        js << "  \"heat_source_note\": \"NOT EM-computed; development prescribed absorbed power\",\n";
+        js << "  \"heat_source_mode\": \""
+           << (cli.init_Q_rz_csv.empty() ? "prescribed_uniform_volumetric" : "prescribed_shaped_rz") << "\",\n";
+        js << "  \"heat_source_note\": \"NOT EM-computed; ASSUMED prescribed absorbed power"
+           << (cli.init_Q_rz_csv.empty() ? "" : " with Fig.10-shaped Q remap") << "\",\n";
+        js << "  \"init_T_rz_csv\": \"" << cli.init_T_rz_csv << "\",\n";
+        js << "  \"init_Q_rz_csv\": \"" << cli.init_Q_rz_csv << "\",\n";
+        js << "  \"init_T_ASSUMED\": " << (cli.init_T_rz_csv.empty() ? 0 : 1) << ",\n";
         js << "  \"reload_dir\": \"" << cli.reload_dir << "\",\n";
         js << "  \"n_glass\": " << n_glass << ",\n";
         js << "  \"n_rotor\": " << n_rotor << ",\n";

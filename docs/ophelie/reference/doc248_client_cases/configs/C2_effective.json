@@ -4,8 +4,12 @@
   "mechanics": {
     "mode": "elastic_driven",
     "rpm": 10,
-    "omega_ramp_s": 0.5,
-    "note": "elastic FSI; long wall time expected"
+    "omega_ramp_s": 2.0,
+    "youngs_modulus_Pa": 2.0e8,
+    "E_status": "ASSUMED_soft_for_FSI_longevity_NOT_stainless_certificate",
+    "solid_numerical_damping": 0.5,
+    "blowup_note": "Stainless E=2e11 blew at t≈0.32s (e_off~0.11 tip runaway, ~500 solid substeps/fluid). Soft E + longer ramp targets ≥2–5 s.",
+    "note": "elastic FSI; soft E cuts solid CFL cost; long wall time still expected vs rigid C2r"
   },
   "geometry": {
     "dp_m": 0.005,
@@ -18,14 +22,27 @@
     "generator_input_power_W": 30000
   },
   "thermal": {
-    "t_initial_k": 1273.15
+    "t_initial_k": 1273.15,
+    "init_T_rz_csv": "docs/ophelie/reference/standard_data/doc248_seeds/SEED_CLIENT_STIR_Fig8a_T_rz.csv",
+    "init_Q_rz_csv": "docs/ophelie/reference/standard_data/doc248_seeds/SEED_CLIENT_STIR_Fig10_Q_rz.csv",
+    "init_note": "ASSUMED French Fig.8a T + Fig.10 Q remapped to client R=0.1415 H=0.230; NOT literature PASS. t_initial_k remains thermal_deltaT reference."
   },
+  "rotor_vtp_fields": [
+    "Velocity",
+    "ViscousForceFromFluid",
+    "PressureForceFromFluid",
+    "DeformationGradient",
+    "Displacement",
+    "VonMisesStress",
+    "VonMisesStrain",
+    "GreenLagrangeStrain"
+  ],
   "probes": ["client_midradius_probe", "legacy_thermocouple_tip"],
   "run_default": {
-    "end_time_s": 60,
-    "state_record_interval_s": 2,
+    "end_time_s": 5,
+    "state_record_interval_s": 0.25,
     "max_wall_hours": 24,
-    "note": "60 s ≈ 10 rev at 10 rpm; raise end-time / wall hours on production GPU"
+    "note": "Default 5 s soft-E elastic FSI; raise END_TIME for longer. Production heat long-run → C2r rigid."
   },
   "particles": "regenerate via 01_generate_particles.sh (stir relax --bodies=all)"
 }

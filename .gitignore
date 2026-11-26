@@ -1108,19 +1108,25 @@ docs/ophelie/reference/doc247_longrun_four_cases/**/trz_snaps/
 docs/ophelie/reference/doc247_longrun_four_cases/**/run.log
 docs/ophelie/reference/doc247_longrun_four_cases/**/summary.json
 docs/ophelie/reference/doc248_client_cases/runs/
+docs/ophelie/reference/doc248_client_cases/evidence/
+# Plot/export packs + local scratch (VTP/monitor dumps); keep on disk only
+docs/ophelie/reference/**/packs/
+docs/ophelie/搅拌*/
+docs/ophelie/**/*.pdf
 # Archives / binary dumps anywhere under docs/ophelie
 docs/ophelie/*.zip
 docs/ophelie/**/*.zip
 docs/ophelie/**/*.tar.gz
 docs/ophelie/**/*.tar.gz.sha256
-# Keep the GPT IC zip + JSON inside the machine handoff pack
-!docs/ophelie/handoffs/this_machine_useful_2026-11-26/**/*.zip
-!docs/ophelie/handoffs/this_machine_useful_2026-11-26/**/*.json
-!docs/ophelie/handoffs/this_machine_useful_2026-11-26/**/*.meta.json
-
-# Local duplicates of handoff pack content (canonical under handoffs/)
-docs/ophelie/reference/doc248_client_cases/configs/client_nc_*
-docs/ophelie/reference/doc248_client_cases/configs/gpt_nc_ic/
+# Canonical Doc248 C0 GPT / hybrid IC under configs/ (track; zip exception below)
+!docs/ophelie/reference/doc248_client_cases/configs/client_nc_gpt_H230.meta.json
+!docs/ophelie/reference/doc248_client_cases/configs/client_nc_gpt_H230_T_rz.csv
+# csv/preview local-only:
+# hybrid IC local-only
+!docs/ophelie/reference/doc248_client_cases/configs/gpt_nc_ic/
+# zip/csv/previews are local-only (see Large local-only block below)
+# !docs/ophelie/reference/doc248_client_cases/configs/OPHELIE_Client_NC_Initial_Temperature_Field-230mm.zip
+# Optional leftover stir scripts/configs not used on this machine
 docs/ophelie/reference/doc248_client_cases/configs/fig8_seed_normalized_preview.png
 docs/ophelie/reference/doc248_client_cases/configs/C3_effective.json
 docs/ophelie/reference/doc248_client_cases/configs/C4_effective.json
@@ -1174,3 +1180,14 @@ tests/extra_source_and_tests/3d_examples/test_3d_ophelie_induction_demo/scripts/
 /*.pdf
 /docs/ophelie_demo_baseline.md
 
+
+
+# Large local-only IC/assets (keep on disk; do not push)
+docs/ophelie/reference/doc248_client_cases/configs/OPHELIE_Client_NC_Initial_Temperature_Field-230mm.zip
+# client_nc_gpt_H230_T_rz.csv tracked (standard IC; ~1MB)
+docs/ophelie/reference/doc248_client_cases/configs/client_nc_gpt_H230_preview.png
+docs/ophelie/reference/doc248_client_cases/configs/client_nc_hybrid_tongue_v6_H230*
+docs/ophelie/reference/doc248_client_cases/configs/gpt_nc_ic/OPHELIE_Client_NC_Initial_Temperature.png
+docs/ophelie/reference/standard_data/doc247_seeds/SEED_STIR_Fig10_Qshape_PLACEHOLDER_from_Fig6*
+docs/ophelie/reference/standard_data/doc247_french_digitization/figures/
+docs/ophelie/reference/standard_data/doc248_seeds/figures/
